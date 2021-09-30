@@ -3,6 +3,7 @@
 
 #include "bl-beamformer/type.hh"
 #include "bl-beamformer/logger.hh"
+#include "bl-beamformer/tools/magic_enum.hh"
 #include "bl-beamformer/tools/jitify2.hh"
 using namespace jitify2::reflection;
 

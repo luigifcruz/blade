@@ -1,5 +1,10 @@
-test('beamformer-basic', executable(
-  'bl-beamformer-basic', 'basic.cc',
+test('beamformer-basic-ata', executable(
+  'bl-beamformer-basic-ata', ['basic.cc', 'basic-ata.cc'],
+  dependencies: libbl_dep,
+))
+
+test('beamformer-basic-meerkat', executable(
+  'bl-beamformer-basic-meerkat', ['basic.cc', 'basic-meerkat.cc'],
   dependencies: libbl_dep,
 ))
 

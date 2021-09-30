@@ -29,6 +29,7 @@ private:
     dim3 grid;
     dim3 block;
     unsigned long long int* counter;
+    jitify2::ProgramCache<> cache;
 };
 
 } // namespace BL::Checker

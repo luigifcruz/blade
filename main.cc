@@ -10,6 +10,7 @@ Result Init() {
         .NTIME  = 8750,
         .NPOLS  = 2,
         .TBLOCK = 350,
+        .kernel = Beamformer::Kernel::ATA,
     });
 
     Checker checker({beam.outputLen()});
@@ -49,10 +50,10 @@ Result Init() {
         return Result::ERROR;
     }
 
-    cudaFree(&input);
-    cudaFree(&output);
-    cudaFree(&phasor);
-    cudaFree(&result);
+    cudaFree(input);
+    cudaFree(output);
+    cudaFree(phasor);
+    cudaFree(result);
 
     return Result::SUCCESS;
 }

@@ -39,7 +39,8 @@ jitify_comp = executable(
 jitify_gen = generator(
   jitify_comp,
   output: '@BASENAME@.jit.hh',
-  arguments : ['-I/opt/cuda/include', '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
+  # TODO: Fix this hardcoded CUDA path.
+  arguments : ['-I/opt/cuda/include', '-lineinfo', '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
 )
 
 src_lst += jitify_gen.process(jit_lst)

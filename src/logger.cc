@@ -17,14 +17,14 @@ namespace BL {
 Result Logger::Init() {
 #if not defined(NDEBUG)
     // ASCII art made by jgs https://www.asciiart.eu/space/aliens
-    std::cout << R"END(
+    std::cout << R"(
                        .-.
         .-""`""-.    |(0 0)
      _/`oOoOoOoOo`\_ \ \-/
     '.-=-=-=-=-=-=-.' \/ \
       `-=.=-.-=.=-'    \ /\
          ^  ^  ^       _H_ \
-    )END" << std::endl;
+    )" << std::endl;
 #endif
 
     auto consoleSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();

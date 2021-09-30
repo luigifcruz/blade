@@ -4,9 +4,7 @@
 
 namespace BL {
 
-static jitify2::ProgramCache<> cache(100, *checker_kernel);
-
-Checker::Checker(const Config & config) : config(config) {
+Checker::Checker(const Config & config) : config(config), cache(100, *checker_kernel) {
     if (config.block > 1024) {
         BL_FATAL("Maximum block length is 1024.");
         throw Result::ERROR;
@@ -23,7 +21,7 @@ Checker::Checker(const Config & config) : config(config) {
 }
 
 Checker::~Checker() {
-    cudaFree(&counter);
+    cudaFree(counter);
 }
 
 unsigned long long int Checker::run(const std::complex<float>* input, const std::complex<float>* output) {

@@ -4,15 +4,8 @@
 
 using namespace BL;
 
-Result Init() {
-    Beamformer beam({
-        .NBEAMS = 16,
-        .NANTS  = 20,
-        .NCHANS = 384,
-        .NTIME  = 8750,
-        .NPOLS  = 2,
-        .TBLOCK = 350,
-    });
+Result Run(const Beamformer::Config & config) {
+    Beamformer beam(config);
 
     Checker checker({beam.outputLen()});
 
@@ -43,9 +36,9 @@ Result Init() {
     std::generate(phasor_span.begin(), phasor_span.end(), []{ return 2.0; });
 
     std::span<std::complex<float>> result_span{result, beam.outputLen()};
-    std::generate(result_span.begin(), result_span.end(), []{ return 40.0; });
+    std::generate(result_span.begin(), result_span.end(), [&]{ return config.NANTS * 2.0; });
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 150; i++) {
         CHECK(beam.run(input, phasor, output));
         cudaDeviceSynchronize();
     }
@@ -56,27 +49,10 @@ Result Init() {
         return Result::ERROR;
     }
 
-    cudaFree(&input);
-    cudaFree(&output);
-    cudaFree(&phasor);
-    cudaFree(&result);
+    cudaFree(input);
+    cudaFree(output);
+    cudaFree(phasor);
+    cudaFree(result);
 
     return Result::SUCCESS;
 }
-
-int main() {
-    Logger::Init();
-
-    BL_INFO("Welcome to BL Beamformer.");
-
-    if (Init() != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. System is exiting...");
-        return 1;
-    }
-
-    BL_INFO("Nominal shutdown...");
-    Logger::Shutdown();
-
-    return 0;
-}
-

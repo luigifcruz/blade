@@ -45,8 +45,8 @@ Result Init() {
         return Result::ERROR;
     }
 
-    cudaFree(&input);
-    cudaFree(&output);
+    cudaFree(input_ptr);
+    cudaFree(output_ptr);
 
     return Result::SUCCESS;
 }

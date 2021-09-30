@@ -4,9 +4,7 @@
 
 namespace BL {
 
-static jitify2::ProgramCache<> cache(100, *beamformer_kernel);
-
-Beamformer::Beamformer(const Config & config) : config(config) {
+Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beamformer_kernel) {
     if (config.NBEAMS > config.TBLOCK) {
         BL_FATAL("TBLOCK is smalled than NBEAMS.");
         throw Result::ERROR;
@@ -17,6 +15,11 @@ Beamformer::Beamformer(const Config & config) : config(config) {
         throw Result::ERROR;
     }
 
+    if (config.TBLOCK > 1024) {
+        BL_FATAL("TBLOCK larger than hardware limit (1024).");
+        throw Result::ERROR;
+    }
+
     if ((config.TBLOCK % 32) != 0) {
         BL_WARN("Best performance is achieved when TBLOCK is a multiple of 32.");
     }
@@ -24,7 +27,7 @@ Beamformer::Beamformer(const Config & config) : config(config) {
     block = dim3(config.TBLOCK);
     grid = dim3(config.NCHANS, config.NTIME/config.TBLOCK);
 
-    kernel = Template("beamformer").instantiate(
+    kernel = Template(magic_enum::enum_name<Kernel>(config.kernel)).instantiate(
         config.NBEAMS,
         config.NANTS,
         config.NCHANS,
@@ -37,8 +40,7 @@ Beamformer::Beamformer(const Config & config) : config(config) {
 Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<float>* phasor,
         std::complex<float>* output) {
 
-    cache
-        .get_kernel(kernel)
+    cache.get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
             reinterpret_cast<const char2*>(input),

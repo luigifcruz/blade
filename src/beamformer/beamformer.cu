@@ -1,7 +1,7 @@
 #include "cuComplex.h"
 
 template<size_t NBEAMS, size_t NANTS, size_t NCHANS, size_t NTIME, size_t NPOLS, size_t TBLOCK>
-__global__ void beamformer(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
+__global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
     int ti = threadIdx.x + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;
     int bi = threadIdx.x;
@@ -43,6 +43,33 @@ __global__ void beamformer(const char2* in, const cuFloatComplex* phasor, cuFloa
         for (int a = 0; a < NANTS; a++) {
             acc[0] = cuCaddf(acc[0], cuCmulf(ant_cache[a][0], phr_cache[b][a][0]));
             acc[1] = cuCaddf(acc[1], cuCmulf(ant_cache[a][1], phr_cache[b][a][1]));
+        }
+
+        reinterpret_cast<float4*>(out)[iz] = *reinterpret_cast<float4*>(acc);
+    }
+}
+
+template<size_t NBEAMS, size_t NANTS, size_t NCHANS, size_t NTIME, size_t NPOLS, size_t TBLOCK>
+__global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
+    int ti = threadIdx.x + (blockIdx.y * TBLOCK);
+    int ch = blockIdx.x;
+
+    // Load the antenna values to registers.
+    int ix = (ch * NTIME) + (ti);
+    int dx = NTIME * NCHANS;
+
+    // Multiply and accumulate.
+    int iy = 0;
+    int iz = (ch * NTIME) + ti;
+    int dz = NTIME * NCHANS;
+
+    for (int b = 0; b < NBEAMS; b++, iz += dz) {
+        cuFloatComplex acc[NPOLS] = {{0.0, 0.0}};
+
+        for (int a = 0, x = ix; a < NANTS; a++, iy += 1, x += dx) {
+            const char4 tmp = reinterpret_cast<const char4*>(in)[ix];
+            acc[0] = cuCaddf(acc[0], cuCmulf(make_cuFloatComplex(tmp.x, tmp.y), phasor[iy]));
+            acc[1] = cuCaddf(acc[1], cuCmulf(make_cuFloatComplex(tmp.z, tmp.w), phasor[iy]));
         }
 
         reinterpret_cast<float4*>(out)[iz] = *reinterpret_cast<float4*>(acc);
