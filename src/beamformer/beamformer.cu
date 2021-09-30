@@ -54,9 +54,18 @@ __global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatCo
     int ti = threadIdx.x + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;
 
+
     // Load the antenna values to registers.
+    cuFloatComplex ant_cache[NANTS][NPOLS];
+
     int ix = (ch * NTIME) + (ti);
     int dx = NTIME * NCHANS;
+
+    for (int a = 0; a < NANTS; a++, ix += dx) {
+        const char4 tmp = reinterpret_cast<const char4*>(in)[ix];
+        ant_cache[a][0] = make_cuFloatComplex(tmp.x, tmp.y);
+        ant_cache[a][1] = make_cuFloatComplex(tmp.z, tmp.w);
+    }
 
     // Multiply and accumulate.
     int iy = 0;
@@ -67,9 +76,8 @@ __global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatCo
         cuFloatComplex acc[NPOLS] = {{0.0, 0.0}};
 
         for (int a = 0, x = ix; a < NANTS; a++, iy += 1, x += dx) {
-            const char4 tmp = reinterpret_cast<const char4*>(in)[ix];
-            acc[0] = cuCaddf(acc[0], cuCmulf(make_cuFloatComplex(tmp.x, tmp.y), phasor[iy]));
-            acc[1] = cuCaddf(acc[1], cuCmulf(make_cuFloatComplex(tmp.z, tmp.w), phasor[iy]));
+            acc[0] = cuCaddf(acc[0], cuCmulf(ant_cache[a][0], phasor[iy]));
+            acc[1] = cuCaddf(acc[1], cuCmulf(ant_cache[a][1], phasor[iy]));
         }
 
         reinterpret_cast<float4*>(out)[iz] = *reinterpret_cast<float4*>(acc);
