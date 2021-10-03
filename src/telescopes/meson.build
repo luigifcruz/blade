@@ -3,14 +3,15 @@ dep_lst += [
   py.dependency(embed: true)
 ]
 
-ata_src_lst = []
+python_src_lst = []
 
-subdir('beamformer')
+subdir('ata')
+#subdir('meerkat')
 
 lnk_lst += [
   py.extension_module(
-    'ata',
-    sources: ata_src_lst,
+    'blade-python',
+    sources: python_src_lst,
     include_directories: inc_lst,
     dependencies: dep_lst,
     gnu_symbol_visibility: 'hidden',

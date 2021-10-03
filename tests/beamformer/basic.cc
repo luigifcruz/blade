@@ -1,45 +1,63 @@
-#include <span>
+#include "blade/kernels/beamformer.hh"
+#include "blade/kernels/checker.hh"
 
-#include "bl-beamformer/base.hh"
+using namespace Blade;
 
-using namespace BL;
-
-Result Run(const Beamformer::Config & config) {
-    Beamformer beam(config);
-
-    Checker checker({beam.outputLen()});
+Result Run(const Kernel::Beamformer::Config & config) {
+    Kernel::Manager manager;
+    Kernel::Beamformer beam(config);
+    Kernel::Checker checker({beam.outputLen()});
 
     std::complex<int8_t>* input;
-    BL_CUDA_CHECK(cudaMallocManaged(&input, beam.inputLen() * sizeof(std::complex<int8_t>)), [&]{
+    std::size_t input_size = beam.inputLen() * sizeof(input[0]);
+
+    std::complex<float>* phasors;
+    std::size_t phasors_size = beam.phasorsLen() * sizeof(phasors[0]);
+
+    std::complex<float>* output;
+    std::size_t output_size = beam.outputLen() * sizeof(output[0]);
+
+    std::complex<float>* result;
+    std::size_t result_size = beam.outputLen() * sizeof(result[0]);
+
+    manager.save({
+        .memory = {
+            .device = input_size + phasors_size + output_size + result_size,
+            .host = input_size + phasors_size + output_size + result_size,
+        },
+        .transfer = {
+            .d2h = result_size,
+            .h2d = input_size,
+        }
+    }).report();
+
+    BL_CUDA_CHECK(cudaMallocManaged(&input, input_size), [&]{
         BL_FATAL("Can't allocate beamformer input buffer.");
     });
 
-    std::complex<float>* phasor;
-    BL_CUDA_CHECK(cudaMallocManaged(&phasor, beam.phasorLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&phasors, phasors_size), [&]{
         BL_FATAL("Can't allocate beamformer phasor buffer.");
     });
 
-    std::complex<float>* output;
-    BL_CUDA_CHECK(cudaMallocManaged(&output, beam.outputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&output, output_size), [&]{
         BL_FATAL("Can't allocate beamformer output buffer.");
     });
 
-    std::complex<float>* result;
-    BL_CUDA_CHECK(cudaMallocManaged(&result, beam.outputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&result, result_size), [&]{
         BL_FATAL("Can't allocate beamformer output groundtruth buffer.");
     });
 
     std::span<std::complex<int8_t>> input_span{input, beam.inputLen()};
     std::generate(input_span.begin(), input_span.end(), []{ return 1; });
 
-    std::span<std::complex<float>> phasor_span{phasor, beam.phasorLen()};
+    std::span<std::complex<float>> phasor_span{phasors, beam.phasorsLen()};
     std::generate(phasor_span.begin(), phasor_span.end(), []{ return 2.0; });
 
     std::span<std::complex<float>> result_span{result, beam.outputLen()};
     std::generate(result_span.begin(), result_span.end(), [&]{ return config.NANTS * 2.0; });
 
     for (int i = 0; i < 150; i++) {
-        BL_CHECK(beam.run(input, phasor, output));
+        BL_CHECK(beam.run(input, phasors, output));
         cudaDeviceSynchronize();
     }
 
@@ -51,7 +69,7 @@ Result Run(const Beamformer::Config & config) {
 
     cudaFree(input);
     cudaFree(output);
-    cudaFree(phasor);
+    cudaFree(phasors);
     cudaFree(result);
 
     return Result::SUCCESS;

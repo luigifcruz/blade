@@ -1,14 +1,13 @@
-#ifndef BL_BEAMFORMER_H
-#define BL_BEAMFORMER_H
+#ifndef BLADE_KERNELS_BEAMFORMER_H
+#define BLADE_KERNELS_BEAMFORMER_H
 
-#include "bl-beamformer/type.hh"
-#include "bl-beamformer/helpers.hh"
+#include "blade/kernels/base.hh"
 
-namespace BL {
+namespace Blade::Kernel {
 
-class BL_API Beamformer {
+class BLADE_API Beamformer : public Generic {
 public:
-    enum Kernel {
+    enum Recipe {
         ATA,
         ATA_4P_FFT,
         MEERKAT,
@@ -21,7 +20,7 @@ public:
         std::size_t NTIME;
         std::size_t NPOLS;
         std::size_t TBLOCK;
-        Kernel kernel;
+        Recipe recipe;
     };
 
     Beamformer(const Config & config);
@@ -35,27 +34,26 @@ public:
         return config.NBEAMS*config.NTIME*config.NCHANS*config.NPOLS;
     };
 
-    constexpr std::size_t phasorLen() const {
-        switch (config.kernel) {
-            case Kernel::ATA:
-            case Kernel::ATA_4P_FFT:
+    constexpr std::size_t phasorsLen() const {
+        switch (config.recipe) {
+            case Recipe::ATA:
+            case Recipe::ATA_4P_FFT:
                 return config.NBEAMS*config.NANTS*config.NCHANS*config.NPOLS;
-            case Kernel::MEERKAT:
+            case Recipe::MEERKAT:
                 return config.NBEAMS*config.NANTS;
         }
         return 0;
     };
 
-    Result run(const std::complex<int8_t>* input, const std::complex<float>* phasor, std::complex<float>* output);
+    Result run(const std::complex<int8_t>* input, const std::complex<float>* phasors, std::complex<float>* output);
 
 private:
     const Config config;
     std::string kernel;
-    dim3 grid;
-    dim3 block;
+    dim3 grid, block;
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace BL
+} // namespace Blade::Kernel
 
 #endif

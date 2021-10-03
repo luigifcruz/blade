@@ -1,22 +1,20 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "bl-beamformer/logger.hh"
+#include "blade/logger.hh"
 
-namespace BL {
+std::string computeMethodName(const std::string& function, const std::string& prettyFunction) {
+    size_t locFunName = prettyFunction.find(function);
+    size_t begin = prettyFunction.rfind(" ",locFunName) + 1;
+    size_t end = prettyFunction.find("(",locFunName + function.length());
+    if (prettyFunction[end + 1] == ')')
+        return (prettyFunction.substr(begin,end - begin) + "()");
+    else
+        return (prettyFunction.substr(begin,end - begin) + "(...)");
+}
 
-Result Logger::Init() {
-#if not defined(NDEBUG)
-    // ASCII art made by jgs https://www.asciiart.eu/space/aliens
-    std::cout << R"(
-                       .-.
-        .-""`""-.    |(0 0)
-     _/`oOoOoOoOo`\_ \ \-/
-    '.-=-=-=-=-=-=-.' \/ \
-      `-=.=-.-=.=-'    \ /\
-         ^  ^  ^       _H_ \
-    )" << std::endl;
-#endif
+namespace Blade {
 
+Logger::Logger() {
     auto consoleSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
     consoleSink->set_pattern("[%Y-%m-%d %T.%e%z] [%n] [%l] [%!] %v%$");
 
@@ -36,12 +34,20 @@ Result Logger::Init() {
 
     spdlog::register_logger(logger);
 
-    return Result::SUCCESS;
+    logger->info(R"(
+
+Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
+                   .-.
+    .-""`""-.    |(0 0)
+ _/`oOoOoOoOo`\_ \ \-/
+'.-=-=-=-=-=-=-.' \/ \
+  `-=.=-.-=.=-'    \ /\
+     ^  ^  ^       _H_ \
+    )");
 }
 
-Result Logger::Shutdown() {
+Logger::~Logger() {
     spdlog::shutdown();
-    return Result::SUCCESS;
 }
 
-} // namespace BL::Logger
+} // namespace Blade

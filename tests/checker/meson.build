@@ -1,9 +1,9 @@
 test('checker-complex', executable(
-  'bl-checker-complex', 'complex.cc',
-  dependencies: libbl_dep,
+  'blade-checker-complex', 'complex.cc',
+  dependencies: lib_blade_dep,
 ))
 
 test('checker-integer', executable(
-  'bl-checker-integer', 'integer.cc',
-  dependencies: libbl_dep,
+  'blade-checker-integer', 'integer.cc',
+  dependencies: lib_blade_dep,
 ))

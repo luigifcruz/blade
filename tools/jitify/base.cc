@@ -39,7 +39,7 @@
  * 2. Modify varname to be [INPUT_FILENAME]_kernel.
  * */
 
-#include "bl-beamformer/tools/jitify2.hh"
+#include "blade/utils/jitify2.hh"
 
 #include <cctype>
 #include <cstdlib>
@@ -71,7 +71,7 @@ void write_serialized_program_as_cpp_header(
       "JITIFY_INCLUDE_GUARD_PROGRAM_" + source_varname;
   ostream << "#ifndef " << include_guard_name << "\n#define "
           << include_guard_name << "\n";
-  ostream << "#include <bl-beamformer/tools/jitify2.hh>\n";
+  ostream << "#include <blade/utils/jitify2.hh>\n";
   if (!shared_headers_varname.empty()) {
     ostream << "extern const jitify2::StringMap* " << shared_headers_varname
             << ";\n";

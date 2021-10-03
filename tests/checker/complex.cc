@@ -1,13 +1,12 @@
-#include <span>
 #include <algorithm>
 #include <ctime>
 
-#include "bl-beamformer/base.hh"
+#include "blade/kernels/checker.hh"
 
-using namespace BL;
+using namespace Blade;
 
 Result Init() {
-    Checker checker({8192});
+    Kernel::Checker checker({8192});
 
     static std::complex<float>* input_ptr;
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{
@@ -60,7 +59,7 @@ Result Init() {
 }
 
 int main() {
-    Logger::Init();
+    Logger guard{};
 
     BL_INFO("Welcome to BL Beamformer.");
 
@@ -70,7 +69,6 @@ int main() {
     }
 
     BL_INFO("Nominal shutdown...");
-    Logger::Shutdown();
 
     return 0;
 }

@@ -1,11 +1,7 @@
-#ifndef BL_HELPERS_H
-#define BL_HELPERS_H
+#ifndef BLADE_MACROS_H
+#define BLADE_MACROS_H
 
-#include "bl-beamformer/type.hh"
-#include "bl-beamformer/logger.hh"
-#include "bl-beamformer/tools/magic_enum.hh"
-#include "bl-beamformer/tools/jitify2.hh"
-using namespace jitify2::reflection;
+#include "blade/types.hh"
 
 #ifndef BL_CUDA_CHECK_KERNEL
 #define BL_CUDA_CHECK_KERNEL() { \
@@ -44,15 +40,5 @@ using namespace jitify2::reflection;
     } \
 }
 #endif
-
-namespace BL {
-
-class BL_API Helpers {
-public:
-    static Result LoadFromFile(const char* filename, void* cudaMemory, std::size_t size, std::size_t len);
-    static Result PrintState();
-};
-
-} // namespace BL::Helpers
 
 #endif

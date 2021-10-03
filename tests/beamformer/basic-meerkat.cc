@@ -1,34 +1,30 @@
-#include <span>
+#include "blade/kernels/beamformer.hh"
 
-#include "bl-beamformer/base.hh"
+using namespace Blade;
 
-using namespace BL;
-
-Result Run(const Beamformer::Config & config);
+Result Run(const Kernel::Beamformer::Config & config);
 
 int main() {
-    Logger::Init();
+    Logger guard{};
 
     BL_INFO("Testing beamformer with the MeetKAT kernel.");
 
-    Beamformer::Config config = {
+    Kernel::Beamformer::Config config = {
         .NBEAMS = 64,
         .NANTS  = 64,
         .NCHANS = 1,
         .NTIME  = 4194304,
         .NPOLS  = 2,
         .TBLOCK = 256,
-        .kernel = Beamformer::Kernel::MEERKAT,
+        .recipe = Kernel::Beamformer::Recipe::MEERKAT,
     };
 
     if (Run(config) != Result::SUCCESS) {
         BL_FATAL("Test failed.");
-        Logger::Shutdown();
         return 1;
     }
 
     BL_INFO("Test succeeded.");
-    Logger::Shutdown();
 
     return 0;
 }

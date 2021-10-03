@@ -1,11 +1,11 @@
 project(
-  'bl',
+  'blade',
   ['cpp','cuda'],
   version: '0.0.0',
   default_options: [
     'cpp_std=c++20',
     'b_ndebug=if-release',
-    'b_lto=true',
+    # TODO: Add LTO option when Nvidia fixes bug with Clang 12.
   ]
 )
 
@@ -36,7 +36,7 @@ summary({'cpp_std': get_option('cpp_std'),
         }, section: 'General', bool_yn: true)
 
 lnk_lst += library(
-  'bl-beamformer',
+  'blade',
   src_lst,
   include_directories: inc_lst,
   dependencies: dep_lst,
@@ -45,7 +45,7 @@ lnk_lst += library(
   gnu_symbol_visibility: 'hidden',
 )
 
-libbl_dep = declare_dependency(
+lib_blade_dep = declare_dependency(
   include_directories: inc_lst,
   dependencies: dep_lst,
   link_with: lnk_lst,
@@ -53,9 +53,4 @@ libbl_dep = declare_dependency(
 
 subdir('tests')
 
-executable(
-  'bl-beamformer', 'main.cc',
-  dependencies: libbl_dep,
-  install: true,
-)
-
+# TODO: Add pkgconfig module.

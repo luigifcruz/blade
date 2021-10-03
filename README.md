@@ -1,4 +1,4 @@
-# BL-beamforming
+# BLADE - Breakthrough Listen Accelerated DSP Engine
 
 ## Dependencies
 

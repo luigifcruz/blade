@@ -1,12 +1,11 @@
-#ifndef BL_CHECKER_H
-#define BL_CHECKER_H
+#ifndef BLADE_KERNELS_CHECKER_H
+#define BLADE_KERNELS_CHECKER_H
 
-#include "bl-beamformer/type.hh"
-#include "bl-beamformer/helpers.hh"
+#include "blade/kernels/base.hh"
 
-namespace BL {
+namespace Blade::Kernel {
 
-class BL_API Checker {
+class BLADE_API Checker : public Generic {
 public:
     struct Config {
         std::size_t len;
@@ -32,6 +31,6 @@ private:
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace BL::Checker
+} // namespace Blade::Kernel
 
 #endif

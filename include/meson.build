@@ -1,1 +1,1 @@
-install_subdir('bl-beamformer', install_dir : get_option('includedir'))
+install_subdir('blade', install_dir : get_option('includedir'))
