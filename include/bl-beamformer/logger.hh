@@ -4,8 +4,25 @@
 #include "bl-beamformer/type.hh"
 
 #undef SPDLOG_FUNCTION
-std::string computeMethodName(const std::string& function, const std::string& prettyFunction);
+#undef SPDLOG_ACTIVE_LEVEL
+
+#ifdef NDEBUG
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
+#else
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
+
+inline std::string computeMethodName(const std::string& function, const std::string& prettyFunction) {
+    size_t locFunName = prettyFunction.find(function);
+    size_t begin = prettyFunction.rfind(" ",locFunName) + 1;
+    size_t end = prettyFunction.find("(",locFunName + function.length());
+    if (prettyFunction[end + 1] == ')')
+        return (prettyFunction.substr(begin,end - begin) + "()");
+    else
+        return (prettyFunction.substr(begin,end - begin) + "(...)");
+}
 #define SPDLOG_FUNCTION computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__).c_str()
+
 #include <spdlog/spdlog.h>
 
 #define BL_LOG_ID "BL"
@@ -19,7 +36,7 @@ std::string computeMethodName(const std::string& function, const std::string& pr
 
 namespace BL {
 
-    class Logger {
+    class BL_API Logger {
     public:
         Logger() = default;
         ~Logger() = default;

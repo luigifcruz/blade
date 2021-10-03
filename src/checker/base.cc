@@ -5,6 +5,8 @@
 namespace BL {
 
 Checker::Checker(const Config & config) : config(config), cache(100, *checker_kernel) {
+    BL_DEBUG("Initilizating class.");
+
     if (config.block > 1024) {
         BL_FATAL("Maximum block length is 1024.");
         throw Result::ERROR;
@@ -21,6 +23,7 @@ Checker::Checker(const Config & config) : config(config), cache(100, *checker_ke
 }
 
 Checker::~Checker() {
+    BL_DEBUG("Destroying class.");
     cudaFree(counter);
 }
 

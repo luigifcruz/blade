@@ -16,38 +16,52 @@ Result Init() {
     Checker checker({beam.outputLen()});
 
     std::complex<int8_t>* input;
-    CUDA_CHECK(cudaMalloc(&input, beam.inputLen() * sizeof(std::complex<int8_t>)), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&input, beam.inputLen() * sizeof(std::complex<int8_t>)), [&]{
         BL_FATAL("Can't allocate beamformer input buffer.");
     });
 
     std::complex<float>* phasor;
-    CUDA_CHECK(cudaMalloc(&phasor, beam.phasorLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&phasor, beam.phasorLen() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate beamformer phasor buffer.");
     });
 
     std::complex<float>* output;
-    CUDA_CHECK(cudaMalloc(&output, beam.outputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&output, beam.outputLen() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate beamformer output buffer.");
     });
 
     std::complex<float>* result;
-    CUDA_CHECK(cudaMalloc(&result, beam.outputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&result, beam.outputLen() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate beamformer output groundtruth buffer.");
     });
 
-    ATA::Beamformer::Test test;
-/*
-    CUDA_CHECK(cudaMemcpy(&input, , beam.inputLen() * sizeof(std::complex<int8_t>), cudaMemcpyHostToDevice), [&]{
-        BL_FATAL("Can't copy beamformer input data from host to device.");
-    });
-*/
+    {
+        ATA::Beamformer::Test test;
 
-    CHECK(Helpers::LoadFromFile("input.raw", input, sizeof(std::complex<int8_t>), beam.inputLen()));
-    CHECK(Helpers::LoadFromFile("phasor.raw", phasor, sizeof(std::complex<float>), beam.phasorLen()));
-    CHECK(Helpers::LoadFromFile("output.raw", result, sizeof(std::complex<float>), beam.outputLen()));
+        BL_CHECK(test.beamform());
+
+        BL_ASSERT(test.getInputData().size() == beam.inputLen());
+        BL_ASSERT(test.getPhasorsData().size() == beam.phasorLen());
+        BL_ASSERT(test.getOutputData().size() == beam.outputLen());
+
+        BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), beam.inputLen() * sizeof(std::complex<int8_t>),
+                    cudaMemcpyHostToDevice), [&]{
+            BL_FATAL("Can't copy beamformer input data from host to device.");
+        });
+
+        BL_CUDA_CHECK(cudaMemcpy(phasor, test.getPhasorsData().data(), beam.phasorLen() * sizeof(std::complex<float>),
+                    cudaMemcpyHostToDevice), [&]{
+            BL_FATAL("Can't copy beamformer phasors data from host to device.");
+        });
+
+        BL_CUDA_CHECK(cudaMemcpy(result, test.getOutputData().data(), beam.outputLen() * sizeof(std::complex<float>),
+                    cudaMemcpyHostToDevice), [&]{
+            BL_FATAL("Can't copy beamformer result data from host to device.");
+        });
+    }
 
     for (int i = 0; i < 100; i++) {
-        CHECK(beam.run(input, phasor, output));
+        BL_CHECK(beam.run(input, phasor, output));
         cudaDeviceSynchronize();
     }
 

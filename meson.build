@@ -4,13 +4,15 @@ project(
   version: '0.0.0',
   default_options: [
     'cpp_std=c++20',
+    'b_ndebug=if-release',
+    'b_lto=true',
   ]
 )
 
 cfg_lst = configuration_data()
 src_lst = []
 dep_lst = [
-  dependency('cuda', version : '>=11', modules : ['cufft', 'nvrtc', 'cudart', 'cuda']),
+  dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
   dependency('spdlog'),
 ]
 inc_lst = [
@@ -20,30 +22,18 @@ inc_lst = [
 lnk_lst = []
 jit_lst = []
 
+py = import('python').find_installation('python3')
+
 subdir('src')
 subdir('include')
+subdir('python')
+subdir('tools')
 
 summary({'cpp_std': get_option('cpp_std'),
          'prefix': get_option('prefix'),
          'buildtype': get_option('buildtype'),
          'crossbuild': meson.is_cross_build(),
         }, section: 'General', bool_yn: true)
-
-jitify_comp = executable(
-  'jitify-preprocess',
-  'tools/jitify.cc',
-  include_directories: inc_lst,
-  dependencies: dep_lst,
-)
-
-jitify_gen = generator(
-  jitify_comp,
-  output: '@BASENAME@.jit.hh',
-  # TODO: Fix this hardcoded CUDA path.
-  arguments : ['-I/opt/cuda/include', '-lineinfo', '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
-)
-
-src_lst += jitify_gen.process(jit_lst)
 
 lnk_lst += library(
   'bl-beamformer',
@@ -52,6 +42,7 @@ lnk_lst += library(
   dependencies: dep_lst,
   link_with: lnk_lst,
   install: true,
+  gnu_symbol_visibility: 'hidden',
 )
 
 libbl_dep = declare_dependency(
@@ -67,3 +58,4 @@ executable(
   dependencies: libbl_dep,
   install: true,
 )
+

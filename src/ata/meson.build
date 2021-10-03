@@ -1,6 +1,3 @@
-pymod = import('python')
-py = pymod.find_installation('python3')
-
 dep_lst += [
   dependency('pybind11'),
   py.dependency(embed: true)
@@ -16,5 +13,6 @@ lnk_lst += [
     sources: ata_src_lst,
     include_directories: inc_lst,
     dependencies: dep_lst,
+    gnu_symbol_visibility: 'hidden',
   )
 ]

@@ -2,20 +2,20 @@
 
 template<size_t NBEAMS, size_t NANTS, size_t NCHANS, size_t NTIME, size_t NPOLS, size_t TBLOCK>
 __global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
-    int ti = threadIdx.x + (blockIdx.y * TBLOCK);
-    int ch = blockIdx.x;
     int bi = threadIdx.x;
+    int ti = bi + (blockIdx.y * TBLOCK);
+    int ch = blockIdx.x;
 
     // Load the phasors to shared memory.
     __shared__ cuFloatComplex phr_cache[NBEAMS][NANTS][NPOLS];
 
     int iy = (ch * NPOLS) + (bi * NPOLS * NCHANS * NANTS);
-    int dy = NPOLS * NCHANS;
+    const int dy = NPOLS * NCHANS;
 
-    if (threadIdx.x < NBEAMS) {
+    if (bi < NBEAMS) {
         for (int a = 0; a < NANTS; a++, iy += dy) {
-            phr_cache[threadIdx.x][a][0] = phasor[iy+0];
-            phr_cache[threadIdx.x][a][1] = phasor[iy+1];
+            phr_cache[bi][a][0] = phasor[iy+0];
+            phr_cache[bi][a][1] = phasor[iy+1];
         }
     }
 
@@ -25,7 +25,7 @@ __global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComple
     cuFloatComplex ant_cache[NANTS][NPOLS];
 
     int ix = (ch * NTIME) + (ti);
-    int dx = NTIME * NCHANS;
+    const int dx = NTIME * NCHANS;
 
     for (int a = 0; a < NANTS; a++, ix += dx) {
         const char4 tmp = reinterpret_cast<const char4*>(in)[ix];
@@ -35,7 +35,7 @@ __global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComple
 
     // Multiply and accumulate.
     int iz = (ch * NTIME) + ti;
-    int dz = NTIME * NCHANS;
+    const int dz = NTIME * NCHANS;
 
     for (int b = 0; b < NBEAMS; b++, iz += dz) {
         cuFloatComplex acc[NPOLS] = {{0.0, 0.0}};
@@ -51,15 +51,15 @@ __global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComple
 
 template<size_t NBEAMS, size_t NANTS, size_t NCHANS, size_t NTIME, size_t NPOLS, size_t TBLOCK>
 __global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
-    int ti = threadIdx.x + (blockIdx.y * TBLOCK);
+    int bi = threadIdx.x;
+    int ti = bi + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;
-
 
     // Load the antenna values to registers.
     cuFloatComplex ant_cache[NANTS][NPOLS];
 
     int ix = (ch * NTIME) + (ti);
-    int dx = NTIME * NCHANS;
+    const int dx = NTIME * NCHANS;
 
     for (int a = 0; a < NANTS; a++, ix += dx) {
         const char4 tmp = reinterpret_cast<const char4*>(in)[ix];
@@ -70,7 +70,7 @@ __global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatCo
     // Multiply and accumulate.
     int iy = 0;
     int iz = (ch * NTIME) + ti;
-    int dz = NTIME * NCHANS;
+    const int dz = NTIME * NCHANS;
 
     for (int b = 0; b < NBEAMS; b++, iz += dz) {
         cuFloatComplex acc[NPOLS] = {{0.0, 0.0}};

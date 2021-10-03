@@ -6,7 +6,7 @@
 
 namespace BL {
 
-class Beamformer {
+class BL_API Beamformer {
 public:
     enum Kernel {
         ATA,
@@ -15,26 +15,27 @@ public:
     };
 
     struct Config {
-        size_t NBEAMS;
-        size_t NANTS;
-        size_t NCHANS;
-        size_t NTIME;
-        size_t NPOLS;
-        size_t TBLOCK;
+        std::size_t NBEAMS;
+        std::size_t NANTS;
+        std::size_t NCHANS;
+        std::size_t NTIME;
+        std::size_t NPOLS;
+        std::size_t TBLOCK;
         Kernel kernel;
     };
 
     Beamformer(const Config & config);
+    ~Beamformer();
 
-    constexpr size_t inputLen() const {
+    constexpr std::size_t inputLen() const {
         return config.NANTS*config.NCHANS*config.NTIME*config.NPOLS;
     };
 
-    constexpr size_t outputLen() const {
+    constexpr std::size_t outputLen() const {
         return config.NBEAMS*config.NTIME*config.NCHANS*config.NPOLS;
     };
 
-    constexpr size_t phasorLen() const {
+    constexpr std::size_t phasorLen() const {
         switch (config.kernel) {
             case Kernel::ATA:
             case Kernel::ATA_4P_FFT:

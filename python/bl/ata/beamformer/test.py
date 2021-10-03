@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class BeamformerTest:
+class Test:
     NBEAMS: int = 16
     NANTS:  int = 20
     NCHANS: int = 384
@@ -11,8 +11,7 @@ class BeamformerTest:
 
 
     def __init__(self):
-        # simulate 8bit numbers
-        # I'm taking them to be 8bit + 8bit complex numbers = int16
+        # simulate 8bit numbers (int8_t + int8_t = int16_t)
         self.input_len = (self.NANTS * self.NCHANS * self.NTIME * self.NPOLS)
         self.input_dims = (self.NANTS, self.NCHANS, self.NTIME, self.NPOLS)
         self.input_flat = np.random.randint(-int(2**16/2), int(2**16/2), self.input_len).astype(np.int16)
@@ -29,7 +28,7 @@ class BeamformerTest:
         self.output = np.zeros(shape=(self.NBEAMS, self.NCHANS, self.NTIME, self.NPOLS), dtype=np.complex64)
 
 
-    def run(self):
+    def beamform(self):
         for ibeam in range(self.NBEAMS):
             phased = self.input * self.phasors[ibeam][..., np.newaxis, :]
             self.output[ibeam] = phased.sum(axis=0)
@@ -41,19 +40,19 @@ class BeamformerTest:
         self.output.tofile("output.raw")
 
 
-    def getInput(self):
+    def getInputData(self):
         return self.input_flat
 
 
-    def getPhasors(self):
+    def getPhasorsData(self):
         return self.phasors
 
 
-    def getOutput(self):
+    def getOutputData(self):
         return self.output
 
 
 if __name__ == '__main__':
-    beamformer = BeamformerTest()
-    beamformer.run()
+    beamformer = Test()
+    beamformer.beamform()
     beamformer.saveToFile()

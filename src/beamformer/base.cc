@@ -5,6 +5,8 @@
 namespace BL {
 
 Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beamformer_kernel) {
+    BL_DEBUG("Initilizating class.");
+
     if (config.NBEAMS > config.TBLOCK) {
         BL_FATAL("TBLOCK is smalled than NBEAMS.");
         throw Result::ERROR;
@@ -37,6 +39,10 @@ Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beam
     );
 }
 
+Beamformer::~Beamformer() {
+    BL_DEBUG("Destroying class.");
+}
+
 Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<float>* phasor,
         std::complex<float>* output) {
 
@@ -48,7 +54,7 @@ Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<flo
             reinterpret_cast<cuFloatComplex*>(output)
         );
 
-    CUDA_CHECK_KERNEL();
+    BL_CUDA_CHECK_KERNEL();
 
     return Result::SUCCESS;
 }

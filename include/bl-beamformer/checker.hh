@@ -6,17 +6,17 @@
 
 namespace BL {
 
-class Checker {
+class BL_API Checker {
 public:
     struct Config {
-        size_t len;
-        size_t block = 256;
+        std::size_t len;
+        std::size_t block = 256;
     };
 
     Checker(const Config & config);
     ~Checker();
 
-    constexpr size_t inputLen() const {
+    constexpr std::size_t inputLen() const {
         return config.len;
     }
 
