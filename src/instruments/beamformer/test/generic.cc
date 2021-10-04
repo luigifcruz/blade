@@ -2,9 +2,9 @@
 
 namespace Blade::Instrument::Beamformer::Test {
 
-Generic::Generic(const std::string & module_str) {
+Generic::Generic(const std::string & telescope) {
     BL_DEBUG("Initilizating class.");
-    lib = py::module::import(module_str.c_str()).attr("Test")();
+    lib = py::module::import("blade.instruments.beamformer.test").attr(telescope.c_str())();
 }
 
 Result Generic::beamform() {

@@ -2,6 +2,6 @@
 
 namespace Blade::Instrument::Beamformer::Test {
 
-ATA::ATA() : Generic("blade.ata.beamformer") {}
+ATA::ATA() : Generic("ATA") {}
 
 } // namespace Blade::Instrument::Beamformer::Test

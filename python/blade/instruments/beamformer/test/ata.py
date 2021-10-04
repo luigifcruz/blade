@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Test:
+class ATA:
     NBEAMS: int = 16
     NANTS:  int = 20
     NCHANS: int = 384

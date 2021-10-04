@@ -1,1 +1,1 @@
-from .ata.beamformer import *
+from .instruments import *

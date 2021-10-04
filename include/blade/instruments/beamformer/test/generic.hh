@@ -7,7 +7,7 @@ namespace Blade::Instrument::Beamformer::Test {
 
 class BLADE_API Generic : protected Instrument::Generic {
 public:
-    Generic(const std::string & module_str);
+    Generic(const std::string & telescope);
     ~Generic() = default;
 
     Result beamform();
