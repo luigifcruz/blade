@@ -8,12 +8,10 @@ Generic::Generic(const std::string & module_str) {
 }
 
 Result Generic::beamform() {
-    try {
-        lib.attr("beamform")();
-    } catch(...) {
-        BL_FATAL("Failed to execute Python function.");
-        return Result::ERROR;
-    }
+    BL_CATCH(lib.attr("beamform")(), [&]{
+        BL_FATAL("Failed to execute Python function: {}", e.what());
+        return Result::PYTHON_ERROR;
+    });
     return Result::SUCCESS;
 }
 

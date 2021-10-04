@@ -10,12 +10,12 @@ Result Init() {
 
     static std::complex<float>* input_ptr;
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{
-        BL_FATAL("Can't allocate complex checker test input buffer.");
+        BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
     });
 
     static std::complex<float>* output_ptr;
     BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{
-        BL_FATAL("Can't allocate complex checker test output buffer.");
+        BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
     std::srand(unsigned(std::time(nullptr)));

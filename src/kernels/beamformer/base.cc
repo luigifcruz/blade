@@ -55,7 +55,10 @@ Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<flo
             reinterpret_cast<cuFloatComplex*>(output)
         );
 
-    BL_CUDA_CHECK_KERNEL();
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Kernel failed to execute: {}", err);
+        return Result::CUDA_ERROR;
+    });
 
     return Result::SUCCESS;
 }

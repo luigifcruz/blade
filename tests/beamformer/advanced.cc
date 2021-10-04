@@ -33,19 +33,19 @@ Result Run(const Kernel::Beamformer::Config & config, Instrument::Beamformer::Te
     }).report();
 
     BL_CUDA_CHECK(cudaMalloc(&input, input_size), [&]{
-        BL_FATAL("Can't allocate beamformer input buffer.");
+        BL_FATAL("Can't allocate beamformer input buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMalloc(&phasors, phasors_size), [&]{
-        BL_FATAL("Can't allocate beamformer phasor buffer.");
+        BL_FATAL("Can't allocate beamformer phasor buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMalloc(&output, output_size), [&]{
-        BL_FATAL("Can't allocate beamformer output buffer.");
+        BL_FATAL("Can't allocate beamformer output buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMalloc(&result, result_size), [&]{
-        BL_FATAL("Can't allocate beamformer output groundtruth buffer.");
+        BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
     {
@@ -56,15 +56,15 @@ Result Run(const Kernel::Beamformer::Config & config, Instrument::Beamformer::Te
         BL_ASSERT(test.getOutputData().size() == beam.outputLen());
 
         BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), input_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer input data from host to device.");
+            BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
         });
 
         BL_CUDA_CHECK(cudaMemcpy(phasors, test.getPhasorsData().data(), phasors_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer phasors data from host to device.");
+            BL_FATAL("Can't copy beamformer phasors data from host to device: {}", err);
         });
 
         BL_CUDA_CHECK(cudaMemcpy(result, test.getOutputData().data(), result_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer result data from host to device.");
+            BL_FATAL("Can't copy beamformer result data from host to device: {}", err);
         });
     }
 

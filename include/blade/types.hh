@@ -11,6 +11,7 @@ enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,
     CUDA_ERROR,
+    PYTHON_ERROR,
     ASSERTION_ERROR,
 };
 

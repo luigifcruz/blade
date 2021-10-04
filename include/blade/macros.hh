@@ -4,11 +4,11 @@
 #include "blade/types.hh"
 
 #ifndef BL_CUDA_CHECK_KERNEL
-#define BL_CUDA_CHECK_KERNEL() { \
-    cudaError_t err; \
-    if ((err = cudaPeekAtLastError()) != cudaSuccess) { \
-        BL_FATAL("Kernel failed to execute: {}", cudaGetErrorString(err)); \
-        return Result::CUDA_ERROR; \
+#define BL_CUDA_CHECK_KERNEL(callback) { \
+    cudaError_t val; \
+    if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
+        auto err = cudaGetErrorString(val); \
+        return callback(); \
     } \
 }
 #endif
@@ -17,6 +17,7 @@
 #define BL_CUDA_CHECK(x, callback) { \
     cudaError_t val = (x); \
     if (val != cudaSuccess) { \
+        auto err = cudaGetErrorString(val); \
         callback(); \
         return Result::CUDA_ERROR; \
     } \
@@ -37,6 +38,16 @@
     bool val = (x); \
     if (val != true) { \
         return Result::ASSERTION_ERROR; \
+    } \
+}
+#endif
+
+#ifndef BL_CATCH
+#define BL_CATCH(x, callback) { \
+    try { \
+        (void)(x); \
+    } catch (const std::exception & e) { \
+        return callback(); \
     } \
 }
 #endif

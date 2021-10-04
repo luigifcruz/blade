@@ -32,19 +32,19 @@ Result Run(const Kernel::Beamformer::Config & config) {
     }).report();
 
     BL_CUDA_CHECK(cudaMallocManaged(&input, input_size), [&]{
-        BL_FATAL("Can't allocate beamformer input buffer.");
+        BL_FATAL("Can't allocate beamformer input buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMallocManaged(&phasors, phasors_size), [&]{
-        BL_FATAL("Can't allocate beamformer phasor buffer.");
+        BL_FATAL("Can't allocate beamformer phasor buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMallocManaged(&output, output_size), [&]{
-        BL_FATAL("Can't allocate beamformer output buffer.");
+        BL_FATAL("Can't allocate beamformer output buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMallocManaged(&result, result_size), [&]{
-        BL_FATAL("Can't allocate beamformer output groundtruth buffer.");
+        BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
     std::span<std::complex<int8_t>> input_span{input, beam.inputLen()};

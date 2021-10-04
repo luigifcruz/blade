@@ -40,6 +40,11 @@ unsigned long long int Checker::run(const std::complex<float>* input, const std:
             counter
         );
 
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Kernel failed to execute: {}", err);
+        return -1;
+    });
+
     cudaDeviceSynchronize();
 
     return *counter;
@@ -54,6 +59,11 @@ unsigned long long int Checker::run(const float* input, const float* output) {
         ->configure(grid, block)
         ->launch(input, output, counter);
 
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Kernel failed to execute: {}", err);
+        return -1;
+    });
+
     cudaDeviceSynchronize();
 
     return *counter;
@@ -67,6 +77,11 @@ unsigned long long int Checker::run(const int8_t* input, const int8_t* output) {
         .get_kernel(kernel)
         ->configure(grid, block)
         ->launch(input, output, counter);
+
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Kernel failed to execute: {}", err);
+        return -1;
+    });
 
     cudaDeviceSynchronize();
 
