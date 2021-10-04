@@ -1,16 +1,16 @@
-#include "blade/telescopes/ata/beamformer/test.hh"
+#include "blade/instruments/beamformer/test/ata.hh"
 #include "blade/kernels/beamformer.hh"
 
 using namespace Blade;
 
-Result Run(const Kernel::Beamformer::Config &, Telescope::Generic::Beamformer::Test &);
+Result Run(const Kernel::Beamformer::Config &, Instrument::Beamformer::Test::Generic &);
 
 int main() {
     Logger guard{};
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Telescope::ATA::Beamformer::Test test;
+    Instrument::Beamformer::Test::ATA test;
 
     Kernel::Beamformer::Config config = {
         .NBEAMS = 16,

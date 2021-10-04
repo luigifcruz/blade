@@ -28,8 +28,6 @@ class BLADE_API Manager {
 public:
     struct Config {
         std::size_t pcie_bw = 22e9;
-        std::size_t device_bw = 800e9;
-        std::size_t host_bw = 30e9;
     };
 
     Manager() {};
@@ -38,6 +36,10 @@ public:
     Manager& save(const Resources & resources);
     Manager& reset();
     Manager& report();
+
+    constexpr Resources getResources() const {
+        return master;
+    }
 
 protected:
     const Config config;

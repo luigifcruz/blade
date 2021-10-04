@@ -1,17 +1,13 @@
-#include "blade/telescopes/ata/beamformer/test.hh"
+#include "blade/instruments/beamformer/test/generic.hh"
 
-namespace Blade::Telescope::ATA::Beamformer {
+namespace Blade::Instrument::Beamformer::Test {
 
-Test::Test() {
+Generic::Generic(const std::string & module_str) {
     BL_DEBUG("Initilizating class.");
-    lib = py::module::import("blade.ata.beamformer").attr("Test")();
+    lib = py::module::import(module_str.c_str()).attr("Test")();
 }
 
-Test::~Test() {
-    BL_DEBUG("Destroying class.");
-}
-
-Result Test::beamform() {
+Result Generic::beamform() {
     try {
         lib.attr("beamform")();
     } catch(...) {
@@ -21,16 +17,16 @@ Result Test::beamform() {
     return Result::SUCCESS;
 }
 
-std::span<const std::complex<int8_t>> Test::getInputData() {
+std::span<const std::complex<int8_t>> Generic::getInputData() {
     return __convert<int16_t, const std::complex<int8_t>>(lib.attr("getInputData"));
 }
 
-std::span<const std::complex<float>> Test::getPhasorsData() {
+std::span<const std::complex<float>> Generic::getPhasorsData() {
     return __convert<std::complex<float>, const std::complex<float>>(lib.attr("getPhasorsData"));
 }
 
-std::span<const std::complex<float>> Test::getOutputData() {
+std::span<const std::complex<float>> Generic::getOutputData() {
     return __convert<std::complex<float>, const std::complex<float>>(lib.attr("getOutputData"));
 }
 
-} // namespace Blade::Telescope::ATA::Beamformer
+} // namespace Blade::Generic::Beamformer::Test

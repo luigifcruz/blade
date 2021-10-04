@@ -1,10 +1,10 @@
-#include "blade/telescopes/ata/beamformer/test.hh"
+#include "blade/instruments/beamformer/test/ata.hh"
 #include "blade/kernels/beamformer.hh"
 #include "blade/kernels/checker.hh"
 
 using namespace Blade;
 
-Result Run(const Kernel::Beamformer::Config & config, Telescope::Generic::Beamformer::Test & test) {
+Result Run(const Kernel::Beamformer::Config & config, Instrument::Beamformer::Test::Generic & test) {
     Kernel::Manager manager;
     Kernel::Beamformer beam(config);
     Kernel::Checker checker({beam.outputLen()});

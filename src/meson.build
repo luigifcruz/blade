@@ -3,4 +3,4 @@ src_lst += files([
 ])
 
 subdir('kernels')
-subdir('telescopes')
+subdir('instruments')

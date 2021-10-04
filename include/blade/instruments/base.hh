@@ -1,5 +1,5 @@
-#ifndef BLADE_TELESCOPES_GENERIC_H
-#define BLADE_TELESCOPES_GENERIC_H
+#ifndef BLADE_INSTRUMENTS_H
+#define BLADE_INSTRUMENTS_H
 
 #include "blade/base.hh"
 
@@ -7,9 +7,9 @@
 #include <pybind11/numpy.h>
 namespace py = pybind11;
 
-namespace Blade::Telescope::Generic {
+namespace Blade::Instrument {
 
-class BLADE_API Utils {
+class BLADE_API Generic {
 protected:
     template<typename IT, typename OT>
     static std::span<OT> __convert(const py::object & input) {
@@ -20,7 +20,7 @@ protected:
     }
 };
 
-} // namespace Blade::Telescope::Generic
+} // namespace Blade::Instrument
 
 #endif
 
