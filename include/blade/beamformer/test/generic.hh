@@ -6,10 +6,21 @@
 
 namespace Blade::Beamformer::Test {
 
-class BLADE_API Generic : protected Python {
+class BLADE_API Generic {
 public:
-    Generic(const std::string & telescope);
-    ~Generic() = default;
+    virtual ~Generic() = default;
+
+    virtual Result beamform() = 0;
+
+    virtual std::span<const std::complex<int8_t>> getInputData() = 0;
+    virtual std::span<const std::complex<float>> getPhasorsData() = 0;
+    virtual std::span<const std::complex<float>> getOutputData() = 0;
+};
+
+class BLADE_API GenericPython : public Generic, protected Python {
+public:
+    GenericPython(const std::string & telescope);
+    ~GenericPython() = default;
 
     Result beamform();
 

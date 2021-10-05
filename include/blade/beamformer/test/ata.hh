@@ -5,7 +5,7 @@
 
 namespace Blade::Beamformer::Test {
 
-class BLADE_API ATA : public Generic {
+class BLADE_API ATA : public GenericPython {
 public:
     ATA();
     ~ATA() = default;

@@ -2,6 +2,6 @@
 
 namespace Blade::Beamformer::Test {
 
-ATA::ATA() : Generic("ATA") {}
+ATA::ATA() : GenericPython("ATA") {}
 
 } // namespace Blade::Beamformer::Test
