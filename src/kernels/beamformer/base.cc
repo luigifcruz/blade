@@ -9,7 +9,7 @@ Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beam
     BL_DEBUG("Initilizating class.");
 
     if (config.NBEAMS > config.TBLOCK) {
-        BL_FATAL("TBLOCK is smalled than NBEAMS.");
+        BL_FATAL("TBLOCK is smaller than NBEAMS.");
         throw Result::ERROR;
     }
 
