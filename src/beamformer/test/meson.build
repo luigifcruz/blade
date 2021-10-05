@@ -1,4 +1,4 @@
-ist_src_lst += files([
+pyt_lst += files([
   'ata.cc',
   'generic.cc',
 ])

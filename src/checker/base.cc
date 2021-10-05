@@ -1,8 +1,8 @@
-#include "blade/kernels/checker.hh"
+#include "blade/checker/base.hh"
 
 #include "checker.jit.hh"
 
-namespace Blade::Kernel {
+namespace Blade {
 
 Checker::Checker(const Config & config) : config(config), cache(100, *checker_kernel) {
     BL_DEBUG("Initilizating class.");
@@ -88,4 +88,4 @@ unsigned long long int Checker::run(const int8_t* input, const int8_t* output) {
     return *counter;
 }
 
-} // namespace Blade::Kernel
+} // namespace Blade

@@ -1,18 +1,22 @@
-#ifndef BLADE_INSTRUMENTS_H
-#define BLADE_INSTRUMENTS_H
+#ifndef BLADE_PYTHON_H
+#define BLADE_PYTHON_H
 
-#include "blade/base.hh"
+#include "blade/common.hh"
+#include "blade/types.hh"
 
 #include <pybind11/embed.h>
 #include <pybind11/numpy.h>
 namespace py = pybind11;
 
-namespace Blade::Instrument {
+namespace Blade {
 
-class BLADE_API Generic {
+class BLADE_API Python {
 protected:
+    py::scoped_interpreter guard{}; // WARNING: Interpreter should be destructed last!
+    py::object lib;
+
     template<typename IT, typename OT>
-    static std::span<OT> __convert(const py::object & input) {
+    static std::span<OT> getVector(const py::object & input) {
         auto arr = input().cast<py::array_t<IT>>();
         auto buf = reinterpret_cast<OT*>(arr.data());
         auto len = static_cast<std::size_t>(arr.size());
@@ -20,7 +24,6 @@ protected:
     }
 };
 
-} // namespace Blade::Instrument
+} // namespace Blade
 
 #endif
-

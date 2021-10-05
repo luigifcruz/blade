@@ -1,11 +1,12 @@
-#ifndef BLADE_KERNELS_CHECKER_H
-#define BLADE_KERNELS_CHECKER_H
+#ifndef BLADE_CHECKER_H
+#define BLADE_CHECKER_H
 
-#include "blade/kernels/base.hh"
+#include "blade/base.hh"
+#include "blade/kernel.hh"
 
-namespace Blade::Kernel {
+namespace Blade {
 
-class BLADE_API Checker : public Generic {
+class BLADE_API Checker : public Kernel {
 public:
     struct Config {
         std::size_t len;
@@ -31,6 +32,6 @@ private:
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade::Kernel
+} // namespace Blade
 
 #endif

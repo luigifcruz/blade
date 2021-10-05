@@ -5,4 +5,3 @@ src_lst += files([
 jit_lst += files([
   'checker.cu',
 ])
-

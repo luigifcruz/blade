@@ -1,13 +1,13 @@
-#include "blade/instruments/beamformer/test/ata.hh"
-#include "blade/kernels/beamformer.hh"
-#include "blade/kernels/checker.hh"
+#include "blade/beamformer/test/generic.hh"
+#include "blade/beamformer/generic.hh"
+#include "blade/checker/base.hh"
+#include "blade/manager.hh"
 
 using namespace Blade;
 
-Result Run(const Kernel::Beamformer::Config & config, Instrument::Beamformer::Test::Generic & test) {
-    Kernel::Manager manager;
-    Kernel::Beamformer beam(config);
-    Kernel::Checker checker({beam.outputLen()});
+Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
+    Manager manager;
+    Checker checker({beam.outputLen()});
 
     std::complex<int8_t>* input;
     std::size_t input_size = beam.inputLen() * sizeof(input[0]);
@@ -48,25 +48,23 @@ Result Run(const Kernel::Beamformer::Config & config, Instrument::Beamformer::Te
         BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
-    {
-        BL_CHECK(test.beamform());
+    BL_CHECK(test.beamform());
 
-        BL_ASSERT(test.getInputData().size() == beam.inputLen());
-        BL_ASSERT(test.getPhasorsData().size() == beam.phasorsLen());
-        BL_ASSERT(test.getOutputData().size() == beam.outputLen());
+    BL_ASSERT(test.getInputData().size() == beam.inputLen());
+    BL_ASSERT(test.getPhasorsData().size() == beam.phasorsLen());
+    BL_ASSERT(test.getOutputData().size() == beam.outputLen());
 
-        BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), input_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
-        });
+    BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), input_size, cudaMemcpyHostToDevice), [&]{
+        BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
+    });
 
-        BL_CUDA_CHECK(cudaMemcpy(phasors, test.getPhasorsData().data(), phasors_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer phasors data from host to device: {}", err);
-        });
+    BL_CUDA_CHECK(cudaMemcpy(phasors, test.getPhasorsData().data(), phasors_size, cudaMemcpyHostToDevice), [&]{
+        BL_FATAL("Can't copy beamformer phasors data from host to device: {}", err);
+    });
 
-        BL_CUDA_CHECK(cudaMemcpy(result, test.getOutputData().data(), result_size, cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy beamformer result data from host to device: {}", err);
-        });
-    }
+    BL_CUDA_CHECK(cudaMemcpy(result, test.getOutputData().data(), result_size, cudaMemcpyHostToDevice), [&]{
+        BL_FATAL("Can't copy beamformer result data from host to device: {}", err);
+    });
 
     for (int i = 0; i < 150; i++) {
         BL_CHECK(beam.run(input, phasors, output));

@@ -1,6 +1,8 @@
 src_lst += files([
   'logger.cc',
+  'manager.cc',
+  'kernel.cc',
 ])
 
-subdir('kernels')
-subdir('instruments')
+subdir('checker')
+subdir('beamformer')

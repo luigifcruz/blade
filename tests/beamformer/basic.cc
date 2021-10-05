@@ -1,12 +1,12 @@
-#include "blade/kernels/beamformer.hh"
-#include "blade/kernels/checker.hh"
+#include "blade/beamformer/generic.hh"
+#include "blade/checker/base.hh"
+#include "blade/manager.hh"
 
 using namespace Blade;
 
-Result Run(const Kernel::Beamformer::Config & config) {
-    Kernel::Manager manager;
-    Kernel::Beamformer beam(config);
-    Kernel::Checker checker({beam.outputLen()});
+Result Run(Beamformer::Generic & beam) {
+    Manager manager;
+    Checker checker({beam.outputLen()});
 
     std::complex<int8_t>* input;
     std::size_t input_size = beam.inputLen() * sizeof(input[0]);
@@ -54,7 +54,7 @@ Result Run(const Kernel::Beamformer::Config & config) {
     std::generate(phasor_span.begin(), phasor_span.end(), []{ return 2.0; });
 
     std::span<std::complex<float>> result_span{result, beam.outputLen()};
-    std::generate(result_span.begin(), result_span.end(), [&]{ return config.NANTS * 2.0; });
+    std::generate(result_span.begin(), result_span.end(), [&]{ return beam.getConfig().NANTS * 2.0; });
 
     for (int i = 0; i < 150; i++) {
         BL_CHECK(beam.run(input, phasors, output));

@@ -1,17 +1,11 @@
-#include "blade/kernels/beamformer.hh"
+#include "blade/beamformer/generic.hh"
 
-#include "blade/utils/magic_enum.hh"
 #include "beamformer.jit.hh"
 
-namespace Blade::Kernel {
+namespace Blade::Beamformer {
 
-Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beamformer_kernel) {
+Generic::Generic(const Config & config) : config(config), cache(100, *beamformer_kernel) {
     BL_DEBUG("Initilizating class.");
-
-    if (config.NBEAMS > config.TBLOCK) {
-        BL_FATAL("TBLOCK is smaller than NBEAMS.");
-        throw Result::ERROR;
-    }
 
     if ((config.NTIME % config.TBLOCK) != 0) {
         BL_FATAL("NTIME isn't divisable by TBLOCK.");
@@ -26,25 +20,9 @@ Beamformer::Beamformer(const Config & config) : config(config), cache(100, *beam
     if ((config.TBLOCK % 32) != 0) {
         BL_WARN("Best performance is achieved when TBLOCK is a multiple of 32.");
     }
-
-    block = dim3(config.TBLOCK);
-    grid = dim3(config.NCHANS, config.NTIME/config.TBLOCK);
-
-    kernel = Template(magic_enum::enum_name<Recipe>(config.recipe)).instantiate(
-        config.NBEAMS,
-        config.NANTS,
-        config.NCHANS,
-        config.NTIME,
-        config.NPOLS,
-        config.TBLOCK
-    );
 }
 
-Beamformer::~Beamformer() {
-    BL_DEBUG("Destroying class.");
-}
-
-Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<float>* phasors,
+Result Generic::run(const std::complex<int8_t>* input, const std::complex<float>* phasors,
         std::complex<float>* output) {
 
     cache.get_kernel(kernel)
@@ -63,4 +41,4 @@ Result Beamformer::run(const std::complex<int8_t>* input, const std::complex<flo
     return Result::SUCCESS;
 }
 
-} // namespace Blade::Kernel
+} // namespace Blade::Beamformer

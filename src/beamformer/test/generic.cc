@@ -1,6 +1,6 @@
-#include "blade/instruments/beamformer/test/generic.hh"
+#include "blade/beamformer/test/generic.hh"
 
-namespace Blade::Instrument::Beamformer::Test {
+namespace Blade::Beamformer::Test {
 
 Generic::Generic(const std::string & telescope) {
     BL_DEBUG("Initilizating class.");
@@ -16,15 +16,15 @@ Result Generic::beamform() {
 }
 
 std::span<const std::complex<int8_t>> Generic::getInputData() {
-    return __convert<int16_t, const std::complex<int8_t>>(lib.attr("getInputData"));
+    return getVector<int16_t, const std::complex<int8_t>>(lib.attr("getInputData"));
 }
 
 std::span<const std::complex<float>> Generic::getPhasorsData() {
-    return __convert<std::complex<float>, const std::complex<float>>(lib.attr("getPhasorsData"));
+    return getVector<std::complex<float>, const std::complex<float>>(lib.attr("getPhasorsData"));
 }
 
 std::span<const std::complex<float>> Generic::getOutputData() {
-    return __convert<std::complex<float>, const std::complex<float>>(lib.attr("getOutputData"));
+    return getVector<std::complex<float>, const std::complex<float>>(lib.attr("getOutputData"));
 }
 
-} // namespace Blade::Generic::Beamformer::Test
+} // namespace Blade::Beamformer::Test

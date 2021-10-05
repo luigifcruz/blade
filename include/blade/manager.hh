@@ -1,12 +1,11 @@
-#ifndef BLADE_KERNELS_H
-#define BLADE_KERNELS_H
+#ifndef BLADE_MANAGER_H
+#define BLADE_MANAGER_H
 
-#include "blade/base.hh"
+#include "blade/common.hh"
+#include "blade/types.hh"
+#include "blade/logger.hh"
 
-#include "blade/utils/jitify2.hh"
-using namespace jitify2::reflection;
-
-namespace Blade::Kernel {
+namespace Blade {
 
 struct Resources {
     struct {
@@ -18,10 +17,6 @@ struct Resources {
         std::size_t d2h = 0;
         std::size_t h2d = 0;
     } transfer;
-};
-
-class BLADE_API Generic {
-public:
 };
 
 class BLADE_API Manager {
@@ -58,6 +53,6 @@ protected:
     }
 };
 
-} // namespace Blade::Kernel
+} // namespace Blade
 
 #endif

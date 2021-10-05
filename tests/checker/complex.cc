@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <ctime>
 
-#include "blade/kernels/checker.hh"
+#include "blade/checker/base.hh"
 
 using namespace Blade;
 
 Result Init() {
-    Kernel::Checker checker({8192});
+    Checker checker({8192});
 
     static std::complex<float>* input_ptr;
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{

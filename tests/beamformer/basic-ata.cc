@@ -1,25 +1,24 @@
-#include "blade/kernels/beamformer.hh"
+#include "blade/beamformer/ata.hh"
 
 using namespace Blade;
 
-Result Run(const Kernel::Beamformer::Config & config);
+Result Run(Beamformer::Generic &);
 
 int main() {
     Logger guard{};
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Kernel::Beamformer::Config config = {
+    Beamformer::ATA beam({
         .NBEAMS = 16,
         .NANTS  = 20,
         .NCHANS = 384,
         .NTIME  = 8750,
         .NPOLS  = 2,
         .TBLOCK = 350,
-        .recipe = Kernel::Beamformer::Recipe::ATA,
-    };
+    });
 
-    if (Run(config) != Result::SUCCESS) {
+    if (Run(beam) != Result::SUCCESS) {
         BL_FATAL("Test failed.");
         return 1;
     }

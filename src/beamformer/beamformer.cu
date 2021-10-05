@@ -50,7 +50,7 @@ __global__ void ATA(const char2* in, const cuFloatComplex* phasor, cuFloatComple
 }
 
 template<size_t NBEAMS, size_t NANTS, size_t NCHANS, size_t NTIME, size_t NPOLS, size_t TBLOCK>
-__global__ void MEERKAT(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
+__global__ void MeerKAT(const char2* in, const cuFloatComplex* phasor, cuFloatComplex* out) {
     int bi = threadIdx.x;
     int ti = bi + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;

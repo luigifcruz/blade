@@ -9,11 +9,15 @@ project(
   ]
 )
 
+py = import('python').find_installation('python3')
+
 cfg_lst = configuration_data()
 src_lst = []
 dep_lst = [
-  dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
   dependency('spdlog'),
+  dependency('pybind11'),
+  py.dependency(embed: true),
+  dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
 ]
 inc_lst = [
   include_directories('include'),
@@ -21,8 +25,7 @@ inc_lst = [
 ]
 lnk_lst = []
 jit_lst = []
-
-py = import('python').find_installation('python3')
+pyt_lst = []
 
 subdir('src')
 subdir('include')
@@ -34,6 +37,14 @@ summary({'cpp_std': get_option('cpp_std'),
          'buildtype': get_option('buildtype'),
          'crossbuild': meson.is_cross_build(),
         }, section: 'General', bool_yn: true)
+
+lnk_lst += py.extension_module(
+  'blade-python',
+  sources: pyt_lst,
+  include_directories: inc_lst,
+  dependencies: dep_lst,
+  gnu_symbol_visibility: 'hidden',
+)
 
 lnk_lst += library(
   'blade',
