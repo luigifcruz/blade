@@ -3,8 +3,8 @@
 namespace Blade::Beamformer {
 
 MeerKAT::MeerKAT(const Config & config) : Generic(config) {
-    block = dim3(config.TBLOCK);
-    grid = dim3(config.NCHANS, config.NTIME/config.TBLOCK);
+    block = dim3(config.blockSize);
+    grid = dim3(config.NCHANS, config.NTIME/config.blockSize);
 
     kernel = Template("MeerKAT").instantiate(
         config.NBEAMS,
@@ -12,7 +12,7 @@ MeerKAT::MeerKAT(const Config & config) : Generic(config) {
         config.NCHANS,
         config.NTIME,
         config.NPOLS,
-        config.TBLOCK
+        config.blockSize
     );
 }
 

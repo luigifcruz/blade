@@ -9,15 +9,19 @@ namespace Blade {
 class BLADE_API Checker : public Kernel {
 public:
     struct Config {
-        std::size_t len;
-        std::size_t block = 256;
+        std::size_t inputSize;
+        std::size_t blockSize = 256;
     };
 
     Checker(const Config & config);
     ~Checker();
 
-    constexpr std::size_t inputLen() const {
-        return config.len;
+    constexpr Config getConfig() const {
+        return config;
+    }
+
+    constexpr std::size_t getInputSize() const {
+        return config.inputSize;
     }
 
     unsigned long long int run(const std::complex<float>* input, const std::complex<float>* output);

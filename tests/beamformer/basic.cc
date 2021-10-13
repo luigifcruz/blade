@@ -6,19 +6,19 @@ using namespace Blade;
 
 Result Run(Beamformer::Generic & beam) {
     Manager manager;
-    Checker checker({beam.outputLen()});
+    Checker checker({beam.getOutputSize()});
 
     std::complex<int8_t>* input;
-    std::size_t input_size = beam.inputLen() * sizeof(input[0]);
+    std::size_t input_size = beam.getInputSize() * sizeof(input[0]);
 
     std::complex<float>* phasors;
-    std::size_t phasors_size = beam.phasorsLen() * sizeof(phasors[0]);
+    std::size_t phasors_size = beam.getPhasorsSize() * sizeof(phasors[0]);
 
     std::complex<float>* output;
-    std::size_t output_size = beam.outputLen() * sizeof(output[0]);
+    std::size_t output_size = beam.getOutputSize() * sizeof(output[0]);
 
     std::complex<float>* result;
-    std::size_t result_size = beam.outputLen() * sizeof(result[0]);
+    std::size_t result_size = beam.getOutputSize() * sizeof(result[0]);
 
     manager.save({
         .memory = {
@@ -47,13 +47,13 @@ Result Run(Beamformer::Generic & beam) {
         BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
-    std::span<std::complex<int8_t>> input_span{input, beam.inputLen()};
+    std::span<std::complex<int8_t>> input_span{input, beam.getInputSize()};
     std::generate(input_span.begin(), input_span.end(), []{ return 1; });
 
-    std::span<std::complex<float>> phasor_span{phasors, beam.phasorsLen()};
+    std::span<std::complex<float>> phasor_span{phasors, beam.getPhasorsSize()};
     std::generate(phasor_span.begin(), phasor_span.end(), []{ return 2.0; });
 
-    std::span<std::complex<float>> result_span{result, beam.outputLen()};
+    std::span<std::complex<float>> result_span{result, beam.getOutputSize()};
     std::generate(result_span.begin(), result_span.end(), [&]{ return beam.getConfig().NANTS * 2.0; });
 
     for (int i = 0; i < 150; i++) {

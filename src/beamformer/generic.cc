@@ -4,21 +4,17 @@
 
 namespace Blade::Beamformer {
 
-Generic::Generic(const Config & config) : config(config), cache(100, *beamformer_kernel) {
+Generic::Generic(const Config & config) :
+    Kernel(config.blockSize),
+    config(config),
+    cache(100, *beamformer_kernel)
+{
     BL_DEBUG("Initilizating class.");
 
-    if ((config.NTIME % config.TBLOCK) != 0) {
-        BL_FATAL("NTIME isn't divisable by TBLOCK.");
+    if ((config.NTIME % config.blockSize) != 0) {
+        BL_FATAL("Number of time samples ({}) isn't divisable by the block size ({}).",
+                config.NTIME, config.blockSize);
         throw Result::ERROR;
-    }
-
-    if (config.TBLOCK > 1024) {
-        BL_FATAL("TBLOCK larger than hardware limit (1024).");
-        throw Result::ERROR;
-    }
-
-    if ((config.TBLOCK % 32) != 0) {
-        BL_WARN("Best performance is achieved when TBLOCK is a multiple of 32.");
     }
 }
 

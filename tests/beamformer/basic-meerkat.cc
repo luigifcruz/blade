@@ -10,12 +10,14 @@ int main() {
     BL_INFO("Testing beamformer with the MeetKAT kernel.");
 
     Beamformer::MeerKAT beam({
-        .NBEAMS = 64,
-        .NANTS  = 64,
-        .NCHANS = 1,
-        .NTIME  = 4194304,
-        .NPOLS  = 2,
-        .TBLOCK = 256,
+        {
+            .NBEAMS = 64,
+            .NANTS  = 64,
+            .NCHANS = 1,
+            .NTIME  = 4194304,
+            .NPOLS  = 2,
+        },
+        256,
     });
 
     if (Run(beam) != Result::SUCCESS) {

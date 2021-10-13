@@ -15,6 +15,15 @@ enum class Result : uint8_t {
     ASSERTION_ERROR,
 };
 
+struct ArrayDims {
+public:
+    std::size_t NBEAMS;
+    std::size_t NANTS;
+    std::size_t NCHANS;
+    std::size_t NTIME;
+    std::size_t NPOLS;
+};
+
 } // namespace Blade
 
 #endif

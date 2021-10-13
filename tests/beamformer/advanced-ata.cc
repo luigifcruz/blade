@@ -13,12 +13,14 @@ int main() {
     Beamformer::Test::ATA test;
 
     Beamformer::ATA beam({
-        .NBEAMS = 16,
-        .NANTS  = 20,
-        .NCHANS = 384,
-        .NTIME  = 8750,
-        .NPOLS  = 2,
-        .TBLOCK = 350,
+        {
+            .NBEAMS = 16,
+            .NANTS  = 20,
+            .NCHANS = 384,
+            .NTIME  = 8750,
+            .NPOLS  = 2,
+        },
+        350,
     });
 
     if (Run(beam, test) != Result::SUCCESS) {

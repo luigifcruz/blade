@@ -9,15 +9,15 @@ class BLADE_API ATA : public Generic {
 public:
     ATA(const Config & config);
 
-    constexpr std::size_t inputLen() const {
+    constexpr std::size_t getInputSize() const {
         return config.NANTS*config.NCHANS*config.NTIME*config.NPOLS;
     };
 
-    constexpr std::size_t outputLen() const {
+    constexpr std::size_t getOutputSize() const {
         return config.NBEAMS*config.NTIME*config.NCHANS*config.NPOLS;
     };
 
-    constexpr std::size_t phasorsLen() const {
+    constexpr std::size_t getPhasorsSize() const {
         return config.NBEAMS*config.NANTS*config.NCHANS*config.NPOLS;
     };
 };

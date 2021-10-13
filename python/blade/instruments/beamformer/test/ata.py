@@ -53,6 +53,6 @@ class ATA:
 
 
 if __name__ == '__main__':
-    beamformer = Test()
+    beamformer = ATA()
     beamformer.beamform()
     beamformer.saveToFile()

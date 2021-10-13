@@ -6,3 +6,4 @@ src_lst += files([
 
 subdir('checker')
 subdir('beamformer')
+subdir('channelizer')

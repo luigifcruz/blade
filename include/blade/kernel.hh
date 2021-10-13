@@ -12,7 +12,7 @@ namespace Blade {
 
 class BLADE_API Kernel {
 public:
-    Kernel();
+    Kernel(const std::size_t & blockSize);
 };
 
 } // namespace Blade

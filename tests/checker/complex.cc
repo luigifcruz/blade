@@ -9,28 +9,28 @@ Result Init() {
     Checker checker({8192});
 
     static std::complex<float>* input_ptr;
-    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.getInputSize() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
     });
 
     static std::complex<float>* output_ptr;
-    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, checker.inputLen() * sizeof(std::complex<float>)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, checker.getInputSize() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
     std::srand(unsigned(std::time(nullptr)));
-    std::span<std::complex<float>> input{input_ptr, checker.inputLen()};
+    std::span<std::complex<float>> input{input_ptr, checker.getInputSize()};
     std::generate(input.begin(), input.end(), std::rand);
 
-    std::span<std::complex<float>> output{output_ptr, checker.inputLen()};
+    std::span<std::complex<float>> output{output_ptr, checker.getInputSize()};
     std::generate(output.begin(), output.end(), []{
         return std::complex<float>{1.42, 1.69};
     });
 
     size_t counter = 0;
 
-    if ((counter = checker.run(input_ptr, output_ptr)) != checker.inputLen()) {
-        BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.", 0, checker.inputLen(), counter);
+    if ((counter = checker.run(input_ptr, output_ptr)) != checker.getInputSize()) {
+        BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.", 0, checker.getInputSize(), counter);
         return Result::ERROR;
     }
 
@@ -47,8 +47,8 @@ Result Init() {
     input[0] = output[0];
     input[6] = output[6];
 
-    if ((counter = checker.run(input_ptr, output_ptr)) != checker.inputLen() - 2) {
-        BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.", 3, checker.inputLen() - 2, counter);
+    if ((counter = checker.run(input_ptr, output_ptr)) != checker.getInputSize() - 2) {
+        BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.", 3, checker.getInputSize() - 2, counter);
         return Result::ERROR;
     }
 

@@ -7,19 +7,19 @@ using namespace Blade;
 
 Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
     Manager manager;
-    Checker checker({beam.outputLen()});
+    Checker checker({beam.getOutputSize()});
 
     std::complex<int8_t>* input;
-    std::size_t input_size = beam.inputLen() * sizeof(input[0]);
+    std::size_t input_size = beam.getInputSize() * sizeof(input[0]);
 
     std::complex<float>* phasors;
-    std::size_t phasors_size = beam.phasorsLen() * sizeof(phasors[0]);
+    std::size_t phasors_size = beam.getPhasorsSize() * sizeof(phasors[0]);
 
     std::complex<float>* output;
-    std::size_t output_size = beam.outputLen() * sizeof(output[0]);
+    std::size_t output_size = beam.getOutputSize() * sizeof(output[0]);
 
     std::complex<float>* result;
-    std::size_t result_size = beam.outputLen() * sizeof(result[0]);
+    std::size_t result_size = beam.getOutputSize() * sizeof(result[0]);
 
     manager.save({
         .memory = {
@@ -50,9 +50,9 @@ Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
 
     BL_CHECK(test.beamform());
 
-    BL_ASSERT(test.getInputData().size() == beam.inputLen());
-    BL_ASSERT(test.getPhasorsData().size() == beam.phasorsLen());
-    BL_ASSERT(test.getOutputData().size() == beam.outputLen());
+    BL_ASSERT(test.getInputData().size() == beam.getInputSize());
+    BL_ASSERT(test.getPhasorsData().size() == beam.getPhasorsSize());
+    BL_ASSERT(test.getOutputData().size() == beam.getOutputSize());
 
     BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), input_size, cudaMemcpyHostToDevice), [&]{
         BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
