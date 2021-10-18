@@ -2,13 +2,14 @@
 
 namespace Blade::Beamformer::Test {
 
-GenericPython::GenericPython(const std::string & telescope) {
+GenericPython::GenericPython(const std::string & telescope, const ArrayDims & dims) {
     BL_DEBUG("Initilizating class.");
-    lib = py::module::import("blade.instruments.beamformer.test").attr(telescope.c_str())();
+    lib = py::module::import("blade.instruments.beamformer.test").attr(telescope.c_str())(
+            dims.NBEAMS, dims.NANTS, dims.NCHANS, dims.NTIME, dims.NPOLS);
 }
 
-Result GenericPython::beamform() {
-    BL_CATCH(lib.attr("beamform")(), [&]{
+Result GenericPython::process() {
+    BL_CATCH(lib.attr("process")(), [&]{
         BL_FATAL("Failed to execute Python function: {}", e.what());
         return Result::PYTHON_ERROR;
     });

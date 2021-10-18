@@ -6,7 +6,7 @@ using namespace Blade;
 
 Result Run(Beamformer::Generic & beam) {
     Manager manager;
-    Checker checker({beam.getOutputSize()});
+    Checker::Generic checker({beam.getOutputSize()});
 
     std::complex<int8_t>* input;
     std::size_t input_size = beam.getInputSize() * sizeof(input[0]);
@@ -31,6 +31,7 @@ Result Run(Beamformer::Generic & beam) {
         }
     }).report();
 
+    BL_INFO("Allocating CUDA memory...");
     BL_CUDA_CHECK(cudaMallocManaged(&input, input_size), [&]{
         BL_FATAL("Can't allocate beamformer input buffer: {}", err);
     });
@@ -47,6 +48,7 @@ Result Run(Beamformer::Generic & beam) {
         BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
+    BL_INFO("Generating test data...");
     std::span<std::complex<int8_t>> input_span{input, beam.getInputSize()};
     std::generate(input_span.begin(), input_span.end(), []{ return 1; });
 
@@ -56,11 +58,13 @@ Result Run(Beamformer::Generic & beam) {
     std::span<std::complex<float>> result_span{result, beam.getOutputSize()};
     std::generate(result_span.begin(), result_span.end(), [&]{ return beam.getConfig().NANTS * 2.0; });
 
+    BL_INFO("Running kernel...");
     for (int i = 0; i < 150; i++) {
         BL_CHECK(beam.run(input, phasors, output));
         cudaDeviceSynchronize();
     }
 
+    BL_INFO("Checking for errors...");
     size_t errors = 0;
     if ((errors = checker.run(output, result)) != 0) {
         BL_FATAL("Beamformer produced {} errors.", errors);

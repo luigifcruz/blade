@@ -2,9 +2,9 @@
 
 #include "checker.jit.hh"
 
-namespace Blade {
+namespace Blade::Checker {
 
-Checker::Checker(const Config & config) :
+Generic::Generic(const Config & config) :
     Kernel(config.blockSize),
     config(config),
     cache(100, *checker_kernel)
@@ -21,12 +21,12 @@ Checker::Checker(const Config & config) :
     *counter = 0;
 }
 
-Checker::~Checker() {
+Generic::~Generic() {
     BL_DEBUG("Destroying class.");
     cudaFree(counter);
 }
 
-unsigned long long int Checker::run(const std::complex<float>* input, const std::complex<float>* output) {
+unsigned long long int Generic::run(const std::complex<float>* input, const std::complex<float>* output) {
     auto kernel = Template("checker_complex").instantiate(config.inputSize);
 
     *counter = 0;
@@ -49,7 +49,7 @@ unsigned long long int Checker::run(const std::complex<float>* input, const std:
     return *counter;
 }
 
-unsigned long long int Checker::run(const float* input, const float* output) {
+unsigned long long int Generic::run(const float* input, const float* output) {
     auto kernel = Template("checker").instantiate(Type<float>(), config.inputSize);
 
     *counter = 0;
@@ -68,7 +68,7 @@ unsigned long long int Checker::run(const float* input, const float* output) {
     return *counter;
 }
 
-unsigned long long int Checker::run(const int8_t* input, const int8_t* output) {
+unsigned long long int Generic::run(const int8_t* input, const int8_t* output) {
     auto kernel = Template("checker").instantiate(Type<int8_t>(), config.inputSize);
 
     *counter = 0;
@@ -87,4 +87,4 @@ unsigned long long int Checker::run(const int8_t* input, const int8_t* output) {
     return *counter;
 }
 
-} // namespace Blade
+} // namespace Blade::Checker

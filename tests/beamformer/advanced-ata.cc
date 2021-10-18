@@ -10,8 +10,6 @@ int main() {
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Beamformer::Test::ATA test;
-
     Beamformer::ATA beam({
         {
             .NBEAMS = 16,
@@ -22,6 +20,8 @@ int main() {
         },
         350,
     });
+
+    Beamformer::Test::ATA test(beam.getConfig());
 
     if (Run(beam, test) != Result::SUCCESS) {
         BL_FATAL("Test failed.");

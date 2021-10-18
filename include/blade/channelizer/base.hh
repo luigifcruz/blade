@@ -4,17 +4,17 @@
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
-namespace Blade {
+namespace Blade::Channelizer {
 
-class BLADE_API Channelizer : public Kernel {
+class BLADE_API Generic : public Kernel {
 public:
     struct Config : public ArrayDims {
         std::size_t fftSize = 4;
         std::size_t blockSize = 256;
     };
 
-    Channelizer(const Config & config);
-    ~Channelizer();
+    Generic(const Config & config);
+    ~Generic();
 
     constexpr Config getConfig() const {
         return config;
@@ -27,12 +27,11 @@ public:
         return cfg;
     }
 
-    // In this case, the input and output will be the same.
-    constexpr std::size_t getInputSize() const {
+    constexpr std::size_t getBufferSize() const {
         return config.NPOLS * config.NTIME * config.NANTS * config.NCHANS;
     }
 
-    Result run(const std::complex<int8_t>* input);
+    Result run(const std::complex<int8_t>* input, std::complex<int8_t>* output);
 
 private:
     const Config config;
@@ -41,6 +40,6 @@ private:
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade
+} // namespace Blade::Channelizer
 
 #endif

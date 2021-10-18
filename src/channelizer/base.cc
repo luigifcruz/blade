@@ -2,9 +2,9 @@
 
 #include "channelizer.jit.hh"
 
-namespace Blade {
+namespace Blade::Channelizer {
 
-Channelizer::Channelizer(const Config & config) :
+Generic::Generic(const Config & config) :
     Kernel(config.blockSize),
     config(config),
     cache(100, *channelizer_kernel)
@@ -22,27 +22,28 @@ Channelizer::Channelizer(const Config & config) :
     }
 
     block = dim3(config.blockSize);
-    grid = dim3((getInputSize() + block.x - 1) / block.x / config.fftSize);
+    grid = dim3((getBufferSize() + block.x - 1) / block.x / (config.fftSize * config.NPOLS));
 
+    std::string kernel_key;
     switch (config.fftSize) {
-        case 4:
-            kernel = Template("FOUR_PNT_FFT").instantiate(getInputSize());
-            break;
+        case 4: kernel_key = "fft_4pnt"; break;
         default:
             BL_FATAL("The FFT size of {} is not supported yet.", config.fftSize);
             throw Result::ERROR;
     }
+    kernel = Template(kernel_key).instantiate(getBufferSize(), config.fftSize, config.NPOLS);
 }
 
-Channelizer::~Channelizer() {
+Generic::~Generic() {
     BL_DEBUG("Destroying class.");
 }
 
-Result Channelizer::run(const std::complex<int8_t>* input) {
+Result Generic::run(const std::complex<int8_t>* input, std::complex<int8_t>* output) {
     cache.get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
-            reinterpret_cast<const char2*>(input)
+            reinterpret_cast<const char2*>(input),
+            reinterpret_cast<char2*>(output)
         );
 
     BL_CUDA_CHECK_KERNEL([&]{

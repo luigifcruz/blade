@@ -6,8 +6,9 @@
 using namespace Blade;
 
 Result Init() {
-    Checker checker({8192});
+    Checker::Generic checker({8192});
 
+    BL_INFO("Allocating CUDA memory...");
     static std::complex<float>* input_ptr;
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.getInputSize() * sizeof(std::complex<float>)), [&]{
         BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
@@ -18,6 +19,7 @@ Result Init() {
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
+    BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
     std::span<std::complex<float>> input{input_ptr, checker.getInputSize()};
     std::generate(input.begin(), input.end(), std::rand);
@@ -29,6 +31,7 @@ Result Init() {
 
     size_t counter = 0;
 
+    BL_INFO("Running kernels...");
     if ((counter = checker.run(input_ptr, output_ptr)) != checker.getInputSize()) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.", 0, checker.getInputSize(), counter);
         return Result::ERROR;

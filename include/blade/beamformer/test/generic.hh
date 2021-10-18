@@ -10,7 +10,7 @@ class BLADE_API Generic {
 public:
     virtual ~Generic() = default;
 
-    virtual Result beamform() = 0;
+    virtual Result process() = 0;
 
     virtual std::span<const std::complex<int8_t>> getInputData() = 0;
     virtual std::span<const std::complex<float>> getPhasorsData() = 0;
@@ -19,10 +19,10 @@ public:
 
 class BLADE_API GenericPython : public Generic, protected Python {
 public:
-    GenericPython(const std::string & telescope);
+    GenericPython(const std::string & telescope, const ArrayDims & dims);
     ~GenericPython() = default;
 
-    Result beamform();
+    Result process();
 
     std::span<const std::complex<int8_t>> getInputData();
     std::span<const std::complex<float>> getPhasorsData();

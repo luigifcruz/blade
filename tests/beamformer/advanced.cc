@@ -7,7 +7,7 @@ using namespace Blade;
 
 Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
     Manager manager;
-    Checker checker({beam.getOutputSize()});
+    Checker::Generic checker({beam.getOutputSize()});
 
     std::complex<int8_t>* input;
     std::size_t input_size = beam.getInputSize() * sizeof(input[0]);
@@ -32,6 +32,7 @@ Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
         }
     }).report();
 
+    BL_INFO("Allocating CUDA memory...");
     BL_CUDA_CHECK(cudaMalloc(&input, input_size), [&]{
         BL_FATAL("Can't allocate beamformer input buffer: {}", err);
     });
@@ -48,12 +49,15 @@ Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
         BL_FATAL("Can't allocate beamformer output groundtruth buffer: {}", err);
     });
 
-    BL_CHECK(test.beamform());
+    BL_INFO("Generating test data with Python...");
+    BL_CHECK(test.process());
 
+    BL_INFO("Checking test data size...");
     BL_ASSERT(test.getInputData().size() == beam.getInputSize());
     BL_ASSERT(test.getPhasorsData().size() == beam.getPhasorsSize());
     BL_ASSERT(test.getOutputData().size() == beam.getOutputSize());
 
+    BL_INFO("Copying test data to the device...");
     BL_CUDA_CHECK(cudaMemcpy(input, test.getInputData().data(), input_size, cudaMemcpyHostToDevice), [&]{
         BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
     });
@@ -66,14 +70,17 @@ Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
         BL_FATAL("Can't copy beamformer result data from host to device: {}", err);
     });
 
+    BL_INFO("Running kernel...");
     for (int i = 0; i < 150; i++) {
         BL_CHECK(beam.run(input, phasors, output));
         cudaDeviceSynchronize();
     }
 
+    BL_INFO("Checking for errors...");
     size_t errors = 0;
     if ((errors = checker.run(output, result)) != 0) {
         BL_FATAL("Beamformer produced {} errors.", errors);
+        return Result::ERROR;
     }
 
     cudaFree(input);

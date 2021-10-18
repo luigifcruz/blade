@@ -1,20 +1,20 @@
-#ifndef BLADE_CHECKER_H
-#define BLADE_CHECKER_H
+#ifndef BLADE_CHECKER_GENERIC_H
+#define BLADE_CHECKER_GENERIC_H
 
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
-namespace Blade {
+namespace Blade::Checker {
 
-class BLADE_API Checker : public Kernel {
+class BLADE_API Generic : public Kernel {
 public:
     struct Config {
         std::size_t inputSize;
         std::size_t blockSize = 256;
     };
 
-    Checker(const Config & config);
-    ~Checker();
+    Generic(const Config & config);
+    ~Generic();
 
     constexpr Config getConfig() const {
         return config;
@@ -36,6 +36,6 @@ private:
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade
+} // namespace Blade::Checker
 
 #endif
