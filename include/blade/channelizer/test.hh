@@ -7,20 +7,10 @@
 
 namespace Blade::Channelizer::Test {
 
-class BLADE_API Generic {
+class BLADE_API Generic : protected Python {
 public:
-    virtual ~Generic() = default;
-
-    virtual Result process() = 0;
-
-    virtual std::span<const std::complex<int8_t>> getInputData() = 0;
-    virtual std::span<const std::complex<int8_t>> getOutputData() = 0;
-};
-
-class BLADE_API GenericPython : public Generic, protected Python {
-public:
-    GenericPython(const Channelizer::Generic::Config & config);
-    ~GenericPython() = default;
+    Generic(const Channelizer::Generic::Config & config);
+    ~Generic() = default;
 
     Result process();
 

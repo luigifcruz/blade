@@ -90,7 +90,7 @@ int main() {
         1024,
     });
 
-    Channelizer::Test::GenericPython test(chan.getConfig());
+    Channelizer::Test::Generic test(chan.getConfig());
 
     if (Run(chan, test) != Result::SUCCESS) {
         BL_FATAL("Test failed.");
