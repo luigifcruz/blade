@@ -15,12 +15,14 @@ Result Generic::process() {
     return Result::SUCCESS;
 }
 
-std::span<const std::complex<int8_t>> Generic::getInputData() {
-    return getVector<int16_t, const std::complex<int8_t>>(lib.attr("getInputData"));
+std::span<const std::complex<float>> Generic::getInputData() {
+    return getVector<std::complex<float>, const std::complex<float>>
+        (lib.attr("getInputData"));
 }
 
-std::span<const std::complex<int8_t>> Generic::getOutputData() {
-    return getVector<int16_t, const std::complex<int8_t>>(lib.attr("getOutputData"));
+std::span<const std::complex<float>> Generic::getOutputData() {
+    return getVector<std::complex<float>, const std::complex<float>>
+        (lib.attr("getOutputData"));
 }
 
 } // namespace Blade::Channelizer::Test

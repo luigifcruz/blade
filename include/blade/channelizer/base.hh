@@ -31,8 +31,8 @@ public:
         return config.NPOLS * config.NTIME * config.NANTS * config.NCHANS;
     }
 
-    Result run(const std::span<std::complex<int8_t>> &input,
-                     std::span<std::complex<int8_t>> &output);
+    Result run(const std::span<std::complex<float>> &input,
+                     std::span<std::complex<float>> &output);
 
 private:
     const Config config;

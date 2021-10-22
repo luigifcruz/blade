@@ -9,9 +9,9 @@ Result Run(Channelizer::Generic & channelizer, Channelizer::Test::Generic & test
     Manager manager;
     Checker::Generic checker({});
 
-    std::complex<int8_t>* input_ptr;
-    std::complex<int8_t>* output_ptr;
-    std::complex<int8_t>* result_ptr;
+    std::complex<float>* input_ptr;
+    std::complex<float>* output_ptr;
+    std::complex<float>* result_ptr;
     std::size_t buffer_size = channelizer.getBufferSize() * sizeof(input_ptr[0]);
 
     manager.save({

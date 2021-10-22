@@ -40,8 +40,8 @@ Generic::~Generic() {
     BL_DEBUG("Destroying class.");
 }
 
-Result Generic::run(const std::span<std::complex<int8_t>> &input,
-                          std::span<std::complex<int8_t>> &output) {
+Result Generic::run(const std::span<std::complex<float>> &input,
+                          std::span<std::complex<float>> &output) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",
                 input.size(), output.size());
@@ -54,11 +54,12 @@ Result Generic::run(const std::span<std::complex<int8_t>> &input,
         return Result::ASSERTION_ERROR;
     }
 
-    cache.get_kernel(kernel)
+    cache
+        .get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
-            reinterpret_cast<const char2*>(input.data()),
-            reinterpret_cast<char2*>(output.data())
+            reinterpret_cast<const cuFloatComplex*>(input.data()),
+            reinterpret_cast<cuFloatComplex*>(output.data())
         );
 
     BL_CUDA_CHECK_KERNEL([&]{

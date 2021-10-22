@@ -18,20 +18,16 @@ class Generic:
         _a = np.random.uniform(-int(2**8/2), int(2**8/2), self.input_len)
         _b = np.random.uniform(-int(2**8/2), int(2**8/2), self.input_len)
         _buffer = np.round(_a + _b * 1j).astype(np.complex64)
-
-        self.input = _buffer.view(np.float32).astype(np.int8).view(np.int16)
-
         _buffer = _buffer.reshape(self.NANTS * self.NCHANS * self.NTIME, self.NPOLS)
+
+        self.input = np.copy(_buffer)
 
         for i in range(0, _buffer.shape[0], self.NFFT):
             _a = _buffer[i:i+self.NFFT]
             for pol in range(self.NPOLS):
                 _a[:, pol] = np.fft.fft(_a[:, pol])
 
-        print(_buffer[_buffer > 127])
-        print(_buffer[_buffer < -127])
-
-        self.output = _buffer.view(np.float32).astype(np.int8).view(np.int16)
+        self.output = _buffer
 
     def getInputData(self):
         return self.input

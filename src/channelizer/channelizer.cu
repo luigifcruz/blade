@@ -2,37 +2,8 @@
 
 // 4-point FFT
 
-__device__ __inline__ void fft_4pnt_proc(
-        const char2 a, const char2 b, const char2 c, const char2 d,
-        char2* A, char2* B, char2* C, char2* D) {
-    const char r1 = a.x - c.x;
-    const char r2 = a.y - c.y;
-    const char r3 = b.x - d.x;
-    const char r4 = b.y - d.y;
-
-    const char t1 = a.x + c.x;
-    const char t2 = a.y + c.y;
-    const char t3 = b.x + d.x;
-    const char t4 = b.y + d.y;
-
-    const char a3 = t1 - t3;
-    const char a4 = t2 - t4;
-    const char b3 = r1 - r4;
-    const char b2 = r2 - r3;
-
-    const char a1 = t1 + t3;
-    const char a2 = t2 + t4;
-    const char b1 = r1 + r4;
-    const char b4 = r2 + r3;
-
-    *A = make_char2(a1, a2);
-    *B = make_char2(b1, b2);
-    *C = make_char2(a3, a4);
-    *D = make_char2(b3, b4);
-}
-
 template<size_t N, size_t NFFT, size_t NPOLS>
-__global__ void fft_4pnt(const char2* input, char2* output) {
+__global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
     const int numThreads = (blockDim.x * gridDim.x) * (NFFT * NPOLS);
     const int threadID = (blockIdx.x * blockDim.x + threadIdx.x) * (NFFT * NPOLS);
 
@@ -40,8 +11,36 @@ __global__ void fft_4pnt(const char2* input, char2* output) {
         for (int j = i; j < i + NPOLS; j += 1) {
             // TODO: Fix indexes for NPOLS.
             // TODO: Add reordering index.
-            fft_4pnt_proc(input[j+0], input[j+2], input[j+4], input[j+6],
-                          &output[j+0], &output[j+2], &output[j+4], &output[j+6]);
+
+            const float2 a = input[j+0];
+            const float2 b = input[j+2];
+            const float2 c = input[j+4];
+            const float2 d = input[j+6];
+
+            const float r1 = a.x - c.x;
+            const float r2 = a.y - c.y;
+            const float r3 = b.x - d.x;
+            const float r4 = b.y - d.y;
+
+            const float t1 = a.x + c.x;
+            const float t2 = a.y + c.y;
+            const float t3 = b.x + d.x;
+            const float t4 = b.y + d.y;
+
+            const float a3 = t1 - t3;
+            const float a4 = t2 - t4;
+            const float b3 = r1 - r4;
+            const float b2 = r2 - r3;
+
+            const float a1 = t1 + t3;
+            const float a2 = t2 + t4;
+            const float b1 = r1 + r4;
+            const float b4 = r2 + r3;
+
+            output[j+0] = make_cuFloatComplex(a1, a2);
+            output[j+2] = make_cuFloatComplex(b1, b2);
+            output[j+4] = make_cuFloatComplex(a3, a4);
+            output[j+6] = make_cuFloatComplex(b3, b4);
         }
     }
 }
