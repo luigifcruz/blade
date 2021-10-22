@@ -7,4 +7,3 @@ __global__ void cast(IT* input, OT* output) {
         output[i] = static_cast<OT>(input[i]);
     }
 }
-

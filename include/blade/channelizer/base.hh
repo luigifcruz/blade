@@ -10,7 +10,7 @@ class BLADE_API Generic : public Kernel {
 public:
     struct Config : public ArrayDims {
         std::size_t fftSize = 4;
-        std::size_t blockSize = 1024;
+        std::size_t blockSize = 512;
     };
 
     Generic(const Config & config);

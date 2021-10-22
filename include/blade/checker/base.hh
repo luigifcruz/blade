@@ -9,7 +9,7 @@ namespace Blade::Checker {
 class BLADE_API Generic : public Kernel {
 public:
     struct Config {
-        std::size_t blockSize = 1024;
+        std::size_t blockSize = 512;
     };
 
     Generic(const Config & config);
