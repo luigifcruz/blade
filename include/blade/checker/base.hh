@@ -9,8 +9,7 @@ namespace Blade::Checker {
 class BLADE_API Generic : public Kernel {
 public:
     struct Config {
-        std::size_t inputSize;
-        std::size_t blockSize = 256;
+        std::size_t blockSize = 1024;
     };
 
     Generic(const Config & config);
@@ -20,20 +19,27 @@ public:
         return config;
     }
 
-    constexpr std::size_t getInputSize() const {
-        return config.inputSize;
-    }
+    unsigned long long int run(const std::span<float> &a,
+                               const std::span<float> &b);
 
-    unsigned long long int run(const std::complex<float>* input, const std::complex<float>* output);
-    unsigned long long int run(const float* input, const float* output);
-    unsigned long long int run(const int8_t* input, const int8_t* output);
+    unsigned long long int run(const std::span<int8_t> &a,
+                               const std::span<int8_t> &b);
+
+    unsigned long long int run(const std::span<std::complex<float>> &a,
+                               const std::span<std::complex<float>> &b);
+
+    unsigned long long int run(const std::span<std::complex<int8_t>> &a,
+                               const std::span<std::complex<int8_t>> &b);
 
 private:
     const Config config;
-    dim3 grid;
     dim3 block;
     unsigned long long int* counter;
     jitify2::ProgramCache<> cache;
+
+    template<typename IT, typename OT>
+    unsigned long long int generic_run(IT a, OT b, std::size_t size,
+            std::size_t scale = 1);
 };
 
 } // namespace Blade::Checker

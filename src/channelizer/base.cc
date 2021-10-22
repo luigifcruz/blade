@@ -12,8 +12,8 @@ Generic::Generic(const Config & config) :
     BL_DEBUG("Initilizating class.");
 
     if ((config.NTIME % config.fftSize) != 0) {
-        BL_FATAL("The number of time samples ({}) should be divisable by the FFT size ({}).",
-                config.NTIME, config.fftSize);
+        BL_FATAL("The number of time samples ({}) should be divisable "
+                "by the FFT size ({}).", config.NTIME, config.fftSize);
         throw Result::ERROR;
     }
 
@@ -21,8 +21,10 @@ Generic::Generic(const Config & config) :
         BL_WARN("Number of beams ({}) should be one.", config.NBEAMS);
     }
 
-    block = dim3(config.blockSize);
-    grid = dim3((getBufferSize() + block.x - 1) / block.x / (config.fftSize * config.NPOLS));
+    auto size = getBufferSize();
+
+    block = config.blockSize;
+    grid = (size + block.x - 1) / block.x / (config.fftSize * config.NPOLS);
 
     std::string kernel_key;
     switch (config.fftSize) {
@@ -31,19 +33,32 @@ Generic::Generic(const Config & config) :
             BL_FATAL("The FFT size of {} is not supported yet.", config.fftSize);
             throw Result::ERROR;
     }
-    kernel = Template(kernel_key).instantiate(getBufferSize(), config.fftSize, config.NPOLS);
+    kernel = Template(kernel_key).instantiate(size, config.fftSize, config.NPOLS);
 }
 
 Generic::~Generic() {
     BL_DEBUG("Destroying class.");
 }
 
-Result Generic::run(const std::complex<int8_t>* input, std::complex<int8_t>* output) {
+Result Generic::run(const std::span<std::complex<int8_t>> &input,
+                          std::span<std::complex<int8_t>> &output) {
+    if (input.size() != output.size()) {
+        BL_FATAL("Size mismatch between input and output ({}, {}).",
+                input.size(), output.size());
+        return Result::ASSERTION_ERROR;
+    }
+
+    if (input.size() != getBufferSize()) {
+        BL_FATAL("Size mismatch between input and configuration ({}, {}).",
+                input.size(), getBufferSize());
+        return Result::ASSERTION_ERROR;
+    }
+
     cache.get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
-            reinterpret_cast<const char2*>(input),
-            reinterpret_cast<char2*>(output)
+            reinterpret_cast<const char2*>(input.data()),
+            reinterpret_cast<char2*>(output.data())
         );
 
     BL_CUDA_CHECK_KERNEL([&]{

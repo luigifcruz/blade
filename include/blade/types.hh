@@ -7,6 +7,13 @@
 
 namespace Blade {
 
+typedef std::span<std::complex<float>> VCF32;
+typedef std::span<std::complex<int8_t>> VCI8;
+typedef std::complex<float> CF32;
+typedef std::complex<int8_t> CI8;
+typedef std::span<float> VF32;
+typedef std::span<int8_t> VI8;
+
 enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,

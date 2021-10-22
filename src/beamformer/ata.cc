@@ -4,8 +4,8 @@ namespace Blade::Beamformer {
 
 ATA::ATA(const Config & config) : Generic(config) {
     if (config.NBEAMS > config.blockSize) {
-        BL_FATAL("The block size ({}) is smaller than the number of beams ({}).",
-                config.blockSize, config.NBEAMS);
+        BL_FATAL("The block size ({}) is smaller than the number "
+                "of beams ({}).", config.blockSize, config.NBEAMS);
         throw Result::ERROR;
     }
 

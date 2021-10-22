@@ -12,21 +12,39 @@ Generic::Generic(const Config & config) :
     BL_DEBUG("Initilizating class.");
 
     if ((config.NTIME % config.blockSize) != 0) {
-        BL_FATAL("Number of time samples ({}) isn't divisable by the block size ({}).",
-                config.NTIME, config.blockSize);
+        BL_FATAL("Number of time samples ({}) isn't divisable by "
+                "the block size ({}).", config.NTIME, config.blockSize);
         throw Result::ERROR;
     }
 }
 
-Result Generic::run(const std::complex<int8_t>* input, const std::complex<float>* phasors,
-        std::complex<float>* output) {
+Result Generic::run(const std::span<std::complex<int8_t>> &input,
+                    const std::span<std::complex<float>> &phasors,
+                          std::span<std::complex<float>> &output) {
+    if (input.size() != getInputSize()) {
+        BL_FATAL("Size mismatch between input and configuration ({}, {}).",
+                input.size(), getInputSize());
+        return Result::ASSERTION_ERROR;
+    }
+
+    if (phasors.size() != getPhasorsSize()) {
+        BL_FATAL("Size mismatch between phasors and configuration ({}, {}).",
+                phasors.size(), getPhasorsSize());
+        return Result::ASSERTION_ERROR;
+    }
+
+    if (output.size() != getOutputSize()) {
+        BL_FATAL("Size mismatch between output and configuration ({}, {}).",
+                output.size(), getOutputSize());
+        return Result::ASSERTION_ERROR;
+    }
 
     cache.get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
-            reinterpret_cast<const char2*>(input),
-            reinterpret_cast<const cuFloatComplex*>(phasors),
-            reinterpret_cast<cuFloatComplex*>(output)
+            reinterpret_cast<const char2*>(input.data()),
+            reinterpret_cast<const cuFloatComplex*>(phasors.data()),
+            reinterpret_cast<cuFloatComplex*>(output.data())
         );
 
     BL_CUDA_CHECK_KERNEL([&]{

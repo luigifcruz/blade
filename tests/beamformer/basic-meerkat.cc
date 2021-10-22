@@ -21,7 +21,7 @@ int main() {
     });
 
     if (Run(beam) != Result::SUCCESS) {
-        BL_FATAL("Test failed.");
+        BL_WARN("Fault was encountered. Test is exiting...");
         return 1;
     }
 

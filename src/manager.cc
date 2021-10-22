@@ -28,10 +28,10 @@ Manager& Manager::report() {
     BL_INFO("   Host:   {} MB", toMB(master.memory.host));
     BL_INFO("   Device: {} MB", toMB(master.memory.device));
     BL_INFO("Estimated transfers:");
-    BL_INFO("   H2D: {} MB @ {} GB/s = {:.1f} ms", toMB(master.transfer.h2d), toGB(config.pcie_bw),
-            toMs(master.transfer.h2d, config.pcie_bw));
-    BL_INFO("   D2H: {} MB @ {} GB/s = {:.1f} ms", toMB(master.transfer.d2h), toGB(config.pcie_bw),
-            toMs(master.transfer.d2h, config.pcie_bw));
+    BL_INFO("   H2D: {} MB @ {} GB/s = {:.1f} ms", toMB(master.transfer.h2d),
+            toGB(config.pcie_bw), toMs(master.transfer.h2d, config.pcie_bw));
+    BL_INFO("   D2H: {} MB @ {} GB/s = {:.1f} ms", toMB(master.transfer.d2h),
+            toGB(config.pcie_bw), toMs(master.transfer.d2h, config.pcie_bw));
     BL_INFO("=============================================");
 
     return *this;

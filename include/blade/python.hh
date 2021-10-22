@@ -12,7 +12,10 @@ namespace Blade {
 
 class BLADE_API Python {
 protected:
-    py::scoped_interpreter guard{}; // WARNING: Interpreter should be destructed last!
+    // WARNING: Interpreter should be destructed last!
+    py::scoped_interpreter guard{};
+    //
+
     py::object lib;
 
     template<typename IT, typename OT>

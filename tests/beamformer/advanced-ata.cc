@@ -24,7 +24,7 @@ int main() {
     Beamformer::Test::ATA test(beam.getConfig());
 
     if (Run(beam, test) != Result::SUCCESS) {
-        BL_FATAL("Test failed.");
+        BL_WARN("Fault was encountered. Test is exiting...");
         return 1;
     }
 

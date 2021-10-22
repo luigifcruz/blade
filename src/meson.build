@@ -4,6 +4,7 @@ src_lst += files([
   'kernel.cc',
 ])
 
+subdir('cast')
 subdir('checker')
 subdir('beamformer')
 subdir('channelizer')

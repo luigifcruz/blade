@@ -28,6 +28,9 @@ class Generic:
             for pol in range(self.NPOLS):
                 _a[:, pol] = np.fft.fft(_a[:, pol])
 
+        print(_buffer[_buffer > 127])
+        print(_buffer[_buffer < -127])
+
         self.output = _buffer.view(np.float32).astype(np.int8).view(np.int16)
 
     def getInputData(self):

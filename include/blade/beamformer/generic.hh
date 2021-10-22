@@ -9,7 +9,7 @@ namespace Blade::Beamformer {
 class BLADE_API Generic : public Kernel {
 public:
     struct Config : ArrayDims {
-        std::size_t blockSize;
+        std::size_t blockSize = 1024;
     };
 
     Generic(const Config & config);
@@ -23,7 +23,9 @@ public:
     virtual constexpr std::size_t getOutputSize() const = 0;
     virtual constexpr std::size_t getPhasorsSize() const = 0;
 
-    Result run(const std::complex<int8_t>* input, const std::complex<float>* phasors, std::complex<float>* output);
+    Result run(const std::span<std::complex<int8_t>> &input,
+               const std::span<std::complex<float>> &phasors,
+                     std::span<std::complex<float>> &output);
 
 protected:
     const Config config;

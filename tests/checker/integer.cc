@@ -1,49 +1,54 @@
-#include <algorithm>
-#include <ctime>
-
 #include "blade/checker/base.hh"
 
 using namespace Blade;
 
-Result Init() {
-    Checker::Generic checker({8192});
+Result Init(std::size_t testSize = 8192) {
+    Checker::Generic checker({});
 
     BL_INFO("Allocating CUDA memory...");
     static int8_t* input_ptr;
-    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, checker.getInputSize() * sizeof(int8_t)), [&]{
+    static int8_t* output_ptr;
+
+    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, testSize * sizeof(int8_t)), [&]{
         BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
     });
 
-    static int8_t* output_ptr;
-    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, checker.getInputSize() * sizeof(int8_t)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, testSize * sizeof(int8_t)), [&]{
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
+    std::span input{input_ptr, testSize};
+    std::span output{output_ptr, testSize};
+
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
-    std::span<int8_t> input{input_ptr, checker.getInputSize()};
-    std::generate(input.begin(), input.end(), std::rand);
 
-    std::span<int8_t> output{output_ptr, checker.getInputSize()};
-    std::generate(output.begin(), output.end(), []{
-        return 69;
-    });
+    for (auto & element : input) {
+        element = std::rand();
+    }
 
-    size_t counter = 0;
+    for (auto & element : output) {
+        element = 60;
+    }
 
     BL_INFO("Running kernels...");
-    if ((counter = checker.run(input_ptr, output_ptr)) < checker.getInputSize() - 100) {
-        BL_FATAL("[SUBTEST {}] Expected over than {} matches but found {}.", 0, checker.getInputSize() - 100, counter);
+    size_t counter = 0;
+
+    if ((counter = checker.run(input, output)) < testSize - 100) {
+        BL_FATAL("[SUBTEST {}] Expected over than {} matches but found {}.",
+                0, testSize - 100, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(input_ptr, input_ptr)) > 100) {
-        BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.", 1, 100, counter);
+    if ((counter = checker.run(input, input)) > 100) {
+        BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.",
+                1, 100, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(output_ptr, output_ptr)) > 100) {
-        BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.", 2, 100, counter);
+    if ((counter = checker.run(output, output)) > 100) {
+        BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.",
+                2, 100, counter);
         return Result::ERROR;
     }
 
@@ -56,14 +61,15 @@ Result Init() {
 int main() {
     Logger guard{};
 
-    BL_INFO("Welcome to BL Beamformer.");
+    BL_INFO("Testing integer checker.");
 
     if (Init() != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. System is exiting...");
+        BL_WARN("Fault was encountered. Test is exiting...");
         return 1;
     }
 
-    BL_INFO("Nominal shutdown...");
+
+    BL_INFO("Test succeeded.");
 
     return 0;
 }
