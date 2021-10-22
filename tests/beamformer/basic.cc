@@ -8,7 +8,7 @@ Result Run(Beamformer::Generic & beam) {
     Manager manager;
     Checker::Generic checker({});
 
-    std::complex<int8_t>* input_ptr;
+    std::complex<float>* input_ptr;
     std::size_t input_size = beam.getInputSize() * sizeof(input_ptr[0]);
 
     std::complex<float>* phasors_ptr;
@@ -59,11 +59,11 @@ Result Run(Beamformer::Generic & beam) {
     }
 
     for (auto & element : phasors) {
-        element = 2;
+        element = 2.1;
     }
 
     for (auto & element : result) {
-        element = beam.getConfig().NANTS * 2.0;
+        element = beam.getConfig().NANTS * 2.1;
     }
 
     BL_INFO("Running kernel...");

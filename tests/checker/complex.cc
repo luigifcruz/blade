@@ -1,6 +1,3 @@
-#include <algorithm>
-#include <ctime>
-
 #include "blade/checker/base.hh"
 
 using namespace Blade;

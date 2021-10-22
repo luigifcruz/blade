@@ -12,7 +12,7 @@ public:
 
     virtual Result process() = 0;
 
-    virtual std::span<const std::complex<int8_t>> getInputData() = 0;
+    virtual std::span<const std::complex<float>> getInputData() = 0;
     virtual std::span<const std::complex<float>> getPhasorsData() = 0;
     virtual std::span<const std::complex<float>> getOutputData() = 0;
 };
@@ -24,7 +24,7 @@ public:
 
     Result process();
 
-    std::span<const std::complex<int8_t>> getInputData();
+    std::span<const std::complex<float>> getInputData();
     std::span<const std::complex<float>> getPhasorsData();
     std::span<const std::complex<float>> getOutputData();
 };

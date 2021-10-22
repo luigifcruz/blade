@@ -18,7 +18,7 @@ Generic::Generic(const Config & config) :
     }
 }
 
-Result Generic::run(const std::span<std::complex<int8_t>> &input,
+Result Generic::run(const std::span<std::complex<float>> &input,
                     const std::span<std::complex<float>> &phasors,
                           std::span<std::complex<float>> &output) {
     if (input.size() != getInputSize()) {
@@ -42,7 +42,7 @@ Result Generic::run(const std::span<std::complex<int8_t>> &input,
     cache.get_kernel(kernel)
         ->configure(grid, block)
         ->launch(
-            reinterpret_cast<const char2*>(input.data()),
+            reinterpret_cast<const cuFloatComplex*>(input.data()),
             reinterpret_cast<const cuFloatComplex*>(phasors.data()),
             reinterpret_cast<cuFloatComplex*>(output.data())
         );

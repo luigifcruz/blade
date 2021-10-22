@@ -9,7 +9,7 @@ Result Run(Beamformer::Generic & beam, Beamformer::Test::Generic & test) {
     Manager manager;
     Checker::Generic checker({});
 
-    std::complex<int8_t>* input_ptr;
+    std::complex<float>* input_ptr;
     std::size_t input_size = beam.getInputSize() * sizeof(input_ptr[0]);
 
     std::complex<float>* phasors_ptr;

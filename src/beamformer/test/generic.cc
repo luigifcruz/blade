@@ -18,8 +18,8 @@ Result GenericPython::process() {
     return Result::SUCCESS;
 }
 
-std::span<const std::complex<int8_t>> GenericPython::getInputData() {
-    return getVector<int16_t, const std::complex<int8_t>>
+std::span<const std::complex<float>> GenericPython::getInputData() {
+    return getVector<std::complex<float>, const std::complex<float>>
         (lib.attr("getInputData"));
 }
 

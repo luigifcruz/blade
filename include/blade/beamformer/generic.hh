@@ -23,7 +23,7 @@ public:
     virtual constexpr std::size_t getOutputSize() const = 0;
     virtual constexpr std::size_t getPhasorsSize() const = 0;
 
-    Result run(const std::span<std::complex<int8_t>> &input,
+    Result run(const std::span<std::complex<float>> &input,
                const std::span<std::complex<float>> &phasors,
                      std::span<std::complex<float>> &output);
 
