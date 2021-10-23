@@ -31,6 +31,9 @@ public:
     unsigned long long int run(const std::span<std::complex<int8_t>> &a,
                                const std::span<std::complex<int8_t>> &b);
 
+    unsigned long long int run(const std::span<std::complex<half>> &a,
+                               const std::span<std::complex<half>> &b);
+
 private:
     const Config config;
     dim3 block;

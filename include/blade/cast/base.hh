@@ -23,6 +23,10 @@ public:
                      std::span<std::complex<float>> &output,
                      cudaStream_t cudaStream = 0);
 
+    Result run(const std::span<std::complex<float>> &input,
+                     std::span<std::complex<half>> &output,
+                     cudaStream_t cudaStream = 0);
+
 private:
     const Config config;
     dim3 block;

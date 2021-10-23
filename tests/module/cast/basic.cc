@@ -93,6 +93,24 @@ int main() {
         return 1;
     }
 
+    BL_INFO("Testing complex float32 to float16 float conversion...");
+    if (Run<std::complex<float>, std::complex<half>>([](auto &input, auto &result){
+        for (std::size_t i = 0; i < input.size(); i++) {
+            input[i] = {
+                static_cast<float>(std::rand()),
+                static_cast<float>(std::rand())
+            };
+
+            result[i] = {
+                static_cast<half>(input[i].real()),
+                static_cast<half>(input[i].imag())
+            };
+        }
+    }) != Result::SUCCESS) {
+        BL_WARN("Fault was encountered. Test is exiting...");
+        return 1;
+    }
+
     BL_INFO("Test succeeded.");
 
     return 0;

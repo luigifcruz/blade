@@ -23,7 +23,7 @@ public:
 
     Pipeline(const Config & configuration) : config(configuration) {
         BL_INFO("Initializing modules...")
-        inputCast = Factory<Cast::Generic>({
+        cast = Factory<Cast::Generic>({
             .blockSize = config.castBlockSize,
         });
 
@@ -40,10 +40,6 @@ public:
             {
                 .blockSize = config.beamformerBlockSize,
             }
-        });
-
-        manager = Factory<Manager>({
-            .pcie_bw = static_cast<size_t>(11e9),
         });
 
         BL_INFO("Allocating device memory...")
@@ -98,9 +94,9 @@ public:
         return Result::SUCCESS;
     }
 
-    Result download(std::span<std::complex<float>> output) {
-        BL_CUDA_CHECK(cudaMemcpyAsync(output.data(), bufferD.data(),
-                    bufferD.size_bytes(), cudaMemcpyDeviceToHost, cudaStream), [&]{
+    Result download(std::span<std::complex<half>> output) {
+        BL_CUDA_CHECK(cudaMemcpyAsync(output.data(), bufferE.data(),
+                    bufferE.size_bytes(), cudaMemcpyDeviceToHost, cudaStream), [&]{
             BL_FATAL("Can't copy data from device to host: {}", err);
         });
 
@@ -119,9 +115,10 @@ private:
     std::span<std::complex<float>> bufferB;
     std::span<std::complex<float>> bufferC;
     std::span<std::complex<float>> bufferD;
+    std::span<std::complex<half>> bufferE;
 
     std::unique_ptr<Manager> manager;
-    std::unique_ptr<Cast::Generic> inputCast;
+    std::unique_ptr<Cast::Generic> cast;
     std::unique_ptr<Beamformer::ATA> beamformer;
     std::unique_ptr<Channelizer::Generic> channelizer;
 
@@ -131,12 +128,14 @@ private:
         std::complex<float>* pbufferB;
         std::complex<float>* pbufferC;
         std::complex<float>* pbufferD;
+        std::complex<half>* pbufferE;
 
         std::size_t sphasors = beamformer->getPhasorsSize() * sizeof(pphasors[0]);
         std::size_t sbufferA = channelizer->getBufferSize() * sizeof(pbufferA[0]);
         std::size_t sbufferB = channelizer->getBufferSize() * sizeof(pbufferB[0]);
         std::size_t sbufferC = channelizer->getBufferSize() * sizeof(pbufferC[0]);
         std::size_t sbufferD = beamformer->getOutputSize() * sizeof(pbufferD[0]);
+        std::size_t sbufferE = beamformer->getOutputSize() * sizeof(pbufferE[0]);
 
         BL_CUDA_CHECK(cudaMalloc(&pphasors, sphasors), [&]{
             BL_FATAL("Can't allocate phasor buffer: {}", err);
@@ -158,19 +157,24 @@ private:
             BL_FATAL("Can't allocate buffer D: {}", err);
         });
 
+        BL_CUDA_CHECK(cudaMalloc(&pbufferE, sbufferE), [&]{
+            BL_FATAL("Can't allocate buffer E: {}", err);
+        });
+
         this->phasors = std::span(pphasors, beamformer->getPhasorsSize());
         this->bufferA = std::span(pbufferA, channelizer->getBufferSize());
         this->bufferB = std::span(pbufferB, channelizer->getBufferSize());
         this->bufferC = std::span(pbufferC, channelizer->getBufferSize());
         this->bufferD = std::span(pbufferD, beamformer->getOutputSize());
+        this->bufferE = std::span(pbufferE, beamformer->getOutputSize());
 
         manager->save({
             .memory = {
-                .device = sphasors + sbufferA + sbufferB + sbufferC + sbufferD,
-                .host = sphasors + sbufferA + sbufferD,
+                .device = sphasors + sbufferA + sbufferB + sbufferC + sbufferD + sbufferE,
+                .host = sphasors + sbufferA + sbufferE,
             },
             .transfer = {
-                .d2h = sbufferD,
+                .d2h = sbufferE,
                 .h2d = sbufferA,
             }
         }).report();
@@ -179,9 +183,10 @@ private:
     }
 
     Result runKernels() {
-        BL_CHECK(inputCast->run(bufferA, bufferB, cudaStream));
+        BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
         BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
         BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
+        BL_CHECK(cast->run(bufferD, bufferE, cudaStream));
 
         return Result::SUCCESS;
     }
@@ -251,16 +256,20 @@ int main() {
     });
 
     std::vector<std::complex<int8_t>> input(pipeline.getInputSize());
-    std::vector<std::complex<float>> output(pipeline.getOutputSize());
+    std::vector<std::complex<half>> output(pipeline.getOutputSize());
 
-    cudaHostRegister(input.data(), input.size() * sizeof(input[0]), cudaHostRegisterReadOnly);
-    cudaHostRegister(output.data(), output.size() * sizeof(output[0]), cudaHostRegisterDefault);
+    cudaHostRegister(input.data(), input.size() * sizeof(input[0]),
+            cudaHostRegisterReadOnly);
+    cudaHostRegister(output.data(), output.size() * sizeof(output[0]),
+            cudaHostRegisterDefault);
 
     std::vector<std::complex<int8_t>> input2(pipeline2.getInputSize());
-    std::vector<std::complex<float>> output2(pipeline2.getOutputSize());
+    std::vector<std::complex<half>> output2(pipeline2.getOutputSize());
 
-    cudaHostRegister(input2.data(), input2.size() * sizeof(input2[0]), cudaHostRegisterReadOnly);
-    cudaHostRegister(output2.data(), output2.size() * sizeof(output2[0]), cudaHostRegisterDefault);
+    cudaHostRegister(input2.data(), input2.size() * sizeof(input2[0]),
+            cudaHostRegisterReadOnly);
+    cudaHostRegister(output2.data(), output2.size() * sizeof(output2[0]),
+            cudaHostRegisterDefault);
 
     auto t1 = high_resolution_clock::now();
     for (int i = 0; i < 150; i++) {

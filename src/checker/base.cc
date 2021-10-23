@@ -78,6 +78,21 @@ unsigned long long int Generic::run(const std::span<std::complex<int8_t>> &a,
     );
 }
 
+unsigned long long int Generic::run(const std::span<std::complex<half>> &a,
+                                    const std::span<std::complex<half>> &b) {
+    if (a.size() != b.size()) {
+        BL_FATAL("Size mismatch between checker inputs.");
+        return -1;
+    }
+
+    return this->generic_run(
+        reinterpret_cast<const half*>(a.data()),
+        reinterpret_cast<const half*>(b.data()),
+        a.size(),
+        2
+    );
+}
+
 unsigned long long int Generic::run(const std::span<float> &a,
                                     const std::span<float> &b) {
     if (a.size() != b.size()) {

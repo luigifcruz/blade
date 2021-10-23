@@ -1,3 +1,5 @@
+#include <cuda_fp16.h>
+
 template<typename IT, typename OT, size_t N>
 __global__ void cast(IT* input, OT* output) {
     const int numThreads = blockDim.x * gridDim.x;
