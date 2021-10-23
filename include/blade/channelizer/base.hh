@@ -8,10 +8,12 @@ namespace Blade::Channelizer {
 
 class BLADE_API Generic : public Kernel {
 public:
-    struct Config : public ArrayDims {
+    struct InternalConfig {
         std::size_t fftSize = 4;
         std::size_t blockSize = 512;
     };
+
+    struct Config : ArrayDims, InternalConfig {};
 
     Generic(const Config & config);
     ~Generic();
@@ -20,8 +22,9 @@ public:
         return config;
     }
 
-    constexpr ArrayDims getOutputDims() const {
+    constexpr ArrayDims getOutputDims(std::size_t beams = 1) const {
         auto cfg = config;
+        cfg.NBEAMS = beams;
         cfg.NCHANS *= config.fftSize;
         cfg.NTIME /= config.fftSize;
         return cfg;
@@ -32,7 +35,8 @@ public:
     }
 
     Result run(const std::span<std::complex<float>> &input,
-                     std::span<std::complex<float>> &output);
+                     std::span<std::complex<float>> &output,
+                     cudaStream_t cudaStream = 0);
 
 private:
     const Config config;

@@ -30,7 +30,6 @@ Result Run(FG gen_func, std::size_t testSize = 134400000) {
             .h2d = result_size,
         }
     }).report();
-
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, input_size), [&]{
         BL_FATAL("Can't allocate test input buffer: {}", err);
     });
@@ -98,4 +97,3 @@ int main() {
 
     return 0;
 }
-

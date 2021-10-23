@@ -20,7 +20,8 @@ public:
     }
 
     Result run(const std::span<std::complex<int8_t>> &input,
-                     std::span<std::complex<float>> &output);
+                     std::span<std::complex<float>> &output,
+                     cudaStream_t cudaStream = 0);
 
 private:
     const Config config;
@@ -28,7 +29,8 @@ private:
     jitify2::ProgramCache<> cache;
 
     template<typename OT, typename IT>
-    Result run(IT input, OT output, std::size_t size);
+    Result run(IT input, OT output, std::size_t size,
+            cudaStream_t cudaStream = 0);
 };
 
 } // namespace Blade::Cast

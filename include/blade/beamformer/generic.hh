@@ -8,9 +8,11 @@ namespace Blade::Beamformer {
 
 class BLADE_API Generic : public Kernel {
 public:
-    struct Config : ArrayDims {
+    struct InternalConfig {
         std::size_t blockSize = 512;
     };
+
+    struct Config : ArrayDims, InternalConfig {};
 
     Generic(const Config & config);
     virtual ~Generic() = default;
@@ -25,7 +27,8 @@ public:
 
     Result run(const std::span<std::complex<float>> &input,
                const std::span<std::complex<float>> &phasors,
-                     std::span<std::complex<float>> &output);
+                     std::span<std::complex<float>> &output,
+                     cudaStream_t cudaStream = 0);
 
 protected:
     const Config config;

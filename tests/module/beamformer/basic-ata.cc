@@ -16,8 +16,9 @@ int main() {
             .NCHANS = 384,
             .NTIME  = 8750,
             .NPOLS  = 2,
+        }, {
+            .blockSize = 350,
         },
-        350,
     });
 
     if (Run(beam) != Result::SUCCESS) {

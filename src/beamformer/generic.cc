@@ -20,7 +20,8 @@ Generic::Generic(const Config & config) :
 
 Result Generic::run(const std::span<std::complex<float>> &input,
                     const std::span<std::complex<float>> &phasors,
-                          std::span<std::complex<float>> &output) {
+                          std::span<std::complex<float>> &output,
+                          cudaStream_t cudaStream) {
     if (input.size() != getInputSize()) {
         BL_FATAL("Size mismatch between input and configuration ({}, {}).",
                 input.size(), getInputSize());
@@ -40,7 +41,7 @@ Result Generic::run(const std::span<std::complex<float>> &input,
     }
 
     cache.get_kernel(kernel)
-        ->configure(grid, block)
+        ->configure(grid, block, 0, cudaStream)
         ->launch(
             reinterpret_cast<const cuFloatComplex*>(input.data()),
             reinterpret_cast<const cuFloatComplex*>(phasors.data()),

@@ -26,15 +26,15 @@ Result Run(Channelizer::Generic & channelizer, Channelizer::Test::Generic & test
     }).report();
 
     BL_INFO("Allocating CUDA memory...");
-    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, buffer_size), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&input_ptr, buffer_size), [&]{
         BL_FATAL("Can't allocate complex checker input buffer: {}", err);
     });
 
-    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, buffer_size), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&output_ptr, buffer_size), [&]{
         BL_FATAL("Can't allocate complex checker output buffer: {}", err);
     });
 
-    BL_CUDA_CHECK(cudaMallocManaged(&result_ptr, buffer_size), [&]{
+    BL_CUDA_CHECK(cudaMalloc(&result_ptr, buffer_size), [&]{
         BL_FATAL("Can't allocate complex checker input buffer: {}", err);
     });
 
@@ -91,9 +91,10 @@ int main() {
             .NCHANS = 96,
             .NTIME  = 35000,
             .NPOLS  = 2,
+        }, {
+            .fftSize = 4,
+            .blockSize = 1024,
         },
-        4,
-        1024,
     });
 
     Channelizer::Test::Generic test(chan.getConfig());

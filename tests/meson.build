@@ -1,4 +1,2 @@
-subdir('cast')
-subdir('checker')
-subdir('beamformer')
-subdir('channelizer')
+subdir('module')
+subdir('pipeline')
