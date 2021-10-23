@@ -26,15 +26,15 @@ Generic::~Generic() {
 }
 
 template<typename IT, typename OT>
-unsigned long long int Generic::generic_run(IT a, OT b,
-                                            std::size_t size, std::size_t scale) {
+unsigned long long int Generic::run(IT a, OT b, std::size_t size, std::size_t scale,
+        cudaStream_t cudaStream) {
     auto kernel = Template("checker").instantiate(Type<IT>(), size * scale);
     dim3 grid = dim3(((size * scale) + block.x - 1) / block.x);
 
     *counter = 0;
     cache
         .get_kernel(kernel)
-        ->configure(grid, block)
+        ->configure(grid, block, 0, cudaStream)
         ->launch(a, b, counter);
 
     BL_CUDA_CHECK_KERNEL([&]{
@@ -48,69 +48,57 @@ unsigned long long int Generic::generic_run(IT a, OT b,
 }
 
 
-unsigned long long int Generic::run(const std::span<std::complex<float>> &a,
-                                    const std::span<std::complex<float>> &b) {
+template<typename IT, typename OT>
+unsigned long long int Generic::run(const std::span<std::complex<IT>> &a,
+                                    const std::span<std::complex<OT>> &b,
+                                          cudaStream_t cudaStream) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
     }
 
-    return this->generic_run(
-        reinterpret_cast<const float*>(a.data()),
-        reinterpret_cast<const float*>(b.data()),
+    return this->run(
+        reinterpret_cast<const IT*>(a.data()),
+        reinterpret_cast<const OT*>(b.data()),
         a.size(),
         2
     );
 }
 
-unsigned long long int Generic::run(const std::span<std::complex<int8_t>> &a,
-                                    const std::span<std::complex<int8_t>> &b) {
+template<typename IT, typename OT>
+unsigned long long int Generic::run(const std::span<IT> &a,
+                                    const std::span<OT> &b,
+                                          cudaStream_t cudaStream) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
     }
 
-    return this->generic_run(
-        reinterpret_cast<const int8_t*>(a.data()),
-        reinterpret_cast<const int8_t*>(b.data()),
-        a.size(),
-        2
-    );
+    return this->run(a.data(), b.data(), a.size());
 }
 
-unsigned long long int Generic::run(const std::span<std::complex<half>> &a,
-                                    const std::span<std::complex<half>> &b) {
-    if (a.size() != b.size()) {
-        BL_FATAL("Size mismatch between checker inputs.");
-        return -1;
-    }
+template unsigned long long int Generic::run(const std::span<std::complex<float>>&,
+                                             const std::span<std::complex<float>>&,
+                                                   cudaStream_t);
 
-    return this->generic_run(
-        reinterpret_cast<const half*>(a.data()),
-        reinterpret_cast<const half*>(b.data()),
-        a.size(),
-        2
-    );
-}
+template unsigned long long int Generic::run(const std::span<std::complex<int8_t>>&,
+                                             const std::span<std::complex<int8_t>>&,
+                                                   cudaStream_t);
 
-unsigned long long int Generic::run(const std::span<float> &a,
-                                    const std::span<float> &b) {
-    if (a.size() != b.size()) {
-        BL_FATAL("Size mismatch between checker inputs.");
-        return -1;
-    }
+template unsigned long long int Generic::run(const std::span<std::complex<half>>&,
+                                             const std::span<std::complex<half>>&,
+                                                   cudaStream_t);
 
-    return this->generic_run(a.data(), b.data(), a.size());
-}
+template unsigned long long int Generic::run(const std::span<float>&,
+                                             const std::span<float>&,
+                                                   cudaStream_t);
 
-unsigned long long int Generic::run(const std::span<int8_t> &a,
-                                    const std::span<int8_t> &b) {
-    if (a.size() != b.size()) {
-        BL_FATAL("Size mismatch between checker inputs.");
-        return -1;
-    }
+template unsigned long long int Generic::run(const std::span<int8_t>&,
+                                             const std::span<int8_t>&,
+                                                   cudaStream_t);
 
-    return this->generic_run(a.data(), b.data(), a.size());
-}
+template unsigned long long int Generic::run(const std::span<half>&,
+                                             const std::span<half>&,
+                                                   cudaStream_t);
 
 } // namespace Blade::Checker

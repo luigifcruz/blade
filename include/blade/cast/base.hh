@@ -19,12 +19,9 @@ public:
         return config;
     }
 
-    Result run(const std::span<std::complex<int8_t>> &input,
-                     std::span<std::complex<float>> &output,
-                     cudaStream_t cudaStream = 0);
-
-    Result run(const std::span<std::complex<float>> &input,
-                     std::span<std::complex<half>> &output,
+    template<typename IT, typename OT>
+    Result run(const std::span<std::complex<IT>> &input,
+                     std::span<std::complex<OT>> &output,
                      cudaStream_t cudaStream = 0);
 
 private:

@@ -1,5 +1,7 @@
 # BLADE - Breakthrough Listen Accelerated DSP Engine
 
+This library is meant to be used by the Allen Telescope Array beamformer.
+
 ## Dependencies
 
 - Clang 12 or GCC 11

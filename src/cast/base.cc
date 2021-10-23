@@ -42,8 +42,9 @@ Result Generic::run(IT input, OT output, std::size_t size, cudaStream_t cudaStre
     return Result::SUCCESS;
 }
 
-Result Generic::run(const std::span<std::complex<int8_t>> &input,
-                          std::span<std::complex<float>> &output,
+template<typename IT, typename OT>
+Result Generic::run(const std::span<std::complex<IT>> &input,
+                          std::span<std::complex<OT>> &output,
                           cudaStream_t cudaStream) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",
@@ -52,28 +53,19 @@ Result Generic::run(const std::span<std::complex<int8_t>> &input,
     }
 
     return this->run(
-        reinterpret_cast<const int8_t*>(input.data()),
-        reinterpret_cast<float*>(output.data()),
+        reinterpret_cast<const IT*>(input.data()),
+        reinterpret_cast<OT*>(output.data()),
         input.size() * 2,
         cudaStream
     );
 }
 
-Result Generic::run(const std::span<std::complex<float>> &input,
-                          std::span<std::complex<half>> &output,
-                          cudaStream_t cudaStream) {
-    if (input.size() != output.size()) {
-        BL_FATAL("Size mismatch between input and output ({}, {}).",
-                input.size(), output.size());
-        return Result::ASSERTION_ERROR;
-    }
+template Result Generic::run(const std::span<std::complex<int8_t>>&,
+                                   std::span<std::complex<float>>&,
+                                   cudaStream_t);
 
-    return this->run(
-        reinterpret_cast<const float*>(input.data()),
-        reinterpret_cast<half*>(output.data()),
-        input.size() * 2,
-        cudaStream
-    );
-}
+template Result Generic::run(const std::span<std::complex<float>>&,
+                                   std::span<std::complex<half>>&,
+                                   cudaStream_t);
 
 } // namespace Blade::Cast

@@ -42,6 +42,10 @@ public:
             }
         });
 
+        manager = Factory<Manager>({
+            .pcie_bw = static_cast<size_t>(11e9),
+        });
+
         BL_INFO("Allocating device memory...")
         if (this->allocate() != Result::SUCCESS) {
             BL_FATAL("Pipeline initialization failed. Exiting...");

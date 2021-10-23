@@ -19,20 +19,15 @@ public:
         return config;
     }
 
-    unsigned long long int run(const std::span<float> &a,
-                               const std::span<float> &b);
+    template<typename IT, typename OT>
+    unsigned long long int run(const std::span<IT> &a,
+                               const std::span<OT> &b,
+                                     cudaStream_t cudaStream = 0);
 
-    unsigned long long int run(const std::span<int8_t> &a,
-                               const std::span<int8_t> &b);
-
-    unsigned long long int run(const std::span<std::complex<float>> &a,
-                               const std::span<std::complex<float>> &b);
-
-    unsigned long long int run(const std::span<std::complex<int8_t>> &a,
-                               const std::span<std::complex<int8_t>> &b);
-
-    unsigned long long int run(const std::span<std::complex<half>> &a,
-                               const std::span<std::complex<half>> &b);
+    template<typename IT, typename OT>
+    unsigned long long int run(const std::span<std::complex<IT>> &a,
+                               const std::span<std::complex<OT>> &b,
+                                     cudaStream_t cudaStream = 0);
 
 private:
     const Config config;
@@ -41,8 +36,8 @@ private:
     jitify2::ProgramCache<> cache;
 
     template<typename IT, typename OT>
-    unsigned long long int generic_run(IT a, OT b, std::size_t size,
-            std::size_t scale = 1);
+    unsigned long long int run(IT a, OT b, std::size_t size,
+            std::size_t scale = 1, cudaStream_t cudaStream = 0);
 };
 
 } // namespace Blade::Checker
