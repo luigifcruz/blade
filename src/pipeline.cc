@@ -3,10 +3,12 @@
 namespace Blade {
 
 Pipeline::~Pipeline() {
-    if (!this->commited) {
-        return;
+    BL_DEBUG("Deallocating device memory...");
+    for (const auto & allocation : allocations) {
+        cudaFree(allocation);
     }
 
+    BL_DEBUG("Destroying CUDA assets...");
     cudaGraphDestroy(graph);
     cudaStreamDestroy(cudaStream);
 }
@@ -14,16 +16,18 @@ Pipeline::~Pipeline() {
 Result Pipeline::commit() {
     BL_INFO("Pipeline commiting...");
 
+    BL_INFO("Creating CUDA Stream...");
     BL_CUDA_CHECK(cudaStreamCreateWithFlags(&cudaStream,
                 cudaStreamNonBlocking), [&]{
         BL_FATAL("Failed to create stream for CUDA Graph: {}", err);
     });
 
-    // Let child class allocate memory.
-    BL_INFO("Allocating memory...");
+    BL_INFO("Setup underlying module...");
+    BL_CHECK(this->underlyingInit());
     BL_CHECK(this->underlyingAllocate());
+    BL_CHECK(this->underlyingReport(resources));
+    BL_CHECK(this->underlyingPreprocess());
 
-    // Run kernels once to populate cache.
     BL_INFO("Pre-caching CUDA kernels...");
     BL_CHECK(this->underlyingProcess(cudaStream));
 
@@ -48,20 +52,23 @@ Result Pipeline::commit() {
         BL_FATAL("Failed to instantiate CUDA Graph: {}", err);
     });
 
-    commited = true;
     BL_INFO("Pipeline commited successfully!");
 
     return Result::SUCCESS;
 }
 
 Result Pipeline::process(bool waitCompletion) {
-    BL_CUDA_CHECK(cudaGraphLaunch(instance, 0), [&]{
+    BL_CHECK(this->underlyingPreprocess());
+
+    BL_CUDA_CHECK(cudaGraphLaunch(instance, cudaStream), [&]{
         BL_FATAL("Failed launch CUDA graph: {}", err);
     });
 
     if (waitCompletion) {
         cudaStreamSynchronize(cudaStream);
     }
+
+    BL_CHECK(this->underlyingPostprocess());
 
     return Result::SUCCESS;
 }

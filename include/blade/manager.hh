@@ -22,7 +22,7 @@ struct Resources {
 class BLADE_API ResourcesPlug {
 public:
     virtual ~ResourcesPlug() {};
-    virtual Resources getResources() = 0;
+    virtual Resources getResources() const = 0;
 };
 
 class BLADE_API Manager {

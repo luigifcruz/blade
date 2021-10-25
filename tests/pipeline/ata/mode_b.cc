@@ -23,6 +23,33 @@ public:
     struct Config : ArrayDims, ConfigInternal {};
 
     ModeB(const Config & configuration) : config(configuration) {
+        if (this->commit() != Result::SUCCESS) {
+            throw Result::ERROR;
+        }
+    }
+
+    std::size_t getInputSize() const {
+        return channelizer->getBufferSize();
+    }
+
+    std::size_t getOutputSize() const {
+        return beamformer->getOutputSize();
+    }
+
+    Result upload(const std::span<std::complex<int8_t>> &input) {
+        BL_CHECK(copyBuffer(bufferA, input, CopyKind::H2D));
+
+        return Result::SUCCESS;
+    }
+
+    Result download(std::span<std::complex<half>> output) {
+        BL_CHECK(copyBuffer(output, bufferE, CopyKind::D2H));
+
+        return Result::SUCCESS;
+    }
+
+protected:
+    Result underlyingInit() final {
         cast = Factory<Cast::Generic>({
             .blockSize = config.castBlockSize,
         });
@@ -42,75 +69,28 @@ public:
             }
         });
 
-        if (this->commit() != Result::SUCCESS) {
-            throw Result::ERROR;
-        }
-    }
-
-    ~ModeB() {
-        Free(bufferA);
-        Free(bufferB);
-        Free(bufferC);
-        Free(bufferD);
-        Free(phasors);
-    }
-
-    std::size_t getInputSize() const {
-        return channelizer->getBufferSize();
-    }
-
-    std::size_t getOutputSize() const {
-        return beamformer->getOutputSize();
-    }
-
-    Result upload(const std::span<std::complex<int8_t>> &input) {
-        BL_CHECK(Transfer(bufferA, input, CopyKind::H2D));
-
         return Result::SUCCESS;
     }
 
-    Result download(std::span<std::complex<half>> output) {
-        BL_CHECK(Transfer(output, bufferE, CopyKind::D2H));
-
-        return Result::SUCCESS;
-    }
-
-    Resources getResources() {
-        Resources res;
-
-        // Report device memory.
-        res.memory.device += phasors.size_bytes();
-        res.memory.device += bufferA.size_bytes();
-        res.memory.device += bufferB.size_bytes();
-        res.memory.device += bufferC.size_bytes();
-        res.memory.device += bufferD.size_bytes();
-        res.memory.device += bufferE.size_bytes();
-
-        // Report host memory.
-        res.memory.host += phasors.size_bytes();
-        res.memory.host += bufferA.size_bytes();
-        res.memory.host += bufferE.size_bytes();
-
-        // Report transfers.
+    Result underlyingReport(Resources &res) final {
         res.transfer.h2d += bufferA.size_bytes();
         res.transfer.d2h += bufferE.size_bytes();
 
-        return res;
+        return Result::SUCCESS;
     }
 
-protected:
-    Result underlyingAllocate() {
-        BL_CHECK(Allocate(beamformer->getPhasorsSize(), phasors));
-        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferA));
-        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferB));
-        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferC));
-        BL_CHECK(Allocate(beamformer->getOutputSize(), bufferD));
-        BL_CHECK(Allocate(beamformer->getOutputSize(), bufferE));
+    Result underlyingAllocate() final {
+        BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
+        BL_CHECK(allocateBuffer(bufferA, channelizer->getBufferSize()));
+        BL_CHECK(allocateBuffer(bufferB, channelizer->getBufferSize()));
+        BL_CHECK(allocateBuffer(bufferC, channelizer->getBufferSize()));
+        BL_CHECK(allocateBuffer(bufferD, beamformer->getOutputSize()));
+        BL_CHECK(allocateBuffer(bufferE, beamformer->getOutputSize()));
 
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t & cudaStream) {
+    Result underlyingProcess(cudaStream_t & cudaStream) final {
         BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
         BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
         BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
@@ -144,15 +124,15 @@ int main() {
         {
             .NBEAMS = 1,
             .NANTS  = 20,
-            .NCHANS = 96,
-            .NTIME  = 35000,
+            .NCHANS = 192,
+            .NTIME  = 8192,
             .NPOLS  = 2,
         }, {
             .channelizerRate = 4,
             .beamformerBeams = 16,
             .castBlockSize = 512,
             .channelizerBlockSize = 512,
-            .beamformerBlockSize = 350,
+            .beamformerBlockSize = 512,
         },
     };
 
@@ -161,19 +141,13 @@ int main() {
     swapchain.push_back(std::make_unique<ModeB>(config));
     swapchain.push_back(std::make_unique<ModeB>(config));
 
-    // Gather resources reports from instances.
-    for (auto & instance : swapchain) {
-        manager.save(*instance);
-    }
-    manager.report();
-
     // Allocate and register input buffers.
     std::vector<std::vector<std::complex<int8_t>>> input;
     input.resize(swapchain.size());
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {
         input[i].resize(swapchain[i]->getInputSize());
-        swapchain[i]->Register(input[i], RegisterKind::ReadOnly);
+        swapchain[i]->pinBuffer(input[i], RegisterKind::ReadOnly);
     }
 
     // Allocate and register output buffers.
@@ -182,8 +156,14 @@ int main() {
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {
         output[i].resize(swapchain[i]->getOutputSize());
-        swapchain[i]->Register(output[i], RegisterKind::Default);
+        swapchain[i]->pinBuffer(output[i], RegisterKind::Default);
     }
+
+    // Gather resources reports from instances.
+    for (auto & instance : swapchain) {
+        manager.save(*instance);
+    }
+    manager.report();
 
     // Repeat each operation 150 times to average out the execution time.
     auto t1 = high_resolution_clock::now();
