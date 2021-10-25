@@ -15,13 +15,13 @@ Result Generic::process() {
     return Result::SUCCESS;
 }
 
-std::span<const std::complex<float>> Generic::getInputData() {
-    return getVector<std::complex<float>, const std::complex<float>>
+std::span<std::complex<float>> Generic::getInputData() {
+    return getVector<std::complex<float>, std::complex<float>>
         (lib.attr("getInputData"));
 }
 
-std::span<const std::complex<float>> Generic::getOutputData() {
-    return getVector<std::complex<float>, const std::complex<float>>
+std::span<std::complex<float>> Generic::getOutputData() {
+    return getVector<std::complex<float>, std::complex<float>>
         (lib.attr("getOutputData"));
 }
 

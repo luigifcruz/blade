@@ -14,8 +14,8 @@ public:
 
     Result process();
 
-    std::span<const std::complex<float>> getInputData();
-    std::span<const std::complex<float>> getOutputData();
+    std::span<std::complex<float>> getInputData();
+    std::span<std::complex<float>> getOutputData();
 };
 
 } // namespace Blade::Channelizer::Test

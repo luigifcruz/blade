@@ -21,7 +21,7 @@ protected:
     template<typename IT, typename OT>
     static std::span<OT> getVector(const py::object & input) {
         auto arr = input().cast<py::array_t<IT>>();
-        auto buf = reinterpret_cast<OT*>(arr.data());
+        auto buf = const_cast<OT*>(arr.data());
         auto len = static_cast<std::size_t>(arr.size());
         return std::span{buf, len};
     }

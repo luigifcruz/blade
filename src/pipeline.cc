@@ -14,14 +14,14 @@ Pipeline::~Pipeline() {
 Result Pipeline::commit() {
     BL_INFO("Pipeline commiting...");
 
-    // Let child class allocate memory.
-    BL_INFO("Allocating memory...");
-    BL_CHECK(this->underlyingAllocate());
-
     BL_CUDA_CHECK(cudaStreamCreateWithFlags(&cudaStream,
                 cudaStreamNonBlocking), [&]{
         BL_FATAL("Failed to create stream for CUDA Graph: {}", err);
     });
+
+    // Let child class allocate memory.
+    BL_INFO("Allocating memory...");
+    BL_CHECK(this->underlyingAllocate());
 
     // Run kernels once to populate cache.
     BL_INFO("Pre-caching CUDA kernels...");
@@ -34,6 +34,11 @@ Result Pipeline::commit() {
     });
 
     BL_CHECK(this->underlyingProcess(cudaStream));
+
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Failed to run kernels while capturing: {}", err);
+        return Result::CUDA_ERROR;
+    });
 
     BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream, &graph), [&]{
         BL_FATAL("Failed to end the capture of CUDA Graph: {}", err);

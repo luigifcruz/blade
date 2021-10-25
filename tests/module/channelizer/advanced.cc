@@ -2,81 +2,92 @@
 #include "blade/channelizer/base.hh"
 #include "blade/checker/base.hh"
 #include "blade/manager.hh"
+#include "blade/pipeline.hh"
 
 using namespace Blade;
 
-Result Run(Channelizer::Generic & channelizer, Channelizer::Test::Generic & test) {
-    Manager manager;
-    Checker::Generic checker({});
-
-    std::complex<float>* input_ptr;
-    std::complex<float>* output_ptr;
-    std::complex<float>* result_ptr;
-    std::size_t buffer_size = channelizer.getBufferSize() * sizeof(input_ptr[0]);
-
-    manager.save({
-        .memory = {
-            .device = buffer_size*3,
-            .host = buffer_size*3,
-        },
-        .transfer = {
-            .d2h = buffer_size,
-            .h2d = buffer_size,
+class Module : public Pipeline {
+public:
+    Module(Channelizer::Generic &channelizer,
+           Channelizer::Test::Generic &test) :
+        channelizer(channelizer),
+        test(test),
+        checker({}) {
+        if (this->commit() != Result::SUCCESS) {
+            throw Result::ERROR;
         }
-    }).report();
+    };
 
-    BL_INFO("Allocating CUDA memory...");
-    BL_CUDA_CHECK(cudaMalloc(&input_ptr, buffer_size), [&]{
-        BL_FATAL("Can't allocate complex checker input buffer: {}", err);
-    });
-
-    BL_CUDA_CHECK(cudaMalloc(&output_ptr, buffer_size), [&]{
-        BL_FATAL("Can't allocate complex checker output buffer: {}", err);
-    });
-
-    BL_CUDA_CHECK(cudaMalloc(&result_ptr, buffer_size), [&]{
-        BL_FATAL("Can't allocate complex checker input buffer: {}", err);
-    });
-
-    std::span input(input_ptr, channelizer.getBufferSize());
-    std::span output(output_ptr, channelizer.getBufferSize());
-    std::span result(result_ptr, channelizer.getBufferSize());
-
-    BL_INFO("Generating test data with Python...");
-    BL_CHECK(test.process());
-
-    BL_INFO("Checking test data size...");
-    BL_ASSERT(test.getInputData().size() == channelizer.getBufferSize());
-    BL_ASSERT(test.getOutputData().size() == channelizer.getBufferSize());
-
-    BL_INFO("Copying test data to the device...");
-    BL_CUDA_CHECK(cudaMemcpy(input.data(), test.getInputData().data(),
-                buffer_size, cudaMemcpyHostToDevice), [&]{
-        BL_FATAL("Can't copy beamformer input data from host to device: {}", err);
-    });
-
-    BL_CUDA_CHECK(cudaMemcpy(result.data(), test.getOutputData().data(),
-                buffer_size, cudaMemcpyHostToDevice), [&]{
-        BL_FATAL("Can't copy beamformer result data from host to device: {}", err);
-    });
-
-    BL_INFO("Running kernel...");
-    for (int i = 0; i < 150; i++) {
-        BL_CHECK(channelizer.run(input, output));
-        cudaDeviceSynchronize();
+    ~Module() {
+        Free(input);
+        Free(output);
+        Free(result);
+        Free(counter);
     }
 
-    BL_INFO("Checking for errors...");
-    size_t errors = 0;
-    if ((errors = checker.run(output, result)) != 0) {
-        BL_FATAL("Beamformer produced {} errors.", errors);
-        return Result::ERROR;
+    Resources getResources() {
+        Resources res;
+
+        // Report device memory.
+        res.memory.device += input.size_bytes();
+        res.memory.device += output.size_bytes();
+        res.memory.device += result.size_bytes();
+        res.memory.device += counter.size_bytes();
+
+        // Report host memory.
+        res.memory.host += input.size_bytes();
+        res.memory.host += output.size_bytes();
+        res.memory.host += result.size_bytes();
+        res.memory.host += counter.size_bytes();
+
+        // Report transfers.
+        res.transfer.h2d += input.size_bytes();
+        res.transfer.d2h += output.size_bytes();
+
+        return res;
     }
 
-    cudaFree(input_ptr);
-    cudaFree(result_ptr);
+    unsigned long long int getCounter() const {
+        return counter[0];
+    }
 
-    return Result::SUCCESS;
+    void resetCounter() const {
+        counter[0] = 0;
+    }
+
+protected:
+    Result underlyingAllocate() {
+        BL_CHECK(Allocate(channelizer.getBufferSize(), input));
+        BL_CHECK(Allocate(channelizer.getBufferSize(), output));
+        BL_CHECK(Allocate(channelizer.getBufferSize(), result));
+        BL_CHECK(Allocate(2, counter, true));
+
+        BL_INFO("Generating test data with Python...");
+        BL_CHECK(test.process());
+
+        BL_INFO("Copying test data to the device...");
+        BL_CHECK(Transfer(input, test.getInputData(), CopyKind::H2D));
+        BL_CHECK(Transfer(result, test.getOutputData(), CopyKind::H2D));
+
+        return Result::SUCCESS;
+    }
+
+    Result underlyingProcess(cudaStream_t &cudaStream) {
+        BL_CHECK(channelizer.run(input, output, cudaStream));
+        BL_CHECK(checker.run(output, result, counter, cudaStream));
+
+        return Result::SUCCESS;
+    }
+
+private:
+    Channelizer::Generic &channelizer;
+    Channelizer::Test::Generic &test;
+    Checker::Generic checker;
+
+    std::span<std::complex<float>> input;
+    std::span<std::complex<float>> output;
+    std::span<std::complex<float>> result;
+    std::span<std::size_t> counter;
 };
 
 int main() {
@@ -84,7 +95,7 @@ int main() {
 
     BL_INFO("Testing advanced channelizer.");
 
-    Channelizer::Generic chan({
+    Channelizer::Generic channelizer({
         {
             .NBEAMS = 1,
             .NANTS  = 20,
@@ -97,11 +108,21 @@ int main() {
         },
     });
 
-    Channelizer::Test::Generic test(chan.getConfig());
+    Channelizer::Test::Generic test(channelizer.getConfig());
 
-    if (Run(chan, test) != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. Test is exiting...");
-        return 1;
+    Module mod(channelizer, test);
+    mod.resetCounter();
+
+    for (int i = 0; i < 150; i++) {
+        if (mod.process() != Result::SUCCESS) {
+            BL_WARN("Fault was encountered. Test is exiting...");
+            return 1;
+        }
+
+        if (mod.getCounter() != 0) {
+            BL_FATAL("Beamformer produced {} errors.", mod.getCounter());
+            return 1;
+        }
     }
 
     BL_INFO("Test succeeded.");
