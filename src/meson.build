@@ -2,6 +2,7 @@ src_lst += files([
   'logger.cc',
   'manager.cc',
   'kernel.cc',
+  'pipeline.cc',
 ])
 
 subdir('cast')

@@ -4,12 +4,13 @@
 #include "blade/checker/base.hh"
 #include "blade/channelizer/base.hh"
 #include "blade/beamformer/ata.hh"
+#include "blade/pipeline.hh"
 #include "blade/manager.hh"
 
 using namespace Blade;
 using namespace std::chrono;
 
-class Pipeline {
+class ModeB : public Pipeline {
 public:
     struct ConfigInternal {
         std::size_t channelizerRate = 4;
@@ -21,8 +22,7 @@ public:
 
     struct Config : ArrayDims, ConfigInternal {};
 
-    Pipeline(const Config & configuration) : config(configuration) {
-        BL_INFO("Initializing modules...")
+    ModeB(const Config & configuration) : config(configuration) {
         cast = Factory<Cast::Generic>({
             .blockSize = config.castBlockSize,
         });
@@ -42,31 +42,17 @@ public:
             }
         });
 
-        manager = Factory<Manager>({
-            .pcie_bw = static_cast<size_t>(11e9),
-        });
-
-        BL_INFO("Allocating device memory...")
-        if (this->allocate() != Result::SUCCESS) {
-            BL_FATAL("Pipeline initialization failed. Exiting...");
+        if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
-
-        BL_INFO("Generating CUDA Graph...")
-        if (this->generateGraph() != Result::SUCCESS) {
-            BL_FATAL("Pipeline initialization failed. Exiting...");
-            throw Result::ERROR;
-        }
-
-        BL_INFO("Initialization finished.");
     }
 
-    ~Pipeline() {
-        cudaFree(bufferA.data());
-        cudaFree(bufferB.data());
-        cudaFree(bufferC.data());
-        cudaFree(bufferD.data());
-        cudaFree(phasors.data());
+    ~ModeB() {
+        Free(bufferA);
+        Free(bufferB);
+        Free(bufferC);
+        Free(bufferD);
+        Free(phasors);
     }
 
     std::size_t getInputSize() const {
@@ -78,115 +64,53 @@ public:
     }
 
     Result upload(const std::span<std::complex<int8_t>> &input) {
-        BL_CUDA_CHECK(cudaMemcpyAsync(bufferA.data(), input.data(),
-                    bufferA.size_bytes(), cudaMemcpyHostToDevice, cudaStream), [&]{
-            BL_FATAL("Can't copy data from host to device: {}", err);
-        });
-
-        return Result::SUCCESS;
-    }
-
-    Result process(bool waitCompletion = false) {
-        BL_CUDA_CHECK(cudaGraphLaunch(instance, 0), [&]{
-            BL_FATAL("Failed launch CUDA graph: {}", err);
-        });
-
-        if (waitCompletion) {
-            cudaDeviceSynchronize();
-        }
+        BL_CHECK(Transfer(bufferA, input, CopyKind::H2D));
 
         return Result::SUCCESS;
     }
 
     Result download(std::span<std::complex<half>> output) {
-        BL_CUDA_CHECK(cudaMemcpyAsync(output.data(), bufferE.data(),
-                    bufferE.size_bytes(), cudaMemcpyDeviceToHost, cudaStream), [&]{
-            BL_FATAL("Can't copy data from device to host: {}", err);
-        });
+        BL_CHECK(Transfer(output, bufferE, CopyKind::D2H));
 
         return Result::SUCCESS;
     }
 
-private:
-    const Config& config;
+    Resources getResources() {
+        Resources res;
 
-    cudaGraph_t graph;
-    cudaStream_t cudaStream;
-    cudaGraphExec_t instance;
+        // Report device memory.
+        res.memory.device += phasors.size_bytes();
+        res.memory.device += bufferA.size_bytes();
+        res.memory.device += bufferB.size_bytes();
+        res.memory.device += bufferC.size_bytes();
+        res.memory.device += bufferD.size_bytes();
+        res.memory.device += bufferE.size_bytes();
 
-    std::span<std::complex<float>> phasors;
-    std::span<std::complex<int8_t>> bufferA;
-    std::span<std::complex<float>> bufferB;
-    std::span<std::complex<float>> bufferC;
-    std::span<std::complex<float>> bufferD;
-    std::span<std::complex<half>> bufferE;
+        // Report host memory.
+        res.memory.host += phasors.size_bytes();
+        res.memory.host += bufferA.size_bytes();
+        res.memory.host += bufferE.size_bytes();
 
-    std::unique_ptr<Manager> manager;
-    std::unique_ptr<Cast::Generic> cast;
-    std::unique_ptr<Beamformer::ATA> beamformer;
-    std::unique_ptr<Channelizer::Generic> channelizer;
+        // Report transfers.
+        res.transfer.h2d += bufferA.size_bytes();
+        res.transfer.d2h += bufferE.size_bytes();
 
-    Result allocate() {
-        std::complex<float>* pphasors;
-        std::complex<int8_t>* pbufferA;
-        std::complex<float>* pbufferB;
-        std::complex<float>* pbufferC;
-        std::complex<float>* pbufferD;
-        std::complex<half>* pbufferE;
+        return res;
+    }
 
-        std::size_t sphasors = beamformer->getPhasorsSize() * sizeof(pphasors[0]);
-        std::size_t sbufferA = channelizer->getBufferSize() * sizeof(pbufferA[0]);
-        std::size_t sbufferB = channelizer->getBufferSize() * sizeof(pbufferB[0]);
-        std::size_t sbufferC = channelizer->getBufferSize() * sizeof(pbufferC[0]);
-        std::size_t sbufferD = beamformer->getOutputSize() * sizeof(pbufferD[0]);
-        std::size_t sbufferE = beamformer->getOutputSize() * sizeof(pbufferE[0]);
-
-        BL_CUDA_CHECK(cudaMalloc(&pphasors, sphasors), [&]{
-            BL_FATAL("Can't allocate phasor buffer: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaMalloc(&pbufferA, sbufferA), [&]{
-            BL_FATAL("Can't allocate buffer A: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaMalloc(&pbufferB, sbufferB), [&]{
-            BL_FATAL("Can't allocate buffer B: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaMalloc(&pbufferC, sbufferC), [&]{
-            BL_FATAL("Can't allocate buffer C: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaMalloc(&pbufferD, sbufferD), [&]{
-            BL_FATAL("Can't allocate buffer D: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaMalloc(&pbufferE, sbufferE), [&]{
-            BL_FATAL("Can't allocate buffer E: {}", err);
-        });
-
-        this->phasors = std::span(pphasors, beamformer->getPhasorsSize());
-        this->bufferA = std::span(pbufferA, channelizer->getBufferSize());
-        this->bufferB = std::span(pbufferB, channelizer->getBufferSize());
-        this->bufferC = std::span(pbufferC, channelizer->getBufferSize());
-        this->bufferD = std::span(pbufferD, beamformer->getOutputSize());
-        this->bufferE = std::span(pbufferE, beamformer->getOutputSize());
-
-        manager->save({
-            .memory = {
-                .device = sphasors + sbufferA + sbufferB + sbufferC + sbufferD + sbufferE,
-                .host = sphasors + sbufferA + sbufferE,
-            },
-            .transfer = {
-                .d2h = sbufferE,
-                .h2d = sbufferA,
-            }
-        }).report();
+protected:
+    Result underlyingAllocate() {
+        BL_CHECK(Allocate(beamformer->getPhasorsSize(), phasors));
+        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferA));
+        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferB));
+        BL_CHECK(Allocate(channelizer->getBufferSize(), bufferC));
+        BL_CHECK(Allocate(beamformer->getOutputSize(), bufferD));
+        BL_CHECK(Allocate(beamformer->getOutputSize(), bufferE));
 
         return Result::SUCCESS;
     }
 
-    Result runKernels() {
+    Result underlyingProcess(cudaStream_t & cudaStream) {
         BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
         BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
         BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
@@ -195,39 +119,28 @@ private:
         return Result::SUCCESS;
     }
 
-    Result generateGraph() {
-        BL_CUDA_CHECK(cudaStreamCreateWithFlags(&cudaStream,
-                    cudaStreamNonBlocking), [&]{
-            BL_FATAL("Failed to create stream for CUDA Graph: {}", err);
-        });
+private:
+    const Config& config;
 
-        runKernels(); // Run kernels once to populate cache.
+    std::span<std::complex<float>> phasors;
+    std::span<std::complex<int8_t>> bufferA;
+    std::span<std::complex<float>> bufferB;
+    std::span<std::complex<float>> bufferC;
+    std::span<std::complex<float>> bufferD;
+    std::span<std::complex<half>> bufferE;
 
-        BL_CUDA_CHECK(cudaStreamBeginCapture(cudaStream,
-                    cudaStreamCaptureModeGlobal), [&]{
-            BL_FATAL("Failed to begin the capture of CUDA Graph: {}", err);
-        });
-
-        runKernels();
-
-        BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream, &graph), [&]{
-            BL_FATAL("Failed to end the capture of CUDA Graph: {}", err);
-        });
-
-        BL_CUDA_CHECK(cudaGraphInstantiate(&instance, graph, NULL, NULL, 0), [&]{
-            BL_FATAL("Failed to instantiate CUDA Graph: {}", err);
-        });
-
-        return Result::SUCCESS;
-    }
+    std::unique_ptr<Cast::Generic> cast;
+    std::unique_ptr<Beamformer::ATA> beamformer;
+    std::unique_ptr<Channelizer::Generic> channelizer;
 };
 
 int main() {
     Logger guard{};
+    Manager manager{};
 
     BL_INFO("Testing ATA beamformer pipeline.");
 
-    Pipeline pipeline({
+    ModeB pipeline({
         {
             .NBEAMS = 1,
             .NANTS  = 20,
@@ -243,7 +156,7 @@ int main() {
         },
     });
 
-    Pipeline pipeline2({
+    ModeB pipeline2({
         {
             .NBEAMS = 1,
             .NANTS  = 20,
@@ -258,22 +171,22 @@ int main() {
             .beamformerBlockSize = 350,
         },
     });
+
+    manager.save(pipeline);
+    manager.save(pipeline2);
+    manager.report();
 
     std::vector<std::complex<int8_t>> input(pipeline.getInputSize());
     std::vector<std::complex<half>> output(pipeline.getOutputSize());
 
-    cudaHostRegister(input.data(), input.size() * sizeof(input[0]),
-            cudaHostRegisterReadOnly);
-    cudaHostRegister(output.data(), output.size() * sizeof(output[0]),
-            cudaHostRegisterDefault);
+    pipeline.Register(input, RegisterKind::ReadOnly);
+    pipeline.Register(output, RegisterKind::Default);
 
     std::vector<std::complex<int8_t>> input2(pipeline2.getInputSize());
     std::vector<std::complex<half>> output2(pipeline2.getOutputSize());
 
-    cudaHostRegister(input2.data(), input2.size() * sizeof(input2[0]),
-            cudaHostRegisterReadOnly);
-    cudaHostRegister(output2.data(), output2.size() * sizeof(output2[0]),
-            cudaHostRegisterDefault);
+    pipeline2.Register(input2, RegisterKind::ReadOnly);
+    pipeline2.Register(output2, RegisterKind::Default);
 
     auto t1 = high_resolution_clock::now();
     for (int i = 0; i < 150; i++) {

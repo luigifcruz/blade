@@ -18,6 +18,11 @@ Manager& Manager::save(const Resources & resources) {
     return *this;
 }
 
+Manager& Manager::save(ResourcesPlug &plug) {
+    this->save(plug.getResources());
+    return *this;
+}
+
 Manager& Manager::report() {
     BL_INFO("=============================================");
     BL_INFO("Kernel resources manager usage report:")

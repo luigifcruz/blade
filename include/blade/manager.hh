@@ -19,6 +19,12 @@ struct Resources {
     } transfer;
 };
 
+class BLADE_API ResourcesPlug {
+public:
+    virtual ~ResourcesPlug() {};
+    virtual Resources getResources() = 0;
+};
+
 class BLADE_API Manager {
 public:
     struct Config {
@@ -28,7 +34,8 @@ public:
     Manager() {};
     Manager(const Config & config) : config(config) {};
 
-    Manager& save(const Resources & resources);
+    Manager& save(const Resources &resources);
+    Manager& save(ResourcesPlug &plug);
     Manager& reset();
     Manager& report();
 
