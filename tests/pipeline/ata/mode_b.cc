@@ -140,7 +140,7 @@ int main() {
 
     BL_INFO("Testing ATA beamformer pipeline.");
 
-    ModeB pipeline({
+    ModeB::Config config = {
         {
             .NBEAMS = 1,
             .NANTS  = 20,
@@ -154,72 +154,66 @@ int main() {
             .channelizerBlockSize = 512,
             .beamformerBlockSize = 350,
         },
-    });
+    };
 
-    ModeB pipeline2({
-        {
-            .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 96,
-            .NTIME  = 35000,
-            .NPOLS  = 2,
-        }, {
-            .channelizerRate = 4,
-            .beamformerBeams = 16,
-            .castBlockSize = 512,
-            .channelizerBlockSize = 512,
-            .beamformerBlockSize = 350,
-        },
-    });
+    // Instantiate swapchain instance A and B.
+    std::vector<std::unique_ptr<ModeB>> swapchain;
+    swapchain.push_back(std::make_unique<ModeB>(config));
+    swapchain.push_back(std::make_unique<ModeB>(config));
 
-    manager.save(pipeline);
-    manager.save(pipeline2);
+    // Gather resources reports from instances.
+    for (auto & instance : swapchain) {
+        manager.save(*instance);
+    }
     manager.report();
 
-    std::vector<std::complex<int8_t>> input(pipeline.getInputSize());
-    std::vector<std::complex<half>> output(pipeline.getOutputSize());
+    // Allocate and register input buffers.
+    std::vector<std::vector<std::complex<int8_t>>> input;
+    input.resize(swapchain.size());
 
-    pipeline.Register(input, RegisterKind::ReadOnly);
-    pipeline.Register(output, RegisterKind::Default);
+    for (std::size_t i = 0; i < swapchain.size(); i++) {
+        input[i].resize(swapchain[i]->getInputSize());
+        swapchain[i]->Register(input[i], RegisterKind::ReadOnly);
+    }
 
-    std::vector<std::complex<int8_t>> input2(pipeline2.getInputSize());
-    std::vector<std::complex<half>> output2(pipeline2.getOutputSize());
+    // Allocate and register output buffers.
+    std::vector<std::vector<std::complex<half>>> output;
+    output.resize(swapchain.size());
 
-    pipeline2.Register(input2, RegisterKind::ReadOnly);
-    pipeline2.Register(output2, RegisterKind::Default);
+    for (std::size_t i = 0; i < swapchain.size(); i++) {
+        output[i].resize(swapchain[i]->getOutputSize());
+        swapchain[i]->Register(output[i], RegisterKind::Default);
+    }
 
+    // Repeat each operation 150 times to average out the execution time.
     auto t1 = high_resolution_clock::now();
     for (int i = 0; i < 150; i++) {
-        if (pipeline.upload(input) != Result::SUCCESS) {
-            BL_WARN("Can't upload data. Test is exiting...");
-            return 1;
+
+        // Upload the data of both instances in parallel.
+        for (std::size_t i = 0; i < swapchain.size(); i++) {
+            if (swapchain[i]->upload(input[i]) != Result::SUCCESS) {
+                BL_WARN("Can't upload data. Test is exiting...");
+                return 1;
+            }
         }
 
-        if (pipeline2.upload(input2) != Result::SUCCESS) {
-            BL_WARN("Can't upload data. Test is exiting...");
-            return 1;
+        // Process the data of both instances in parallel.
+        for (std::size_t i = 0; i < swapchain.size(); i++) {
+            if (swapchain[i]->process() != Result::SUCCESS) {
+                BL_WARN("Can't process data. Test is exiting...");
+                return 1;
+            }
         }
 
-        if (pipeline.process() != Result::SUCCESS) {
-            BL_WARN("Can't process data. Test is exiting...");
-            return 1;
+        // Download the data of both instances in parallel.
+        for (std::size_t i = 0; i < swapchain.size(); i++) {
+            if (swapchain[i]->download(output[i]) != Result::SUCCESS) {
+                BL_WARN("Can't download data. Test is exiting...");
+                return 1;
+            }
         }
 
-        if (pipeline2.process() != Result::SUCCESS) {
-            BL_WARN("Can't process data. Test is exiting...");
-            return 1;
-        }
-
-        if (pipeline.download(output) != Result::SUCCESS) {
-            BL_WARN("Can't download data. Test is exiting...");
-            return 1;
-        }
-
-        if (pipeline2.download(output2) != Result::SUCCESS) {
-            BL_WARN("Can't download data. Test is exiting...");
-            return 1;
-        }
-
+        // Wait for both instances to finish.
         cudaDeviceSynchronize();
     }
     auto t2 = high_resolution_clock::now();
