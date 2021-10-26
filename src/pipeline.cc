@@ -4,7 +4,7 @@ namespace Blade {
 
 Pipeline::~Pipeline() {
     BL_DEBUG("Deallocating device memory.");
-    for (const auto & allocation : allocations) {
+    for (const auto& allocation : allocations) {
         cudaFree(allocation);
     }
 
@@ -44,7 +44,7 @@ Result Pipeline::commit() {
         return Result::CUDA_ERROR;
     });
 
-    BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream, &graph), [&]{
+    BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream,& graph), [&]{
         BL_FATAL("Failed to end the capture of CUDA Graph: {}", err);
     });
 

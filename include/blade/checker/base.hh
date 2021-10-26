@@ -4,29 +4,29 @@
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
-namespace Blade::Checker {
+namespace Blade {
 
-class BLADE_API Generic : public Kernel {
+class BLADE_API Checker : public Kernel {
 public:
     struct Config {
         std::size_t blockSize = 512;
     };
 
-    Generic(const Config & config);
-    ~Generic();
+    explicit Checker(const Config& config);
+    ~Checker();
 
     constexpr Config getConfig() const {
         return config;
     }
 
     template<typename IT, typename OT>
-    unsigned long long int run(const std::span<IT> &a,
-                               const std::span<OT> &b,
+    unsigned long long int run(const std::span<IT>& a,
+                               const std::span<OT>& b,
                                      cudaStream_t cudaStream = 0);
 
     template<typename IT, typename OT>
-    unsigned long long int run(const std::span<std::complex<IT>> &a,
-                               const std::span<std::complex<OT>> &b,
+    unsigned long long int run(const std::span<std::complex<IT>>& a,
+                               const std::span<std::complex<OT>>& b,
                                      cudaStream_t cudaStream = 0);
 
 private:
@@ -40,6 +40,6 @@ private:
             std::size_t scale = 1, cudaStream_t cudaStream = 0);
 };
 
-} // namespace Blade::Checker
+} // namespace Blade
 
 #endif

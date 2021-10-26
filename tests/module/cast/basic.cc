@@ -8,14 +8,14 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Module : public Pipeline {
 public:
-    Module(const std::size_t &size) : size(size) {
+    Module(const std::size_t& size) : size(size) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
-    Result upload(const std::span<IT> &inputBuffer,
-                  const std::span<OT> &resultBuffer) {
+    Result upload(const std::span<IT>& inputBuffer,
+                  const std::span<OT>& resultBuffer) {
         BL_CHECK(copyBuffer(input, inputBuffer, CopyKind::H2D));
         BL_CHECK(copyBuffer(result, resultBuffer, CopyKind::H2D));
 
@@ -26,8 +26,8 @@ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
-        cast = Factory<Cast::Generic>({});
-        checker = Factory<Checker::Generic>({});
+        cast = Factory<Cast>({});
+        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -42,7 +42,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources &res) final {
+    Result underlyingReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += input.size_bytes();
@@ -51,7 +51,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t &cudaStream) final {
+    Result underlyingProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(cast->run(input, output, cudaStream));
 
         return Result::SUCCESS;
@@ -74,8 +74,8 @@ private:
     std::span<OT> output;
     std::span<OT> result;
 
-    std::unique_ptr<Cast::Generic> cast;
-    std::unique_ptr<Checker::Generic> checker;
+    std::unique_ptr<Cast> cast;
+    std::unique_ptr<Checker> checker;
 };
 
 template<typename IT, typename OT>

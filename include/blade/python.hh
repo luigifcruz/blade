@@ -19,7 +19,7 @@ protected:
     py::object lib;
 
     template<typename IT, typename OT>
-    static std::span<OT> getVector(const py::object & input) {
+    static std::span<OT> getVector(const py::object& input) {
         auto arr = input().cast<py::array_t<IT>>();
         auto buf = const_cast<OT*>(arr.data());
         auto len = static_cast<std::size_t>(arr.size());

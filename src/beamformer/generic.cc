@@ -4,7 +4,7 @@
 
 namespace Blade::Beamformer {
 
-Generic::Generic(const Config & config) :
+Generic::Generic(const Config& config) :
     Kernel(config.blockSize),
     config(config),
     cache(100, *beamformer_kernel)
@@ -18,9 +18,9 @@ Generic::Generic(const Config & config) :
     }
 }
 
-Result Generic::run(const std::span<std::complex<float>> &input,
-                    const std::span<std::complex<float>> &phasors,
-                          std::span<std::complex<float>> &output,
+Result Generic::run(const std::span<std::complex<float>>& input,
+                    const std::span<std::complex<float>>& phasors,
+                          std::span<std::complex<float>>& output,
                           cudaStream_t cudaStream) {
     if (input.size() != getInputSize()) {
         BL_FATAL("Size mismatch between input and configuration ({}, {}).",

@@ -1,4 +1,4 @@
-#include "blade/beamformer/test/generic.hh"
+#include "blade/beamformer/generic_test.hh"
 #include "blade/beamformer/generic.hh"
 #include "blade/checker/base.hh"
 #include "blade/manager.hh"
@@ -6,10 +6,10 @@
 
 using namespace Blade;
 
-template<typename T, typename TT>
+template<typename T>
 class Module : public Pipeline {
 public:
-    Module(const typename T::Config &config) : config(config) {
+    Module(const typename T::Config& config) : config(config) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -20,8 +20,8 @@ protected:
         BL_INFO("Initializing kernels.");
 
         beamformer = Factory<T>(config);
-        test = std::make_unique<TT>(config);
-        checker = Factory<Checker::Generic>({});
+        test = std::make_unique<typename T::Test>(config);
+        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -45,7 +45,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources &res) final {
+    Result underlyingReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += input.size_bytes();
@@ -55,7 +55,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t &cudaStream) final {
+    Result underlyingProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(beamformer->run(input, phasors, output, cudaStream));
 
         return Result::SUCCESS;
@@ -72,11 +72,11 @@ protected:
     }
 
 private:
-    const typename T::Config &config;
+    const typename T::Config& config;
 
     std::unique_ptr<Beamformer::Generic> beamformer;
-    std::unique_ptr<Beamformer::Test::Generic> test;
-    std::unique_ptr<Checker::Generic> checker;
+    std::unique_ptr<Beamformer::Generic::Test> test;
+    std::unique_ptr<Checker> checker;
 
     std::span<std::complex<float>> input;
     std::span<std::complex<float>> phasors;

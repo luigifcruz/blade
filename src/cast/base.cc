@@ -4,9 +4,9 @@
 
 #include "cast.jit.hh"
 
-namespace Blade::Cast {
+namespace Blade {
 
-Generic::Generic(const Config & config) :
+Cast::Cast(const Config& config) :
     Kernel(config.blockSize),
     config(config),
     cache(100, *cast_kernel)
@@ -16,12 +16,12 @@ Generic::Generic(const Config & config) :
     block = dim3(config.blockSize);
 }
 
-Generic::~Generic() {
+Cast::~Cast() {
     BL_DEBUG("Destroying class.");
 }
 
 template<typename OT, typename IT>
-Result Generic::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream) {
+Result Cast::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream) {
     dim3 grid = dim3((size + block.x - 1) / block.x);
     auto kernel = Template("cast").instantiate(
         Type<typename std::remove_pointer<IT>::type>(),
@@ -43,8 +43,8 @@ Result Generic::run(IT input, OT output, std::size_t size, cudaStream_t cudaStre
 }
 
 template<typename IT, typename OT>
-Result Generic::run(const std::span<std::complex<IT>> &input,
-                          std::span<std::complex<OT>> &output,
+Result Cast::run(const std::span<std::complex<IT>>& input,
+                          std::span<std::complex<OT>>& output,
                           cudaStream_t cudaStream) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",
@@ -60,12 +60,12 @@ Result Generic::run(const std::span<std::complex<IT>> &input,
     );
 }
 
-template Result Generic::run(const std::span<std::complex<int8_t>>&,
+template Result Cast::run(const std::span<std::complex<int8_t>>&,
                                    std::span<std::complex<float>>&,
                                    cudaStream_t);
 
-template Result Generic::run(const std::span<std::complex<float>>&,
+template Result Cast::run(const std::span<std::complex<float>>&,
                                    std::span<std::complex<half>>&,
                                    cudaStream_t);
 
-} // namespace Blade::Cast
+} // namespace Blade

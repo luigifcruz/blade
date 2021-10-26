@@ -3,12 +3,13 @@
 
 #include "blade/base.hh"
 #include "blade/python.hh"
+#include "blade/beamformer/generic.hh"
 
-namespace Blade::Beamformer::Test {
+namespace Blade::Beamformer {
 
-class BLADE_API Generic {
+class BLADE_API Generic::Test {
 public:
-    virtual ~Generic() = default;
+    virtual ~Test() = default;
 
     virtual Result process() = 0;
 
@@ -17,9 +18,9 @@ public:
     virtual std::span<std::complex<float>> getOutputData() = 0;
 };
 
-class BLADE_API GenericPython : public Generic, protected Python {
+class BLADE_API GenericPython : public Generic::Test, protected Python {
 public:
-    GenericPython(const std::string & telescope, const ArrayDims & dims);
+    explicit GenericPython(const std::string& telescope, const ArrayDims& dims);
     ~GenericPython() = default;
 
     Result process();
@@ -29,6 +30,6 @@ public:
     std::span<std::complex<float>> getOutputData();
 };
 
-} // namespace Blade::Beamformer::Test
+} // namespace Blade::Beamformer
 
 #endif

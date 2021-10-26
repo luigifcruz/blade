@@ -3,7 +3,7 @@
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Checker::Generic checker({});
+    Checker checker({});
 
     BL_INFO("Allocating CUDA memory...");
     static int8_t* input_ptr;
@@ -23,11 +23,11 @@ Result Init(std::size_t testSize = 8192) {
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
 
-    for (auto & element : input) {
+    for (auto& element : input) {
         element = std::rand();
     }
 
-    for (auto & element : output) {
+    for (auto& element : output) {
         element = 60;
     }
 

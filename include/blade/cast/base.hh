@@ -4,24 +4,24 @@
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
-namespace Blade::Cast {
+namespace Blade {
 
-class BLADE_API Generic : public Kernel {
+class BLADE_API Cast : public Kernel {
 public:
     struct Config {
         std::size_t blockSize = 512;
     };
 
-    Generic(const Config & config);
-    ~Generic();
+    explicit Cast(const Config& config);
+    ~Cast();
 
     constexpr Config getConfig() const {
         return config;
     }
 
     template<typename IT, typename OT>
-    Result run(const std::span<std::complex<IT>> &input,
-                     std::span<std::complex<OT>> &output,
+    Result run(const std::span<std::complex<IT>>& input,
+                     std::span<std::complex<OT>>& output,
                      cudaStream_t cudaStream = 0);
 
 private:
@@ -34,6 +34,6 @@ private:
             cudaStream_t cudaStream = 0);
 };
 
-} // namespace Blade::Cast
+} // namespace Blade
 
 #endif

@@ -1,6 +1,5 @@
 #include "basic.hh"
-#include "blade/beamformer/ata.hh"
-#include "blade/beamformer/test/ata.hh"
+#include "blade/beamformer/meerkat.hh"
 
 using namespace Blade;
 
@@ -10,7 +9,7 @@ int main() {
 
     BL_INFO("Testing beamformer with the MeerKAT kernel.");
 
-    Module<Beamformer::ATA, Beamformer::Test::ATA> mod({
+    Module<Beamformer::MeerKAT> mod({
         {
             .NBEAMS = 16,
             .NANTS  = 20,

@@ -1,9 +1,9 @@
-#include "blade/beamformer/test/generic.hh"
+#include "blade/beamformer/generic_test.hh"
 
-namespace Blade::Beamformer::Test {
+namespace Blade::Beamformer {
 
-GenericPython::GenericPython(const std::string & telescope,
-                             const ArrayDims & dims) {
+GenericPython::GenericPython(const std::string& telescope,
+                             const ArrayDims& dims) {
     BL_DEBUG("Initilizating class.");
     lib = py::module::import("blade.instruments.beamformer.test")
         .attr(telescope.c_str())(dims.NBEAMS, dims.NANTS, dims.NCHANS,
@@ -33,4 +33,4 @@ std::span<std::complex<float>> GenericPython::getOutputData() {
         (lib.attr("getOutputData"));
 }
 
-} // namespace Blade::Beamformer::Test
+} // namespace Blade::Beamformer

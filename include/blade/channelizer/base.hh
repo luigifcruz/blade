@@ -4,10 +4,12 @@
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
-namespace Blade::Channelizer {
+namespace Blade {
 
-class BLADE_API Generic : public Kernel {
+class BLADE_API Channelizer : public Kernel {
 public:
+    class Test;
+
     struct InternalConfig {
         std::size_t fftSize = 4;
         std::size_t blockSize = 512;
@@ -15,8 +17,8 @@ public:
 
     struct Config : ArrayDims, InternalConfig {};
 
-    Generic(const Config & config);
-    ~Generic();
+    explicit Channelizer(const Config& config);
+    ~Channelizer();
 
     constexpr Config getConfig() const {
         return config;
@@ -34,8 +36,8 @@ public:
         return config.NPOLS * config.NTIME * config.NANTS * config.NCHANS;
     }
 
-    Result run(const std::span<std::complex<float>> &input,
-                     std::span<std::complex<float>> &output,
+    Result run(const std::span<std::complex<float>>& input,
+                     std::span<std::complex<float>>& output,
                      cudaStream_t cudaStream = 0);
 
 private:
@@ -45,6 +47,6 @@ private:
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade::Channelizer
+} // namespace Blade
 
 #endif

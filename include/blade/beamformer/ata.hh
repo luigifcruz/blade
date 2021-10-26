@@ -7,7 +7,9 @@ namespace Blade::Beamformer {
 
 class BLADE_API ATA : public Generic {
 public:
-    ATA(const Config & config);
+    class Test;
+
+    explicit ATA(const Config& config);
 
     constexpr std::size_t getInputSize() const {
         return config.NANTS * config.NCHANS * config.NTIME * config.NPOLS;

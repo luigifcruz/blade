@@ -2,9 +2,9 @@
 
 #include "channelizer.jit.hh"
 
-namespace Blade::Channelizer {
+namespace Blade {
 
-Generic::Generic(const Config & config) :
+Channelizer::Channelizer(const Config& config) :
     Kernel(config.blockSize),
     config(config),
     cache(100, *channelizer_kernel)
@@ -36,12 +36,12 @@ Generic::Generic(const Config & config) :
     kernel = Template(kernel_key).instantiate(size, config.fftSize, config.NPOLS);
 }
 
-Generic::~Generic() {
+Channelizer::~Channelizer() {
     BL_DEBUG("Destroying class.");
 }
 
-Result Generic::run(const std::span<std::complex<float>> &input,
-                          std::span<std::complex<float>> &output,
+Result Channelizer::run(const std::span<std::complex<float>>& input,
+                          std::span<std::complex<float>>& output,
                           cudaStream_t cudaStream) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",
@@ -71,4 +71,4 @@ Result Generic::run(const std::span<std::complex<float>> &input,
     return Result::SUCCESS;
 }
 
-} // namespace Blade::Channelizer
+} // namespace Blade

@@ -2,7 +2,7 @@
 
 namespace Blade::Beamformer {
 
-MeerKAT::MeerKAT(const Config & config) : Generic(config) {
+MeerKAT::MeerKAT(const Config& config) : Generic(config) {
     block = dim3(config.blockSize);
     grid = dim3(config.NCHANS, config.NTIME/config.blockSize);
 

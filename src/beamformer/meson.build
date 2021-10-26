@@ -8,4 +8,7 @@ jit_lst += files([
   'beamformer.cu',
 ])
 
-subdir('test')
+pyt_lst += files([
+  'ata_test.cc',
+  'generic_test.cc',
+])

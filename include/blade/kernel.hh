@@ -12,11 +12,11 @@ namespace Blade {
 
 class BLADE_API Kernel {
 public:
-    Kernel(const std::size_t & blockSize);
+    explicit Kernel(const std::size_t& blockSize);
 };
 
 template<typename T>
-inline std::unique_ptr<T> Factory(const typename T::Config & config) {
+inline std::unique_ptr<T> Factory(const typename T::Config& config) {
     return std::make_unique<T>(config);
 }
 

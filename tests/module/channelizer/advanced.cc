@@ -8,7 +8,7 @@ using namespace Blade;
 
 class Module : public Pipeline {
 public:
-    Module(const Channelizer::Generic::Config &config) : config(config) {
+    Module(const Channelizer::Config& config) : config(config) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -18,9 +18,9 @@ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
-        channelizer = std::make_unique<Channelizer::Generic>(config);
-        test = std::make_unique<Channelizer::Test::Generic>(config);
-        checker = Factory<Checker::Generic>({});
+        channelizer = std::make_unique<Channelizer>(config);
+        test = std::make_unique<Channelizer::Test>(config);
+        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -41,7 +41,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources &res) final {
+    Result underlyingReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += input.size_bytes();
@@ -50,7 +50,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t &cudaStream) final {
+    Result underlyingProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(channelizer->run(input, output, cudaStream));
 
         return Result::SUCCESS;
@@ -67,11 +67,11 @@ protected:
     }
 
 private:
-    const Channelizer::Generic::Config &config;
+    const Channelizer::Config& config;
 
-    std::unique_ptr<Channelizer::Generic> channelizer;
-    std::unique_ptr<Channelizer::Test::Generic> test;
-    std::unique_ptr<Checker::Generic> checker;
+    std::unique_ptr<Channelizer> channelizer;
+    std::unique_ptr<Channelizer::Test> test;
+    std::unique_ptr<Checker> checker;
 
     std::span<std::complex<float>> input;
     std::span<std::complex<float>> output;

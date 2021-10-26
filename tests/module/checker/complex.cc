@@ -3,7 +3,7 @@
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Checker::Generic checker({});
+    Checker checker({});
 
     BL_INFO("Allocating CUDA memory...");
     static std::complex<float>* input_ptr;
@@ -25,14 +25,14 @@ Result Init(std::size_t testSize = 8192) {
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
 
-    for (auto & element : input) {
+    for (auto& element : input) {
         element = {
             static_cast<float>(std::rand()),
             static_cast<float>(std::rand())
         };
     }
 
-    for (auto & element : output) {
+    for (auto& element : output) {
         element = std::complex(1.42, 1.69);
     }
 

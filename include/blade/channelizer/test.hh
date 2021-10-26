@@ -5,12 +5,12 @@
 #include "blade/python.hh"
 #include "blade/channelizer/base.hh"
 
-namespace Blade::Channelizer::Test {
+namespace Blade {
 
-class BLADE_API Generic : protected Python {
+class BLADE_API Channelizer::Test : protected Python {
 public:
-    Generic(const Channelizer::Generic::Config & config);
-    ~Generic() = default;
+    explicit Test(const Channelizer::Config& config);
+    ~Test() = default;
 
     Result process();
 
@@ -18,6 +18,6 @@ public:
     std::span<std::complex<float>> getOutputData();
 };
 
-} // namespace Blade::Channelizer::Test
+} // namespace Blade
 
 #endif

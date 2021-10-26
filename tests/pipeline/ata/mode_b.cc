@@ -22,7 +22,7 @@ public:
 
     struct Config : ArrayDims, ConfigInternal {};
 
-    ModeB(const Config & configuration) : config(configuration) {
+    ModeB(const Config& configuration) : config(configuration) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -36,7 +36,7 @@ public:
         return beamformer->getOutputSize();
     }
 
-    Result upload(const std::span<std::complex<int8_t>> &input) {
+    Result upload(const std::span<std::complex<int8_t>>& input) {
         BL_CHECK(copyBuffer(bufferA, input, CopyKind::H2D));
 
         return Result::SUCCESS;
@@ -52,11 +52,11 @@ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
-        cast = Factory<Cast::Generic>({
+        cast = Factory<Cast>({
             .blockSize = config.castBlockSize,
         });
 
-        channelizer = Factory<Channelizer::Generic>({
+        channelizer = Factory<Channelizer>({
             config,
             {
                 .fftSize = config.channelizerRate,
@@ -87,7 +87,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources &res) final {
+    Result underlyingReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += bufferA.size_bytes();
@@ -96,7 +96,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t & cudaStream) final {
+    Result underlyingProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
         BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
         BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
@@ -115,9 +115,9 @@ private:
     std::span<std::complex<float>> bufferD;
     std::span<std::complex<half>> bufferE;
 
-    std::unique_ptr<Cast::Generic> cast;
+    std::unique_ptr<Cast> cast;
     std::unique_ptr<Beamformer::ATA> beamformer;
-    std::unique_ptr<Channelizer::Generic> channelizer;
+    std::unique_ptr<Channelizer> channelizer;
 };
 
 int main() {
@@ -166,7 +166,7 @@ int main() {
     }
 
     // Gather resources reports from instances.
-    for (auto & instance : swapchain) {
+    for (auto& instance : swapchain) {
         manager.save(*instance);
     }
     manager.report();

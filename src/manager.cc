@@ -10,7 +10,7 @@ Manager& Manager::reset() {
     return *this;
 }
 
-Manager& Manager::save(const Resources & resources) {
+Manager& Manager::save(const Resources& resources) {
     master.memory.host += resources.memory.host;
     master.memory.device += resources.memory.device;
     master.transfer.d2h += resources.transfer.d2h;
@@ -18,7 +18,7 @@ Manager& Manager::save(const Resources & resources) {
     return *this;
 }
 
-Manager& Manager::save(ResourcesPlug &plug) {
+Manager& Manager::save(ResourcesPlug& plug) {
     this->save(plug.getResources());
     return *this;
 }

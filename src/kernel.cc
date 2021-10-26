@@ -2,7 +2,7 @@
 
 namespace Blade {
 
-Kernel::Kernel(const std::size_t & blockSize) {
+Kernel::Kernel(const std::size_t& blockSize) {
     if (blockSize > 1024) {
         BL_FATAL("The block size ({}) is larger than hardware limit (1024).",
                 blockSize);

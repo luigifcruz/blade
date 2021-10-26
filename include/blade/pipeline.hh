@@ -21,7 +21,7 @@ public:
     }
 
     template<typename T>
-    Result pinBuffer(const std::span<T> &mem, RegisterKind kind) {
+    Result pinBuffer(const std::span<T>& mem, RegisterKind kind) {
         BL_DEBUG("Pinning host memory.");
 
         resources.memory.host += mem.size_bytes();
@@ -35,7 +35,7 @@ public:
     }
 
     template<typename T>
-    Result pinBuffer(std::vector<T> &mem, RegisterKind kind) {
+    Result pinBuffer(std::vector<T>& mem, RegisterKind kind) {
         return pinBuffer(std::span{ mem }, kind);
     }
 
@@ -44,7 +44,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingReport(Resources & res) {
+    virtual constexpr Result underlyingReport(Resources& res) {
         return Result::SUCCESS;
     }
 
@@ -56,7 +56,7 @@ protected:
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingProcess(cudaStream_t & cudaStream) {
+    virtual constexpr Result underlyingProcess(cudaStream_t& cudaStream) {
         return Result::SUCCESS;
     }
 
@@ -65,7 +65,7 @@ protected:
     }
 
     template<typename T>
-    Result copyBuffer(const std::span<T> &dst, const std::span<T> &src, CopyKind dir) {
+    Result copyBuffer(const std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
         if (dst.size() != src.size()) {
             BL_FATAL("Size mismatch between source and destination ({}, {}).",
                     src.size(), dst.size());
@@ -81,10 +81,10 @@ protected:
     }
 
     template<typename T>
-    Result allocateBuffer(std::span<T> &dst, std::size_t size, bool managed = false) {
+    Result allocateBuffer(std::span<T>& dst, std::size_t size, bool managed = false) {
         BL_DEBUG("Allocating device memory.");
 
-        T* ptr;
+        T *ptr;
         std::size_t size_bytes = size * sizeof(ptr[0]);
 
         if (managed) {
