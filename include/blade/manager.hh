@@ -21,7 +21,7 @@ struct Resources {
 
 class BLADE_API ResourcesPlug {
  public:
-    virtual ~ResourcesPlug() {};
+    virtual ~ResourcesPlug() {}
     virtual Resources getResources() const = 0;
 };
 
