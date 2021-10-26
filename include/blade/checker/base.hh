@@ -7,7 +7,7 @@
 namespace Blade {
 
 class BLADE_API Checker : public Kernel {
-public:
+ public:
     struct Config {
         std::size_t blockSize = 512;
     };
@@ -29,7 +29,7 @@ public:
                                const std::span<std::complex<OT>>& b,
                                      cudaStream_t cudaStream = 0);
 
-private:
+ private:
     const Config config;
     dim3 block;
     unsigned long long int* counter;
@@ -40,6 +40,6 @@ private:
             std::size_t scale = 1, cudaStream_t cudaStream = 0);
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_CHECKER_BASE_HH_

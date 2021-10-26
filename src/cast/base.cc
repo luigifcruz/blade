@@ -9,8 +9,7 @@ namespace Blade {
 Cast::Cast(const Config& config) :
     Kernel(config.blockSize),
     config(config),
-    cache(100, *cast_kernel)
-{
+    cache(100, *cast_kernel) {
     BL_DEBUG("Initilizating class.");
 
     block = dim3(config.blockSize);
@@ -26,8 +25,7 @@ Result Cast::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream)
     auto kernel = Template("cast").instantiate(
         Type<typename std::remove_pointer<IT>::type>(),
         Type<typename std::remove_pointer<OT>::type>(),
-        size
-    );
+        size);
 
     cache
         .get_kernel(kernel)
@@ -56,8 +54,7 @@ Result Cast::run(const std::span<std::complex<IT>>& input,
         reinterpret_cast<const IT*>(input.data()),
         reinterpret_cast<OT*>(output.data()),
         input.size() * 2,
-        cudaStream
-    );
+        cudaStream);
 }
 
 template Result Cast::run(const std::span<std::complex<int8_t>>&,
@@ -68,4 +65,4 @@ template Result Cast::run(const std::span<std::complex<float>>&,
                                    std::span<std::complex<half>>&,
                                    cudaStream_t);
 
-} // namespace Blade
+}  // namespace Blade

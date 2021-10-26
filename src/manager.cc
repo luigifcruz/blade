@@ -42,4 +42,4 @@ Manager& Manager::report() {
     return *this;
 }
 
-} // namespace Blade
+}  // namespace Blade

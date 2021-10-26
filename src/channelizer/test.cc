@@ -26,4 +26,4 @@ std::span<std::complex<float>> Channelizer::Test::getOutputData() {
         (lib.attr("getOutputData"));
 }
 
-} // namespace Blade
+}  // namespace Blade

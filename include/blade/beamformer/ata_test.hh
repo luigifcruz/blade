@@ -7,11 +7,11 @@
 namespace Blade::Beamformer {
 
 class BLADE_API ATA::Test : public GenericPython {
-public:
+ public:
     explicit Test(const Beamformer::Generic::Config& config);
     ~Test() = default;
 };
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BEAMFORMER_ATA_TEST_HH_

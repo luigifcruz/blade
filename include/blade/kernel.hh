@@ -11,7 +11,7 @@ using namespace jitify2::reflection;
 namespace Blade {
 
 class BLADE_API Kernel {
-public:
+ public:
     explicit Kernel(const std::size_t& blockSize);
 };
 
@@ -20,6 +20,6 @@ inline std::unique_ptr<T> Factory(const typename T::Config& config) {
     return std::make_unique<T>(config);
 }
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_KERNEL_HH_

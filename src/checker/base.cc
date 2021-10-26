@@ -99,4 +99,4 @@ template unsigned long long int Checker::run(const std::span<half>&,
                                              const std::span<half>&,
                                                    cudaStream_t);
 
-} // namespace Blade
+}  // namespace Blade

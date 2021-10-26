@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "blade/beamformer/generic_test.hh"
 #include "blade/beamformer/generic.hh"
 #include "blade/checker/base.hh"
@@ -8,14 +10,14 @@ using namespace Blade;
 
 template<typename T>
 class Module : public Pipeline {
-public:
-    Module(const typename T::Config& config) : config(config) {
+ public:
+    explicit Module(const typename T::Config& config) : config(config) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
-protected:
+ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
@@ -75,7 +77,7 @@ protected:
         return Result::SUCCESS;
     }
 
-private:
+ private:
     const typename T::Config& config;
 
     std::unique_ptr<Beamformer::Generic> beamformer;

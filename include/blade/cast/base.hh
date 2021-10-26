@@ -7,7 +7,7 @@
 namespace Blade {
 
 class BLADE_API Cast : public Kernel {
-public:
+ public:
     struct Config {
         std::size_t blockSize = 512;
     };
@@ -24,7 +24,7 @@ public:
                      std::span<std::complex<OT>>& output,
                      cudaStream_t cudaStream = 0);
 
-private:
+ private:
     const Config config;
     dim3 block;
     jitify2::ProgramCache<> cache;
@@ -34,6 +34,6 @@ private:
             cudaStream_t cudaStream = 0);
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_CAST_BASE_HH_

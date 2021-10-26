@@ -1,13 +1,15 @@
 #ifndef BLADE_CHANNELIZER_H
 #define BLADE_CHANNELIZER_H
 
+#include <string>
+
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
 namespace Blade {
 
 class BLADE_API Channelizer : public Kernel {
-public:
+ public:
     class Test;
 
     struct InternalConfig {
@@ -40,13 +42,13 @@ public:
                      std::span<std::complex<float>>& output,
                      cudaStream_t cudaStream = 0);
 
-private:
+ private:
     const Config config;
     dim3 grid, block;
     std::string kernel;
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_CHANNELIZER_BASE_HH_

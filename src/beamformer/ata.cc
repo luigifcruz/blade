@@ -18,8 +18,7 @@ ATA::ATA(const Config& config) : Generic(config) {
         config.NCHANS,
         config.NTIME,
         config.NPOLS,
-        config.blockSize
-    );
+        config.blockSize);
 }
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer

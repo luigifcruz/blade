@@ -1,6 +1,9 @@
 #ifndef BLADE_TYPES_H
 #define BLADE_TYPES_H
 
+#include <span>
+#include <complex>
+
 #include "blade/common.hh"
 
 #define BLADE_API __attribute__((visibility("default")))
@@ -23,7 +26,7 @@ enum class Result : uint8_t {
 };
 
 struct ArrayDims {
-public:
+ public:
     std::size_t NBEAMS;
     std::size_t NANTS;
     std::size_t NCHANS;
@@ -31,6 +34,6 @@ public:
     std::size_t NPOLS;
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_TYPES_HH_

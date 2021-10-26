@@ -1,13 +1,15 @@
 #ifndef BLADE_BEAMFORMER_GENERIC_H
 #define BLADE_BEAMFORMER_GENERIC_H
 
+#include <string>
+
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
 namespace Blade::Beamformer {
 
 class BLADE_API Generic : public Kernel {
-public:
+ public:
     class Test;
 
     struct InternalConfig {
@@ -32,13 +34,13 @@ public:
                      std::span<std::complex<float>>& output,
                      cudaStream_t cudaStream = 0);
 
-protected:
+ protected:
     const Config config;
     std::string kernel;
     dim3 grid, block;
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BEAMFORMER_GENERIC_HH_

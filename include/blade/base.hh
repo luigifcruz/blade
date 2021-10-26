@@ -8,4 +8,4 @@
 #include "blade/cuda.hh"
 #include "blade/pipeline.hh"
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BASE_HH_

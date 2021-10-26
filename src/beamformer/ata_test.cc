@@ -5,4 +5,4 @@ namespace Blade::Beamformer {
 ATA::Test::Test(const Beamformer::Generic::Config& config) :
     GenericPython("ATA", config) {}
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer

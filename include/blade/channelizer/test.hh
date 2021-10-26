@@ -8,7 +8,7 @@
 namespace Blade {
 
 class BLADE_API Channelizer::Test : protected Python {
-public:
+ public:
     explicit Test(const Channelizer::Config& config);
     ~Test() = default;
 
@@ -18,6 +18,6 @@ public:
     std::span<std::complex<float>> getOutputData();
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_CHANNELIZER_TEST_HH_

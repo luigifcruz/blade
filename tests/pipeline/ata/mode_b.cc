@@ -1,3 +1,4 @@
+#include <memory>
 #include <chrono>
 
 #include "blade/cast/base.hh"
@@ -11,7 +12,7 @@ using namespace Blade;
 using namespace std::chrono;
 
 class ModeB : public Pipeline {
-public:
+ public:
     struct ConfigInternal {
         std::size_t channelizerRate = 4;
         std::size_t beamformerBeams = 16;
@@ -22,7 +23,7 @@ public:
 
     struct Config : ArrayDims, ConfigInternal {};
 
-    ModeB(const Config& configuration) : config(configuration) {
+    explicit ModeB(const Config& configuration) : config(configuration) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -48,7 +49,7 @@ public:
         return Result::SUCCESS;
     }
 
-protected:
+ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
@@ -105,7 +106,7 @@ protected:
         return Result::SUCCESS;
     }
 
-private:
+ private:
     const Config& config;
 
     std::span<std::complex<float>> phasors;
@@ -174,7 +175,6 @@ int main() {
     // Repeat each operation 150 times to average out the execution time.
     auto t1 = high_resolution_clock::now();
     for (int i = 0; i < 150; i++) {
-
         // Upload the data of both instances in parallel.
         for (std::size_t i = 0; i < swapchain.size(); i++) {
             if (swapchain[i]->upload(input[i]) != Result::SUCCESS) {

@@ -1,6 +1,9 @@
 #ifndef BLADE_PIPELINE_H
 #define BLADE_PIPELINE_H
 
+#include <span>
+#include <vector>
+
 #include "blade/common.hh"
 #include "blade/cuda.hh"
 #include "blade/logger.hh"
@@ -10,7 +13,7 @@
 namespace Blade {
 
 class BLADE_API Pipeline : public ResourcesPlug {
-public:
+ public:
     virtual ~Pipeline();
 
     Result commit();
@@ -39,7 +42,7 @@ public:
         return pinBuffer(std::span{ mem }, kind);
     }
 
-protected:
+ protected:
     virtual constexpr Result underlyingInit() {
         return Result::SUCCESS;
     }
@@ -108,7 +111,7 @@ protected:
         return Result::SUCCESS;
     }
 
-private:
+ private:
     cudaGraph_t graph;
     cudaStream_t cudaStream;
     cudaGraphExec_t instance;
@@ -117,6 +120,6 @@ private:
     std::vector<void*> allocations;
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_PIPELINE_HH_

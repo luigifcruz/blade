@@ -7,14 +7,14 @@
 using namespace Blade;
 
 class Module : public Pipeline {
-public:
-    Module(const Channelizer::Config& config) : config(config) {
+ public:
+    explicit Module(const Channelizer::Config& config) : config(config) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
-protected:
+ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
@@ -66,7 +66,7 @@ protected:
         return Result::SUCCESS;
     }
 
-private:
+ private:
     const Channelizer::Config& config;
 
     std::unique_ptr<Channelizer> channelizer;

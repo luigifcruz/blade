@@ -16,4 +16,4 @@ Kernel::Kernel(const std::size_t& blockSize) {
     }
 }
 
-} // namespace Blade
+}  // namespace Blade

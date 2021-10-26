@@ -1,6 +1,8 @@
 #ifndef BLADE_LOGGER_H
 #define BLADE_LOGGER_H
 
+#include <string>
+
 #include "blade/types.hh"
 
 #undef SPDLOG_ACTIVE_LEVEL
@@ -39,11 +41,11 @@ BLADE_API std::string computeMethodName(const std::string&, const std::string&);
 namespace Blade {
 
 class BLADE_API Logger {
-public:
+ public:
     Logger();
     ~Logger();
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_LOGGER_HH_

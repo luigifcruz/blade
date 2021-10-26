@@ -33,4 +33,4 @@ std::span<std::complex<float>> GenericPython::getOutputData() {
         (lib.attr("getOutputData"));
 }
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer

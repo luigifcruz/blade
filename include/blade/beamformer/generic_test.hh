@@ -1,6 +1,8 @@
 #ifndef BLADE_BEAMFORMER_TEST_GENERIC_H
 #define BLADE_BEAMFORMER_TEST_GENERIC_H
 
+#include <string>
+
 #include "blade/base.hh"
 #include "blade/python.hh"
 #include "blade/beamformer/generic.hh"
@@ -8,7 +10,7 @@
 namespace Blade::Beamformer {
 
 class BLADE_API Generic::Test {
-public:
+ public:
     virtual ~Test() = default;
 
     virtual Result process() = 0;
@@ -19,7 +21,7 @@ public:
 };
 
 class BLADE_API GenericPython : public Generic::Test, protected Python {
-public:
+ public:
     explicit GenericPython(const std::string& telescope, const ArrayDims& dims);
     ~GenericPython() = default;
 
@@ -30,6 +32,6 @@ public:
     std::span<std::complex<float>> getOutputData();
 };
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BEAMFORMER_GENERIC_TEST_HH_

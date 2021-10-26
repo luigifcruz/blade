@@ -19,6 +19,6 @@ enum class CopyKind : unsigned int {
     H2H = cudaMemcpyHostToHost,
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_CUDA_HH_

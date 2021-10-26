@@ -7,8 +7,7 @@ namespace Blade::Beamformer {
 Generic::Generic(const Config& config) :
     Kernel(config.blockSize),
     config(config),
-    cache(100, *beamformer_kernel)
-{
+    cache(100, *beamformer_kernel) {
     BL_DEBUG("Initilizating class.");
 
     if ((config.NTIME % config.blockSize) != 0) {
@@ -45,8 +44,7 @@ Result Generic::run(const std::span<std::complex<float>>& input,
         ->launch(
             reinterpret_cast<const cuFloatComplex*>(input.data()),
             reinterpret_cast<const cuFloatComplex*>(phasors.data()),
-            reinterpret_cast<cuFloatComplex*>(output.data())
-        );
+            reinterpret_cast<cuFloatComplex*>(output.data()));
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Kernel failed to execute: {}", err);
@@ -56,4 +54,4 @@ Result Generic::run(const std::span<std::complex<float>>& input,
     return Result::SUCCESS;
 }
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer

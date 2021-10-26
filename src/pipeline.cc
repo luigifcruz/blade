@@ -44,7 +44,7 @@ Result Pipeline::commit() {
         return Result::CUDA_ERROR;
     });
 
-    BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream,& graph), [&]{
+    BL_CUDA_CHECK(cudaStreamEndCapture(cudaStream, &graph), [&]{
         BL_FATAL("Failed to end the capture of CUDA Graph: {}", err);
     });
 
@@ -78,4 +78,4 @@ Result Pipeline::process(bool waitCompletion) {
     return Result::SUCCESS;
 }
 
-} // namespace Blade
+}  // namespace Blade

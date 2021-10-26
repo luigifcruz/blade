@@ -7,8 +7,8 @@ using namespace Blade;
 
 template<typename IT, typename OT>
 class Module : public Pipeline {
-public:
-    Module(const std::size_t& size) : size(size) {
+ public:
+    explicit Module(const std::size_t& size) : size(size) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -22,7 +22,7 @@ public:
         return Result::SUCCESS;
     }
 
-protected:
+ protected:
     Result underlyingInit() final {
         BL_INFO("Initializing kernels.");
 
@@ -67,7 +67,7 @@ protected:
         return Result::SUCCESS;
     }
 
-private:
+ private:
     const std::size_t size;
 
     std::span<IT> input;
@@ -122,8 +122,8 @@ int main() {
     BL_INFO("Casting std::complex<int8_t> to std::complex<float>...");
     if (complex_text<int8_t, float>(testSize) != 0) {
         return 1;
-
     }
+
     BL_INFO("Casting std::complex<float> to std::complex<half>...");
     if (complex_text<float, half>(testSize) != 0) {
         return 1;

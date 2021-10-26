@@ -52,4 +52,4 @@
 }
 #endif
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_MACROS_HH_

@@ -7,8 +7,7 @@ namespace Blade {
 Channelizer::Channelizer(const Config& config) :
     Kernel(config.blockSize),
     config(config),
-    cache(100, *channelizer_kernel)
-{
+    cache(100, *channelizer_kernel) {
     BL_DEBUG("Initilizating class.");
 
     if ((config.NTIME % config.fftSize) != 0) {
@@ -60,8 +59,7 @@ Result Channelizer::run(const std::span<std::complex<float>>& input,
         ->configure(grid, block, 0, cudaStream)
         ->launch(
             reinterpret_cast<const cuFloatComplex*>(input.data()),
-            reinterpret_cast<cuFloatComplex*>(output.data())
-        );
+            reinterpret_cast<cuFloatComplex*>(output.data()));
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Kernel failed to execute: {}", err);
@@ -71,4 +69,4 @@ Result Channelizer::run(const std::span<std::complex<float>>& input,
     return Result::SUCCESS;
 }
 
-} // namespace Blade
+}  // namespace Blade
