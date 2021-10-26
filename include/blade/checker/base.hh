@@ -20,24 +20,23 @@ public:
     }
 
     template<typename IT, typename OT>
-    Result run(const std::span<IT> &a,
-               const std::span<OT> &b,
-                     std::span<std::size_t> &result,
-                     cudaStream_t cudaStream = 0);
+    unsigned long long int run(const std::span<IT> &a,
+                               const std::span<OT> &b,
+                                     cudaStream_t cudaStream = 0);
 
     template<typename IT, typename OT>
-    Result run(const std::span<std::complex<IT>> &a,
-               const std::span<std::complex<OT>> &b,
-                     std::span<std::size_t> &result,
-                     cudaStream_t cudaStream = 0);
+    unsigned long long int run(const std::span<std::complex<IT>> &a,
+                               const std::span<std::complex<OT>> &b,
+                                     cudaStream_t cudaStream = 0);
 
 private:
     const Config config;
     dim3 block;
+    unsigned long long int* counter;
     jitify2::ProgramCache<> cache;
 
     template<typename IT, typename OT>
-    Result run(IT a, OT b, std::span<std::size_t> &result, std::size_t size,
+    unsigned long long int run(IT a, OT b, std::size_t size,
             std::size_t scale = 1, cudaStream_t cudaStream = 0);
 };
 

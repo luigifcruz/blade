@@ -1,15 +1,16 @@
+#include "basic.hh"
 #include "blade/beamformer/ata.hh"
+#include "blade/beamformer/test/ata.hh"
 
 using namespace Blade;
 
-Result Run(Beamformer::Generic &);
-
 int main() {
     Logger guard{};
+    Manager manager{};
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Beamformer::ATA beam({
+    Module<Beamformer::ATA, Beamformer::Test::ATA> mod({
         {
             .NBEAMS = 16,
             .NANTS  = 20,
@@ -21,9 +22,13 @@ int main() {
         },
     });
 
-    if (Run(beam) != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. Test is exiting...");
-        return 1;
+    manager.save(mod).report();
+
+    for (int i = 0; i < 150; i++) {
+        if (mod.process(true) != Result::SUCCESS) {
+            BL_WARN("Fault was encountered. Test is exiting...");
+            return 1;
+        }
     }
 
     BL_INFO("Test succeeded.");

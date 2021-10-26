@@ -50,6 +50,8 @@ public:
 
 protected:
     Result underlyingInit() final {
+        BL_INFO("Initializing kernels.");
+
         cast = Factory<Cast::Generic>({
             .blockSize = config.castBlockSize,
         });
@@ -72,20 +74,24 @@ protected:
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources &res) final {
-        res.transfer.h2d += bufferA.size_bytes();
-        res.transfer.d2h += bufferE.size_bytes();
-
-        return Result::SUCCESS;
-    }
-
     Result underlyingAllocate() final {
+        BL_INFO("Allocating resources.");
+
         BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
         BL_CHECK(allocateBuffer(bufferA, channelizer->getBufferSize()));
         BL_CHECK(allocateBuffer(bufferB, channelizer->getBufferSize()));
         BL_CHECK(allocateBuffer(bufferC, channelizer->getBufferSize()));
         BL_CHECK(allocateBuffer(bufferD, beamformer->getOutputSize()));
         BL_CHECK(allocateBuffer(bufferE, beamformer->getOutputSize()));
+
+        return Result::SUCCESS;
+    }
+
+    Result underlyingReport(Resources &res) final {
+        BL_INFO("Reporting resources.");
+
+        res.transfer.h2d += bufferA.size_bytes();
+        res.transfer.d2h += bufferE.size_bytes();
 
         return Result::SUCCESS;
     }

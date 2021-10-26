@@ -18,18 +18,18 @@ Result GenericPython::process() {
     return Result::SUCCESS;
 }
 
-std::span<const std::complex<float>> GenericPython::getInputData() {
-    return getVector<std::complex<float>, const std::complex<float>>
+std::span<std::complex<float>> GenericPython::getInputData() {
+    return getVector<std::complex<float>, std::complex<float>>
         (lib.attr("getInputData"));
 }
 
-std::span<const std::complex<float>> GenericPython::getPhasorsData() {
-    return getVector<std::complex<float>, const std::complex<float>>
+std::span<std::complex<float>> GenericPython::getPhasorsData() {
+    return getVector<std::complex<float>, std::complex<float>>
         (lib.attr("getPhasorsData"));
 }
 
-std::span<const std::complex<float>> GenericPython::getOutputData() {
-    return getVector<std::complex<float>, const std::complex<float>>
+std::span<std::complex<float>> GenericPython::getOutputData() {
+    return getVector<std::complex<float>, std::complex<float>>
         (lib.attr("getOutputData"));
 }
 

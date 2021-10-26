@@ -1,29 +1,34 @@
-#include "blade/beamformer/meerkat.hh"
+#include "basic.hh"
+#include "blade/beamformer/ata.hh"
+#include "blade/beamformer/test/ata.hh"
 
 using namespace Blade;
 
-Result Run(Beamformer::Generic &);
-
 int main() {
     Logger guard{};
+    Manager manager{};
 
-    BL_INFO("Testing beamformer with the MeetKAT kernel.");
+    BL_INFO("Testing beamformer with the MeerKAT kernel.");
 
-    Beamformer::MeerKAT beam({
+    Module<Beamformer::ATA, Beamformer::Test::ATA> mod({
         {
-            .NBEAMS = 64,
-            .NANTS  = 64,
-            .NCHANS = 1,
-            .NTIME  = 4194304,
+            .NBEAMS = 16,
+            .NANTS  = 20,
+            .NCHANS = 384,
+            .NTIME  = 8750,
             .NPOLS  = 2,
         }, {
-            .blockSize = 256,
+            .blockSize = 350,
         },
     });
 
-    if (Run(beam) != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. Test is exiting...");
-        return 1;
+    manager.save(mod).report();
+
+    for (int i = 0; i < 150; i++) {
+        if (mod.process(true) != Result::SUCCESS) {
+            BL_WARN("Fault was encountered. Test is exiting...");
+            return 1;
+        }
     }
 
     BL_INFO("Test succeeded.");

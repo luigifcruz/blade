@@ -1,4 +1,4 @@
-#subdir('cast')
-#subdir('checker')
-#subdir('beamformer')
+subdir('cast')
+subdir('checker')
+subdir('beamformer')
 subdir('channelizer')

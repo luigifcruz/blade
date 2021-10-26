@@ -1,113 +1,131 @@
 #include "blade/cast/base.hh"
 #include "blade/checker/base.hh"
 #include "blade/manager.hh"
+#include "blade/pipeline.hh"
 
 using namespace Blade;
 
-template<typename IT, typename OT, typename FG>
-Result Run(FG gen_func, std::size_t testSize = 134400000) {
-    Checker::Generic checker({});
-    Cast::Generic cast({});
-    Manager manager;
-
-    BL_INFO("Allocating CUDA memory...");
-    static IT* input_ptr;
-    std::size_t input_size = testSize * sizeof(IT);
-
-    static OT* output_ptr;
-    std::size_t output_size = testSize * sizeof(OT);
-
-    static OT* result_ptr;
-    std::size_t result_size = testSize * sizeof(OT);
-
-    manager.save({
-        .memory = {
-            .device = input_size + output_size + result_size,
-            .host = input_size + output_size + result_size,
-        },
-        .transfer = {
-            .d2h = input_size,
-            .h2d = result_size,
+template<typename IT, typename OT>
+class Module : public Pipeline {
+public:
+    Module(const std::size_t &size) : size(size) {
+        if (this->commit() != Result::SUCCESS) {
+            throw Result::ERROR;
         }
-    }).report();
-    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, input_size), [&]{
-        BL_FATAL("Can't allocate test input buffer: {}", err);
-    });
+    }
 
-    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, output_size), [&]{
-        BL_FATAL("Can't allocate test output buffer: {}", err);
-    });
+    Result upload(const std::span<IT> &inputBuffer,
+                  const std::span<OT> &resultBuffer) {
+        BL_CHECK(copyBuffer(input, inputBuffer, CopyKind::H2D));
+        BL_CHECK(copyBuffer(result, resultBuffer, CopyKind::H2D));
 
-    BL_CUDA_CHECK(cudaMallocManaged(&result_ptr, result_size), [&]{
-        BL_FATAL("Can't allocate test result buffer: {}", err);
-    });
+        return Result::SUCCESS;
+    }
 
-    std::span input(input_ptr, testSize);
-    std::span output(output_ptr, testSize);
-    std::span result(result_ptr, testSize);
+protected:
+    Result underlyingInit() final {
+        BL_INFO("Initializing kernels.");
 
-    BL_INFO("Generating test data...");
-    gen_func(input, result);
+        cast = Factory<Cast::Generic>({});
+        checker = Factory<Checker::Generic>({});
 
-    BL_INFO("Running kernels...");
+        return Result::SUCCESS;
+    }
+
+    Result underlyingAllocate() final {
+        BL_INFO("Allocating resources.");
+
+        BL_CHECK(allocateBuffer(input, size));
+        BL_CHECK(allocateBuffer(output, size));
+        BL_CHECK(allocateBuffer(result, size));
+
+        return Result::SUCCESS;
+    }
+
+    Result underlyingReport(Resources &res) final {
+        BL_INFO("Reporting resources.");
+
+        res.transfer.h2d += input.size_bytes();
+        res.transfer.h2d += result.size_bytes();
+
+        return Result::SUCCESS;
+    }
+
+    Result underlyingProcess(cudaStream_t &cudaStream) final {
+        BL_CHECK(cast->run(input, output, cudaStream));
+
+        return Result::SUCCESS;
+    }
+
+    Result underlyingPostprocess() final {
+        std::size_t errors = 0;
+        if ((errors = checker->run(output, result)) != 0) {
+            BL_FATAL("Module produced {} errors.", errors);
+            return Result::ERROR;
+        }
+
+        return Result::SUCCESS;
+    }
+
+private:
+    const std::size_t size;
+
+    std::span<IT> input;
+    std::span<OT> output;
+    std::span<OT> result;
+
+    std::unique_ptr<Cast::Generic> cast;
+    std::unique_ptr<Checker::Generic> checker;
+};
+
+template<typename IT, typename OT>
+int complex_text(const std::size_t testSize) {
+    Manager manager{};
+    Module<std::complex<IT>, std::complex<OT>> mod{testSize};
+
+    std::vector<std::complex<IT>> input;
+    std::vector<std::complex<OT>> result;
+    for (std::size_t i = 0; i < testSize; i++) {
+        input.push_back({
+            static_cast<IT>(std::rand()),
+            static_cast<IT>(std::rand())
+        });
+
+        result.push_back({
+            static_cast<OT>(input[i].real()),
+            static_cast<OT>(input[i].imag())
+        });
+    }
+    mod.upload(input, result);
+    manager.save(mod).report();
+
     for (int i = 0; i < 150; i++) {
-        BL_CHECK(cast.run(input, output));
-        cudaDeviceSynchronize();
+        if (mod.process(true) != Result::SUCCESS) {
+            BL_WARN("Fault was encountered. Test is exiting...");
+            return 1;
+        }
     }
 
-    BL_INFO("Checking for errors...");
-    size_t errors = 0;
-    if ((errors = checker.run(result, output)) != 0) {
-        BL_FATAL("Beamformer produced {} errors.", errors);
-        return Result::ERROR;
-    }
+    BL_INFO("Success...")
 
-    cudaFree(input_ptr);
-    cudaFree(output_ptr);
-    cudaFree(result_ptr);
-
-    return Result::SUCCESS;
+    return 0;
 }
 
 int main() {
     Logger guard{};
     std::srand(unsigned(std::time(nullptr)));
 
-    BL_INFO("Testing advanced channelizer.");
+    BL_INFO("Testing cast module.");
 
-    BL_INFO("Testing complex int8 to complex float conversion...");
-    if (Run<std::complex<int8_t>, std::complex<float>>([](auto &input, auto &result){
-        for (std::size_t i = 0; i < input.size(); i++) {
-            input[i] = {
-                static_cast<int8_t>(std::rand()),
-                static_cast<int8_t>(std::rand())
-            };
+    const std::size_t testSize = 134400000;
 
-            result[i] = {
-                static_cast<float>(input[i].real()),
-                static_cast<float>(input[i].imag())
-            };
-        }
-    }) != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. Test is exiting...");
+    BL_INFO("Casting std::complex<int8_t> to std::complex<float>...");
+    if (complex_text<int8_t, float>(testSize) != 0) {
         return 1;
+
     }
-
-    BL_INFO("Testing complex float32 to float16 float conversion...");
-    if (Run<std::complex<float>, std::complex<half>>([](auto &input, auto &result){
-        for (std::size_t i = 0; i < input.size(); i++) {
-            input[i] = {
-                static_cast<float>(std::rand()),
-                static_cast<float>(std::rand())
-            };
-
-            result[i] = {
-                static_cast<half>(input[i].real()),
-                static_cast<half>(input[i].imag())
-            };
-        }
-    }) != Result::SUCCESS) {
-        BL_WARN("Fault was encountered. Test is exiting...");
+    BL_INFO("Casting std::complex<float> to std::complex<half>...");
+    if (complex_text<float, half>(testSize) != 0) {
         return 1;
     }
 
