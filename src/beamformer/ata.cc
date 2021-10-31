@@ -3,21 +3,21 @@
 namespace Blade::Beamformer {
 
 ATA::ATA(const Config& config) : Generic(config) {
-    if (config.NBEAMS > config.blockSize) {
+    if (config.dims.NBEAMS > config.blockSize) {
         BL_FATAL("The block size ({}) is smaller than the number "
-                "of beams ({}).", config.blockSize, config.NBEAMS);
+                "of beams ({}).", config.blockSize, config.dims.NBEAMS);
         throw Result::ERROR;
     }
 
     block = dim3(config.blockSize);
-    grid = dim3(config.NCHANS, config.NTIME/config.blockSize);
+    grid = dim3(config.dims.NCHANS, config.dims.NTIME/config.blockSize);
 
     kernel = Template("ATA").instantiate(
-        config.NBEAMS,
-        config.NANTS,
-        config.NCHANS,
-        config.NTIME,
-        config.NPOLS,
+        config.dims.NBEAMS,
+        config.dims.NANTS,
+        config.dims.NCHANS,
+        config.dims.NTIME,
+        config.dims.NPOLS,
         config.blockSize);
 }
 

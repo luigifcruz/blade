@@ -12,12 +12,11 @@ class BLADE_API Channelizer : public Kernel {
  public:
     class Test;
 
-    struct InternalConfig {
+    struct Config {
+        ArrayDims dims;
         std::size_t fftSize = 4;
         std::size_t blockSize = 512;
     };
-
-    struct Config : ArrayDims, InternalConfig {};
 
     explicit Channelizer(const Config& config);
     ~Channelizer();
@@ -26,20 +25,20 @@ class BLADE_API Channelizer : public Kernel {
         return config;
     }
 
-    constexpr ArrayDims getOutputDims(std::size_t beams = 1) const {
-        auto cfg = config;
-        cfg.NBEAMS = beams;
+    constexpr ArrayDims getOutputDims() const {
+        auto cfg = config.dims;
         cfg.NCHANS *= config.fftSize;
         cfg.NTIME /= config.fftSize;
         return cfg;
     }
 
     constexpr std::size_t getBufferSize() const {
-        return config.NPOLS * config.NTIME * config.NANTS * config.NCHANS;
+        return config.dims.NPOLS * config.dims.NTIME *
+            config.dims.NANTS * config.dims.NCHANS;
     }
 
-    Result run(const std::span<std::complex<float>>& input,
-                     std::span<std::complex<float>>& output,
+    Result run(const std::span<std::complex<F32>>& input,
+                     std::span<std::complex<F32>>& output,
                      cudaStream_t cudaStream = 0);
 
  private:

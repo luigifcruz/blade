@@ -12,11 +12,10 @@ class BLADE_API Generic : public Kernel {
  public:
     class Test;
 
-    struct InternalConfig {
+    struct Config {
+        ArrayDims dims;
         std::size_t blockSize = 512;
     };
-
-    struct Config : ArrayDims, InternalConfig {};
 
     explicit Generic(const Config& config);
     virtual ~Generic() = default;
@@ -29,9 +28,9 @@ class BLADE_API Generic : public Kernel {
     virtual constexpr std::size_t getOutputSize() const = 0;
     virtual constexpr std::size_t getPhasorsSize() const = 0;
 
-    Result run(const std::span<std::complex<float>>& input,
-               const std::span<std::complex<float>>& phasors,
-                     std::span<std::complex<float>>& output,
+    Result run(const std::span<std::complex<F32>>& input,
+               const std::span<std::complex<F32>>& phasors,
+                     std::span<std::complex<F32>>& output,
                      cudaStream_t cudaStream = 0);
 
  protected:

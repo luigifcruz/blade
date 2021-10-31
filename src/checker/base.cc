@@ -5,10 +5,7 @@
 namespace Blade {
 
 Checker::Checker(const Config& config) :
-    Kernel(config.blockSize),
-    config(config),
-    cache(100, *checker_kernel)
-{
+    Kernel(config.blockSize), config(config), cache(100, *checker_kernel) {
     BL_DEBUG("Initilizating class.");
 
     block = dim3(config.blockSize);
@@ -75,28 +72,28 @@ unsigned long long int Checker::run(const std::span<IT>& a,
     return this->run(a.data(), b.data(), a.size());
 }
 
-template unsigned long long int Checker::run(const std::span<std::complex<float>>&,
-                                             const std::span<std::complex<float>>&,
+template unsigned long long int Checker::run(const std::span<std::complex<F32>>&,
+                                             const std::span<std::complex<F32>>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<std::complex<int8_t>>&,
-                                             const std::span<std::complex<int8_t>>&,
+template unsigned long long int Checker::run(const std::span<std::complex<I8>>&,
+                                             const std::span<std::complex<I8>>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<std::complex<half>>&,
-                                             const std::span<std::complex<half>>&,
+template unsigned long long int Checker::run(const std::span<std::complex<F16>>&,
+                                             const std::span<std::complex<F16>>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<float>&,
-                                             const std::span<float>&,
+template unsigned long long int Checker::run(const std::span<F32>&,
+                                             const std::span<F32>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<int8_t>&,
-                                             const std::span<int8_t>&,
+template unsigned long long int Checker::run(const std::span<I8>&,
+                                             const std::span<I8>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<half>&,
-                                             const std::span<half>&,
+template unsigned long long int Checker::run(const std::span<F16>&,
+                                             const std::span<F16>&,
                                                    cudaStream_t);
 
 }  // namespace Blade

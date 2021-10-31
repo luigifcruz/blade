@@ -119,13 +119,13 @@ int main() {
 
     const std::size_t testSize = 134400000;
 
-    BL_INFO("Casting std::complex<int8_t> to std::complex<float>...");
-    if (complex_text<int8_t, float>(testSize) != 0) {
+    BL_INFO("Casting std::complex<I8> to std::complex<F32>...");
+    if (complex_text<I8, F32>(testSize) != 0) {
         return 1;
     }
 
-    BL_INFO("Casting std::complex<float> to std::complex<half>...");
-    if (complex_text<float, half>(testSize) != 0) {
+    BL_INFO("Casting std::complex<F32> to std::complex<F16>...");
+    if (complex_text<F32, F16>(testSize) != 0) {
         return 1;
     }
 

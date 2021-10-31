@@ -5,21 +5,19 @@
 namespace Blade::Beamformer {
 
 Generic::Generic(const Config& config) :
-    Kernel(config.blockSize),
-    config(config),
-    cache(100, *beamformer_kernel) {
+    Kernel(config.blockSize), config(config), cache(100, *beamformer_kernel) {
     BL_DEBUG("Initilizating class.");
 
-    if ((config.NTIME % config.blockSize) != 0) {
+    if ((config.dims.NTIME % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by "
-                "the block size ({}).", config.NTIME, config.blockSize);
+                "the block size ({}).", config.dims.NTIME, config.blockSize);
         throw Result::ERROR;
     }
 }
 
-Result Generic::run(const std::span<std::complex<float>>& input,
-                    const std::span<std::complex<float>>& phasors,
-                          std::span<std::complex<float>>& output,
+Result Generic::run(const std::span<std::complex<F32>>& input,
+                    const std::span<std::complex<F32>>& phasors,
+                          std::span<std::complex<F32>>& output,
                           cudaStream_t cudaStream) {
     if (input.size() != getInputSize()) {
         BL_FATAL("Size mismatch between input and configuration ({}, {}).",

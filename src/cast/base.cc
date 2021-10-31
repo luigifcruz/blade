@@ -7,9 +7,7 @@
 namespace Blade {
 
 Cast::Cast(const Config& config) :
-    Kernel(config.blockSize),
-    config(config),
-    cache(100, *cast_kernel) {
+    Kernel(config.blockSize), config(config), cache(100, *cast_kernel) {
     BL_DEBUG("Initilizating class.");
 
     block = dim3(config.blockSize);
@@ -42,8 +40,8 @@ Result Cast::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream)
 
 template<typename IT, typename OT>
 Result Cast::run(const std::span<std::complex<IT>>& input,
-                          std::span<std::complex<OT>>& output,
-                          cudaStream_t cudaStream) {
+                       std::span<std::complex<OT>>& output,
+                       cudaStream_t cudaStream) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",
                 input.size(), output.size());
@@ -57,12 +55,12 @@ Result Cast::run(const std::span<std::complex<IT>>& input,
         cudaStream);
 }
 
-template Result Cast::run(const std::span<std::complex<int8_t>>&,
-                                   std::span<std::complex<float>>&,
-                                   cudaStream_t);
+template Result Cast::run(const std::span<std::complex<I8>>&,
+                                std::span<std::complex<F32>>&,
+                                cudaStream_t);
 
-template Result Cast::run(const std::span<std::complex<float>>&,
-                                   std::span<std::complex<half>>&,
-                                   cudaStream_t);
+template Result Cast::run(const std::span<std::complex<F32>>&,
+                                std::span<std::complex<F16>>&,
+                                cudaStream_t);
 
 }  // namespace Blade

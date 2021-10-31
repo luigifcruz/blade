@@ -10,12 +10,11 @@
 
 namespace Blade {
 
-typedef std::span<std::complex<float>> VCF32;
-typedef std::span<std::complex<int8_t>> VCI8;
-typedef std::complex<float> CF32;
-typedef std::complex<int8_t> CI8;
-typedef std::span<float> VF32;
-typedef std::span<int8_t> VI8;
+typedef half F16;
+typedef float F32;
+typedef int8_t I8;
+typedef int16_t I16;
+typedef int32_t I32;
 
 enum class Result : uint8_t {
     SUCCESS = 0,

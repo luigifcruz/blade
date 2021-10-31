@@ -73,9 +73,9 @@ class Module : public Pipeline {
     std::unique_ptr<Channelizer::Test> test;
     std::unique_ptr<Checker> checker;
 
-    std::span<std::complex<float>> input;
-    std::span<std::complex<float>> output;
-    std::span<std::complex<float>> result;
+    std::span<std::complex<F32>> input;
+    std::span<std::complex<F32>> output;
+    std::span<std::complex<F32>> result;
 };
 
 int main() {
@@ -85,16 +85,15 @@ int main() {
     BL_INFO("Testing advanced channelizer.");
 
     Module mod({
-        {
+        .dims = {
             .NBEAMS = 1,
             .NANTS  = 20,
             .NCHANS = 96,
             .NTIME  = 35000,
             .NPOLS  = 2,
-        }, {
-            .fftSize = 4,
-            .blockSize = 1024,
         },
+        .fftSize = 4,
+        .blockSize = 1024,
     });
 
     manager.save(mod).report();

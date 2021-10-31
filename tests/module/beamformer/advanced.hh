@@ -80,8 +80,8 @@ class Module : public Pipeline {
     std::unique_ptr<Beamformer::Generic::Test> test;
     std::unique_ptr<Checker> checker;
 
-    std::span<std::complex<float>> input;
-    std::span<std::complex<float>> phasors;
-    std::span<std::complex<float>> output;
-    std::span<std::complex<float>> result;
+    std::span<std::complex<F32>> input;
+    std::span<std::complex<F32>> phasors;
+    std::span<std::complex<F32>> output;
+    std::span<std::complex<F32>> result;
 };

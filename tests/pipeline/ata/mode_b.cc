@@ -13,15 +13,14 @@ using namespace std::chrono;
 
 class ModeB : public Pipeline {
  public:
-    struct ConfigInternal {
+    struct Config {
+        ArrayDims inputDims;
         std::size_t channelizerRate = 4;
         std::size_t beamformerBeams = 16;
         std::size_t castBlockSize = 512;
         std::size_t channelizerBlockSize = 512;
         std::size_t beamformerBlockSize = 350;
     };
-
-    struct Config : ArrayDims, ConfigInternal {};
 
     explicit ModeB(const Config& configuration) : config(configuration) {
         if (this->commit() != Result::SUCCESS) {
@@ -37,13 +36,13 @@ class ModeB : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result upload(const std::span<std::complex<int8_t>>& input) {
+    Result upload(const std::span<std::complex<I8>>& input) {
         BL_CHECK(copyBuffer(bufferA, input, CopyKind::H2D));
 
         return Result::SUCCESS;
     }
 
-    Result download(std::span<std::complex<half>> output) {
+    Result download(std::span<std::complex<F16>> output) {
         BL_CHECK(copyBuffer(output, bufferE, CopyKind::D2H));
 
         return Result::SUCCESS;
@@ -58,18 +57,19 @@ class ModeB : public Pipeline {
         });
 
         channelizer = Factory<Channelizer>({
-            config,
-            {
-                .fftSize = config.channelizerRate,
-                .blockSize = config.channelizerBlockSize,
-            },
+            .dims = config.inputDims,
+            .fftSize = config.channelizerRate,
+            .blockSize = config.channelizerBlockSize,
         });
 
+        // TODO: This is a hack.
+        auto dims = channelizer->getOutputDims();
+        dims.NBEAMS *= 16;
+        //
+
         beamformer = Factory<Beamformer::ATA>({
-            channelizer->getOutputDims(config.beamformerBeams),
-            {
-                .blockSize = config.beamformerBlockSize,
-            }
+            .dims = dims,
+            .blockSize = config.beamformerBlockSize,
         });
 
         return Result::SUCCESS;
@@ -109,12 +109,12 @@ class ModeB : public Pipeline {
  private:
     const Config& config;
 
-    std::span<std::complex<float>> phasors;
-    std::span<std::complex<int8_t>> bufferA;
-    std::span<std::complex<float>> bufferB;
-    std::span<std::complex<float>> bufferC;
-    std::span<std::complex<float>> bufferD;
-    std::span<std::complex<half>> bufferE;
+    std::span<std::complex<F32>> phasors;
+    std::span<std::complex<I8>> bufferA;
+    std::span<std::complex<F32>> bufferB;
+    std::span<std::complex<F32>> bufferC;
+    std::span<std::complex<F32>> bufferD;
+    std::span<std::complex<F16>> bufferE;
 
     std::unique_ptr<Cast> cast;
     std::unique_ptr<Beamformer::ATA> beamformer;
@@ -128,19 +128,18 @@ int main() {
     BL_INFO("Testing ATA beamformer pipeline.");
 
     ModeB::Config config = {
-        {
+        .inputDims = {
             .NBEAMS = 1,
             .NANTS  = 20,
             .NCHANS = 192,
             .NTIME  = 8192,
             .NPOLS  = 2,
-        }, {
-            .channelizerRate = 4,
-            .beamformerBeams = 16,
-            .castBlockSize = 512,
-            .channelizerBlockSize = 512,
-            .beamformerBlockSize = 512,
         },
+        .channelizerRate = 4,
+        .beamformerBeams = 16,
+        .castBlockSize = 512,
+        .channelizerBlockSize = 512,
+        .beamformerBlockSize = 512,
     };
 
     // Instantiate swapchain instance A and B.
@@ -149,7 +148,7 @@ int main() {
     swapchain.push_back(std::make_unique<ModeB>(config));
 
     // Allocate and register input buffers.
-    std::vector<std::vector<std::complex<int8_t>>> input;
+    std::vector<std::vector<std::complex<I8>>> input;
     input.resize(swapchain.size());
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {
@@ -158,7 +157,7 @@ int main() {
     }
 
     // Allocate and register output buffers.
-    std::vector<std::vector<std::complex<half>>> output;
+    std::vector<std::vector<std::complex<F16>>> output;
     output.resize(swapchain.size());
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {

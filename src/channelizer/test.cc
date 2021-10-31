@@ -5,7 +5,8 @@ namespace Blade {
 Channelizer::Test::Test(const Channelizer::Config& config) {
     BL_DEBUG("Initilizating class.");
     lib = py::module::import("blade.instruments.channelizer.test").attr("Generic")(
-            config.NANTS, config.NCHANS, config.NTIME, config.NPOLS, config.fftSize);
+            config.dims.NANTS, config.dims.NCHANS, config.dims.NTIME,
+            config.dims.NPOLS, config.fftSize);
 }
 
 Result Channelizer::Test::process() {
@@ -16,13 +17,13 @@ Result Channelizer::Test::process() {
     return Result::SUCCESS;
 }
 
-std::span<std::complex<float>> Channelizer::Test::getInputData() {
-    return getVector<std::complex<float>, std::complex<float>>
+std::span<std::complex<F32>> Channelizer::Test::getInputData() {
+    return getVector<std::complex<F32>, std::complex<F32>>
         (lib.attr("getInputData"));
 }
 
-std::span<std::complex<float>> Channelizer::Test::getOutputData() {
-    return getVector<std::complex<float>, std::complex<float>>
+std::span<std::complex<F32>> Channelizer::Test::getOutputData() {
+    return getVector<std::complex<F32>, std::complex<F32>>
         (lib.attr("getOutputData"));
 }
 

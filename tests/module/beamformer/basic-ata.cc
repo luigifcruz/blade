@@ -10,15 +10,14 @@ int main() {
     BL_INFO("Testing beamformer with the ATA kernel.");
 
     Module<Beamformer::ATA> mod({
-        {
+        .dims = {
             .NBEAMS = 16,
             .NANTS  = 20,
             .NCHANS = 384,
             .NTIME  = 8750,
             .NPOLS  = 2,
-        }, {
-            .blockSize = 350,
         },
+        .blockSize = 350,
     });
 
     manager.save(mod).report();

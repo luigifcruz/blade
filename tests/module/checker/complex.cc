@@ -6,16 +6,16 @@ Result Init(std::size_t testSize = 8192) {
     Checker checker({});
 
     BL_INFO("Allocating CUDA memory...");
-    static std::complex<float>* input_ptr;
-    static std::complex<float>* output_ptr;
+    static std::complex<F32>* input_ptr;
+    static std::complex<F32>* output_ptr;
 
     BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, testSize *
-                sizeof(std::complex<float>)), [&]{
+                sizeof(std::complex<F32>)), [&]{
         BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
     });
 
     BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, testSize *
-                sizeof(std::complex<float>)), [&]{
+                sizeof(std::complex<F32>)), [&]{
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
@@ -27,8 +27,8 @@ Result Init(std::size_t testSize = 8192) {
 
     for (auto& element : input) {
         element = {
-            static_cast<float>(std::rand()),
-            static_cast<float>(std::rand())
+            static_cast<F32>(std::rand()),
+            static_cast<F32>(std::rand())
         };
     }
 

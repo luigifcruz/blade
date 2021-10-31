@@ -14,8 +14,8 @@ class BLADE_API Channelizer::Test : protected Python {
 
     Result process();
 
-    std::span<std::complex<float>> getInputData();
-    std::span<std::complex<float>> getOutputData();
+    std::span<std::complex<F32>> getInputData();
+    std::span<std::complex<F32>> getOutputData();
 };
 
 }  // namespace Blade

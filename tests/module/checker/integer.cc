@@ -6,14 +6,14 @@ Result Init(std::size_t testSize = 8192) {
     Checker checker({});
 
     BL_INFO("Allocating CUDA memory...");
-    static int8_t* input_ptr;
-    static int8_t* output_ptr;
+    static I8* input_ptr;
+    static I8* output_ptr;
 
-    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, testSize * sizeof(int8_t)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&input_ptr, testSize * sizeof(I8)), [&]{
         BL_FATAL("Can't allocate complex checker test input buffer: {}", err);
     });
 
-    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, testSize * sizeof(int8_t)), [&]{
+    BL_CUDA_CHECK(cudaMallocManaged(&output_ptr, testSize * sizeof(I8)), [&]{
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 

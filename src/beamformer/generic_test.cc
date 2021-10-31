@@ -2,8 +2,7 @@
 
 namespace Blade::Beamformer {
 
-GenericPython::GenericPython(const std::string& telescope,
-                             const ArrayDims& dims) {
+GenericPython::GenericPython(const std::string& telescope, const ArrayDims& dims) {
     BL_DEBUG("Initilizating class.");
     lib = py::module::import("blade.instruments.beamformer.test")
         .attr(telescope.c_str())(dims.NBEAMS, dims.NANTS, dims.NCHANS,
@@ -18,18 +17,18 @@ Result GenericPython::process() {
     return Result::SUCCESS;
 }
 
-std::span<std::complex<float>> GenericPython::getInputData() {
-    return getVector<std::complex<float>, std::complex<float>>
+std::span<std::complex<F32>> GenericPython::getInputData() {
+    return getVector<std::complex<F32>, std::complex<F32>>
         (lib.attr("getInputData"));
 }
 
-std::span<std::complex<float>> GenericPython::getPhasorsData() {
-    return getVector<std::complex<float>, std::complex<float>>
+std::span<std::complex<F32>> GenericPython::getPhasorsData() {
+    return getVector<std::complex<F32>, std::complex<F32>>
         (lib.attr("getPhasorsData"));
 }
 
-std::span<std::complex<float>> GenericPython::getOutputData() {
-    return getVector<std::complex<float>, std::complex<float>>
+std::span<std::complex<F32>> GenericPython::getOutputData() {
+    return getVector<std::complex<F32>, std::complex<F32>>
         (lib.attr("getOutputData"));
 }
 
