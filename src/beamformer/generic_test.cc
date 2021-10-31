@@ -17,18 +17,18 @@ Result GenericPython::process() {
     return Result::SUCCESS;
 }
 
-std::span<std::complex<F32>> GenericPython::getInputData() {
-    return getVector<std::complex<F32>, std::complex<F32>>
+std::span<CF32> GenericPython::getInputData() {
+    return getVector<CF32, CF32>
         (lib.attr("getInputData"));
 }
 
-std::span<std::complex<F32>> GenericPython::getPhasorsData() {
-    return getVector<std::complex<F32>, std::complex<F32>>
+std::span<CF32> GenericPython::getPhasorsData() {
+    return getVector<CF32, CF32>
         (lib.attr("getPhasorsData"));
 }
 
-std::span<std::complex<F32>> GenericPython::getOutputData() {
-    return getVector<std::complex<F32>, std::complex<F32>>
+std::span<CF32> GenericPython::getOutputData() {
+    return getVector<CF32, CF32>
         (lib.attr("getOutputData"));
 }
 

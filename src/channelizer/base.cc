@@ -37,8 +37,8 @@ Channelizer::~Channelizer() {
     BL_DEBUG("Destroying class.");
 }
 
-Result Channelizer::run(const std::span<std::complex<F32>>& input,
-                              std::span<std::complex<F32>>& output,
+Result Channelizer::run(const std::span<CF32>& input,
+                              std::span<CF32>& output,
                               cudaStream_t cudaStream) {
     if (input.size() != output.size()) {
         BL_FATAL("Size mismatch between input and output ({}, {}).",

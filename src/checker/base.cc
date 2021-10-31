@@ -72,16 +72,16 @@ unsigned long long int Checker::run(const std::span<IT>& a,
     return this->run(a.data(), b.data(), a.size());
 }
 
-template unsigned long long int Checker::run(const std::span<std::complex<F32>>&,
-                                             const std::span<std::complex<F32>>&,
+template unsigned long long int Checker::run(const std::span<CF32>&,
+                                             const std::span<CF32>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<std::complex<I8>>&,
-                                             const std::span<std::complex<I8>>&,
+template unsigned long long int Checker::run(const std::span<CI8>&,
+                                             const std::span<CI8>&,
                                                    cudaStream_t);
 
-template unsigned long long int Checker::run(const std::span<std::complex<F16>>&,
-                                             const std::span<std::complex<F16>>&,
+template unsigned long long int Checker::run(const std::span<CF16>&,
+                                             const std::span<CF16>&,
                                                    cudaStream_t);
 
 template unsigned long long int Checker::run(const std::span<F32>&,

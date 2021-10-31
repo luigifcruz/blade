@@ -119,12 +119,12 @@ int main() {
 
     const std::size_t testSize = 134400000;
 
-    BL_INFO("Casting std::complex<I8> to std::complex<F32>...");
+    BL_INFO("Casting CI8 to CF32...");
     if (complex_text<I8, F32>(testSize) != 0) {
         return 1;
     }
 
-    BL_INFO("Casting std::complex<F32> to std::complex<F16>...");
+    BL_INFO("Casting CF32 to CF16...");
     if (complex_text<F32, F16>(testSize) != 0) {
         return 1;
     }

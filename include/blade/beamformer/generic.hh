@@ -28,9 +28,9 @@ class BLADE_API Generic : public Kernel {
     virtual constexpr std::size_t getOutputSize() const = 0;
     virtual constexpr std::size_t getPhasorsSize() const = 0;
 
-    Result run(const std::span<std::complex<F32>>& input,
-               const std::span<std::complex<F32>>& phasors,
-                     std::span<std::complex<F32>>& output,
+    Result run(const std::span<CF32>& input,
+               const std::span<CF32>& phasors,
+                     std::span<CF32>& output,
                      cudaStream_t cudaStream = 0);
 
  protected:

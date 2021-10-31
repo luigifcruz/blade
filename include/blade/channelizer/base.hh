@@ -37,8 +37,8 @@ class BLADE_API Channelizer : public Kernel {
             config.dims.NANTS * config.dims.NCHANS;
     }
 
-    Result run(const std::span<std::complex<F32>>& input,
-                     std::span<std::complex<F32>>& output,
+    Result run(const std::span<CF32>& input,
+                     std::span<CF32>& output,
                      cudaStream_t cudaStream = 0);
 
  private:

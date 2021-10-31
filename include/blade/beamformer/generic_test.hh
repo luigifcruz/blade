@@ -15,9 +15,9 @@ class BLADE_API Generic::Test {
 
     virtual Result process() = 0;
 
-    virtual std::span<std::complex<F32>> getInputData() = 0;
-    virtual std::span<std::complex<F32>> getPhasorsData() = 0;
-    virtual std::span<std::complex<F32>> getOutputData() = 0;
+    virtual std::span<CF32> getInputData() = 0;
+    virtual std::span<CF32> getPhasorsData() = 0;
+    virtual std::span<CF32> getOutputData() = 0;
 };
 
 class BLADE_API GenericPython : public Generic::Test, protected Python {
@@ -27,9 +27,9 @@ class BLADE_API GenericPython : public Generic::Test, protected Python {
 
     Result process();
 
-    std::span<std::complex<F32>> getInputData();
-    std::span<std::complex<F32>> getPhasorsData();
-    std::span<std::complex<F32>> getOutputData();
+    std::span<CF32> getInputData();
+    std::span<CF32> getPhasorsData();
+    std::span<CF32> getOutputData();
 };
 
 }  // namespace Blade::Beamformer

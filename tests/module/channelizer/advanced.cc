@@ -73,9 +73,9 @@ class Module : public Pipeline {
     std::unique_ptr<Channelizer::Test> test;
     std::unique_ptr<Checker> checker;
 
-    std::span<std::complex<F32>> input;
-    std::span<std::complex<F32>> output;
-    std::span<std::complex<F32>> result;
+    std::span<CF32> input;
+    std::span<CF32> output;
+    std::span<CF32> result;
 };
 
 int main() {

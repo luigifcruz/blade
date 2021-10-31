@@ -55,12 +55,12 @@ Result Cast::run(const std::span<std::complex<IT>>& input,
         cudaStream);
 }
 
-template Result Cast::run(const std::span<std::complex<I8>>&,
-                                std::span<std::complex<F32>>&,
+template Result Cast::run(const std::span<CI8>&,
+                                std::span<CF32>&,
                                 cudaStream_t);
 
-template Result Cast::run(const std::span<std::complex<F32>>&,
-                                std::span<std::complex<F16>>&,
+template Result Cast::run(const std::span<CF32>&,
+                                std::span<CF16>&,
                                 cudaStream_t);
 
 }  // namespace Blade

@@ -17,13 +17,13 @@ Result Channelizer::Test::process() {
     return Result::SUCCESS;
 }
 
-std::span<std::complex<F32>> Channelizer::Test::getInputData() {
-    return getVector<std::complex<F32>, std::complex<F32>>
+std::span<CF32> Channelizer::Test::getInputData() {
+    return getVector<CF32, CF32>
         (lib.attr("getInputData"));
 }
 
-std::span<std::complex<F32>> Channelizer::Test::getOutputData() {
-    return getVector<std::complex<F32>, std::complex<F32>>
+std::span<CF32> Channelizer::Test::getOutputData() {
+    return getVector<CF32, CF32>
         (lib.attr("getOutputData"));
 }
 

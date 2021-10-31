@@ -36,13 +36,13 @@ class ModeB : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result upload(const std::span<std::complex<I8>>& input) {
+    Result upload(const std::span<CI8>& input) {
         BL_CHECK(copyBuffer(bufferA, input, CopyKind::H2D));
 
         return Result::SUCCESS;
     }
 
-    Result download(std::span<std::complex<F16>> output) {
+    Result download(std::span<CF16> output) {
         BL_CHECK(copyBuffer(output, bufferE, CopyKind::D2H));
 
         return Result::SUCCESS;
@@ -109,12 +109,12 @@ class ModeB : public Pipeline {
  private:
     const Config& config;
 
-    std::span<std::complex<F32>> phasors;
-    std::span<std::complex<I8>> bufferA;
-    std::span<std::complex<F32>> bufferB;
-    std::span<std::complex<F32>> bufferC;
-    std::span<std::complex<F32>> bufferD;
-    std::span<std::complex<F16>> bufferE;
+    std::span<CF32> phasors;
+    std::span<CI8> bufferA;
+    std::span<CF32> bufferB;
+    std::span<CF32> bufferC;
+    std::span<CF32> bufferD;
+    std::span<CF16> bufferE;
 
     std::unique_ptr<Cast> cast;
     std::unique_ptr<Beamformer::ATA> beamformer;
@@ -148,7 +148,7 @@ int main() {
     swapchain.push_back(std::make_unique<ModeB>(config));
 
     // Allocate and register input buffers.
-    std::vector<std::vector<std::complex<I8>>> input;
+    std::vector<std::vector<CI8>> input;
     input.resize(swapchain.size());
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {
@@ -157,7 +157,7 @@ int main() {
     }
 
     // Allocate and register output buffers.
-    std::vector<std::vector<std::complex<F16>>> output;
+    std::vector<std::vector<CF16>> output;
     output.resize(swapchain.size());
 
     for (std::size_t i = 0; i < swapchain.size(); i++) {

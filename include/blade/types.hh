@@ -16,6 +16,12 @@ typedef int8_t I8;
 typedef int16_t I16;
 typedef int32_t I32;
 
+typedef std::complex<F16> CF16;
+typedef std::complex<F32> CF32;
+typedef std::complex<I8> CI8;
+typedef std::complex<I16> CI16;
+typedef std::complex<I32> CI32;
+
 enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,

@@ -15,9 +15,9 @@ Generic::Generic(const Config& config) :
     }
 }
 
-Result Generic::run(const std::span<std::complex<F32>>& input,
-                    const std::span<std::complex<F32>>& phasors,
-                          std::span<std::complex<F32>>& output,
+Result Generic::run(const std::span<CF32>& input,
+                    const std::span<CF32>& phasors,
+                          std::span<CF32>& output,
                           cudaStream_t cudaStream) {
     if (input.size() != getInputSize()) {
         BL_FATAL("Size mismatch between input and configuration ({}, {}).",
