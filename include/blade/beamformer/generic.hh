@@ -1,42 +1,45 @@
 #ifndef BLADE_BEAMFORMER_GENERIC_H
 #define BLADE_BEAMFORMER_GENERIC_H
 
+#include <string>
+
 #include "blade/base.hh"
 #include "blade/kernel.hh"
 
 namespace Blade::Beamformer {
 
 class BLADE_API Generic : public Kernel {
-public:
+ public:
+    class Test;
+
     struct Config {
-        std::size_t NBEAMS;
-        std::size_t NANTS;
-        std::size_t NCHANS;
-        std::size_t NTIME;
-        std::size_t NPOLS;
-        std::size_t TBLOCK;
+        ArrayDims dims;
+        std::size_t blockSize = 512;
     };
 
-    Generic(const Config & config);
+    explicit Generic(const Config& config);
     virtual ~Generic() = default;
-
-    virtual constexpr std::size_t inputLen() const = 0;
-    virtual constexpr std::size_t outputLen() const = 0;
-    virtual constexpr std::size_t phasorsLen() const = 0;
-
-    Result run(const std::complex<int8_t>* input, const std::complex<float>* phasors, std::complex<float>* output);
 
     constexpr Config getConfig() const {
         return config;
     }
 
-protected:
+    virtual constexpr std::size_t getInputSize() const = 0;
+    virtual constexpr std::size_t getOutputSize() const = 0;
+    virtual constexpr std::size_t getPhasorsSize() const = 0;
+
+    Result run(const std::span<CF32>& input,
+               const std::span<CF32>& phasors,
+                     std::span<CF32>& output,
+                     cudaStream_t cudaStream = 0);
+
+ protected:
     const Config config;
     std::string kernel;
     dim3 grid, block;
     jitify2::ProgramCache<> cache;
 };
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BEAMFORMER_GENERIC_HH_

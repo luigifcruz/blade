@@ -4,34 +4,45 @@
 
 namespace Blade::Beamformer {
 
-Generic::Generic(const Config & config) : config(config), cache(100, *beamformer_kernel) {
+Generic::Generic(const Config& config) :
+    Kernel(config.blockSize), config(config), cache(100, *beamformer_kernel) {
     BL_DEBUG("Initilizating class.");
 
-    if ((config.NTIME % config.TBLOCK) != 0) {
-        BL_FATAL("NTIME isn't divisable by TBLOCK.");
+    if ((config.dims.NTIME % config.blockSize) != 0) {
+        BL_FATAL("Number of time samples ({}) isn't divisable by "
+                "the block size ({}).", config.dims.NTIME, config.blockSize);
         throw Result::ERROR;
-    }
-
-    if (config.TBLOCK > 1024) {
-        BL_FATAL("TBLOCK larger than hardware limit (1024).");
-        throw Result::ERROR;
-    }
-
-    if ((config.TBLOCK % 32) != 0) {
-        BL_WARN("Best performance is achieved when TBLOCK is a multiple of 32.");
     }
 }
 
-Result Generic::run(const std::complex<int8_t>* input, const std::complex<float>* phasors,
-        std::complex<float>* output) {
+Result Generic::run(const std::span<CF32>& input,
+                    const std::span<CF32>& phasors,
+                          std::span<CF32>& output,
+                          cudaStream_t cudaStream) {
+    if (input.size() != getInputSize()) {
+        BL_FATAL("Size mismatch between input and configuration ({}, {}).",
+                input.size(), getInputSize());
+        return Result::ASSERTION_ERROR;
+    }
+
+    if (phasors.size() != getPhasorsSize()) {
+        BL_FATAL("Size mismatch between phasors and configuration ({}, {}).",
+                phasors.size(), getPhasorsSize());
+        return Result::ASSERTION_ERROR;
+    }
+
+    if (output.size() != getOutputSize()) {
+        BL_FATAL("Size mismatch between output and configuration ({}, {}).",
+                output.size(), getOutputSize());
+        return Result::ASSERTION_ERROR;
+    }
 
     cache.get_kernel(kernel)
-        ->configure(grid, block)
+        ->configure(grid, block, 0, cudaStream)
         ->launch(
-            reinterpret_cast<const char2*>(input),
-            reinterpret_cast<const cuFloatComplex*>(phasors),
-            reinterpret_cast<cuFloatComplex*>(output)
-        );
+            reinterpret_cast<const cuFloatComplex*>(input.data()),
+            reinterpret_cast<const cuFloatComplex*>(phasors.data()),
+            reinterpret_cast<cuFloatComplex*>(output.data()));
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Kernel failed to execute: {}", err);
@@ -41,4 +52,4 @@ Result Generic::run(const std::complex<int8_t>* input, const std::complex<float>
     return Result::SUCCESS;
 }
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer

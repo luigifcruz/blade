@@ -1,29 +1,33 @@
 #ifndef BLADE_PYTHON_H
 #define BLADE_PYTHON_H
 
+#include <pybind11/embed.h>
+#include <pybind11/numpy.h>
+
 #include "blade/common.hh"
 #include "blade/types.hh"
 
-#include <pybind11/embed.h>
-#include <pybind11/numpy.h>
 namespace py = pybind11;
 
 namespace Blade {
 
 class BLADE_API Python {
-protected:
-    py::scoped_interpreter guard{}; // WARNING: Interpreter should be destructed last!
+ protected:
+    // WARNING: Interpreter should be destructed last!
+    py::scoped_interpreter guard{};
+    //
+
     py::object lib;
 
     template<typename IT, typename OT>
-    static std::span<OT> getVector(const py::object & input) {
+    static std::span<OT> getVector(const py::object& input) {
         auto arr = input().cast<py::array_t<IT>>();
-        auto buf = reinterpret_cast<OT*>(arr.data());
+        auto buf = const_cast<OT*>(arr.data());
         auto len = static_cast<std::size_t>(arr.size());
         return std::span{buf, len};
     }
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_PYTHON_HH_

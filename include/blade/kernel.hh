@@ -11,10 +11,15 @@ using namespace jitify2::reflection;
 namespace Blade {
 
 class BLADE_API Kernel {
-public:
-    Kernel();
+ public:
+    explicit Kernel(const std::size_t& blockSize);
 };
 
-} // namespace Blade
+template<typename T>
+inline std::unique_ptr<T> Factory(const typename T::Config& config) {
+    return std::make_unique<T>(config);
+}
 
-#endif
+}  // namespace Blade
+
+#endif  // BLADE_INCLUDE_BLADE_KERNEL_HH_

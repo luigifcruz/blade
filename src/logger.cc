@@ -2,14 +2,15 @@
 
 #include "blade/logger.hh"
 
-std::string computeMethodName(const std::string& function, const std::string& prettyFunction) {
+std::string computeMethodName(const std::string& function,
+                              const std::string& prettyFunction) {
     size_t locFunName = prettyFunction.find(function);
-    size_t begin = prettyFunction.rfind(" ",locFunName) + 1;
-    size_t end = prettyFunction.find("(",locFunName + function.length());
+    size_t begin = prettyFunction.rfind(" ", locFunName) + 1;
+    size_t end = prettyFunction.find("(", locFunName + function.length());
     if (prettyFunction[end + 1] == ')')
-        return (prettyFunction.substr(begin,end - begin) + "()");
+        return (prettyFunction.substr(begin, end - begin) + "()");
     else
-        return (prettyFunction.substr(begin,end - begin) + "(...)");
+        return (prettyFunction.substr(begin, end - begin) + "(...)");
 }
 
 namespace Blade {
@@ -19,7 +20,8 @@ Logger::Logger() {
     consoleSink->set_pattern("[%Y-%m-%d %T.%e%z] [%n] [%l] [%!] %v%$");
 
     std::vector<spdlog::sink_ptr> sinks{consoleSink};
-    auto logger = std::make_shared<spdlog::logger>(BL_LOG_ID, sinks.begin(), sinks.end());
+    auto logger = std::make_shared<spdlog::logger>(BL_LOG_ID,
+            sinks.begin(), sinks.end());
 
     // If you are going to change this behavior,
     // remind to reflect the changes in the header file.
@@ -50,4 +52,4 @@ Logger::~Logger() {
     spdlog::shutdown();
 }
 
-} // namespace Blade
+}  // namespace Blade

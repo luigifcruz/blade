@@ -1,6 +1,8 @@
 #ifndef BLADE_LOGGER_H
 #define BLADE_LOGGER_H
 
+#include <string>
+
 #include "blade/types.hh"
 
 #undef SPDLOG_ACTIVE_LEVEL
@@ -18,21 +20,32 @@ BLADE_API std::string computeMethodName(const std::string&, const std::string&);
 
 #define BL_LOG_ID "BLADE"
 
-#define BL_TRACE(...) if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_TRACE(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
-#define BL_DEBUG(...) if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_DEBUG(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
-#define BL_WARN(...)  if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_WARN(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
-#define BL_INFO(...)  if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_INFO(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
-#define BL_ERROR(...) if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_ERROR(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
-#define BL_FATAL(...) if (spdlog::get(BL_LOG_ID)) {SPDLOG_LOGGER_CRITICAL(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#define BL_TRACE(...) if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_TRACE(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+
+#define BL_DEBUG(...) if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_DEBUG(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+
+#define BL_WARN(...)  if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_WARN(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+
+#define BL_INFO(...)  if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_INFO(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+
+#define BL_ERROR(...) if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_ERROR(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+
+#define BL_FATAL(...) if (spdlog::get(BL_LOG_ID)) \
+{SPDLOG_LOGGER_CRITICAL(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
 
 namespace Blade {
 
 class BLADE_API Logger {
-public:
+ public:
     Logger();
     ~Logger();
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_LOGGER_HH_

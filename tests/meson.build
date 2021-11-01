@@ -1,2 +1,2 @@
-subdir('checker')
-subdir('beamformer')
+subdir('module')
+subdir('pipeline')

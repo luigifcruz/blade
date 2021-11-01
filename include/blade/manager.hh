@@ -19,16 +19,23 @@ struct Resources {
     } transfer;
 };
 
+class BLADE_API ResourcesPlug {
+ public:
+    virtual ~ResourcesPlug() {}
+    virtual Resources getResources() const = 0;
+};
+
 class BLADE_API Manager {
-public:
+ public:
     struct Config {
         std::size_t pcie_bw = 22e9;
     };
 
-    Manager() {};
-    Manager(const Config & config) : config(config) {};
+    Manager() {}
+    explicit Manager(const Config & config) : config(config) {}
 
-    Manager& save(const Resources & resources);
+    Manager& save(const Resources &resources);
+    Manager& save(ResourcesPlug &plug);
     Manager& reset();
     Manager& report();
 
@@ -36,23 +43,23 @@ public:
         return master;
     }
 
-protected:
+ protected:
     const Config config;
     Resources master;
 
-    std::size_t toMB(const std::size_t & size) {
+    std::size_t toMB(const std::size_t& size) {
         return size / 1e6;
     }
 
-    std::size_t toGB(const std::size_t & size) {
+    std::size_t toGB(const std::size_t& size) {
         return size / 1e9;
     }
 
-    float toMs(const std::size_t & part, const std::size_t & whole) {
+    float toMs(const std::size_t& part, const std::size_t& whole) {
         return (static_cast<float>(part) / static_cast<float>(whole)) * 1000.0f;
     }
 };
 
-} // namespace Blade
+}  // namespace Blade
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_MANAGER_HH_

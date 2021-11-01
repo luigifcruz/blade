@@ -46,10 +46,10 @@
 #define BL_CATCH(x, callback) { \
     try { \
         (void)(x); \
-    } catch (const std::exception & e) { \
+    } catch (const std::exception& e) { \
         return callback(); \
     } \
 }
 #endif
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_MACROS_HH_

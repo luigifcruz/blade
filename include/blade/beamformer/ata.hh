@@ -6,22 +6,27 @@
 namespace Blade::Beamformer {
 
 class BLADE_API ATA : public Generic {
-public:
-    ATA(const Config & config);
+ public:
+    class Test;
 
-    constexpr std::size_t inputLen() const {
-        return config.NANTS*config.NCHANS*config.NTIME*config.NPOLS;
-    };
+    explicit ATA(const Config& config);
 
-    constexpr std::size_t outputLen() const {
-        return config.NBEAMS*config.NTIME*config.NCHANS*config.NPOLS;
-    };
+    constexpr std::size_t getInputSize() const {
+        return config.dims.NANTS * config.dims.NCHANS *
+            config.dims.NTIME * config.dims.NPOLS;
+    }
 
-    constexpr std::size_t phasorsLen() const {
-        return config.NBEAMS*config.NANTS*config.NCHANS*config.NPOLS;
-    };
+    constexpr std::size_t getOutputSize() const {
+        return config.dims.NBEAMS * config.dims.NTIME *
+            config.dims.NCHANS * config.dims.NPOLS;
+    }
+
+    constexpr std::size_t getPhasorsSize() const {
+        return config.dims.NBEAMS * config.dims.NANTS *
+            config.dims.NCHANS * config.dims.NPOLS;
+    }
 };
 
-} // namespace Blade::Beamformer
+}  // namespace Blade::Beamformer
 
-#endif
+#endif  // BLADE_INCLUDE_BLADE_BEAMFORMER_ATA_HH_
