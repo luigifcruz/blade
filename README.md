@@ -10,7 +10,7 @@ This library is meant to be used by the Allen Telescope Array beamformer.
 - spdlog >=1.8
 - CUDA >=11.4
 
-## Benchmarks
+## Pipeline Benchmark
 ### Nov 1, 2021
 Machine: `seti-node8`
 Commit: `9b1a3569ea861d4bf0bdaf7a3b72706ce537ab99`
@@ -32,3 +32,4 @@ Commit: `9b1a3569ea861d4bf0bdaf7a3b72706ce537ab99`
     - The default line length is 88.
     - Using namespaces is allowed in tests.
 - The CUDA C++ Standard Library is being ignored for now because of performance inconsistencies.
+- The library is implemented using bleeding-edge features like CUDA 11.4 and C++20.
