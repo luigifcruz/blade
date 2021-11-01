@@ -11,7 +11,7 @@
 using namespace Blade;
 using namespace std::chrono;
 
-class ModeB : public Pipeline {
+class Module : public Pipeline {
  public:
     struct Config {
         ArrayDims inputDims;
@@ -22,7 +22,7 @@ class ModeB : public Pipeline {
         std::size_t beamformerBlockSize = 350;
     };
 
-    explicit ModeB(const Config& configuration) : config(configuration) {
+    explicit Module(const Config& configuration) : config(configuration) {
         if (this->commit() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -120,92 +120,3 @@ class ModeB : public Pipeline {
     std::unique_ptr<Beamformer::ATA> beamformer;
     std::unique_ptr<Channelizer> channelizer;
 };
-
-int main() {
-    Logger guard{};
-    Manager manager{};
-
-    BL_INFO("Testing ATA beamformer pipeline.");
-
-    ModeB::Config config = {
-        .inputDims = {
-            .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 192,
-            .NTIME  = 8192,
-            .NPOLS  = 2,
-        },
-        .channelizerRate = 4,
-        .beamformerBeams = 16,
-        .castBlockSize = 512,
-        .channelizerBlockSize = 512,
-        .beamformerBlockSize = 512,
-    };
-
-    // Instantiate swapchain instance A and B.
-    std::vector<std::unique_ptr<ModeB>> swapchain;
-    swapchain.push_back(std::make_unique<ModeB>(config));
-    swapchain.push_back(std::make_unique<ModeB>(config));
-
-    // Allocate and register input buffers.
-    std::vector<std::vector<CI8>> input;
-    input.resize(swapchain.size());
-
-    for (std::size_t i = 0; i < swapchain.size(); i++) {
-        input[i].resize(swapchain[i]->getInputSize());
-        swapchain[i]->pinBuffer(input[i], RegisterKind::ReadOnly);
-    }
-
-    // Allocate and register output buffers.
-    std::vector<std::vector<CF16>> output;
-    output.resize(swapchain.size());
-
-    for (std::size_t i = 0; i < swapchain.size(); i++) {
-        output[i].resize(swapchain[i]->getOutputSize());
-        swapchain[i]->pinBuffer(output[i], RegisterKind::Default);
-    }
-
-    // Gather resources reports from instances.
-    for (auto& instance : swapchain) {
-        manager.save(*instance);
-    }
-    manager.report();
-
-    // Repeat each operation 150 times to average out the execution time.
-    auto t1 = high_resolution_clock::now();
-    for (int i = 0; i < 150; i++) {
-        // Upload the data of both instances in parallel.
-        for (std::size_t i = 0; i < swapchain.size(); i++) {
-            if (swapchain[i]->upload(input[i]) != Result::SUCCESS) {
-                BL_WARN("Can't upload data. Test is exiting...");
-                return 1;
-            }
-        }
-
-        // Process the data of both instances in parallel.
-        for (std::size_t i = 0; i < swapchain.size(); i++) {
-            if (swapchain[i]->process() != Result::SUCCESS) {
-                BL_WARN("Can't process data. Test is exiting...");
-                return 1;
-            }
-        }
-
-        // Download the data of both instances in parallel.
-        for (std::size_t i = 0; i < swapchain.size(); i++) {
-            if (swapchain[i]->download(output[i]) != Result::SUCCESS) {
-                BL_WARN("Can't download data. Test is exiting...");
-                return 1;
-            }
-        }
-
-        // Wait for both instances to finish.
-        cudaDeviceSynchronize();
-    }
-    auto t2 = high_resolution_clock::now();
-    duration<double, std::milli> ms_double = (t2 - t1) / 300.0;
-    BL_INFO("Cycle time average was {} ms.", ms_double.count());
-
-    BL_INFO("Test succeeded.");
-
-    return 0;
-}
