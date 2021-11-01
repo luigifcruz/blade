@@ -1,9 +1,16 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <cuda_runtime.h>
 
 #include "module.h"
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc == 3 && (cudaSetDevice(atoi(argv[2])) != 0)) {
+        printf("failed to set device\n");
+        return 1;
+    }
+
     size_t batch_size = 2;
     module_t mod = init(batch_size);
 

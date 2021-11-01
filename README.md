@@ -4,7 +4,7 @@ This library is meant to be used by the Allen Telescope Array beamformer.
 
 ## Dependencies
 
-- Clang >=11 or GCC >=11
+- Clang >=11 or GCC >=10.3
 - PyBind11 >=2.7.8
 - Python >=3.9
 - spdlog >=1.8
