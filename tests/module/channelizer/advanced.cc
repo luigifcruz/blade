@@ -20,7 +20,6 @@ class Module : public Pipeline {
 
         channelizer = std::make_unique<Channelizer>(config);
         test = std::make_unique<Channelizer::Test>(config);
-        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -28,8 +27,8 @@ class Module : public Pipeline {
     Result underlyingAllocate() final {
         BL_INFO("Allocating resources.");
         BL_CHECK(allocateBuffer(input, channelizer->getBufferSize()));
-        BL_CHECK(allocateBuffer(output, channelizer->getBufferSize()));
-        BL_CHECK(allocateBuffer(result, channelizer->getBufferSize()));
+        BL_CHECK(allocateBuffer(output, channelizer->getBufferSize(), true));
+        BL_CHECK(allocateBuffer(result, channelizer->getBufferSize(), true));
 
         BL_INFO("Generating test data with Python.");
         BL_CHECK(test->process());
@@ -58,7 +57,7 @@ class Module : public Pipeline {
 
     Result underlyingPostprocess() final {
         std::size_t errors = 0;
-        if ((errors = checker->run(output, result)) != 0) {
+        if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -71,7 +70,8 @@ class Module : public Pipeline {
 
     std::unique_ptr<Channelizer> channelizer;
     std::unique_ptr<Channelizer::Test> test;
-    std::unique_ptr<Checker> checker;
+
+    Checker checker;
 
     std::span<CF32> input;
     std::span<CF32> output;
@@ -98,7 +98,7 @@ int main() {
 
     manager.save(mod).report();
 
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 24; i++) {
         if (mod.process(true) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;

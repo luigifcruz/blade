@@ -19,7 +19,7 @@ class Module : public Pipeline {
         std::size_t beamformerBeams = 16;
         std::size_t castBlockSize = 512;
         std::size_t channelizerBlockSize = 512;
-        std::size_t beamformerBlockSize = 350;
+        std::size_t beamformerBlockSize = 512;
     };
 
     explicit Module(const Config& configuration) : config(configuration) {

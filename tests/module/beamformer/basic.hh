@@ -22,7 +22,6 @@ class Module : public Pipeline {
         BL_INFO("Initializing kernels.");
 
         beamformer = Factory<T>(config);
-        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -69,7 +68,7 @@ class Module : public Pipeline {
 
     Result underlyingPostprocess() final {
         std::size_t errors = 0;
-        if ((errors = checker->run(output, result)) != 0) {
+        if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -81,7 +80,8 @@ class Module : public Pipeline {
     const typename T::Config& config;
 
     std::unique_ptr<Beamformer::Generic> beamformer;
-    std::unique_ptr<Checker> checker;
+
+    Checker checker;
 
     std::span<CF32> input;
     std::span<CF32> phasors;

@@ -3,7 +3,7 @@
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Checker checker({});
+    Checker checker;
 
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;

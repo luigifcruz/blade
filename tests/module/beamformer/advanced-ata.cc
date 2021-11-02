@@ -14,16 +14,16 @@ int main() {
         .dims = {
             .NBEAMS = 16,
             .NANTS  = 20,
-            .NCHANS = 384,
-            .NTIME  = 8750,
+            .NCHANS = 192,
+            .NTIME  = 8192,
             .NPOLS  = 2,
         },
-        .blockSize = 350,
+        .blockSize = 512,
     });
 
     manager.save(mod).report();
 
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 24; i++) {
         if (mod.process(true) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
