@@ -27,7 +27,6 @@ class Module : public Pipeline {
         BL_INFO("Initializing kernels.");
 
         cast = Factory<Cast>({});
-        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -36,8 +35,8 @@ class Module : public Pipeline {
         BL_INFO("Allocating resources.");
 
         BL_CHECK(allocateBuffer(input, size));
-        BL_CHECK(allocateBuffer(output, size));
-        BL_CHECK(allocateBuffer(result, size));
+        BL_CHECK(allocateBuffer(output, size, true));
+        BL_CHECK(allocateBuffer(result, size, true));
 
         return Result::SUCCESS;
     }
@@ -59,7 +58,7 @@ class Module : public Pipeline {
 
     Result underlyingPostprocess() final {
         std::size_t errors = 0;
-        if ((errors = checker->run(output, result)) != 0) {
+        if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -75,7 +74,7 @@ class Module : public Pipeline {
     std::span<OT> result;
 
     std::unique_ptr<Cast> cast;
-    std::unique_ptr<Checker> checker;
+    Checker checker;
 };
 
 template<typename IT, typename OT>
@@ -99,7 +98,7 @@ int complex_text(const std::size_t testSize) {
     mod.upload(input, result);
     manager.save(mod).report();
 
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 24; i++) {
         if (mod.process(true) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;

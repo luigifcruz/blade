@@ -27,9 +27,8 @@ Result Pipeline::commit() {
     BL_CHECK(this->underlyingAllocate());
     BL_CHECK(this->underlyingReport(resources));
     BL_CHECK(this->underlyingPreprocess());
-
-    BL_DEBUG("Pre-caching CUDA kernels.");
     BL_CHECK(this->underlyingProcess(cudaStream));
+    cudaStreamSynchronize(cudaStream);
 
     BL_DEBUG("Creating CUDA Graphs.");
     BL_CUDA_CHECK(cudaStreamBeginCapture(cudaStream,
@@ -38,6 +37,10 @@ Result Pipeline::commit() {
     });
 
     BL_CHECK(this->underlyingProcess(cudaStream));
+    BL_CUDA_CHECK(cudaLaunchHostFunc(cudaStream, this->handlePostprocess, this), [&]{
+        BL_FATAL("Failed to launch postprocess function while capturing: {}", err);
+        return Result::CUDA_ERROR;
+    });
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Failed to run kernels while capturing: {}", err);
@@ -57,6 +60,15 @@ Result Pipeline::commit() {
     return Result::SUCCESS;
 }
 
+void CUDART_CB Pipeline::handlePostprocess(void* data) {
+    auto pipeline = static_cast<Pipeline*>(data);
+
+    if (pipeline->underlyingPostprocess() != Result::SUCCESS) {
+        BL_FATAL("Postprocess function emitted an error.");
+        abort();
+    }
+}
+
 Result Pipeline::process(bool waitCompletion) {
     BL_CHECK(this->underlyingPreprocess());
 
@@ -67,8 +79,6 @@ Result Pipeline::process(bool waitCompletion) {
     if (waitCompletion) {
         cudaStreamSynchronize(cudaStream);
     }
-
-    BL_CHECK(this->underlyingPostprocess());
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Failed to run CUDA Graph: {}", err);

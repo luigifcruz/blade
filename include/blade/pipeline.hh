@@ -118,6 +118,8 @@ class BLADE_API Pipeline : public ResourcesPlug {
 
     Resources resources;
     std::vector<void*> allocations;
+
+    static void CUDART_CB handlePostprocess(void* data);
 };
 
 }  // namespace Blade

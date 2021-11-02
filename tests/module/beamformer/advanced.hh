@@ -23,7 +23,6 @@ class Module : public Pipeline {
 
         beamformer = Factory<T>(config);
         test = std::make_unique<typename T::Test>(config);
-        checker = Factory<Checker>({});
 
         return Result::SUCCESS;
     }
@@ -33,8 +32,8 @@ class Module : public Pipeline {
 
         BL_CHECK(allocateBuffer(input, beamformer->getInputSize()));
         BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
-        BL_CHECK(allocateBuffer(output, beamformer->getOutputSize()));
-        BL_CHECK(allocateBuffer(result, beamformer->getOutputSize()));
+        BL_CHECK(allocateBuffer(output, beamformer->getOutputSize(), true));
+        BL_CHECK(allocateBuffer(result, beamformer->getOutputSize(), true));
 
         BL_INFO("Generating test data with Python.");
         BL_CHECK(test->process());
@@ -65,7 +64,7 @@ class Module : public Pipeline {
 
     Result underlyingPostprocess() final {
         std::size_t errors = 0;
-        if ((errors = checker->run(output, result)) != 0) {
+        if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -78,7 +77,8 @@ class Module : public Pipeline {
 
     std::unique_ptr<Beamformer::Generic> beamformer;
     std::unique_ptr<Beamformer::Generic::Test> test;
-    std::unique_ptr<Checker> checker;
+
+    Checker checker;
 
     std::span<CF32> input;
     std::span<CF32> phasors;

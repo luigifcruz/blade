@@ -1,54 +1,22 @@
 #include "blade/checker/base.hh"
 
-#include "checker.jit.hh"
-
 namespace Blade {
 
-Checker::Checker(const Config& config) :
-    Kernel(config.blockSize), config(config), cache(100, *checker_kernel) {
-    BL_DEBUG("Initilizating class.");
-
-    block = dim3(config.blockSize);
-
-    if (cudaMallocManaged(&counter, sizeof(unsigned long long int)) != cudaSuccess) {
-        BL_FATAL("Can't allocate CUDA memory for counter.");
-        throw Result::ERROR;
-    }
-    *counter = 0;
-}
-
-Checker::~Checker() {
-    BL_DEBUG("Destroying class.");
-    cudaFree(counter);
-}
-
 template<typename IT, typename OT>
-unsigned long long int Checker::run(IT a, OT b, std::size_t size, std::size_t scale,
-        cudaStream_t cudaStream) {
-    auto kernel = Template("checker").instantiate(Type<IT>(), size * scale);
-    dim3 grid = dim3(((size * scale) + block.x - 1) / block.x);
-
-    *counter = 0;
-    cache
-        .get_kernel(kernel)
-        ->configure(grid, block, 0, cudaStream)
-        ->launch(a, b, counter);
-
-    BL_CUDA_CHECK_KERNEL([&]{
-        BL_FATAL("Kernel failed to execute: {}", err);
-        return -1;
-    });
-
-    cudaDeviceSynchronize();
-
-    return (*counter) / scale;
+unsigned long long int Checker::run(IT a, OT b, std::size_t size, std::size_t scale) {
+    std::size_t counter = 0;
+    for (std::size_t i = 0; i < (size * scale); i++) {
+        if (abs(static_cast<double>(a[i]) - static_cast<double>(b[i])) > 0.1) {
+            counter += 1;
+        }
+    }
+    return counter / scale;
 }
 
 
 template<typename IT, typename OT>
 unsigned long long int Checker::run(const std::span<std::complex<IT>>& a,
-                                    const std::span<std::complex<OT>>& b,
-                                          cudaStream_t cudaStream) {
+                                    const std::span<std::complex<OT>>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -62,8 +30,7 @@ unsigned long long int Checker::run(const std::span<std::complex<IT>>& a,
 
 template<typename IT, typename OT>
 unsigned long long int Checker::run(const std::span<IT>& a,
-                                    const std::span<OT>& b,
-                                          cudaStream_t cudaStream) {
+                                    const std::span<OT>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -73,27 +40,21 @@ unsigned long long int Checker::run(const std::span<IT>& a,
 }
 
 template unsigned long long int Checker::run(const std::span<CF32>&,
-                                             const std::span<CF32>&,
-                                                   cudaStream_t);
+                                             const std::span<CF32>&);
 
 template unsigned long long int Checker::run(const std::span<CI8>&,
-                                             const std::span<CI8>&,
-                                                   cudaStream_t);
+                                             const std::span<CI8>&);
 
 template unsigned long long int Checker::run(const std::span<CF16>&,
-                                             const std::span<CF16>&,
-                                                   cudaStream_t);
+                                             const std::span<CF16>&);
 
 template unsigned long long int Checker::run(const std::span<F32>&,
-                                             const std::span<F32>&,
-                                                   cudaStream_t);
+                                             const std::span<F32>&);
 
 template unsigned long long int Checker::run(const std::span<I8>&,
-                                             const std::span<I8>&,
-                                                   cudaStream_t);
+                                             const std::span<I8>&);
 
 template unsigned long long int Checker::run(const std::span<F16>&,
-                                             const std::span<F16>&,
-                                                   cudaStream_t);
+                                             const std::span<F16>&);
 
 }  // namespace Blade

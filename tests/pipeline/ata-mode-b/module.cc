@@ -25,7 +25,7 @@ struct State {
     std::vector<std::unique_ptr<Module>> swapchain;
 
     std::size_t runs = 0;
-    duration<double, std::milli> elapsed = 0.0s;
+    time_point<system_clock, duration<double, std::milli>> t1;
 };
 
 module_t init(size_t batch_size) {
@@ -60,7 +60,11 @@ module_t init(size_t batch_size) {
 void deinit(module_t mod) {
     auto self = static_cast<State*>(mod);
 
-    BL_INFO("Cycle time average was {} ms.", self->elapsed.count() / self->runs);
+    auto t2 = high_resolution_clock::now();
+    duration<double, std::milli> elapsed = (t2 - self->t1);
+
+    BL_INFO("Cycle time average was {} ms for each of {} runs.",
+        elapsed.count() / self->runs, self->runs);
     BL_INFO("Pipeline exiting.");
 
     delete self;
@@ -83,7 +87,9 @@ size_t get_output_size(module_t mod) {
 int process(module_t mod, void** input, void** output) {
     auto self = static_cast<State*>(mod);
 
-    auto t1 = high_resolution_clock::now();
+    if (self->runs == 0) {
+        self->t1 = high_resolution_clock::now();
+    }
 
     // Upload the data of both instances in parallel.
     for (std::size_t i = 0; i < self->swapchain.size(); i++) {
@@ -120,9 +126,6 @@ int process(module_t mod, void** input, void** output) {
 
     // Wait for both instances to finish.
     cudaDeviceSynchronize();
-
-    auto t2 = high_resolution_clock::now();
-    self->elapsed += (t2 - t1);
     self->runs += self->swapchain.size();
 
     return to_underlying(Result::SUCCESS);
