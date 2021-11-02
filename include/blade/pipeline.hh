@@ -117,9 +117,11 @@ class BLADE_API Pipeline : public ResourcesPlug {
     cudaGraphExec_t instance;
 
     Resources resources;
+    std::size_t state{0};
     std::vector<void*> allocations;
 
     static void CUDART_CB handlePostprocess(void* data);
+    Result handleProcess();
 };
 
 }  // namespace Blade

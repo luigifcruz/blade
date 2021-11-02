@@ -87,7 +87,8 @@ size_t get_output_size(module_t mod) {
 int process(module_t mod, void** input, void** output) {
     auto self = static_cast<State*>(mod);
 
-    if (self->runs == 0) {
+    // Disregard first two iterations.
+    if (self->runs == 2 * self->swapchain.size()) {
         self->t1 = high_resolution_clock::now();
     }
 
