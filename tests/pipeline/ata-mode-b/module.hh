@@ -23,7 +23,7 @@ class Module : public Pipeline {
     };
 
     explicit Module(const Config& configuration) : config(configuration) {
-        if (this->commit() != Result::SUCCESS) {
+        if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
@@ -36,20 +36,14 @@ class Module : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result upload(const std::span<CI8>& input) {
-        BL_CHECK(copyBuffer(bufferA, input, CopyKind::H2D));
-
-        return Result::SUCCESS;
-    }
-
-    Result download(std::span<CF16> output) {
-        BL_CHECK(copyBuffer(output, bufferE, CopyKind::D2H));
-
-        return Result::SUCCESS;
+    Result run(const std::span<CI8>& in, std::span<CF16>& out, bool async = true) {
+        this->input = in;
+        this->output = out;
+        return this->loop(async);
     }
 
  protected:
-    Result underlyingInit() final {
+    Result setupModules() final {
         BL_INFO("Initializing kernels.");
 
         cast = Factory<Cast>({
@@ -75,7 +69,7 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingAllocate() final {
+    Result setupMemory() final {
         BL_INFO("Allocating resources.");
 
         BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
@@ -88,7 +82,7 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources& res) final {
+    Result setupReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += bufferA.size_bytes();
@@ -97,7 +91,13 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t& cudaStream) final {
+    Result loopUpload() final {
+        BL_CHECK(this->copyBuffer(bufferA, input, CopyKind::H2D));
+
+        return Result::SUCCESS;
+    }
+
+    Result loopProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
         BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
         BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
@@ -106,8 +106,17 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
+    Result loopDownload() final {
+        BL_CHECK(this->copyBuffer(output, bufferE, CopyKind::D2H));
+
+        return Result::SUCCESS;
+    }
+
  private:
     const Config& config;
+
+    std::span<CI8> input;
+    std::span<CF16> output;
 
     std::span<CF32> phasors;
     std::span<CI8> bufferA;

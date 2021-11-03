@@ -92,35 +92,18 @@ int process(module_t mod, void** input, void** output) {
         self->t1 = high_resolution_clock::now();
     }
 
-    // Upload the data of both instances in parallel.
-    for (std::size_t i = 0; i < self->swapchain.size(); i++) {
-        auto& worker = self->swapchain[i];
-        auto buf = static_cast<CI8*>(input[i]);
-        auto in = std::span(buf, worker->getInputSize());
-
-        if (worker->upload(in) != Result::SUCCESS) {
-            BL_WARN("Can't upload data. Test is exiting...");
-            return 1;
-        }
-    }
-
     // Process the data of both instances in parallel.
     for (std::size_t i = 0; i < self->swapchain.size(); i++) {
         auto& worker = self->swapchain[i];
-        if (worker->process() != Result::SUCCESS) {
+
+        auto ibuf = static_cast<CI8*>(input[i]);
+        auto in = std::span(ibuf, worker->getInputSize());
+
+        auto obuf = static_cast<CF16*>(output[i]);
+        auto out = std::span(obuf, worker->getOutputSize());
+
+        if (worker->run(in, out) != Result::SUCCESS) {
             BL_WARN("Can't process data. Test is exiting.:q..");
-            return 1;
-        }
-    }
-
-    // Download the data of both instances in parallel.
-    for (std::size_t i = 0; i < self->swapchain.size(); i++) {
-        auto& worker = self->swapchain[i];
-        auto buf = static_cast<CF16*>(output[i]);
-        auto out = std::span(buf, worker->getOutputSize());
-
-        if (worker->download(out) != Result::SUCCESS) {
-            BL_WARN("Can't download data. Test is exiting...");
             return 1;
         }
     }

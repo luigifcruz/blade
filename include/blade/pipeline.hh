@@ -16,8 +16,11 @@ class BLADE_API Pipeline : public ResourcesPlug {
  public:
     virtual ~Pipeline();
 
-    Result commit();
-    Result process(bool waitCompletion = false);
+    Result synchronize();
+
+    constexpr bool isSyncronized() const {
+        return synchronized;
+    }
 
     constexpr Resources getResources() const {
         return resources;
@@ -43,32 +46,43 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
  protected:
-    virtual constexpr Result underlyingInit() {
+    Result setup();
+    Result loop(const bool& async = true);
+
+    virtual constexpr Result setupModules() {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingReport(Resources& res) {
+    virtual constexpr Result setupMemory() {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingAllocate() {
+    virtual constexpr Result setupReport(Resources& res) {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingPreprocess() {
+    virtual constexpr Result loopPreprocess() {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingProcess(cudaStream_t& cudaStream) {
+    virtual constexpr Result loopUpload() {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result underlyingPostprocess() {
+    virtual constexpr Result loopProcess(cudaStream_t& cudaStream) {
+        return Result::SUCCESS;
+    }
+
+    virtual constexpr Result loopDownload() {
+        return Result::SUCCESS;
+    }
+
+    virtual constexpr Result loopPostprocess() {
         return Result::SUCCESS;
     }
 
     template<typename T>
-    Result copyBuffer(const std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
+    Result copyBuffer(std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
         if (dst.size() != src.size()) {
             BL_FATAL("Size mismatch between source and destination ({}, {}).",
                     src.size(), dst.size());
@@ -117,11 +131,12 @@ class BLADE_API Pipeline : public ResourcesPlug {
     cudaGraphExec_t instance;
 
     Resources resources;
-    std::size_t state{0};
     std::vector<void*> allocations;
 
-    static void CUDART_CB handlePostprocess(void* data);
-    Result handleProcess();
+    std::size_t state{0};
+    bool synchronized{true};
+
+    static void CUDART_CB callPostprocess(void* data);
 };
 
 }  // namespace Blade

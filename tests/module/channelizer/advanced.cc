@@ -9,13 +9,17 @@ using namespace Blade;
 class Module : public Pipeline {
  public:
     explicit Module(const Channelizer::Config& config) : config(config) {
-        if (this->commit() != Result::SUCCESS) {
+        if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
+    Result run() {
+        return this->loop(false);
+    }
+
  protected:
-    Result underlyingInit() final {
+    Result setupModules() final {
         BL_INFO("Initializing kernels.");
 
         channelizer = std::make_unique<Channelizer>(config);
@@ -24,7 +28,7 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingAllocate() final {
+    Result setupMemory() final {
         BL_INFO("Allocating resources.");
         BL_CHECK(allocateBuffer(input, channelizer->getBufferSize()));
         BL_CHECK(allocateBuffer(output, channelizer->getBufferSize(), true));
@@ -40,7 +44,7 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingReport(Resources& res) final {
+    Result setupReport(Resources& res) final {
         BL_INFO("Reporting resources.");
 
         res.transfer.h2d += input.size_bytes();
@@ -49,13 +53,13 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result underlyingProcess(cudaStream_t& cudaStream) final {
+    Result loopProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(channelizer->run(input, output, cudaStream));
 
         return Result::SUCCESS;
     }
 
-    Result underlyingPostprocess() final {
+    Result loopPostprocess() final {
         std::size_t errors = 0;
         if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
@@ -99,7 +103,7 @@ int main() {
     manager.save(mod).report();
 
     for (int i = 0; i < 24; i++) {
-        if (mod.process(true) != Result::SUCCESS) {
+        if (mod.run() != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }

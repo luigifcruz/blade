@@ -23,7 +23,7 @@ int main() {
     manager.save(mod).report();
 
     for (int i = 0; i < 24; i++) {
-        if (mod.process(true) != Result::SUCCESS) {
+        if (mod.run() != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }
