@@ -27,8 +27,19 @@ int main(int argc, char **argv) {
         pin_memory(mod, output_buffers[i], output_byte_size);
     }
 
-    for (int i = 0; i < 255; i++) {
-        process(mod, input_buffers, output_buffers);
+    int runs = 0;
+    int head = 0;
+    int tail = 0;
+    while(runs < 510) {
+        if (synchronized(mod, head)) {
+            processAsync(mod, head, input_buffers[head], output_buffers[head]);
+            head = (head + 1) % batch_size;
+        }
+
+        if (tail != head && !synchronized(mod, tail)) {
+            runs += 1;
+            tail = (tail + 1) % batch_size;
+        }
     }
 
     deinit(mod);

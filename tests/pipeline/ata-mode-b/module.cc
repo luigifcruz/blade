@@ -84,6 +84,36 @@ size_t get_output_size(module_t mod) {
     return self->swapchain[0]->getOutputSize();
 }
 
+bool synchronized(module_t mod, int idx) {
+    auto self = static_cast<State*>(mod);
+    return self->swapchain[idx]->isSyncronized();
+}
+
+int processAsync(module_t mod, int idx, void* input, void* output) {
+    auto self = static_cast<State*>(mod);
+
+    if (self->runs == 2) {
+        self->t1 = high_resolution_clock::now();
+    }
+
+    auto& worker = self->swapchain[idx];
+
+    auto ibuf = static_cast<CI8*>(input);
+    auto in = std::span(ibuf, worker->getInputSize());
+
+    auto obuf = static_cast<CF16*>(output);
+    auto out = std::span(obuf, worker->getOutputSize());
+
+    if (worker->run(in, out) != Result::SUCCESS) {
+        BL_WARN("Can't process data. Test is exiting...");
+        return 1;
+    }
+
+    self->runs += 1;
+
+    return to_underlying(Result::SUCCESS);
+}
+
 int process(module_t mod, void** input, void** output) {
     auto self = static_cast<State*>(mod);
 

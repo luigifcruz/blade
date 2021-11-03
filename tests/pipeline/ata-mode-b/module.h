@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef void* module_t;
 
@@ -72,3 +73,37 @@ size_t get_output_size(module_t mod);
 // int : error indicator (zero indicate success)
 //
 int process(module_t mod, void** input, void** output);
+
+// Process a single buffer of data asynchronously.
+//
+// Arguments
+// ---------
+// mod : module_t
+//      pointer to the internal state
+// idx : int
+//      index of the worker
+// input : void*
+//      array of input buffers of size of batch_size (complex CI8)
+// output : void*
+//      array of output buffers of size of batch_size (complex CF16)
+//
+// Return
+// ------
+// int : error indicator (zero indicate success)
+//
+int processAsync(module_t mod, int idx, void* input, void* output);
+
+// Checks if a worker is done with the processing.
+//
+// Arguments
+// ---------
+// mod : module_t
+//      pointer to the internal state
+// idx : int
+//      index of the worker
+//
+// Return
+// ------
+// bool : true if worker is done, otherwise false
+//
+bool synchronized(module_t mod, int idx);
