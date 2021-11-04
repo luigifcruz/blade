@@ -3,7 +3,7 @@
 namespace Blade {
 
 template<typename IT, typename OT>
-unsigned long long int Checker::run(IT a, OT b, std::size_t size, std::size_t scale) {
+BLADE_FAST std::size_t Checker::run(IT a, OT b, std::size_t size, std::size_t scale) {
     std::size_t counter = 0;
     for (std::size_t i = 0; i < (size * scale); i++) {
         if (abs(static_cast<double>(a[i]) - static_cast<double>(b[i])) > 0.1) {
@@ -13,10 +13,9 @@ unsigned long long int Checker::run(IT a, OT b, std::size_t size, std::size_t sc
     return counter / scale;
 }
 
-
 template<typename IT, typename OT>
-unsigned long long int Checker::run(const std::span<std::complex<IT>>& a,
-                                    const std::span<std::complex<OT>>& b) {
+std::size_t Checker::run(const std::span<std::complex<IT>>& a,
+                         const std::span<std::complex<OT>>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -29,8 +28,8 @@ unsigned long long int Checker::run(const std::span<std::complex<IT>>& a,
 }
 
 template<typename IT, typename OT>
-unsigned long long int Checker::run(const std::span<IT>& a,
-                                    const std::span<OT>& b) {
+std::size_t Checker::run(const std::span<IT>& a,
+                         const std::span<OT>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -39,22 +38,22 @@ unsigned long long int Checker::run(const std::span<IT>& a,
     return this->run(a.data(), b.data(), a.size());
 }
 
-template unsigned long long int Checker::run(const std::span<CF32>&,
-                                             const std::span<CF32>&);
+template std::size_t Checker::run(const std::span<CF32>&,
+                                  const std::span<CF32>&);
 
-template unsigned long long int Checker::run(const std::span<CI8>&,
-                                             const std::span<CI8>&);
+template std::size_t Checker::run(const std::span<CI8>&,
+                                  const std::span<CI8>&);
 
-template unsigned long long int Checker::run(const std::span<CF16>&,
-                                             const std::span<CF16>&);
+template std::size_t Checker::run(const std::span<CF16>&,
+                                  const std::span<CF16>&);
 
-template unsigned long long int Checker::run(const std::span<F32>&,
-                                             const std::span<F32>&);
+template std::size_t Checker::run(const std::span<F32>&,
+                                  const std::span<F32>&);
 
-template unsigned long long int Checker::run(const std::span<I8>&,
-                                             const std::span<I8>&);
+template std::size_t Checker::run(const std::span<I8>&,
+                                  const std::span<I8>&);
 
-template unsigned long long int Checker::run(const std::span<F16>&,
-                                             const std::span<F16>&);
+template std::size_t Checker::run(const std::span<F16>&,
+                                  const std::span<F16>&);
 
 }  // namespace Blade

@@ -1,7 +1,7 @@
 #include "module.hh"
 
 extern "C" {
-#include "module.h"
+    #include "module.h"
 }
 
 struct State {

@@ -3,9 +3,9 @@ project(
   ['cpp', 'c', 'cuda'],
   version: '0.0.0',
   default_options: [
+    'buildtype=release',
     'cpp_std=c++20',
     'b_ndebug=if-release',
-    # TODO: Add LTO option when Nvidia fixes bug with Clang 12.
   ]
 )
 
