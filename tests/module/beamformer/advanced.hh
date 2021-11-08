@@ -11,14 +11,15 @@ using namespace Blade;
 template<typename T>
 class Module : public Pipeline {
  public:
-    explicit Module(const typename T::Config& config) : config(config) {
+    explicit Module(const typename T::Config& config) :
+        Pipeline(false, true), config(config) {
         if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
     Result run() {
-        return this->loop(false);
+        return this->loop();
     }
 
  protected:
@@ -26,7 +27,6 @@ class Module : public Pipeline {
         BL_INFO("Initializing kernels.");
 
         beamformer = Factory<T>(config);
-        test = std::make_unique<typename T::Test>(config);
 
         return Result::SUCCESS;
     }
@@ -37,15 +37,6 @@ class Module : public Pipeline {
         BL_CHECK(allocateBuffer(input, beamformer->getInputSize()));
         BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
         BL_CHECK(allocateBuffer(output, beamformer->getOutputSize(), true));
-        BL_CHECK(allocateBuffer(result, beamformer->getOutputSize(), true));
-
-        BL_INFO("Generating test data with Python.");
-        BL_CHECK(test->process());
-
-        BL_INFO("Copying test data to the device.");
-        BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
-        BL_CHECK(copyBuffer(phasors, test->getPhasorsData(), CopyKind::H2D));
-        BL_CHECK(copyBuffer(result, test->getOutputData(), CopyKind::H2D));
 
         return Result::SUCCESS;
     }
@@ -60,15 +51,27 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
+    Result setupTest() final {
+        test = std::make_unique<typename T::Test>(config);
+
+        BL_CHECK(test->process());
+        BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
+        BL_CHECK(copyBuffer(phasors, test->getPhasorsData(), CopyKind::H2D));
+
+        return Result::SUCCESS;
+    }
+
     Result loopProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(beamformer->run(input, phasors, output, cudaStream));
 
         return Result::SUCCESS;
     }
 
-    Result loopPostprocess() final {
+    Result loopTest() final {
+        Checker checker;
+
         std::size_t errors = 0;
-        if ((errors = checker.run(output, result)) != 0) {
+        if ((errors = checker.run(output, test->getOutputData())) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -82,10 +85,7 @@ class Module : public Pipeline {
     std::unique_ptr<Beamformer::Generic> beamformer;
     std::unique_ptr<Beamformer::Generic::Test> test;
 
-    Checker checker;
-
     std::span<CF32> input;
     std::span<CF32> phasors;
     std::span<CF32> output;
-    std::span<CF32> result;
 };

@@ -5,7 +5,7 @@
 namespace Blade::Beamformer {
 
 Generic::Generic(const Config& config) :
-    Kernel(config.blockSize), config(config), cache(100, *beamformer_kernel) {
+        Kernel(config.blockSize), config(config), cache(100, *beamformer_kernel) {
     BL_DEBUG("Initilizating class.");
 
     if ((config.dims.NTIME % config.blockSize) != 0) {

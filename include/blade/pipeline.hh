@@ -14,6 +14,7 @@ namespace Blade {
 
 class BLADE_API Pipeline : public ResourcesPlug {
  public:
+    Pipeline(const bool& async = true, const bool& test = false);
     virtual ~Pipeline();
 
     Result synchronize();
@@ -44,7 +45,7 @@ class BLADE_API Pipeline : public ResourcesPlug {
 
  protected:
     Result setup();
-    Result loop(const bool& async = true);
+    Result loop();
 
     virtual constexpr Result setupModules() {
         return Result::SUCCESS;
@@ -55,6 +56,10 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
     virtual constexpr Result setupReport(Resources& res) {
+        return Result::SUCCESS;
+    }
+
+    virtual constexpr Result setupTest() {
         return Result::SUCCESS;
     }
 
@@ -71,6 +76,10 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
     virtual constexpr Result loopDownload() {
+        return Result::SUCCESS;
+    }
+
+    virtual constexpr Result loopTest() {
         return Result::SUCCESS;
     }
 
@@ -119,6 +128,9 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
  private:
+    bool asyncMode;
+    bool testMode;
+
     cudaGraph_t graph;
     cudaStream_t cudaStream;
     cudaGraphExec_t instance;

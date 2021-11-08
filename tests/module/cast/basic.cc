@@ -8,14 +8,15 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Module : public Pipeline {
  public:
-    explicit Module(const std::size_t& size) : size(size) {
+    explicit Module(const std::size_t& size) :
+        Pipeline(false, true), size(size) {
         if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
     Result run() {
-        return this->loop(false);
+        return this->loop();
     }
 
     Result loadTestData(const std::span<IT>& inputBuffer,
@@ -60,7 +61,9 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result loopPostprocess() final {
+    Result loopTest() final {
+        Checker checker;
+
         std::size_t errors = 0;
         if ((errors = checker.run(output, result)) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
@@ -78,7 +81,6 @@ class Module : public Pipeline {
     std::span<OT> result;
 
     std::unique_ptr<Cast> cast;
-    Checker checker;
 };
 
 template<typename IT, typename OT>
