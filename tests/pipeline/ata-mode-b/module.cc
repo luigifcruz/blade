@@ -28,7 +28,7 @@ struct State {
     time_point<system_clock, duration<double, std::milli>> t1;
 };
 
-module_t init(size_t batch_size) {
+blade_module_t blade_initialize(size_t batch_size) {
     auto self = new State();
 
     if (batch_size < 1) {
@@ -57,7 +57,7 @@ module_t init(size_t batch_size) {
     return self;
 }
 
-void deinit(module_t mod) {
+void blade_terminate(blade_module_t mod) {
     auto self = static_cast<State*>(mod);
 
     auto t2 = high_resolution_clock::now();
@@ -70,26 +70,26 @@ void deinit(module_t mod) {
     delete self;
 }
 
-int pin_memory(module_t mod, void* buffer, size_t size) {
+int blade_pin_memory(blade_module_t mod, void* buffer, size_t size) {
     return cudaHostRegister(buffer, size, cudaHostRegisterDefault);
 }
 
-size_t get_input_size(module_t mod) {
+size_t blade_get_input_size(blade_module_t mod) {
     auto self = static_cast<State*>(mod);
     return self->swapchain[0]->getInputSize();
 }
 
-size_t get_output_size(module_t mod) {
+size_t blade_get_output_size(blade_module_t mod) {
     auto self = static_cast<State*>(mod);
     return self->swapchain[0]->getOutputSize();
 }
 
-bool synchronized(module_t mod, int idx) {
+bool blade_async_query(blade_module_t mod, int idx) {
     auto self = static_cast<State*>(mod);
     return self->swapchain[idx]->isSyncronized();
 }
 
-int processAsync(module_t mod, int idx, void* input, void* output) {
+int blade_async_process(blade_module_t mod, int idx, void* input, void* output) {
     auto self = static_cast<State*>(mod);
 
     if (self->runs == 2) {
@@ -114,7 +114,7 @@ int processAsync(module_t mod, int idx, void* input, void* output) {
     return to_underlying(Result::SUCCESS);
 }
 
-int process(module_t mod, void** input, void** output) {
+int blade_process(blade_module_t mod, void** input, void** output) {
     auto self = static_cast<State*>(mod);
 
     // Disregard first two iterations.

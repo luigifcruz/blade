@@ -12,7 +12,7 @@
 
 namespace Blade {
 
-typedef half    F16;
+typedef __half  F16;
 typedef float   F32;
 typedef int8_t  I8;
 typedef int16_t I16;

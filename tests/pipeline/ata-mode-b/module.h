@@ -2,108 +2,112 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef void* module_t;
+typedef void* blade_module_t;
 
-// Initializes all modules from pipeline.
+// Initialize the pipeline.
 //
-// Arguments
-// ---------
-// batch_size : size_t
-//      specifies the number of parallel workers (usually higher than two)
+// Parameters
+// ----------
+// number_of_workers : size_t
+//      specifies the number of workers to spawn (usually higher than two)
 //
 // Return
 // ------
-// module_t : pointer to the internal state
+// blade_module_t : pointer to the internal state
 //
-module_t init(size_t batch_size);
+blade_module_t blade_initialize(size_t number_of_workers);
 
-// Destroys the module created by init().
+// Terminate the pipeline initialized by init().
 //
-// Arguments
-// ---------
-// mod : module_t
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 //
-void deinit(module_t mod);
+void blade_terminate(blade_module_t mod);
 
-// Pin host memory to the device poll.
+// Pin existing host memory in the device memory poll.
 //
-// Arguments
-// ---------
-// mod : module_t
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 // buffer : void*
 //      buffer pointer
 // size : size_t
-//      size of the pointer
+//      buffer size in bytes
 //
-int pin_memory(module_t mod, void* buffer, size_t size);
+int blade_pin_memory(blade_module_t mod, void* buffer, size_t size);
 
-// Get the expected size of each input buffer.
+// Get the expected size of the input buffer.
 //
-// Arguments
-// ---------
-// mod : module_t
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 //
-size_t get_input_size(module_t mod);
+size_t blade_get_input_size(blade_module_t mod);
 
-// Get the expected size of each output buffer.
+// Get the expected size of the output buffer.
 //
-// Arguments
-// ---------
-// mod : module_t
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 //
-size_t get_output_size(module_t mod);
+size_t blade_get_output_size(blade_module_t mod);
 
-// Process the data.
+// Submit a batch of buffers for synchronous processing.
 //
-// Arguments
-// ---------
-// mod : module_t
+// This function will block until all buffers are processed.
+//
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 // input : void**
-//      array of input buffers of size of batch_size (complex CI8)
+//      array containing input buffers of size of number_of_workers (complex CI8)
 // output : void**
-//      array of output buffers of size of batch_size (complex CF16)
+//      array containing output buffers of size of number_of_workers (complex CF16)
 //
 // Return
 // ------
 // int : error indicator (zero indicate success)
 //
-int process(module_t mod, void** input, void** output);
+int blade_process(blade_module_t mod, void** input, void** output);
 
-// Process a single buffer of data asynchronously.
+// Submit a single buffer for asynchronous processing.
 //
-// Arguments
-// ---------
-// mod : module_t
+// This function is recommended over the synchronous counterpart.
+//
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 // idx : int
-//      index of the worker
+//      worker index
 // input : void*
-//      array of input buffers of size of batch_size (complex CI8)
+//      pointer of the input buffer (complex CI8)
 // output : void*
-//      array of output buffers of size of batch_size (complex CF16)
+//      pointer of the output buffer (complex CF16)
 //
 // Return
 // ------
 // int : error indicator (zero indicate success)
 //
-int processAsync(module_t mod, int idx, void* input, void* output);
+int blade_async_process(blade_module_t mod, int idx, void* input, void* output);
 
-// Checks if a worker is done with the processing.
+// Check if a worked finished processing a buffer.
 //
-// Arguments
-// ---------
-// mod : module_t
+// Parameters
+// ----------
+// mod : blade_module_t
 //      pointer to the internal state
 // idx : int
-//      index of the worker
+//      worker index
 //
 // Return
 // ------
 // bool : true if worker is done, otherwise false
 //
-bool synchronized(module_t mod, int idx);
+bool blade_async_query(blade_module_t mod, int idx);
