@@ -21,6 +21,10 @@ Result Pipeline::synchronize() {
     return Result::SUCCESS;
 }
 
+bool Pipeline::isSyncronized() {
+    return cudaStreamQuery(cudaStream) == cudaSuccess;
+}
+
 Result Pipeline::setup() {
     BL_DEBUG("Pipeline commiting.");
 
@@ -44,7 +48,7 @@ Result Pipeline::loop(const bool& async) {
         BL_FATAL("Pipeline is not synchronized.");
         return Result::ERROR;
     }
-    this->synchronized = false;
+
     BL_CHECK(this->loopPreprocess());
     BL_CHECK(this->loopUpload());
 
@@ -92,11 +96,6 @@ Result Pipeline::loop(const bool& async) {
     }
 
     BL_CHECK(this->loopDownload());
-    BL_CUDA_CHECK(cudaLaunchHostFunc(cudaStream,
-            this->callPostprocess, this), [&]{
-        BL_FATAL("Failed to launch postprocess: {}", err);
-        return Result::CUDA_ERROR;
-    });
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Failed to process: {}", err);
@@ -108,16 +107,6 @@ Result Pipeline::loop(const bool& async) {
     }
 
     return Result::SUCCESS;
-}
-
-void CUDART_CB Pipeline::callPostprocess(void* data) {
-    auto pipeline = static_cast<Pipeline*>(data);
-
-    if (pipeline->loopPostprocess() != Result::SUCCESS) {
-        abort();
-    }
-
-    pipeline->synchronized = true;
 }
 
 }  // namespace Blade

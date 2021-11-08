@@ -17,10 +17,7 @@ class BLADE_API Pipeline : public ResourcesPlug {
     virtual ~Pipeline();
 
     Result synchronize();
-
-    constexpr bool isSyncronized() const {
-        return synchronized;
-    }
+    bool isSyncronized();
 
     constexpr Resources getResources() const {
         return resources;
@@ -77,10 +74,6 @@ class BLADE_API Pipeline : public ResourcesPlug {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result loopPostprocess() {
-        return Result::SUCCESS;
-    }
-
     template<typename T>
     Result copyBuffer(std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
         if (dst.size() != src.size()) {
@@ -131,12 +124,8 @@ class BLADE_API Pipeline : public ResourcesPlug {
     cudaGraphExec_t instance;
 
     Resources resources;
-    std::vector<void*> allocations;
-
     std::size_t state{0};
-    bool synchronized{true};
-
-    static void CUDART_CB callPostprocess(void* data);
+    std::vector<void*> allocations;
 };
 
 }  // namespace Blade
