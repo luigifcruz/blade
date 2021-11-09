@@ -1,5 +1,5 @@
-#ifndef BLADE_PYTHON_H
-#define BLADE_PYTHON_H
+#ifndef BLADE_PYTHON_HH
+#define BLADE_PYTHON_HH
 
 #include <pybind11/embed.h>
 #include <pybind11/numpy.h>

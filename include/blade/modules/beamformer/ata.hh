@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULES_BEAMFORMER_ATA_H
-#define BLADE_MODULES_BEAMFORMER_ATA_H
+#ifndef BLADE_MODULES_BEAMFORMER_ATA_HH
+#define BLADE_MODULES_BEAMFORMER_ATA_HH
 
 #include "blade/modules/beamformer/generic.hh"
 

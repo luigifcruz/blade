@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULES_CHECKER_GENERIC_H
-#define BLADE_MODULES_CHECKER_GENERIC_H
+#ifndef BLADE_MODULES_CHECKER_GENERIC_HH
+#define BLADE_MODULES_CHECKER_GENERIC_HH
 
 #include "blade/base.hh"
 #include "blade/module.hh"

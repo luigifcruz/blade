@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULE_H
-#define BLADE_MODULE_H
+#ifndef BLADE_MODULE_HH
+#define BLADE_MODULE_HH
 
 #include "blade/common.hh"
 #include "blade/logger.hh"

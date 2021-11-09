@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_H
-#define BLADE_PIPELINES_H
+#ifndef BLADE_PIPELINES_BASE_HH
+#define BLADE_PIPELINES_BASE_HH
 
 #include <stdint.h>
 #include <stddef.h>

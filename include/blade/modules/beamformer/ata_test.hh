@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULES_BEAMFORMER_TEST_ATA_H
-#define BLADE_MODULES_BEAMFORMER_TEST_ATA_H
+#ifndef BLADE_MODULES_BEAMFORMER_TEST_ATA_HH
+#define BLADE_MODULES_BEAMFORMER_TEST_ATA_HH
 
 #include "blade/modules/beamformer/generic_test.hh"
 #include "blade/modules/beamformer/ata.hh"

@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINE_H
-#define BLADE_PIPELINE_H
+#ifndef BLADE_PIPELINE_HH
+#define BLADE_PIPELINE_HH
 
 #include <span>
 #include <vector>

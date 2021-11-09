@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_ATA_MODE_B_HH
-#define BLADE_PIPELINES_ATA_MODE_B_HH
+#ifndef BLADE_PIPELINES_ATA_MODE_B_HHH
+#define BLADE_PIPELINES_ATA_MODE_B_HHH
 
 #include "blade/pipeline.hh"
 #include "blade/manager.hh"

@@ -1,5 +1,5 @@
-#ifndef BLADE_LOGGER_H
-#define BLADE_LOGGER_H
+#ifndef BLADE_LOGGER_HH
+#define BLADE_LOGGER_HH
 
 #include <string>
 

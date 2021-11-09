@@ -1,5 +1,5 @@
-#ifndef BLADE_COMMON_H
-#define BLADE_COMMON_H
+#ifndef BLADE_COMMON_HH
+#define BLADE_COMMON_HH
 
 #include <cuda_runtime.h>
 #include <cuComplex.h>
