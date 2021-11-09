@@ -23,6 +23,14 @@ struct State {
         .beamformerBlockSize = 512,
     };
 
+    struct Job {
+        std::size_t index;
+        void* input_ptr;
+        void* output_ptr;
+    };
+    std::deque<Job> fifo;
+    std::size_t head = 0;
+
     std::unique_ptr<Logger> guard;
     std::unique_ptr<Manager> manager;
     std::vector<std::unique_ptr<ModeB>> swapchain;
@@ -31,11 +39,11 @@ struct State {
     time_point<system_clock, duration<double, std::milli>> t1;
 };
 
-blade_module_t blade_ata_b_initialize(size_t batch_size) {
+blade_module_t blade_ata_b_initialize(size_t number_of_workers) {
     auto self = new State();
 
-    if (batch_size < 1) {
-        BL_FATAL("Batch size should be larger than zero.");
+    if (number_of_workers < 1) {
+        BL_FATAL("Number of workers should be larger than zero.");
         return nullptr;
     }
 
@@ -47,7 +55,7 @@ blade_module_t blade_ata_b_initialize(size_t batch_size) {
     BL_INFO("Pipeline for ATA Mode B started.");
 
     // Instantiate swapchain workers.
-    for (std::size_t i = 0; i < batch_size; i++) {
+    for (std::size_t i = 0; i < number_of_workers; i++) {
         self->swapchain.push_back(std::make_unique<ModeB>(self->config));
     }
 
@@ -83,12 +91,7 @@ size_t blade_ata_b_get_output_size(blade_module_t mod) {
     return self->swapchain[0]->getOutputSize();
 }
 
-bool blade_ata_b_async_query(blade_module_t mod, int idx) {
-    auto self = static_cast<State*>(mod);
-    return self->swapchain[idx]->isSyncronized();
-}
-
-int blade_ata_b_async_process(blade_module_t mod, int idx, void* input, void* output) {
+int process(blade_module_t mod, int idx, void* input, void* output) {
     auto self = static_cast<State*>(mod);
 
     if (self->runs == 2) {
@@ -118,7 +121,7 @@ int blade_ata_b_process(blade_module_t mod, void** input, void** output) {
 
     // Process the data of both instances in parallel.
     for (std::size_t i = 0; i < self->swapchain.size(); i++) {
-        blade_ata_b_async_process(mod, i, input[i], output[i]);
+        process(mod, i, input[i], output[i]);
     }
 
     // Wait for both instances to finish.
@@ -127,4 +130,62 @@ int blade_ata_b_process(blade_module_t mod, void** input, void** output) {
     }
 
     return to_underlying(Result::SUCCESS);
+}
+
+bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
+    auto self = static_cast<State*>(mod);
+
+    // If full, try again later.
+    if (self->fifo.size() == self->swapchain.size()) {
+        return false;
+    }
+
+    // Start processing.
+    process(mod, self->head, input, output);
+
+    // Push to the FIFO.
+    self->fifo.push_back({
+        .index = self->head,
+        .input_ptr = input,
+        .output_ptr = output,
+    });
+
+    self->head = (self->head + 1) % self->swapchain.size();
+
+    // Indicate successfull schedulement.
+    return true;
+}
+
+bool blade_ata_b_dequeue(blade_module_t mod, void** input, void** output) {
+    auto self = static_cast<State*>(mod);
+
+    // If empty, try again later.
+    if (self->fifo.size() == 0) {
+        return false;
+    }
+
+    auto& job = self->fifo.front();
+    auto& worker = self->swapchain[job.index];
+
+    // If full, wait.
+    if (self->fifo.size() == self->swapchain.size()) {
+        worker->synchronize();
+    }
+
+    // If front synchronized, return.
+    if (!worker->isSyncronized()) {
+        return false;
+    }
+
+    if (input != NULL) {
+        *input = job.input_ptr;
+    }
+
+    if (output != NULL) {
+        *output = job.output_ptr;
+    }
+
+    self->fifo.pop_front();
+
+    return false;
 }

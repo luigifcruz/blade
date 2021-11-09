@@ -4,7 +4,7 @@
 
 #include "blade/pipelines/ata/mode_b.h"
 
-#define SYNC_MODE 1
+#define SYNC_MODE 0
 
 int main(int argc, char **argv) {
     if (argc == 3 && blade_use_device(atoi(argv[2]))) {
@@ -35,19 +35,15 @@ int main(int argc, char **argv) {
     }
 
 #else
+    int h = 0;
 
-    int runs = 0;
-    int head = 0;
-    int tail = 0;
-    while(runs < 510) {
-        if (blade_async_query(mod, head)) {
-            blade_async_process(mod, head, input_buffers[head], output_buffers[head]);
-            head = (head + 1) % number_of_workers;
+    for (int i = 0; i < 510; i++) {
+        if (blade_ata_b_enqueue(mod, input_buffers[h], output_buffers[h])) {
+            h = (h + 1) % number_of_workers;
         }
 
-        if (tail != head && !blade_async_query(mod, tail)) {
-            runs += 1;
-            tail = (tail + 1) % number_of_workers;
+        if (blade_ata_b_dequeue(mod, NULL, NULL)) {
+            // consume pointer
         }
     }
 

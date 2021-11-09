@@ -12,13 +12,16 @@ Pipeline::Pipeline(const bool& async, const bool& test) :
 }
 
 Pipeline::~Pipeline() {
-    BL_DEBUG("Deallocating device memory.");
+    this->synchronize();
+
     for (const auto& allocation : this->allocations) {
         cudaFree(allocation);
     }
 
-    BL_DEBUG("Destroying CUDA assets.");
-    cudaGraphDestroy(this->graph);
+    if (this->state == 3) {
+        cudaGraphDestroy(this->graph);
+    }
+
     cudaStreamDestroy(this->cudaStream);
 }
 

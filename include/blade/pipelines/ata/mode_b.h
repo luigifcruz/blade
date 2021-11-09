@@ -3,8 +3,6 @@
 
 #include "blade/pipelines/base.h"
 
-typedef void* blade_module_t;
-
 // Initialize the pipeline.
 //
 // Parameters
@@ -64,41 +62,39 @@ size_t BLADE_API blade_ata_b_get_output_size(blade_module_t mod);
 //
 int BLADE_API blade_ata_b_process(blade_module_t mod, void** input, void** output);
 
-// Submit a single buffer for asynchronous processing.
-//
-// This function is recommended over the synchronous counterpart.
-//
-// Parameters
-// ----------
-// mod : blade_module_t
-//      pointer to the internal state
-// idx : int
-//      worker index
-// input : void*
-//      pointer of the input buffer (complex CI8)
-// output : void*
-//      pointer of the output buffer (complex CF16)
-//
-// Return
-// ------
-// int : error indicator (zero indicate success)
-//
-int BLADE_API blade_ata_b_async_process(blade_module_t mod, int idx, void* input,
-        void* output);
 
-// Check if a worked finished processing a buffer.
+// Enqueue a single buffer for asynchronous processing.
 //
 // Parameters
 // ----------
 // mod : blade_module_t
 //      pointer to the internal state
-// idx : int
-//      worker index
+// input : void*
+//      input buffer (complex CI8)
+// output : void*
+//      output buffer (complex CF16)
 //
 // Return
 // ------
-// bool : true if worker is done, otherwise false
+// int : true if successfully enqueued, try again later if false
 //
-bool BLADE_API blade_ata_b_async_query(blade_module_t mod, int idx);
+bool BLADE_API blade_ata_b_enqueue(blade_module_t mod, void* input, void* output);
+
+// Dequeue a single buffer from asynchronous processing.
+//
+// Parameters
+// ----------
+// mod : blade_module_t
+//      pointer to the internal state
+// input : void**
+//      optional, filled with the dequeued buffer input buffer (complex CI8)
+// output : void**
+//      optional, filled with the dequeued buffer output buffer (complex CF16)
+//
+// Return
+// ------
+// int : true if successfully dequeue, try again later if false
+//
+bool BLADE_API blade_ata_b_dequeue(blade_module_t mod, void** input, void** output);
 
 #endif

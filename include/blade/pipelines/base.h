@@ -9,6 +9,9 @@
 #define BLADE_API __attribute__((visibility("default")))
 #endif
 
+// Opaque pointer.
+typedef void* blade_module_t;
+
 // Pin existing host memory in the device memory poll.
 //
 // Parameters

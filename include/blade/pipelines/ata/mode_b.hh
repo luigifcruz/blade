@@ -1,6 +1,8 @@
 #ifndef BLADE_PIPELINES_ATA_MODE_B_HHH
 #define BLADE_PIPELINES_ATA_MODE_B_HHH
 
+#include <deque>
+
 #include "blade/pipeline.hh"
 #include "blade/manager.hh"
 
