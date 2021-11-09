@@ -29,7 +29,7 @@ Result ModeB::setupModules() {
     });
 
     auto dims = channelizer->getOutputDims();
-    dims.NBEAMS *= 16;
+    dims.NBEAMS *= config.beamformerBeams;
 
     beamformer = Factory<Modules::Beamformer::ATA>({
         .dims = dims,
