@@ -10,6 +10,7 @@ This library is meant to be used by the Allen Telescope Array beamformer.
 - spdlog >=1.8
 - CUDA >=11.4
 
+## Pipeline Benchmark
 ### Nov 1, 2021
 Machine: `seti-node8`
 Commit: `9b1a3569ea861d4bf0bdaf7a3b72706ce537ab99`
