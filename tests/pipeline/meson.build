@@ -1,1 +1,1 @@
-subdir('ata-mode-b')
+subdir('ata')

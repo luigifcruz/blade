@@ -1,9 +1,9 @@
-#include "blade/checker/base.hh"
+#include "blade/modules/checker/base.hh"
 
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Checker checker;
+    Modules::Checker checker;
 
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;

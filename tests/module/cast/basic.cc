@@ -1,5 +1,5 @@
-#include "blade/cast/base.hh"
-#include "blade/checker/base.hh"
+#include "blade/modules/cast/base.hh"
+#include "blade/modules/checker/base.hh"
 #include "blade/manager.hh"
 #include "blade/pipeline.hh"
 
@@ -31,7 +31,7 @@ class Module : public Pipeline {
     Result setupModules() final {
         BL_INFO("Initializing kernels.");
 
-        cast = Factory<Cast>({});
+        cast = Factory<Modules::Cast>({});
 
         return Result::SUCCESS;
     }
@@ -62,7 +62,7 @@ class Module : public Pipeline {
     }
 
     Result loopTest() final {
-        Checker checker;
+        Modules::Checker checker;
 
         std::size_t errors = 0;
         if ((errors = checker.run(output, result)) != 0) {
@@ -80,7 +80,7 @@ class Module : public Pipeline {
     std::span<OT> output;
     std::span<OT> result;
 
-    std::unique_ptr<Cast> cast;
+    std::unique_ptr<Modules::Cast> cast;
 };
 
 template<typename IT, typename OT>

@@ -5,13 +5,12 @@
 #include <pybind11/numpy.h>
 
 #include "blade/common.hh"
-#include "blade/types.hh"
 
 namespace py = pybind11;
 
 namespace Blade {
 
-class BLADE_API Python {
+class python {
  protected:
     // WARNING: Interpreter should be destructed last!
     py::scoped_interpreter guard{};

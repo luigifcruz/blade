@@ -2,7 +2,6 @@
 #define BLADE_MANAGER_H
 
 #include "blade/common.hh"
-#include "blade/types.hh"
 #include "blade/logger.hh"
 
 namespace Blade {
@@ -19,9 +18,9 @@ struct Resources {
     } transfer;
 };
 
-class BLADE_API ResourcesPlug {
+class resources {
  public:
-    virtual ~ResourcesPlug() {}
+    virtual ~resources() {}
     virtual Resources getResources() const = 0;
 };
 
@@ -35,7 +34,7 @@ class BLADE_API Manager {
     explicit Manager(const Config & config) : config(config) {}
 
     Manager& save(const Resources &resources);
-    Manager& save(ResourcesPlug &plug);
+    Manager& save(resources &plug);
     Manager& reset();
     Manager& report();
 

@@ -18,14 +18,14 @@ Manager& Manager::save(const Resources& resources) {
     return *this;
 }
 
-Manager& Manager::save(ResourcesPlug& plug) {
+Manager& Manager::save(resources& plug) {
     this->save(plug.getResources());
     return *this;
 }
 
 Manager& Manager::report() {
     BL_INFO("=============================================");
-    BL_INFO("Kernel resources manager usage report:")
+    BL_INFO("Pipeline resources manager usage report:")
     BL_INFO("=============================================");
     BL_INFO("Manager configuration:");
     BL_INFO("   PCIe bandwidth: {} GB/s", toGB(config.pcie_bw));
