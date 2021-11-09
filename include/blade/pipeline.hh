@@ -10,7 +10,7 @@
 
 namespace Blade {
 
-class BLADE_API Pipeline : public resources {
+class BLADE_API Pipeline {
  public:
     Pipeline(const bool& async = true, const bool& test = false);
     virtual ~Pipeline();
@@ -22,25 +22,6 @@ class BLADE_API Pipeline : public resources {
         return resources;
     }
 
-    template<typename T>
-    Result pinBuffer(const std::span<T>& mem, RegisterKind kind) {
-        BL_DEBUG("Pinning host memory.");
-
-        resources.memory.host += mem.size_bytes();
-
-        BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(),
-                    static_cast<unsigned int>(kind)), [&]{
-            BL_FATAL("Failed to register host memory: {}", err);
-        });
-
-        return Result::SUCCESS;
-    }
-
-    template<typename T>
-    Result pinBuffer(std::vector<T>& mem, RegisterKind kind) {
-        return pinBuffer(std::span{ mem }, kind);
-    }
-
  protected:
     Result setup();
     Result loop();
@@ -50,10 +31,6 @@ class BLADE_API Pipeline : public resources {
     }
 
     virtual constexpr Result setupMemory() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result setupReport(Resources& res) {
         return Result::SUCCESS;
     }
 
@@ -105,14 +82,14 @@ class BLADE_API Pipeline : public resources {
         std::size_t size_bytes = size * sizeof(ptr[0]);
 
         if (managed) {
-            resources.memory.device += size_bytes;
-            resources.memory.host += size_bytes;
+            resources.device += size_bytes;
+            resources.host += size_bytes;
 
             BL_CUDA_CHECK(cudaMallocManaged(&ptr, size_bytes), [&]{
                 BL_FATAL("Failed to allocate managed memory: {}", err);
             });
         } else {
-            resources.memory.device += size_bytes;
+            resources.device += size_bytes;
 
             BL_CUDA_CHECK(cudaMalloc(&ptr, size_bytes), [&]{
                 BL_FATAL("Failed to allocate memory: {}", err);
@@ -123,6 +100,25 @@ class BLADE_API Pipeline : public resources {
         dst = std::span(ptr, size);
 
         return Result::SUCCESS;
+    }
+
+    template<typename T>
+    Result pinBuffer(const std::span<T>& mem, RegisterKind kind) {
+        BL_DEBUG("Pinning host memory.");
+
+        resources.host += mem.size_bytes();
+
+        BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(),
+                    static_cast<unsigned int>(kind)), [&]{
+            BL_FATAL("Failed to register host memory: {}", err);
+        });
+
+        return Result::SUCCESS;
+    }
+
+    template<typename T>
+    Result pinBuffer(std::vector<T>& mem, RegisterKind kind) {
+        return pinBuffer(std::span{ mem }, kind);
     }
 
  private:

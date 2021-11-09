@@ -46,15 +46,6 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result setupReport(Resources& res) final {
-        BL_INFO("Reporting resources.");
-
-        res.transfer.h2d += input.size_bytes();
-        res.transfer.h2d += result.size_bytes();
-
-        return Result::SUCCESS;
-    }
-
     Result loopProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(cast->run(input, output, cudaStream));
 
@@ -102,7 +93,7 @@ int complex_test(const std::size_t testSize) {
         });
     }
     mod.loadTestData(input, result);
-    manager.save(mod).report();
+    manager.save(mod.getResources()).report();
 
     for (int i = 0; i < 24; i++) {
         if (mod.run() != Result::SUCCESS) {

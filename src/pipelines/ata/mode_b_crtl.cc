@@ -61,7 +61,7 @@ blade_module_t blade_ata_b_initialize(size_t number_of_workers) {
 
     // Register resources.
     for (auto& worker : self->swapchain) {
-        self->manager->save(*worker);
+        self->manager->save(worker->getResources());
     }
     self->manager->report();
 
@@ -152,7 +152,6 @@ bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
 
     self->head = (self->head + 1) % self->swapchain.size();
 
-    // Indicate successfull schedulement.
     return true;
 }
 
@@ -187,5 +186,5 @@ bool blade_ata_b_dequeue(blade_module_t mod, void** input, void** output) {
 
     self->fifo.pop_front();
 
-    return false;
+    return true;
 }

@@ -41,16 +41,6 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
-    Result setupReport(Resources& res) final {
-        BL_INFO("Reporting resources.");
-
-        res.transfer.h2d += input.size_bytes();
-        res.transfer.h2d += phasors.size_bytes();
-        res.transfer.d2h += output.size_bytes();
-
-        return Result::SUCCESS;
-    }
-
     Result setupTest() final {
         test = std::make_unique<typename T::Test>(config);
 

@@ -25,7 +25,7 @@ blade_module_t BLADE_API blade_ata_b_initialize(size_t number_of_workers);
 //
 void BLADE_API blade_ata_b_terminate(blade_module_t mod);
 
-// Get the expected size of the input buffer.
+// Get the expected size of a single input buffer.
 //
 // Parameters
 // ----------
@@ -34,7 +34,7 @@ void BLADE_API blade_ata_b_terminate(blade_module_t mod);
 //
 size_t BLADE_API blade_ata_b_get_input_size(blade_module_t mod);
 
-// Get the expected size of the output buffer.
+// Get the expected size of a single output buffer.
 //
 // Parameters
 // ----------

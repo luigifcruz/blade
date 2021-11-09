@@ -21,7 +21,7 @@ int main() {
         .blockSize = 512,
     });
 
-    manager.save(mod).report();
+    manager.save(mod.getResources()).report();
 
     for (int i = 0; i < 24; i++) {
         if (mod.run() != Result::SUCCESS) {

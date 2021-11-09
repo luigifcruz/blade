@@ -52,15 +52,6 @@ Result ModeB::setupMemory() {
     return Result::SUCCESS;
 }
 
-Result ModeB::setupReport(Resources& res) {
-    BL_INFO("Reporting resources.");
-
-    res.transfer.h2d += bufferA.size_bytes();
-    res.transfer.d2h += bufferE.size_bytes();
-
-    return Result::SUCCESS;
-}
-
 Result ModeB::loopUpload() {
     BL_CHECK(this->copyBuffer(bufferA, input, CopyKind::H2D));
 

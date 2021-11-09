@@ -41,7 +41,6 @@ class ModeB : public Pipeline {
  protected:
     Result setupModules() final;
     Result setupMemory() final;
-    Result setupReport(Resources& res) final;
 
     Result loopUpload() final;
     Result loopProcess(cudaStream_t& cudaStream) final;

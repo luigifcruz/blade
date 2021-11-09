@@ -7,34 +7,15 @@
 namespace Blade {
 
 struct Resources {
-    struct {
-        std::size_t device = 0;
-        std::size_t host = 0;
-    } memory;
-
-    struct {
-        std::size_t d2h = 0;
-        std::size_t h2d = 0;
-    } transfer;
-};
-
-class resources {
- public:
-    virtual ~resources() {}
-    virtual Resources getResources() const = 0;
+    std::size_t device = 0;
+    std::size_t host = 0;
 };
 
 class BLADE_API Manager {
  public:
-    struct Config {
-        std::size_t pcie_bw = 22e9;
-    };
-
     Manager() {}
-    explicit Manager(const Config & config) : config(config) {}
 
     Manager& save(const Resources &resources);
-    Manager& save(resources &plug);
     Manager& reset();
     Manager& report();
 
@@ -43,19 +24,10 @@ class BLADE_API Manager {
     }
 
  protected:
-    const Config config;
     Resources master;
 
     std::size_t toMB(const std::size_t& size) {
         return size / 1e6;
-    }
-
-    std::size_t toGB(const std::size_t& size) {
-        return size / 1e9;
-    }
-
-    float toMs(const std::size_t& part, const std::size_t& whole) {
-        return (static_cast<float>(part) / static_cast<float>(whole)) * 1000.0f;
     }
 };
 

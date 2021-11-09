@@ -47,7 +47,6 @@ Result Pipeline::setup() {
 
     BL_CHECK(this->setupModules());
     BL_CHECK(this->setupMemory());
-    BL_CHECK(this->setupReport(this->resources));
 
     if (!this->asyncMode) {
         BL_INFO("Working in synchronous mode.");
