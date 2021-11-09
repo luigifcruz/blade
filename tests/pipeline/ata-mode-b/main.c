@@ -43,12 +43,12 @@ int main(int argc, char **argv) {
     while(runs < 510) {
         if (blade_async_query(mod, head)) {
             blade_async_process(mod, head, input_buffers[head], output_buffers[head]);
-            head = (head + 1) % batch_size;
+            head = (head + 1) % number_of_workers;
         }
 
         if (tail != head && !blade_async_query(mod, tail)) {
             runs += 1;
-            tail = (tail + 1) % batch_size;
+            tail = (tail + 1) % number_of_workers;
         }
     }
 

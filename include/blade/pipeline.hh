@@ -14,13 +14,11 @@ namespace Blade {
 
 class BLADE_API Pipeline : public ResourcesPlug {
  public:
+    Pipeline(const bool& async = true, const bool& test = false);
     virtual ~Pipeline();
 
     Result synchronize();
-
-    constexpr bool isSyncronized() const {
-        return synchronized;
-    }
+    bool isSyncronized();
 
     constexpr Resources getResources() const {
         return resources;
@@ -47,7 +45,7 @@ class BLADE_API Pipeline : public ResourcesPlug {
 
  protected:
     Result setup();
-    Result loop(const bool& async = true);
+    Result loop();
 
     virtual constexpr Result setupModules() {
         return Result::SUCCESS;
@@ -58,6 +56,10 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
     virtual constexpr Result setupReport(Resources& res) {
+        return Result::SUCCESS;
+    }
+
+    virtual constexpr Result setupTest() {
         return Result::SUCCESS;
     }
 
@@ -77,7 +79,7 @@ class BLADE_API Pipeline : public ResourcesPlug {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result loopPostprocess() {
+    virtual constexpr Result loopTest() {
         return Result::SUCCESS;
     }
 
@@ -126,17 +128,16 @@ class BLADE_API Pipeline : public ResourcesPlug {
     }
 
  private:
+    bool asyncMode;
+    bool testMode;
+
     cudaGraph_t graph;
     cudaStream_t cudaStream;
     cudaGraphExec_t instance;
 
     Resources resources;
-    std::vector<void*> allocations;
-
     std::size_t state{0};
-    bool synchronized{true};
-
-    static void CUDART_CB callPostprocess(void* data);
+    std::vector<void*> allocations;
 };
 
 }  // namespace Blade

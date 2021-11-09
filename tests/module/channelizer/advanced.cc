@@ -8,14 +8,15 @@ using namespace Blade;
 
 class Module : public Pipeline {
  public:
-    explicit Module(const Channelizer::Config& config) : config(config) {
+    explicit Module(const Channelizer::Config& config) :
+        Pipeline(false, true), config(config) {
         if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
     }
 
     Result run() {
-        return this->loop(false);
+        return this->loop();
     }
 
  protected:
@@ -23,7 +24,6 @@ class Module : public Pipeline {
         BL_INFO("Initializing kernels.");
 
         channelizer = std::make_unique<Channelizer>(config);
-        test = std::make_unique<Channelizer::Test>(config);
 
         return Result::SUCCESS;
     }
@@ -32,14 +32,6 @@ class Module : public Pipeline {
         BL_INFO("Allocating resources.");
         BL_CHECK(allocateBuffer(input, channelizer->getBufferSize()));
         BL_CHECK(allocateBuffer(output, channelizer->getBufferSize(), true));
-        BL_CHECK(allocateBuffer(result, channelizer->getBufferSize(), true));
-
-        BL_INFO("Generating test data with Python.");
-        BL_CHECK(test->process());
-
-        BL_INFO("Copying test data to the device.");
-        BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
-        BL_CHECK(copyBuffer(result, test->getOutputData(), CopyKind::H2D));
 
         return Result::SUCCESS;
     }
@@ -53,15 +45,26 @@ class Module : public Pipeline {
         return Result::SUCCESS;
     }
 
+    Result setupTest() final {
+        test = std::make_unique<Channelizer::Test>(config);
+
+        BL_CHECK(test->process());
+        BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
+
+        return Result::SUCCESS;
+    }
+
     Result loopProcess(cudaStream_t& cudaStream) final {
         BL_CHECK(channelizer->run(input, output, cudaStream));
 
         return Result::SUCCESS;
     }
 
-    Result loopPostprocess() final {
+    Result loopTest() final {
+        Checker checker;
+
         std::size_t errors = 0;
-        if ((errors = checker.run(output, result)) != 0) {
+        if ((errors = checker.run(output, test->getOutputData())) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }
@@ -75,11 +78,8 @@ class Module : public Pipeline {
     std::unique_ptr<Channelizer> channelizer;
     std::unique_ptr<Channelizer::Test> test;
 
-    Checker checker;
-
     std::span<CF32> input;
     std::span<CF32> output;
-    std::span<CF32> result;
 };
 
 int main() {

@@ -22,7 +22,8 @@ class Module : public Pipeline {
         std::size_t beamformerBlockSize = 512;
     };
 
-    explicit Module(const Config& configuration) : config(configuration) {
+    explicit Module(const Config& configuration) :
+        Pipeline(true, false), config(configuration) {
         if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
         }
@@ -36,10 +37,10 @@ class Module : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result run(const std::span<CI8>& in, std::span<CF16>& out, bool async = true) {
+    Result run(const std::span<CI8>& in, std::span<CF16>& out) {
         this->input = in;
         this->output = out;
-        return this->loop(async);
+        return this->loop();
     }
 
  protected:

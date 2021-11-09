@@ -117,30 +117,15 @@ int blade_async_process(blade_module_t mod, int idx, void* input, void* output) 
 int blade_process(blade_module_t mod, void** input, void** output) {
     auto self = static_cast<State*>(mod);
 
-    // Disregard first two iterations.
-    if (self->runs == 2 * self->swapchain.size()) {
-        self->t1 = high_resolution_clock::now();
-    }
-
     // Process the data of both instances in parallel.
     for (std::size_t i = 0; i < self->swapchain.size(); i++) {
-        auto& worker = self->swapchain[i];
-
-        auto ibuf = static_cast<CI8*>(input[i]);
-        auto in = std::span(ibuf, worker->getInputSize());
-
-        auto obuf = static_cast<CF16*>(output[i]);
-        auto out = std::span(obuf, worker->getOutputSize());
-
-        if (worker->run(in, out) != Result::SUCCESS) {
-            BL_WARN("Can't process data. Test is exiting.:q..");
-            return 1;
-        }
+        blade_async_process(mod, i, input[i], output[i]);
     }
 
     // Wait for both instances to finish.
-    cudaDeviceSynchronize();
-    self->runs += self->swapchain.size();
+    for (auto& worker : self->swapchain) {
+        worker->synchronize();
+    }
 
     return to_underlying(Result::SUCCESS);
 }
