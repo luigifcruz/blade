@@ -6,4 +6,4 @@
 #include "blade/pipeline.hh"
 #include "blade/manager.hh"
 
-#endif  // BLADE_INCLUDE_BLADE_BASE_HH_
+#endif

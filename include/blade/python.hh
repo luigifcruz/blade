@@ -29,4 +29,4 @@ class python {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_PYTHON_HH_
+#endif

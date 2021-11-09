@@ -48,4 +48,4 @@ class BLADE_API Logger {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_LOGGER_HH_
+#endif

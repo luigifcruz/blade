@@ -65,4 +65,4 @@ class ModeB : public Pipeline {
 
 }  // namespace Blade::Pipelines::ATA
 
-#endif  // BLADE_INCLUDE_BLADE_PIPELINES_ATA_MODE_B_HH_
+#endif

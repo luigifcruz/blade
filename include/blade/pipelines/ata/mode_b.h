@@ -101,4 +101,4 @@ int BLADE_API blade_ata_b_async_process(blade_module_t mod, int idx, void* input
 //
 bool BLADE_API blade_ata_b_async_query(blade_module_t mod, int idx);
 
-#endif  // BLADE_INCLUDE_BLADE_PIPELINES_ATA_MODE_B_H_
+#endif

@@ -140,4 +140,4 @@ class BLADE_API Pipeline : public resources {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_PIPELINE_HH_
+#endif

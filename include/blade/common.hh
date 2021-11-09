@@ -111,4 +111,4 @@ enum class CopyKind : unsigned int {
 }
 #endif
 
-#endif  // BLADE_INCLUDE_BLADE_COMMON_HH_
+#endif

@@ -61,4 +61,4 @@ class BLADE_API Manager {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_MANAGER_HH_
+#endif

@@ -24,4 +24,4 @@ bool BLADE_API blade_pin_memory(void* buffer, size_t size);
 
 bool BLADE_API blade_use_device(int device_id);
 
-#endif  // BLADE_INCLUDE_BLADE_META_H_
+#endif

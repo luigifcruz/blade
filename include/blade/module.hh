@@ -21,4 +21,4 @@ inline std::unique_ptr<T> Factory(const typename T::Config& config) {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_MODULE_HH_
+#endif
