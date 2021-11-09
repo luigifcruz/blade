@@ -7,7 +7,7 @@
 #define SYNC_MODE 0
 
 int main(int argc, char **argv) {
-    if (argc == 3 && blade_use_device(atoi(argv[2]))) {
+    if (argc == 3 && !blade_use_device(atoi(argv[2]))) {
         printf("failed to set device\n");
         return 1;
     }
