@@ -1,17 +1,16 @@
-#ifndef BLADE_PYTHON_H
-#define BLADE_PYTHON_H
+#ifndef BLADE_PYTHON_HH
+#define BLADE_PYTHON_HH
 
 #include <pybind11/embed.h>
 #include <pybind11/numpy.h>
 
 #include "blade/common.hh"
-#include "blade/types.hh"
 
 namespace py = pybind11;
 
 namespace Blade {
 
-class BLADE_API Python {
+class python {
  protected:
     // WARNING: Interpreter should be destructed last!
     py::scoped_interpreter guard{};
@@ -30,4 +29,4 @@ class BLADE_API Python {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_PYTHON_HH_
+#endif

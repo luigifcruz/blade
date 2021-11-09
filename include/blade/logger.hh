@@ -1,9 +1,9 @@
-#ifndef BLADE_LOGGER_H
-#define BLADE_LOGGER_H
+#ifndef BLADE_LOGGER_HH
+#define BLADE_LOGGER_HH
 
 #include <string>
 
-#include "blade/types.hh"
+#include "blade/common.hh"
 
 #undef SPDLOG_ACTIVE_LEVEL
 #ifdef NDEBUG
@@ -48,4 +48,4 @@ class BLADE_API Logger {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_LOGGER_HH_
+#endif

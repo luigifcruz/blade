@@ -1,6 +1,6 @@
 #include "advanced.hh"
-#include "blade/beamformer/ata.hh"
-#include "blade/beamformer/ata_test.hh"
+#include "blade/modules/beamformer/ata.hh"
+#include "blade/modules/beamformer/ata_test.hh"
 
 using namespace Blade;
 
@@ -10,7 +10,7 @@ int main() {
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Module<Beamformer::ATA> mod({
+    Module<Modules::Beamformer::ATA> mod({
         .dims = {
             .NBEAMS = 16,
             .NANTS  = 20,

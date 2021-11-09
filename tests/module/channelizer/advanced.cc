@@ -1,6 +1,6 @@
-#include "blade/channelizer/test.hh"
-#include "blade/channelizer/base.hh"
-#include "blade/checker/base.hh"
+#include "blade/modules/channelizer/test.hh"
+#include "blade/modules/channelizer/base.hh"
+#include "blade/modules/checker/base.hh"
 #include "blade/manager.hh"
 #include "blade/pipeline.hh"
 
@@ -8,7 +8,7 @@ using namespace Blade;
 
 class Module : public Pipeline {
  public:
-    explicit Module(const Channelizer::Config& config) :
+    explicit Module(const Modules::Channelizer::Config& config) :
         Pipeline(false, true), config(config) {
         if (this->setup() != Result::SUCCESS) {
             throw Result::ERROR;
@@ -23,7 +23,7 @@ class Module : public Pipeline {
     Result setupModules() final {
         BL_INFO("Initializing kernels.");
 
-        channelizer = std::make_unique<Channelizer>(config);
+        channelizer = std::make_unique<Modules::Channelizer>(config);
 
         return Result::SUCCESS;
     }
@@ -46,7 +46,7 @@ class Module : public Pipeline {
     }
 
     Result setupTest() final {
-        test = std::make_unique<Channelizer::Test>(config);
+        test = std::make_unique<Modules::Channelizer::Test>(config);
 
         BL_CHECK(test->process());
         BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
@@ -61,7 +61,7 @@ class Module : public Pipeline {
     }
 
     Result loopTest() final {
-        Checker checker;
+        Modules::Checker checker;
 
         std::size_t errors = 0;
         if ((errors = checker.run(output, test->getOutputData())) != 0) {
@@ -73,10 +73,10 @@ class Module : public Pipeline {
     }
 
  private:
-    const Channelizer::Config& config;
+    const Modules::Channelizer::Config& config;
 
-    std::unique_ptr<Channelizer> channelizer;
-    std::unique_ptr<Channelizer::Test> test;
+    std::unique_ptr<Modules::Channelizer> channelizer;
+    std::unique_ptr<Modules::Channelizer::Test> test;
 
     std::span<CF32> input;
     std::span<CF32> output;

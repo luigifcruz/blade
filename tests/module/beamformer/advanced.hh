@@ -1,8 +1,8 @@
 #include <memory>
 
-#include "blade/beamformer/generic_test.hh"
-#include "blade/beamformer/generic.hh"
-#include "blade/checker/base.hh"
+#include "blade/modules/beamformer/generic_test.hh"
+#include "blade/modules/beamformer/generic.hh"
+#include "blade/modules/checker/base.hh"
 #include "blade/manager.hh"
 #include "blade/pipeline.hh"
 
@@ -68,7 +68,7 @@ class Module : public Pipeline {
     }
 
     Result loopTest() final {
-        Checker checker;
+        Modules::Checker checker;
 
         std::size_t errors = 0;
         if ((errors = checker.run(output, test->getOutputData())) != 0) {
@@ -82,8 +82,8 @@ class Module : public Pipeline {
  private:
     const typename T::Config& config;
 
-    std::unique_ptr<Beamformer::Generic> beamformer;
-    std::unique_ptr<Beamformer::Generic::Test> test;
+    std::unique_ptr<Modules::Beamformer::Generic> beamformer;
+    std::unique_ptr<Modules::Beamformer::Generic::Test> test;
 
     std::span<CF32> input;
     std::span<CF32> phasors;

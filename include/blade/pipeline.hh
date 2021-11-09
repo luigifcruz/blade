@@ -1,18 +1,16 @@
-#ifndef BLADE_PIPELINE_H
-#define BLADE_PIPELINE_H
+#ifndef BLADE_PIPELINE_HH
+#define BLADE_PIPELINE_HH
 
 #include <span>
 #include <vector>
 
 #include "blade/common.hh"
-#include "blade/cuda.hh"
 #include "blade/logger.hh"
-#include "blade/macros.hh"
 #include "blade/manager.hh"
 
 namespace Blade {
 
-class BLADE_API Pipeline : public ResourcesPlug {
+class BLADE_API Pipeline : public resources {
  public:
     Pipeline(const bool& async = true, const bool& test = false);
     virtual ~Pipeline();
@@ -142,4 +140,4 @@ class BLADE_API Pipeline : public ResourcesPlug {
 
 }  // namespace Blade
 
-#endif  // BLADE_INCLUDE_BLADE_PIPELINE_HH_
+#endif
