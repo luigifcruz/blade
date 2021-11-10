@@ -1,7 +1,7 @@
 project(
   'blade',
   ['cpp', 'c', 'cuda'],
-  version: '0.0.0.7',
+  version: '0.0.0.8',
   default_options: [
     'buildtype=release',
     'cpp_std=c++20',
@@ -13,6 +13,7 @@ py = import('python').find_installation('python3')
 
 cfg_lst = configuration_data()
 cfg_lst.set('VERSION', meson.project_version())
+cfg_lst.set('BUILD_TYPE', get_option('prefix'))
 
 src_lst = []
 dep_lst = [
@@ -65,10 +66,6 @@ lib_blade_dep = declare_dependency(
 )
 
 subdir('tests')
-
-doxygen = find_program('doxygen', required : false)
-if doxygen.found()
-  subdir('docs')
-endif
+subdir('docs')
 
 # TODO: Add pkgconfig module.
