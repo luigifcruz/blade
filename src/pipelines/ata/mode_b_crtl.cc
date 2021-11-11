@@ -27,6 +27,8 @@ struct State {
         std::size_t index;
         void* input_ptr;
         void* output_ptr;
+        int input_id;
+        int output_id;
     };
     std::deque<Job> fifo;
     std::size_t head = 0;
@@ -132,7 +134,8 @@ int blade_ata_b_process(blade_module_t mod, void** input, void** output) {
     return to_underlying(Result::SUCCESS);
 }
 
-bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
+bool blade_ata_b_enqueue_with_id(blade_module_t mod, void* input, void* output,
+                                 int input_id, int output_id) {
     auto self = static_cast<State*>(mod);
 
     // If full, try again later.
@@ -148,6 +151,8 @@ bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
         .index = self->head,
         .input_ptr = input,
         .output_ptr = output,
+        .input_id = input_id,
+        .output_id = output_id,
     });
 
     self->head = (self->head + 1) % self->swapchain.size();
@@ -155,7 +160,12 @@ bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
     return true;
 }
 
-bool blade_ata_b_dequeue(blade_module_t mod, void** input, void** output) {
+bool blade_ata_b_enqueue(blade_module_t mod, void* input, void* output) {
+    return blade_ata_b_enqueue_with_id(mod, input, output, 0, 0);
+}
+
+bool blade_ata_b_dequeue_with_id(blade_module_t mod, void** input, void** output,
+                                 int* input_id, int* output_id) {
     auto self = static_cast<State*>(mod);
 
     // If empty, try again later.
@@ -184,7 +194,19 @@ bool blade_ata_b_dequeue(blade_module_t mod, void** input, void** output) {
         *output = job.output_ptr;
     }
 
+    if (input_id != NULL) {
+        *input_id = job.input_id;
+    }
+
+    if (output_id != NULL) {
+        *output_id = job.output_id;
+    }
+
     self->fifo.pop_front();
 
     return true;
+}
+
+bool blade_ata_b_dequeue(blade_module_t mod, void** input, void** output) {
+    return blade_ata_b_dequeue_with_id(mod, input, output, NULL, NULL);
 }
