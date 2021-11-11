@@ -88,6 +88,31 @@ size_t blade_ata_b_get_input_size(blade_module_t mod) {
     return self->swapchain[0]->getInputSize();
 }
 
+size_t blade_ata_b_get_output_NBEAMS(blade_module_t mod) {
+    auto self = static_cast<State*>(mod);
+    return self->config.beamformerBeams;
+}
+
+size_t blade_ata_b_get_input_dim_NANTS(blade_module_t mod) {
+    auto self = static_cast<State*>(mod);
+    return self->config.inputDims.NANTS;
+}
+
+size_t blade_ata_b_get_input_dim_NCHANS(blade_module_t mod) {
+    auto self = static_cast<State*>(mod);
+    return self->config.inputDims.NCHANS;
+}
+
+size_t blade_ata_b_get_input_dim_NTIME(blade_module_t mod) {
+    auto self = static_cast<State*>(mod);
+    return self->config.inputDims.NTIME;
+}
+
+size_t blade_ata_b_get_input_dim_NPOLS(blade_module_t mod) {
+    auto self = static_cast<State*>(mod);
+    return self->config.inputDims.NPOLS;
+}
+
 size_t blade_ata_b_get_output_size(blade_module_t mod) {
     auto self = static_cast<State*>(mod);
     return self->swapchain[0]->getOutputSize();

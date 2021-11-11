@@ -34,6 +34,51 @@ void BLADE_API blade_ata_b_terminate(blade_module_t mod);
 //
 size_t BLADE_API blade_ata_b_get_input_size(blade_module_t mod);
 
+// Get the number of beams formed in the output buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t blade_ata_b_get_output_NBEAMS(blade_module_t mod);
+
+// Get the expected NANTS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t blade_ata_b_get_input_dim_NANTS(blade_module_t mod);
+
+// Get the expected NCHANS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t blade_ata_b_get_input_dim_NCHANS(blade_module_t mod);
+
+// Get the expected NTIME dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t blade_ata_b_get_input_dim_NTIME(blade_module_t mod);
+
+// Get the expected NPOLS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t blade_ata_b_get_input_dim_NPOLS(blade_module_t mod);
+
 // Get the expected size of a single output buffer.
 //
 // Parameters
