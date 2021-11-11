@@ -41,7 +41,7 @@ size_t BLADE_API blade_ata_b_get_input_size(blade_module_t mod);
 // mod : blade_module_t
 //      pointer to the internal state
 //
-size_t blade_ata_b_get_output_NBEAMS(blade_module_t mod);
+size_t BLADE_API blade_ata_b_get_output_NBEAMS(blade_module_t mod);
 
 // Get the expected NANTS dimension of each input buffer.
 //
@@ -50,7 +50,7 @@ size_t blade_ata_b_get_output_NBEAMS(blade_module_t mod);
 // mod : blade_module_t
 //      pointer to the internal state
 //
-size_t blade_ata_b_get_input_dim_NANTS(blade_module_t mod);
+size_t BLADE_API blade_ata_b_get_input_dim_NANTS(blade_module_t mod);
 
 // Get the expected NCHANS dimension of each input buffer.
 //
@@ -59,7 +59,7 @@ size_t blade_ata_b_get_input_dim_NANTS(blade_module_t mod);
 // mod : blade_module_t
 //      pointer to the internal state
 //
-size_t blade_ata_b_get_input_dim_NCHANS(blade_module_t mod);
+size_t BLADE_API blade_ata_b_get_input_dim_NCHANS(blade_module_t mod);
 
 // Get the expected NTIME dimension of each input buffer.
 //
@@ -68,7 +68,7 @@ size_t blade_ata_b_get_input_dim_NCHANS(blade_module_t mod);
 // mod : blade_module_t
 //      pointer to the internal state
 //
-size_t blade_ata_b_get_input_dim_NTIME(blade_module_t mod);
+size_t BLADE_API blade_ata_b_get_input_dim_NTIME(blade_module_t mod);
 
 // Get the expected NPOLS dimension of each input buffer.
 //
@@ -77,7 +77,7 @@ size_t blade_ata_b_get_input_dim_NTIME(blade_module_t mod);
 // mod : blade_module_t
 //      pointer to the internal state
 //
-size_t blade_ata_b_get_input_dim_NPOLS(blade_module_t mod);
+size_t BLADE_API blade_ata_b_get_input_dim_NPOLS(blade_module_t mod);
 
 // Get the expected size of a single output buffer.
 //
@@ -128,7 +128,7 @@ int BLADE_API blade_ata_b_process(blade_module_t mod, void** input, void** outpu
 // ------
 // int : true if successfully enqueued, try again later if false
 //
-bool blade_ata_b_enqueue_with_id(blade_module_t mod, void* input, void* output,
+bool BLADE_API blade_ata_b_enqueue_with_id(blade_module_t mod, void* input, void* output,
                                  int input_id, int output_id);
 
 // Enqueue a single buffer for asynchronous processing.
@@ -168,7 +168,7 @@ bool BLADE_API blade_ata_b_enqueue(blade_module_t mod, void* input, void* output
 // ------
 // int : true if successfully dequeue, try again later if false
 //
-bool blade_ata_b_dequeue_with_id(blade_module_t mod, void** input, void** output,
+bool BLADE_API blade_ata_b_dequeue_with_id(blade_module_t mod, void** input, void** output,
                                  int* input_id, int* output_id);
 
 // Dequeue a single buffer from asynchronous processing.
