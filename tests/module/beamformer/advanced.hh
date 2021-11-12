@@ -2,9 +2,9 @@
 
 #include "blade/modules/beamformer/generic_test.hh"
 #include "blade/modules/beamformer/generic.hh"
-#include "blade/modules/checker/base.hh"
-#include "blade/manager.hh"
+#include "blade/utils/checker.hh"
 #include "blade/pipeline.hh"
+#include "blade/manager.hh"
 
 using namespace Blade;
 
@@ -58,10 +58,8 @@ class Module : public Pipeline {
     }
 
     Result loopTest() final {
-        Modules::Checker checker;
-
         std::size_t errors = 0;
-        if ((errors = checker.run(output, test->getOutputData())) != 0) {
+        if ((errors = Checker::run(output, test->getOutputData())) != 0) {
             BL_FATAL("Module produced {} errors.", errors);
             return Result::ERROR;
         }

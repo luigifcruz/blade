@@ -7,7 +7,6 @@
 #include "blade/manager.hh"
 
 #include "blade/modules/cast/base.hh"
-#include "blade/modules/checker/base.hh"
 #include "blade/modules/channelizer/base.hh"
 #include "blade/modules/beamformer/ata.hh"
 

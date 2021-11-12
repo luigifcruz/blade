@@ -1,6 +1,6 @@
-#include "blade/modules/checker/base.hh"
+#include "blade/utils/checker.hh"
 
-namespace Blade::Modules {
+namespace Blade {
 
 template<typename IT, typename OT>
 std::size_t Checker::run(IT a, OT b, std::size_t size, std::size_t scale) {
@@ -21,7 +21,7 @@ std::size_t Checker::run(const std::span<std::complex<IT>>& a,
         return -1;
     }
 
-    return this->run(
+    return Checker::run(
         reinterpret_cast<const IT*>(a.data()),
         reinterpret_cast<const OT*>(b.data()),
         a.size(), 2);
@@ -35,7 +35,7 @@ std::size_t Checker::run(const std::span<IT>& a,
         return -1;
     }
 
-    return this->run(a.data(), b.data(), a.size());
+    return Checker::run(a.data(), b.data(), a.size());
 }
 
 template std::size_t Checker::run(const std::span<CF32>&,

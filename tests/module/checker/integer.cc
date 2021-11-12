@@ -1,10 +1,8 @@
-#include "blade/modules/checker/base.hh"
+#include "blade/utils/checker.hh"
 
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Modules::Checker checker;
-
     BL_INFO("Allocating CUDA memory...");
     static I8* input_ptr;
     static I8* output_ptr;
@@ -34,19 +32,19 @@ Result Init(std::size_t testSize = 8192) {
     BL_INFO("Running kernels...");
     size_t counter = 0;
 
-    if ((counter = checker.run(input, output)) < testSize - 100) {
+    if ((counter = Checker::run(input, output)) < testSize - 100) {
         BL_FATAL("[SUBTEST {}] Expected over than {} matches but found {}.",
                 0, testSize - 100, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(input, input)) > 100) {
+    if ((counter = Checker::run(input, input)) > 100) {
         BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.",
                 1, 100, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(output, output)) > 100) {
+    if ((counter = Checker::run(output, output)) > 100) {
         BL_FATAL("[SUBTEST {}] Expected less than {} matches but found {}.",
                 2, 100, counter);
         return Result::ERROR;

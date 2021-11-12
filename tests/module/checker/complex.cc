@@ -1,10 +1,8 @@
-#include "blade/modules/checker/base.hh"
+#include "blade/utils/checker.hh"
 
 using namespace Blade;
 
 Result Init(std::size_t testSize = 8192) {
-    Modules::Checker checker;
-
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;
     static CF32* output_ptr;
@@ -39,19 +37,19 @@ Result Init(std::size_t testSize = 8192) {
     BL_INFO("Running kernels...");
     size_t counter = 0;
 
-    if ((counter = checker.run(input, output)) != testSize) {
+    if ((counter = Checker::run(input, output)) != testSize) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.",
                 0, testSize, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(input, input)) != 0) {
+    if ((counter = Checker::run(input, input)) != 0) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.",
                 1, 0, counter);
         return Result::ERROR;
     }
 
-    if ((counter = checker.run(output, output)) != 0) {
+    if ((counter = Checker::run(output, output)) != 0) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.",
                 2, 0, counter);
         return Result::ERROR;
@@ -60,7 +58,7 @@ Result Init(std::size_t testSize = 8192) {
     input[0] = output[0];
     input[6] = output[6];
 
-    if ((counter = checker.run(input, output)) != testSize - 2) {
+    if ((counter = Checker::run(input, output)) != testSize - 2) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.",
                 3, testSize - 2, counter);
         return Result::ERROR;
