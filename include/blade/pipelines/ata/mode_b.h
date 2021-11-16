@@ -34,6 +34,51 @@ void BLADE_API blade_ata_b_terminate(blade_module_t mod);
 //
 size_t BLADE_API blade_ata_b_get_input_size(blade_module_t mod);
 
+// Get the number of beams formed in the output buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t BLADE_API blade_ata_b_get_output_NBEAMS(blade_module_t mod);
+
+// Get the expected NANTS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t BLADE_API blade_ata_b_get_input_dim_NANTS(blade_module_t mod);
+
+// Get the expected NCHANS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t BLADE_API blade_ata_b_get_input_dim_NCHANS(blade_module_t mod);
+
+// Get the expected NTIME dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t BLADE_API blade_ata_b_get_input_dim_NTIME(blade_module_t mod);
+
+// Get the expected NPOLS dimension of each input buffer.
+//
+// Arguments
+// ---------
+// mod : blade_module_t
+//      pointer to the internal state
+//
+size_t BLADE_API blade_ata_b_get_input_dim_NPOLS(blade_module_t mod);
+
 // Get the expected size of a single output buffer.
 //
 // Parameters
@@ -63,6 +108,29 @@ size_t BLADE_API blade_ata_b_get_output_size(blade_module_t mod);
 int BLADE_API blade_ata_b_process(blade_module_t mod, void** input, void** output);
 
 
+// Enqueue a single buffer for asynchronous processing, with the option to pass in 
+// buffer IDs which can be retrieved in the `blade_ata_b_dequeue` call.
+//
+// Parameters
+// ----------
+// mod : blade_module_t
+//      pointer to the internal state
+// input : void*
+//      input buffer (complex CI8)
+// output : void*
+//      output buffer (complex CF16)
+// input_id : int
+//      user ID for input buffer
+// output_id : int
+//      user ID for output buffer
+//
+// Return
+// ------
+// int : true if successfully enqueued, try again later if false
+//
+bool BLADE_API blade_ata_b_enqueue_with_id(blade_module_t mod, void* input, void* output,
+                                 int input_id, int output_id);
+
 // Enqueue a single buffer for asynchronous processing.
 //
 // Parameters
@@ -79,6 +147,29 @@ int BLADE_API blade_ata_b_process(blade_module_t mod, void** input, void** outpu
 // int : true if successfully enqueued, try again later if false
 //
 bool BLADE_API blade_ata_b_enqueue(blade_module_t mod, void* input, void* output);
+
+// Dequeue a single buffer from asynchronous processing, with option to retrieve the 
+// buffer IDs passed in during the `blade_ata_b_enqueue` call.
+//
+// Parameters
+// ----------
+// mod : blade_module_t
+//      pointer to the internal state
+// input : void**
+//      optional, filled with the dequeued buffer input buffer (complex CI8)
+// output : void**
+//      optional, filled with the dequeued buffer output buffer (complex CF16)
+// input_id : int*
+//      optional, filled with the user supplied ID for input buffer
+// output_id : int*
+//      optional, filled with the user supplied ID for output buffer
+//
+// Return
+// ------
+// int : true if successfully dequeue, try again later if false
+//
+bool BLADE_API blade_ata_b_dequeue_with_id(blade_module_t mod, void** input, void** output,
+                                 int* input_id, int* output_id);
 
 // Dequeue a single buffer from asynchronous processing.
 //
