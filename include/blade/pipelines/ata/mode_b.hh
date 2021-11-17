@@ -40,7 +40,7 @@ class ModeB : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result run(const std::span<CI8>& in, std::span<CF16>& out);
+    Result run(const std::span<CI8>& in, std::span<BLADE_OUTPUT_ELEMENT_T>& out);
 
  protected:
     Result setupModules() final;

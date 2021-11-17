@@ -63,4 +63,8 @@ template Result Cast::run(const std::span<CF32>&,
                                 std::span<CF16>&,
                                 cudaStream_t);
 
+template Result Cast::run(const std::span<CF32>&,
+                                std::span<CF32>&,
+                                cudaStream_t);
+
 }  // namespace Blade::Modules
