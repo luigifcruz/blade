@@ -11,6 +11,10 @@
 #include "blade/modules/channelizer/base.hh"
 #include "blade/modules/beamformer/ata.hh"
 
+extern "C" {
+    #include "blade/pipelines/ata/mode_b_config.h"
+}
+
 using namespace std::chrono;
 
 namespace Blade::Pipelines::ATA {
@@ -50,14 +54,14 @@ class ModeB : public Pipeline {
     const Config& config;
 
     std::span<CI8> input;
-    std::span<CF16> output;
+    std::span<BLADE_OUTPUT_ELEMENT_T> output;
 
     std::span<CF32> phasors;
     std::span<CI8> bufferA;
     std::span<CF32> bufferB;
     std::span<CF32> bufferC;
     std::span<CF32> bufferD;
-    std::span<CF16> bufferE;
+    std::span<BLADE_OUTPUT_ELEMENT_T> bufferE;
 
     std::unique_ptr<Modules::Cast> cast;
     std::unique_ptr<Modules::Beamformer::ATA> beamformer;

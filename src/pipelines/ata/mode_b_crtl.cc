@@ -130,7 +130,7 @@ int process(blade_module_t mod, int idx, void* input, void* output) {
     auto ibuf = static_cast<CI8*>(input);
     auto in = std::span(ibuf, worker->getInputSize());
 
-    auto obuf = static_cast<CF16*>(output);
+    auto obuf = static_cast<BLADE_OUTPUT_ELEMENT_T*>(output);
     auto out = std::span(obuf, worker->getOutputSize());
 
     if (worker->run(in, out) != Result::SUCCESS) {

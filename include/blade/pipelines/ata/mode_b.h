@@ -3,15 +3,6 @@
 
 #include "blade/pipelines/base.h"
 
-#define BLADE_INPUT_NANT 20
-#define BLADE_INPUT_NCOMPLEX_BYTES 2
-
-#define BLADE_ANT_NCHAN 192
-#define BLADE_NTIME 8192
-#define BLADE_NPOL 2
-
-#define BLADE_OUTPUT_NBEAM 8
-#define BLADE_OUTPUT_NCOMPLEX_BYTES 4
 
 // Initialize the pipeline.
 //
