@@ -11,13 +11,13 @@ struct State {
     ModeB::Config config = {
         .inputDims = {
             .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 192,
-            .NTIME  = 8192,
-            .NPOLS  = 2,
+            .NANTS  = BLADE_INPUT_NANT,
+            .NCHANS = BLADE_ANT_NCHAN,
+            .NTIME  = BLADE_NTIME,
+            .NPOLS  = BLADE_NPOL,
         },
         .channelizerRate = 4,
-        .beamformerBeams = 16,
+        .beamformerBeams = BLADE_OUTPUT_NBEAM,
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
         .beamformerBlockSize = 512,
