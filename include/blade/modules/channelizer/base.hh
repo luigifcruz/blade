@@ -43,9 +43,6 @@ class BLADE_API Channelizer : public module {
 
  private:
     const Config config;
-    dim3 grid, block;
-    std::string kernel;
-    jitify2::ProgramCache<> cache;
 };
 
 }  // namespace Blade::Modules

@@ -5,7 +5,7 @@
 namespace Blade::Modules {
 
 Channelizer::Channelizer(const Config& config) :
-    module(config.blockSize), config(config), cache(100, *channelizer_kernel) {
+        module(config.blockSize, channelizer_kernel), config(config) {
     BL_DEBUG("Initilizating class.");
 
     if ((config.dims.NTIME % config.fftSize) != 0) {

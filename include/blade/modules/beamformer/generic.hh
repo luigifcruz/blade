@@ -35,9 +35,6 @@ class BLADE_API Generic : public module {
 
  protected:
     const Config config;
-    std::string kernel;
-    dim3 grid, block;
-    jitify2::ProgramCache<> cache;
 };
 
 }  // namespace Blade::Modules::Beamformer

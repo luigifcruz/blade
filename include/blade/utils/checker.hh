@@ -2,18 +2,19 @@
 #define BLADE_UTILS_CHECKER_HH
 
 #include "blade/base.hh"
+#include "blade/memory.hh"
 
 namespace Blade {
 
 class BLADE_API Checker {
  public:
     template<typename IT, typename OT>
-    static std::size_t run(const std::span<IT>& a,
-                           const std::span<OT>& b);
+    static std::size_t run(const Memory::HostVector<IT>& a,
+                           const Memory::HostVector<OT>& b);
 
     template<typename IT, typename OT>
-    static std::size_t run(const std::span<std::complex<IT>>& a,
-                           const std::span<std::complex<OT>>& b);
+    static std::size_t run(const Memory::HostVector<std::complex<IT>>& a,
+                           const Memory::HostVector<std::complex<OT>>& b);
 
  private:
     template<typename IT, typename OT>

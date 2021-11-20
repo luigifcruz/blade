@@ -2,136 +2,144 @@
 #define BLADE_PIPELINE_HH
 
 #include <span>
-#include <vector>
+#include <string>
+#include <memory>
+#include <map>
 
 #include "blade/common.hh"
 #include "blade/logger.hh"
-#include "blade/manager.hh"
+#include "blade/module.hh"
+
 
 namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline(const bool& async = true, const bool& test = false);
-    virtual ~Pipeline();
+    Pipeline() : state(State::IDLE) {
+        BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream,
+                cudaStreamNonBlocking), [&]{
+            BL_FATAL("Failed to create stream for CUDA steam: {}", err);
+        });
+    }
 
-    Result synchronize();
-    bool isSyncronized();
+    virtual ~Pipeline() {
+        this->synchronize();
+        if (this->state == State::GRAPH) {
+            cudaGraphDestroy(this->graph);
+        }
+        cudaStreamDestroy(this->stream);
+    }
 
-    constexpr Resources getResources() const {
-        return resources;
+    Result synchronize() {
+        BL_CUDA_CHECK(cudaStreamSynchronize(this->stream), [&]{
+            BL_FATAL("Failed to synchronize stream: {}", err);
+        });
+        return Result::SUCCESS;
+    }
+
+    bool isSyncronized() {
+        return cudaStreamQuery(this->stream) == cudaSuccess;
     }
 
  protected:
-    Result setup();
-    Result loop();
-
-    virtual constexpr Result setupModules() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result setupMemory() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result setupTest() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result loopPreprocess() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result loopUpload() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result loopProcess(cudaStream_t& cudaStream) {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result loopDownload() {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result loopTest() {
-        return Result::SUCCESS;
-    }
-
     template<typename T>
-    Result copyBuffer(std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
-        if (dst.size() != src.size()) {
-            BL_FATAL("Size mismatch between source and destination ({}, {}).",
-                    src.size(), dst.size());
-            return Result::ASSERTION_ERROR;
+    void connect(std::shared_ptr<T>& module,
+                 const std::string& moduleName,
+                 const typename T::Config& config,
+                 const typename T::Input& input) {
+        module = std::make_unique<T>(config, input);
+        this->modules.insert({moduleName, module});
+    }
+
+    Result compute() {
+        for (auto& [name, module] : this->modules) {
+            BL_CHECK(module->preprocess());
         }
 
-        BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),
-                    static_cast<cudaMemcpyKind>(dir), cudaStream), [&]{
-            BL_FATAL("Can't copy data: {}", err);
+        switch (state) {
+            case State::GRAPH:
+                BL_CUDA_CHECK(cudaGraphLaunch(this->instance, this->stream), [&]{
+                    BL_FATAL("Failed launch CUDA graph: {}", err);
+                });
+                break;
+            case State::CACHED:
+                BL_DEBUG("Creating CUDA Graph.");
+                BL_CUDA_CHECK(cudaStreamBeginCapture(this->stream,
+                    cudaStreamCaptureModeGlobal), [&]{
+                    BL_FATAL("Failed to begin the capture of CUDA Graph: {}", err);
+                });
+
+                for (auto& [name, module] : this->modules) {
+                    BL_CHECK(module->process());
+                }
+
+                BL_CUDA_CHECK(cudaStreamEndCapture(this->stream, &this->graph), [&]{
+                    BL_FATAL("Failed to end the capture of CUDA Graph: {}", err);
+                });
+
+                BL_CUDA_CHECK(cudaGraphInstantiate(&this->instance, this->graph,
+                        NULL, NULL, 0), [&]{
+                    BL_FATAL("Failed to instantiate CUDA Graph: {}", err);
+                });
+
+                this->state = State::GRAPH;
+                break;
+            case State::IDLE:
+                BL_DEBUG("Caching kernels ahead of CUDA Graph instantiation.");
+                for (auto& [name, module] : this->modules) {
+                    BL_CHECK(module->process());
+                }
+                this->state = State::CACHED;
+                break;
+            default:
+                BL_FATAL("Internal error.");
+                return Result::ERROR;
+        }
+
+        BL_CUDA_CHECK_KERNEL([&]{
+            BL_FATAL("Failed to process: {}", err);
+            return Result::CUDA_ERROR;
         });
 
         return Result::SUCCESS;
     }
 
     template<typename T>
-    Result allocateBuffer(std::span<T>& dst, std::size_t size, bool managed = false) {
-        BL_DEBUG("Allocating device memory.");
-
-        T *ptr;
-        std::size_t size_bytes = size * sizeof(ptr[0]);
-
-        if (managed) {
-            resources.device += size_bytes;
-            resources.host += size_bytes;
-
-            BL_CUDA_CHECK(cudaMallocManaged(&ptr, size_bytes), [&]{
-                BL_FATAL("Failed to allocate managed memory: {}", err);
-            });
-        } else {
-            resources.device += size_bytes;
-
-            BL_CUDA_CHECK(cudaMalloc(&ptr, size_bytes), [&]{
-                BL_FATAL("Failed to allocate memory: {}", err);
-            });
-        }
-
-        allocations.push_back(ptr);
-        dst = std::span(ptr, size);
-
-        return Result::SUCCESS;
+    Result copy(Memory::DeviceVector<T>& dst,
+                const Memory::DeviceVector<T>& src) {
+        return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename T>
-    Result pinBuffer(const std::span<T>& mem, RegisterKind kind) {
-        BL_DEBUG("Pinning host memory.");
-
-        resources.host += mem.size_bytes();
-
-        BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(),
-                    static_cast<unsigned int>(kind)), [&]{
-            BL_FATAL("Failed to register host memory: {}", err);
-        });
-
-        return Result::SUCCESS;
+    Result copy(Memory::DeviceVector<T>& dst,
+                const Memory::HostVector<T>& src) {
+        return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename T>
-    Result pinBuffer(std::vector<T>& mem, RegisterKind kind) {
-        return pinBuffer(std::span{ mem }, kind);
+    Result copy(Memory::HostVector<T>& dst,
+                const Memory::HostVector<T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
+    template<typename T>
+    Result copy(Memory::HostVector<T>& dst,
+                const Memory::DeviceVector<T>& src) {
+        return Memory::Copy(dst, src, this->stream);
     }
 
  private:
-    bool asyncMode;
-    bool testMode;
+    enum State : uint8_t {
+        IDLE,
+        CACHED,
+        GRAPH,
+    };
 
+    State state;
     cudaGraph_t graph;
-    cudaStream_t cudaStream;
+    cudaStream_t stream;
     cudaGraphExec_t instance;
-
-    Resources resources;
-    std::size_t state{0};
-    std::vector<void*> allocations;
+    std::map<std::string, std::shared_ptr<Module>> modules;
 };
 
 }  // namespace Blade

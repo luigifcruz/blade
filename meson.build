@@ -9,8 +9,6 @@ project(
   ]
 )
 
-py = import('python').find_installation('python3')
-
 cfg_lst = configuration_data()
 cfg_lst.set('VERSION', meson.project_version())
 cfg_lst.set('BUILD_TYPE', get_option('prefix'))
@@ -18,8 +16,6 @@ cfg_lst.set('BUILD_TYPE', get_option('prefix'))
 src_lst = []
 dep_lst = [
   dependency('spdlog'),
-  dependency('pybind11'),
-  py.dependency(embed: true),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
 ]
 inc_lst = [
@@ -28,11 +24,9 @@ inc_lst = [
 ]
 lnk_lst = []
 jit_lst = []
-pyt_lst = []
 
 subdir('src')
 subdir('include')
-subdir('python')
 subdir('tools')
 
 summary({'cpp_std': get_option('cpp_std'),
@@ -41,14 +35,6 @@ summary({'cpp_std': get_option('cpp_std'),
          'crossbuild': meson.is_cross_build(),
         }, section: 'General', bool_yn: true)
 
-lnk_lst += py.extension_module(
-  'blade-python',
-  sources: pyt_lst,
-  include_directories: inc_lst,
-  dependencies: dep_lst,
-  gnu_symbol_visibility: 'hidden',
-)
-
 lnk_lst += library(
   'blade',
   src_lst,
@@ -56,7 +42,6 @@ lnk_lst += library(
   dependencies: dep_lst,
   link_with: lnk_lst,
   install: true,
-  gnu_symbol_visibility: 'hidden',
 )
 
 lib_blade_dep = declare_dependency(

@@ -6,32 +6,41 @@
 
 namespace Blade::Modules {
 
-class BLADE_API Cast : public module {
+template<typename IT, typename OT>
+class BLADE_API Cast : public Module {
  public:
     struct Config {
         std::size_t blockSize = 512;
     };
 
-    explicit Cast(const Config& config);
-    ~Cast();
+    struct Input {
+        Memory::DeviceVector<IT>& buf;
+    };
 
-    constexpr Config getConfig() const {
-        return config;
+    struct Output {
+        Memory::DeviceVector<OT> buf;
+    };
+
+    explicit Cast(const Config& config, const Input& input);
+
+    constexpr Memory::DeviceVector<IT>& getInput() {
+        return this->input.buf;
     }
 
-    template<typename IT, typename OT>
-    Result run(const std::span<std::complex<IT>>& input,
-                     std::span<std::complex<OT>>& output,
-                     cudaStream_t cudaStream = 0);
+    constexpr const Memory::DeviceVector<OT>& getOutput() const {
+        return this->output.buf;
+    }
+
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
+    Result process(const cudaStream_t& stream = 0) final;
 
  private:
     const Config config;
-    dim3 block;
-    jitify2::ProgramCache<> cache;
-
-    template<typename OT, typename IT>
-    Result run(IT input, OT output, std::size_t size,
-            cudaStream_t cudaStream = 0);
+    const Input input;
+    Output output;
 };
 
 }  // namespace Blade::Modules

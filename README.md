@@ -5,8 +5,6 @@ This library is meant to be used by the Allen Telescope Array beamformer.
 ## Dependencies
 
 - GCC >=10.3
-- PyBind11 >=2.7.8
-- Python >=3.9
 - spdlog >=1.8
 - CUDA >=11.4
 

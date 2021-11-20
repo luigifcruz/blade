@@ -1,103 +1,63 @@
 #include "blade/modules/cast/base.hh"
 #include "blade/utils/checker.hh"
-#include "blade/manager.hh"
+#include "blade/memory.hh"
 #include "blade/pipeline.hh"
+#include "blade/memory.hh"
 
 using namespace Blade;
 
 template<typename IT, typename OT>
-class Module : public Pipeline {
+class Test : public Pipeline {
  public:
-    explicit Module(const std::size_t& size) :
-        Pipeline(false, true), size(size) {
-        if (this->setup() != Result::SUCCESS) {
-            throw Result::ERROR;
-        }
+    explicit Test(const std::size_t& size) : input(size) {
+        this->connect(cast, "cast", {512}, {input});
     }
 
-    Result run() {
-        return this->loop();
-    }
-
-    Result loadTestData(const std::span<IT>& inputBuffer,
-                  const std::span<OT>& resultBuffer) {
-        BL_CHECK(copyBuffer(input, inputBuffer, CopyKind::H2D));
-        BL_CHECK(copyBuffer(result, resultBuffer, CopyKind::H2D));
-
-        return Result::SUCCESS;
-    }
-
- protected:
-    Result setupModules() final {
-        BL_INFO("Initializing kernels.");
-
-        cast = Factory<Modules::Cast>({});
-
-        return Result::SUCCESS;
-    }
-
-    Result setupMemory() final {
-        BL_INFO("Allocating resources.");
-
-        BL_CHECK(allocateBuffer(input, size));
-        BL_CHECK(allocateBuffer(output, size, true));
-        BL_CHECK(allocateBuffer(result, size, true));
-
-        return Result::SUCCESS;
-    }
-
-    Result loopProcess(cudaStream_t& cudaStream) final {
-        BL_CHECK(cast->run(input, output, cudaStream));
-
-        return Result::SUCCESS;
-    }
-
-    Result loopTest() final {
-        std::size_t errors = 0;
-        if ((errors = Checker::run(output, result)) != 0) {
-            BL_FATAL("Module produced {} errors.", errors);
-            return Result::ERROR;
-        }
+    Result run(const Memory::HostVector<IT>& input, Memory::HostVector<OT>& output) {
+        BL_CHECK(this->copy(cast->getInput(), input));
+        BL_CHECK(this->compute());
+        BL_CHECK(this->copy(output, cast->getOutput()));
+        BL_CHECK(this->synchronize());
 
         return Result::SUCCESS;
     }
 
  private:
-    const std::size_t size;
-
-    std::span<IT> input;
-    std::span<OT> output;
-    std::span<OT> result;
-
-    std::unique_ptr<Modules::Cast> cast;
+    Memory::DeviceVector<IT> input;
+    std::shared_ptr<Modules::Cast<IT, OT>> cast;
 };
 
 template<typename IT, typename OT>
 int complex_test(const std::size_t testSize) {
-    Manager manager{};
-    Module<std::complex<IT>, std::complex<OT>> mod{testSize};
+    auto mod = Test<std::complex<IT>, std::complex<OT>>{testSize};
 
-    std::vector<std::complex<IT>> input;
-    std::vector<std::complex<OT>> result;
+    Memory::HostVector<std::complex<IT>> input(testSize);
+    Memory::HostVector<std::complex<OT>> output(testSize);
+    Memory::HostVector<std::complex<OT>> result(testSize);
+
     for (std::size_t i = 0; i < testSize; i++) {
-        input.push_back({
+        input[i] = {
             static_cast<IT>(std::rand()),
             static_cast<IT>(std::rand())
-        });
+        };
 
-        result.push_back({
+        result[i] = {
             static_cast<OT>(input[i].real()),
             static_cast<OT>(input[i].imag())
-        });
+        };
     }
-    mod.loadTestData(input, result);
-    manager.save(mod.getResources()).report();
 
     for (int i = 0; i < 24; i++) {
-        if (mod.run() != Result::SUCCESS) {
+        if (mod.run(input, output) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }
+    }
+
+    std::size_t errors = 0;
+    if ((errors = Checker::run(output, result)) != 0) {
+        BL_FATAL("Cast produced {} errors.", errors);
+        return 1;
     }
 
     BL_INFO("Success...")

@@ -1,2 +1,2 @@
 subdir('module')
-subdir('pipeline')
+#subdir('pipeline')

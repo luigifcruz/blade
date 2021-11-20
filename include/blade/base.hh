@@ -4,6 +4,6 @@
 #include "blade/common.hh"
 #include "blade/logger.hh"
 #include "blade/pipeline.hh"
-#include "blade/manager.hh"
+#include "blade/memory.hh"
 
 #endif

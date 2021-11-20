@@ -4,8 +4,9 @@
 #include <cuda_runtime.h>
 #include <cuComplex.h>
 #include <cuda_fp16.h>
-#include <complex>
+
 #include <span>
+#include <complex>
 
 namespace Blade {
 
@@ -25,7 +26,6 @@ enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,
     CUDA_ERROR,
-    PYTHON_ERROR,
     ASSERTION_ERROR,
 };
 
@@ -40,20 +40,6 @@ struct ArrayDims {
     std::size_t NCHANS;
     std::size_t NTIME;
     std::size_t NPOLS;
-};
-
-enum class RegisterKind : unsigned int {
-    Mapped = cudaHostRegisterMapped,
-    ReadOnly = cudaHostRegisterReadOnly,
-    Default = cudaHostRegisterDefault,
-    Portable = cudaHostRegisterPortable,
-};
-
-enum class CopyKind : unsigned int {
-    D2H = cudaMemcpyDeviceToHost,
-    H2D = cudaMemcpyHostToDevice,
-    D2D = cudaMemcpyDeviceToDevice,
-    H2H = cudaMemcpyHostToHost,
 };
 
 }  // namespace Blade
@@ -83,11 +69,31 @@ enum class CopyKind : unsigned int {
 }
 #endif
 
+#ifndef BL_CUDA_CHECK_THROW
+#define BL_CUDA_CHECK_THROW(x, callback) { \
+    cudaError_t val = (x); \
+    if (val != cudaSuccess) { \
+        auto err = cudaGetErrorString(val); \
+        callback(); \
+        throw Result::CUDA_ERROR; \
+    } \
+}
+#endif
+
 #ifndef BL_CHECK
 #define BL_CHECK(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
         return val; \
+    } \
+}
+#endif
+
+#ifndef BL_CHECK_THROW
+#define BL_CHECK_THROW(x) { \
+    Result val = (x); \
+    if (val != Result::SUCCESS) { \
+        throw val; \
     } \
 }
 #endif
