@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "blade/common.hh"
+#include "blade/macros.hh"
 
 #undef SPDLOG_ACTIVE_LEVEL
 #ifdef NDEBUG

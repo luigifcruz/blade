@@ -1,7 +1,7 @@
 #include <type_traits>
 #include <typeindex>
 
-#include "blade/modules/cast/base.hh"
+#include "blade/modules/cast.hh"
 
 #include "cast.jit.hh"
 
@@ -12,21 +12,10 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
         : Module(config.blockSize, cast_kernel),
           config(config),
           input(input) {
+    auto size = input.buf.size() * cudaTypeSize<IT>();
 
-    // TODO: Add proper handling.
-    std::map<std::type_index, std::string> mappy;
-
-    mappy[typeid(CF32)] = "float";
-    mappy[typeid(CF16)] = "__half";
-    mappy[typeid(CI8)] = "char";
-
-    kernel = Template("cast").instantiate(
-        mappy[typeid(IT)],
-        mappy[typeid(OT)],
-        input.buf.size() * 2);
-
-    grid = dim3(((input.buf.size() * 2) + block.x - 1) / block.x);
-    block = dim3(config.blockSize);
+    kernel = Template("cast").instantiate(cudaType<IT>(), cudaType<OT>(), size);
+    grid = dim3((size + block.x - 1) / block.x);
 
     BL_CHECK_THROW(output.buf.allocate(input.buf.size()));
 }

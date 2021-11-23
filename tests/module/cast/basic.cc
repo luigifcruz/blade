@@ -1,4 +1,4 @@
-#include "blade/modules/cast/base.hh"
+#include "blade/modules/cast.hh"
 #include "blade/utils/checker.hh"
 #include "blade/memory.hh"
 #include "blade/pipeline.hh"
@@ -13,7 +13,8 @@ class Test : public Pipeline {
         this->connect(cast, "cast", {512}, {input});
     }
 
-    Result run(const Memory::HostVector<IT>& input, Memory::HostVector<OT>& output) {
+    Result run(const Memory::HostVector<IT>& input,
+                     Memory::HostVector<OT>& output) {
         BL_CHECK(this->copy(cast->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, cast->getOutput()));

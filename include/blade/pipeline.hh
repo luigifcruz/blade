@@ -6,10 +6,8 @@
 #include <memory>
 #include <map>
 
-#include "blade/common.hh"
 #include "blade/logger.hh"
 #include "blade/module.hh"
-
 
 namespace Blade {
 

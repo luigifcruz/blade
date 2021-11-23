@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "blade/common.hh"
+#include "blade/types.hh"
 #include "blade/logger.hh"
 #include "blade/memory.hh"
 
@@ -15,20 +15,8 @@ namespace Blade {
 class BLADE_API Module {
  public:
     explicit Module(const std::size_t& blockSize,
-                    const jitify2::PreprocessedProgram& kernel)
-            : cache(100, *kernel) {
-        if (blockSize > 1024) {
-            BL_FATAL("The block size ({}) is larger than hardware limit (1024).",
-                    blockSize);
-            throw Result::ERROR;
-        }
-
-        if ((blockSize % 32) != 0) {
-            BL_WARN("Best performance is achieved when the block size ({}) "
-                    "is a multiple of 32.", blockSize);
-        }
-    }
-    virtual ~Module() {}
+                    const jitify2::PreprocessedProgram& kernel);
+    virtual ~Module() = default;
 
     virtual constexpr Result preprocess(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
@@ -42,6 +30,12 @@ class BLADE_API Module {
     jitify2::ProgramCache<> cache;
     std::string kernel;
     dim3 grid, block;
+
+    template<typename T>
+    static const std::string cudaType();
+
+    template<typename T>
+    static const std::size_t cudaTypeSize();
 };
 
 }  // namespace Blade

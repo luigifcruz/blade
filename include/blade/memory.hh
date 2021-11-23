@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "blade/common.hh"
+#include "blade/types.hh"
 #include "blade/logger.hh"
 
 namespace Blade {
