@@ -25,7 +25,7 @@ Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
         ->configure(grid, this->block, 0, stream)
-        ->launch(input.buf, output.buf);
+        ->launch(input.buf.data(), output.buf.data());
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Module failed to execute: {}", err);
