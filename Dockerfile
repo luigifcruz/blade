@@ -14,8 +14,8 @@ RUN python3 -m pip install meson ninja
 ENV CC=gcc-10
 ENV CXX=g++-10
 
-RUN rm -fr builddir
-RUN meson builddir -Dprefix=/usr
-RUN cd builddir && ninja install
+RUN rm -fr build
+RUN meson build -Dprefix=/usr
+RUN cd build && ninja install
 
 WORKDIR /
