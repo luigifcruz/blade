@@ -47,7 +47,9 @@ Result ModeB::setupMemory() {
     BL_CHECK(allocateBuffer(bufferB, channelizer->getBufferSize()));
     BL_CHECK(allocateBuffer(bufferC, channelizer->getBufferSize()));
     BL_CHECK(allocateBuffer(bufferD, beamformer->getOutputSize()));
+    #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
     BL_CHECK(allocateBuffer(bufferE, beamformer->getOutputSize()));
+    #endif
 
     return Result::SUCCESS;
 }
@@ -62,13 +64,19 @@ Result ModeB::loopProcess(cudaStream_t& cudaStream) {
     BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
     BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
     BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
+    #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
     BL_CHECK(cast->run(bufferD, bufferE, cudaStream));
+    #endif
 
     return Result::SUCCESS;
 }
 
 Result ModeB::loopDownload() {
+    #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
     BL_CHECK(this->copyBuffer(output, bufferE, CopyKind::D2H));
+    #else // copy directly from beamformer output
+    BL_CHECK(this->copyBuffer(output, bufferD, CopyKind::D2H));
+    #endif
 
     return Result::SUCCESS;
 }
