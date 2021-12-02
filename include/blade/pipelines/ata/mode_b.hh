@@ -40,7 +40,7 @@ class ModeB : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result run(const std::span<CI8>& in, std::span<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>& out);
+    Result run(const std::span<CI8>& in, std::span<uint8_t>& out);
 
  protected:
     Result setupModules() final;
@@ -54,7 +54,7 @@ class ModeB : public Pipeline {
     const Config& config;
 
     std::span<CI8> input;
-    std::span<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T> output;
+    std::span<uint8_t> output;
 
     std::span<CF32> phasors;
     std::span<CI8> bufferA;

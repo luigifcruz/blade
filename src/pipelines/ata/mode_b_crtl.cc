@@ -130,8 +130,9 @@ int process(blade_module_t mod, int idx, void* input, void* output) {
     auto ibuf = static_cast<CI8*>(input);
     auto in = std::span(ibuf, worker->getInputSize());
 
-    auto obuf = static_cast<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T*>(output);
-    auto out = std::span(obuf, worker->getOutputSize());
+    auto obuf = static_cast<uint8_t*>(output);
+    auto obufByteSize = worker->getOutputSize()*sizeof(BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T);
+    auto out = std::span(obuf, obufByteSize);
 
     if (worker->run(in, out) != Result::SUCCESS) {
         BL_WARN("Can't process data. Test is exiting...");
