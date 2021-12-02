@@ -58,8 +58,8 @@ class BLADE_API Pipeline {
         return Result::SUCCESS;
     }
 
-    template<typename T>
-    Result copyBuffer(std::span<T>& dst, const std::span<T>& src, CopyKind dir) {
+    template<typename DT, typename ST>
+    Result copyBuffer(std::span<DT>& dst, const std::span<ST>& src, CopyKind dir) {
         if (dst.size() != src.size()) {
             BL_FATAL("Size mismatch between source and destination ({}, {}).",
                     src.size(), dst.size());
