@@ -73,9 +73,9 @@ Result ModeB::loopProcess(cudaStream_t& cudaStream) {
 
 Result ModeB::loopDownload() {
     #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
-    BL_CHECK(this->copyBuffer(output, bufferE, CopyKind::D2H));
+    BL_CHECK(this->copyBuffer2D(output, BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_DPITCH, bufferE, BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH, CopyKind::D2H));
     #else // copy directly from beamformer output
-    BL_CHECK(this->copyBuffer(output, bufferD, CopyKind::D2H));
+    BL_CHECK(this->copyBuffer2D(output, BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_DPITCH, bufferD, BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH, CopyKind::D2H));
     #endif
 
     return Result::SUCCESS;

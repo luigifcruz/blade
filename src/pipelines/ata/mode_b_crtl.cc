@@ -132,6 +132,8 @@ int process(blade_module_t mod, int idx, void* input, void* output) {
 
     auto obuf = static_cast<uint8_t*>(output);
     auto obufByteSize = worker->getOutputSize()*sizeof(BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T);
+    obufByteSize = (obufByteSize/BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH)*BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_DPITCH;
+    obuf += BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD; // ensure padding effectively happens before payload
     auto out = std::span(obuf, obufByteSize);
 
     if (worker->run(in, out) != Result::SUCCESS) {
