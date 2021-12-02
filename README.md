@@ -7,6 +7,9 @@ This library is meant to be used by the Allen Telescope Array beamformer.
 - GCC >=10.3
 - spdlog >=1.8
 - CUDA >=11.4
+- Meson >=0.58
+- Ninja
+- Cmake
 
 ## Pipeline Benchmark
 ### Nov 1, 2021
