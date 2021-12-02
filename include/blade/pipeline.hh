@@ -74,6 +74,46 @@ class BLADE_API Pipeline {
         return Result::SUCCESS;
     }
 
+    template<typename DT, typename ST>
+    Result copyBuffer2D(std::span<DT>& dst, size_t dpitch, const std::span<ST>& src, size_t width, CopyKind dir) {
+        if (width > dpitch) {
+            BL_FATAL("2D copy 'width' is larger than destination's pitch ({}, {}).",
+                    width, dpitch);
+            return Result::ASSERTION_ERROR;
+        }
+        if (dst.size() != dpitch*(src.size_bytes()/width)) {
+            BL_FATAL("Destination's size is not exactly covered by {} rows of {} ({} vs {}).",
+                    (src.size_bytes()/width), dpitch, dst.size(), dpitch*(src.size_bytes()/width));
+            return Result::ASSERTION_ERROR;
+        }
+        if (width % sizeof(ST) != 0) {
+            BL_FATAL("2D copy 'width' is not a multiple of source's element size ({}, {}).",
+                    width, sizeof(ST));
+            return Result::ASSERTION_ERROR;
+        }
+        if (src.size() % width != 0) {
+            BL_FATAL("2D copy 'width' is not a factor of source's size ({}, {}).",
+                    width, src.size());
+            return Result::ASSERTION_ERROR;
+        }
+
+        BL_CUDA_CHECK(
+            cudaMemcpy2DAsync(
+                dst.data(),
+                dpitch,
+                src.data(),
+                width,
+                width,
+                src.size_bytes()/width,
+                static_cast<cudaMemcpyKind>(dir), cudaStream),
+            [&]{
+                BL_FATAL("Can't copy data: {}", err);
+            }
+        );
+
+        return Result::SUCCESS;
+    }
+
     template<typename T>
     Result allocateBuffer(std::span<T>& dst, std::size_t size, bool managed = false) {
         BL_DEBUG("Allocating device memory.");
