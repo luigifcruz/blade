@@ -60,9 +60,9 @@ class BLADE_API Pipeline {
 
     template<typename DT, typename ST>
     Result copyBuffer(std::span<DT>& dst, const std::span<ST>& src, CopyKind dir) {
-        if (dst.size() != src.size()) {
+        if (dst.size_bytes() != src.size_bytes()) {
             BL_FATAL("Size mismatch between source and destination ({}, {}).",
-                    src.size(), dst.size());
+                    src.size_bytes(), dst.size_bytes());
             return Result::ASSERTION_ERROR;
         }
 
@@ -81,9 +81,9 @@ class BLADE_API Pipeline {
                     width, dpitch);
             return Result::ASSERTION_ERROR;
         }
-        if (dst.size() != dpitch*height) {
+        if (dst.size_bytes() != dpitch*height) {
             BL_FATAL("Destination's size is not exactly covered by {} rows of {} ({} vs {}).",
-                    height, dpitch, dst.size(), dpitch*height);
+                    height, dpitch, dst.size_bytes(), dpitch*height);
             return Result::ASSERTION_ERROR;
         }
         if (width > spitch) {
@@ -91,9 +91,9 @@ class BLADE_API Pipeline {
                     width, spitch);
             return Result::ASSERTION_ERROR;
         }
-        if (src.size() != spitch*height) {
+        if (src.size_bytes() != spitch*height) {
             BL_FATAL("Source's size is not exactly covered by {} rows of {} ({} vs {}).",
-                    height, spitch, src.size(), spitch*height);
+                    height, spitch, src.size_bytes(), spitch*height);
             return Result::ASSERTION_ERROR;
         }
         if (width % sizeof(DT) != 0) {
