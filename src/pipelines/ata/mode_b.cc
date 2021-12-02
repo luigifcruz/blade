@@ -9,7 +9,7 @@ ModeB::ModeB(const Config& configuration) :
     }
 }
 
-Result ModeB::run(const std::span<CI8>& in, std::span<BLADE_OUTPUT_ELEMENT_T>& out) {
+Result ModeB::run(const std::span<CI8>& in, std::span<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>& out) {
     this->input = in;
     this->output = out;
     return this->loop();

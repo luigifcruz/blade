@@ -3,7 +3,6 @@
 
 #include "blade/pipelines/base.h"
 
-
 // Initialize the pipeline.
 //
 // Parameters

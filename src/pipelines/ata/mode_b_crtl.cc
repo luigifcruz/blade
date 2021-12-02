@@ -11,13 +11,13 @@ struct State {
     ModeB::Config config = {
         .inputDims = {
             .NBEAMS = 1,
-            .NANTS  = BLADE_INPUT_NANT,
-            .NCHANS = BLADE_ANT_NCHAN,
-            .NTIME  = BLADE_NTIME,
-            .NPOLS  = BLADE_NPOL,
+            .NANTS  = BLADE_ATA_MODE_B_INPUT_NANT,
+            .NCHANS = BLADE_ATA_MODE_B_ANT_NCHAN,
+            .NTIME  = BLADE_ATA_MODE_B_NTIME,
+            .NPOLS  = BLADE_ATA_MODE_B_NPOL,
         },
         .channelizerRate = 4,
-        .beamformerBeams = BLADE_OUTPUT_NBEAM,
+        .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
         .beamformerBlockSize = 512,
@@ -130,7 +130,7 @@ int process(blade_module_t mod, int idx, void* input, void* output) {
     auto ibuf = static_cast<CI8*>(input);
     auto in = std::span(ibuf, worker->getInputSize());
 
-    auto obuf = static_cast<BLADE_OUTPUT_ELEMENT_T*>(output);
+    auto obuf = static_cast<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T*>(output);
     auto out = std::span(obuf, worker->getOutputSize());
 
     if (worker->run(in, out) != Result::SUCCESS) {
