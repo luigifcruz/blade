@@ -11,7 +11,7 @@ jitify_gen = generator(
   # TODO: Fix this hardcoded CUDA path.
   # TODO: Add -lineinfo only when debug enabled.
   arguments : ['-I/usr/local/cuda/include', '-I/opt/cuda/include', '-lineinfo',
-      '-dlto', '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
+      '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
 )
 
 src_lst += jitify_gen.process(jit_lst)

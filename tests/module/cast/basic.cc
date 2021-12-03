@@ -1,6 +1,5 @@
 #include "blade/modules/cast.hh"
 #include "blade/utils/checker.hh"
-#include "blade/memory.hh"
 #include "blade/pipeline.hh"
 #include "blade/memory.hh"
 
@@ -9,7 +8,9 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
-    explicit Test(const std::size_t& size) : input(size) {
+    explicit Test(const std::size_t& size) {
+        BL_CHECK_THROW(input.allocate(size));
+
         this->connect(cast, "cast", {512}, {input});
     }
 
@@ -73,6 +74,8 @@ int main() {
     BL_INFO("Testing cast module.");
 
     const std::size_t testSize = 134400000;
+
+    // TODO: Add non-complex tests.
 
     BL_INFO("Casting CI8 to CF32...");
     if (complex_test<I8, F32>(testSize) != 0) {

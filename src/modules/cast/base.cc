@@ -24,7 +24,7 @@ template<typename IT, typename OT>
 Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
-        ->configure(grid, this->block, 0, stream)
+        ->configure(grid, block, 0, stream)
         ->launch(input.buf.data(), output.buf.data());
 
     BL_CUDA_CHECK_KERNEL([&]{

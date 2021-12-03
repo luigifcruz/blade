@@ -1,83 +1,44 @@
-#include "blade/modules/channelizer/test.hh"
-#include "blade/modules/channelizer/base.hh"
+#include "blade/modules/channelizer.hh"
 #include "blade/utils/checker.hh"
-#include "blade/manager.hh"
 #include "blade/pipeline.hh"
+#include "blade/memory.hh"
 
 using namespace Blade;
 
-class Module : public Pipeline {
+template<typename IT, typename OT>
+class Test : public Pipeline {
  public:
-    explicit Module(const Modules::Channelizer::Config& config) :
-        Pipeline(false, true), config(config) {
-        if (this->setup() != Result::SUCCESS) {
-            throw Result::ERROR;
-        }
+    explicit Test(const typename Modules::Channelizer<IT, OT>::Config& config) {
+        BL_CHECK_THROW(input.allocate(channelizer->getBufferSize(config)));
+
+        this->connect(channelizer, "channelizer", config, {input});
     }
 
-    Result run() {
-        return this->loop();
+    std::size_t getInputSize() {
+        return input.size();
     }
 
- protected:
-    Result setupModules() final {
-        BL_INFO("Initializing kernels.");
-
-        channelizer = std::make_unique<Modules::Channelizer>(config);
-
-        return Result::SUCCESS;
-    }
-
-    Result setupMemory() final {
-        BL_INFO("Allocating resources.");
-        BL_CHECK(allocateBuffer(input, channelizer->getBufferSize()));
-        BL_CHECK(allocateBuffer(output, channelizer->getBufferSize(), true));
-
-        return Result::SUCCESS;
-    }
-
-    Result setupTest() final {
-        test = std::make_unique<Modules::Channelizer::Test>(config);
-
-        BL_CHECK(test->process());
-        BL_CHECK(copyBuffer(input, test->getInputData(), CopyKind::H2D));
-
-        return Result::SUCCESS;
-    }
-
-    Result loopProcess(cudaStream_t& cudaStream) final {
-        BL_CHECK(channelizer->run(input, output, cudaStream));
-
-        return Result::SUCCESS;
-    }
-
-    Result loopTest() final {
-        std::size_t errors = 0;
-        if ((errors = Checker::run(output, test->getOutputData())) != 0) {
-            BL_FATAL("Module produced {} errors.", errors);
-            return Result::ERROR;
-        }
+    Result run(const Memory::HostVector<IT>& input,
+                     Memory::HostVector<OT>& output) {
+        BL_CHECK(this->copy(channelizer->getInput(), input));
+        BL_CHECK(this->compute());
+        BL_CHECK(this->copy(output, channelizer->getOutput()));
+        BL_CHECK(this->synchronize());
 
         return Result::SUCCESS;
     }
 
  private:
-    const Modules::Channelizer::Config& config;
-
-    std::unique_ptr<Modules::Channelizer> channelizer;
-    std::unique_ptr<Modules::Channelizer::Test> test;
-
-    std::span<CF32> input;
-    std::span<CF32> output;
+    Memory::DeviceVector<IT> input;
+    std::shared_ptr<Modules::Channelizer<IT, OT>> channelizer;
 };
 
 int main() {
     Logger guard{};
-    Manager manager{};
 
     BL_INFO("Testing advanced channelizer.");
 
-    Module mod({
+    Test<CF32, CF32> mod({
         .dims = {
             .NBEAMS = 1,
             .NANTS  = 20,
@@ -86,13 +47,14 @@ int main() {
             .NPOLS  = 2,
         },
         .fftSize = 4,
-        .blockSize = 1024,
+        .blockSize = 512,
     });
 
-    manager.save(mod.getResources()).report();
+    Memory::HostVector<CF32> input(mod.getInputSize());
+    Memory::HostVector<CF32> output(mod.getInputSize());
 
     for (int i = 0; i < 24; i++) {
-        if (mod.run() != Result::SUCCESS) {
+        if (mod.run(input, output) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }

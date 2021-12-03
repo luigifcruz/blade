@@ -4,9 +4,9 @@
 
 std::string computeMethodName(const std::string& function,
                               const std::string& prettyFunction) {
-    size_t locFunName = prettyFunction.find(function);
-    size_t begin = prettyFunction.rfind(" ", locFunName) + 1;
-    size_t end = prettyFunction.find("(", locFunName + function.length());
+    std::size_t locFunName = prettyFunction.find(function);
+    std::size_t begin = prettyFunction.rfind(" ", locFunName) + 1;
+    std::size_t end = prettyFunction.find("(", locFunName + function.length());
     if (prettyFunction[end + 1] == ')')
         return (prettyFunction.substr(begin, end - begin) + "()");
     else
