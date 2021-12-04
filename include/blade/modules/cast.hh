@@ -10,6 +10,7 @@ template<typename IT, typename OT>
 class BLADE_API Cast : public Module {
  public:
     struct Config {
+        std::size_t inputSize;
         std::size_t blockSize = 512;
     };
 

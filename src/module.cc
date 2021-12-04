@@ -11,7 +11,7 @@ Module::Module(const std::size_t& blockSize,
     if (blockSize > 1024) {
         BL_FATAL("The block size ({}) is larger than hardware limit (1024).",
                 blockSize);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if ((blockSize % 32) != 0) {
@@ -21,7 +21,7 @@ Module::Module(const std::size_t& blockSize,
 }
 
 template<typename T>
-const std::string Module::cudaType() {
+const std::string Module::CudaType() {
     static std::map<std::type_index, std::string> type_map = {
         {typeid(CF16),  "__half"},
         {typeid(CF32),  "float"},
@@ -37,19 +37,19 @@ const std::string Module::cudaType() {
     return type_map[typeid(T)];
 }
 
-template const std::string Module::cudaType<CF16>();
-template const std::string Module::cudaType<CF32>();
-template const std::string Module::cudaType<CI8>();
-template const std::string Module::cudaType<CI16>();
-template const std::string Module::cudaType<CI32>();
-template const std::string Module::cudaType<F16>();
-template const std::string Module::cudaType<F32>();
-template const std::string Module::cudaType<I8>();
-template const std::string Module::cudaType<I16>();
-template const std::string Module::cudaType<I32>();
+template const std::string Module::CudaType<CF16>();
+template const std::string Module::CudaType<CF32>();
+template const std::string Module::CudaType<CI8>();
+template const std::string Module::CudaType<CI16>();
+template const std::string Module::CudaType<CI32>();
+template const std::string Module::CudaType<F16>();
+template const std::string Module::CudaType<F32>();
+template const std::string Module::CudaType<I8>();
+template const std::string Module::CudaType<I16>();
+template const std::string Module::CudaType<I32>();
 
 template<typename T>
-const std::size_t Module::cudaTypeSize() {
+const std::size_t Module::CudaTypeSize() {
     static std::map<std::type_index, std::size_t> size_map = {
         {typeid(CF16),  2},
         {typeid(CF32),  2},
@@ -65,15 +65,15 @@ const std::size_t Module::cudaTypeSize() {
     return size_map[typeid(T)];
 }
 
-template const std::size_t Module::cudaTypeSize<CF16>();
-template const std::size_t Module::cudaTypeSize<CF32>();
-template const std::size_t Module::cudaTypeSize<CI8>();
-template const std::size_t Module::cudaTypeSize<CI16>();
-template const std::size_t Module::cudaTypeSize<CI32>();
-template const std::size_t Module::cudaTypeSize<F16>();
-template const std::size_t Module::cudaTypeSize<F32>();
-template const std::size_t Module::cudaTypeSize<I8>();
-template const std::size_t Module::cudaTypeSize<I16>();
-template const std::size_t Module::cudaTypeSize<I32>();
+template const std::size_t Module::CudaTypeSize<CF16>();
+template const std::size_t Module::CudaTypeSize<CF32>();
+template const std::size_t Module::CudaTypeSize<CI8>();
+template const std::size_t Module::CudaTypeSize<CI16>();
+template const std::size_t Module::CudaTypeSize<CI32>();
+template const std::size_t Module::CudaTypeSize<F16>();
+template const std::size_t Module::CudaTypeSize<F32>();
+template const std::size_t Module::CudaTypeSize<I8>();
+template const std::size_t Module::CudaTypeSize<I16>();
+template const std::size_t Module::CudaTypeSize<I32>();
 
 }  // namespace Blade

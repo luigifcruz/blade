@@ -27,11 +27,12 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
             throw Result::ERROR;
     }
 
-    auto size = getBufferSize(config);
+    auto size = getBufferSize();
     grid = (size + block.x - 1) / block.x / (config.fftSize * config.dims.NPOLS);
     kernel = Template(kernel_key).instantiate(size, config.fftSize, config.dims.NPOLS);
 
-    BL_CHECK_THROW(output.buf.allocate(input.buf.size()));
+    BL_CHECK_THROW(InitInput(input.buf, getBufferSize()));
+    BL_CHECK_THROW(InitOutput(output.buf, getBufferSize()));
 }
 
 template<typename IT, typename OT>

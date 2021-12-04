@@ -32,10 +32,36 @@ class BLADE_API Module {
     dim3 grid, block;
 
     template<typename T>
-    static const std::string cudaType();
+    static Result InitInput(T& buffer, std::size_t size) {
+        if (buffer.empty()) {
+            BL_DEBUG("Input is empty, allocating {} elements", size);
+            return buffer.allocate(size);
+        }
+
+        if (buffer.size() != size) {
+            BL_FATAL("Input size ({}) doesn't match the configuration size ({}).",
+                buffer.size(), size);
+            return Result::ERROR;
+        }
+
+        return Result::SUCCESS;
+    }
 
     template<typename T>
-    static const std::size_t cudaTypeSize();
+    static Result InitOutput(T& buffer, std::size_t size) {
+        if (!buffer.empty()) {
+            BL_FATAL("The output buffer should be empty on initialization.");
+            return Result::ERROR;
+        }
+
+        return buffer.allocate(size);
+    }
+
+    template<typename T>
+    static const std::string CudaType();
+
+    template<typename T>
+    static const std::size_t CudaTypeSize();
 };
 
 }  // namespace Blade

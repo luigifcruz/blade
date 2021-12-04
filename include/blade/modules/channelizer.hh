@@ -39,14 +39,14 @@ class BLADE_API Channelizer : public Module {
         return this->config;
     }
 
-    constexpr static const ArrayDims getOutputDims(const Config& config) {
+    constexpr const ArrayDims getOutputDims() {
         auto cfg = config.dims;
         cfg.NCHANS *= config.fftSize;
         cfg.NTIME /= config.fftSize;
         return cfg;
     }
 
-    constexpr static const std::size_t getBufferSize(const Config& config) {
+    constexpr const std::size_t getBufferSize() {
         return config.dims.NPOLS * config.dims.NTIME *
             config.dims.NANTS * config.dims.NCHANS;
     }

@@ -9,13 +9,11 @@ template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
     explicit Test(const typename Modules::Channelizer<IT, OT>::Config& config) {
-        BL_CHECK_THROW(input.allocate(channelizer->getBufferSize(config)));
-
-        this->connect(channelizer, "channelizer", config, {input});
+        this->connect(channelizer, config, {input});
     }
 
-    std::size_t getInputSize() {
-        return input.size();
+    constexpr const std::size_t getInputSize() const {
+        return channelizer->getBufferSize();
     }
 
     Result run(const Memory::HostVector<IT>& input,

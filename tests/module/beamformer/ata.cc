@@ -1,16 +1,14 @@
 #include "advanced.hh"
 #include "blade/modules/beamformer/ata.hh"
-#include "blade/modules/beamformer/ata_test.hh"
 
 using namespace Blade;
 
 int main() {
     Logger guard{};
-    Manager manager{};
 
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    Module<Modules::Beamformer::ATA> mod({
+    Test<CF32, CF32> mod({
         .dims = {
             .NBEAMS = 16,
             .NANTS  = 20,
@@ -21,10 +19,12 @@ int main() {
         .blockSize = 512,
     });
 
-    manager.save(mod.getResources()).report();
+    Memory::HostVector<CF32> input(mod.getInputSize());
+    Memory::HostVector<CF32> phasors(mod.getPhasorsSize());
+    Memory::HostVector<CF32> output(mod.getOutputSize());
 
     for (int i = 0; i < 24; i++) {
-        if (mod.run() != Result::SUCCESS) {
+        if (mod.run(input, phasors, output) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }

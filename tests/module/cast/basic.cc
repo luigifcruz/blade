@@ -8,10 +8,8 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
-    explicit Test(const std::size_t& size) {
-        BL_CHECK_THROW(input.allocate(size));
-
-        this->connect(cast, "cast", {512}, {input});
+    explicit Test(const std::size_t& inputSize) {
+        this->connect(cast, {inputSize, 512}, {input});
     }
 
     Result run(const Memory::HostVector<IT>& input,

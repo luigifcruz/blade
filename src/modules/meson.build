@@ -1,3 +1,3 @@
 subdir('cast')
-#subdir('beamformer')
+subdir('beamformer')
 subdir('channelizer')
