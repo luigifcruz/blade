@@ -21,9 +21,11 @@ class BLADE_API Memory {
         explicit CustomVector(const std::span<T>& other)
                  : container(other),
                    managed(false) {}
-        explicit CustomVector(const T* ptr, const std::size_t& size)
+        explicit CustomVector(T* ptr, const std::size_t& size)
                  : container(ptr, size),
                    managed(false) {}
+
+        virtual ~CustomVector() {}
 
         CustomVector(const CustomVector&) = delete;
         CustomVector& operator=(const CustomVector&) = delete;
@@ -47,6 +49,8 @@ class BLADE_API Memory {
         constexpr T& operator[](std::size_t idx) const {
             return container[idx];
         }
+
+        virtual Result allocate(const std::size_t& size) = 0;
 
      protected:
         std::span<T> container;
@@ -121,7 +125,7 @@ class BLADE_API Memory {
             BL_CHECK_THROW(this->allocate(size));
         }
 
-        Result allocate(const std::size_t& size) {
+        Result allocate(const std::size_t& size) final {
             if (!this->container.empty() && !this->managed) {
                 return Result::ERROR;
             }
@@ -145,7 +149,7 @@ class BLADE_API Memory {
                 Get().resources.host -= this->container.size_bytes();
                 if (cudaFreeHost(this->container.data()) != cudaSuccess) {
                     BL_FATAL("Failed to deallocate host memory.");
-                };
+                }
             }
         }
     };
@@ -159,7 +163,7 @@ class BLADE_API Memory {
             BL_CHECK_THROW(this->allocate(size));
         }
 
-        Result allocate(const std::size_t& size) {
+        Result allocate(const std::size_t& size) final {
             if (!this->container.empty() && !this->managed) {
                 return Result::ERROR;
             }
@@ -183,7 +187,7 @@ class BLADE_API Memory {
                 Get().resources.device -= this->container.size_bytes();
                 if (cudaFree(this->container.data()) != cudaSuccess) {
                     BL_FATAL("Failed to deallocate device memory.");
-                };
+                }
             }
         }
     };
@@ -217,7 +221,17 @@ class BLADE_API Memory {
     }
 
     template<typename T>
-    static Result Register(const std::span<T>& mem, const bool& readOnly = false) {
+    static Result Register(const HostVector<T>& mem, const bool& readOnly = false) {
+        cudaPointerAttributes attr;
+        BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, mem.data()), [&]{
+            BL_FATAL("Failed to get pointer attributes: {}", err);
+        });
+
+        if (attr.type != cudaMemoryTypeUnregistered) {
+            BL_WARN("Memory already registered.");
+            return Result::SUCCESS;
+        }
+
         unsigned int kind = cudaHostRegisterDefault;
         if (readOnly) {
             kind = cudaHostRegisterReadOnly;
@@ -226,8 +240,6 @@ class BLADE_API Memory {
         BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(), kind), [&]{
             BL_FATAL("Failed to register host memory: {}", err);
         });
-
-        Get().resources.host += mem.size_bytes();
 
         return Result::SUCCESS;
     }

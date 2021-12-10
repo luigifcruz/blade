@@ -8,8 +8,6 @@ namespace Blade::Modules::Beamformer {
 template<typename IT, typename OT>
 class BLADE_API ATA : public Generic<IT, OT> {
  public:
-    class Test;
-
     explicit ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input);
 
