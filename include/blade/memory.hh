@@ -13,22 +13,20 @@ class BLADE_API Memory {
     Memory() {}
 
     template<class T>
-    class CustomVector {
+    class Vector {
      public:
-        CustomVector()
+        Vector()
                  : container(),
                    managed(false) {}
-        explicit CustomVector(const std::span<T>& other)
+        explicit Vector(const std::span<T>& other)
                  : container(other),
                    managed(false) {}
-        explicit CustomVector(T* ptr, const std::size_t& size)
+        explicit Vector(T* ptr, const std::size_t& size)
                  : container(ptr, size),
                    managed(false) {}
 
-        virtual ~CustomVector() {}
-
-        CustomVector(const CustomVector&) = delete;
-        CustomVector& operator=(const CustomVector&) = delete;
+        Vector(const Vector&) = delete;
+        Vector& operator=(const Vector&) = delete;
 
         constexpr T* data() const noexcept {
             return container.data();
@@ -50,16 +48,14 @@ class BLADE_API Memory {
             return container[idx];
         }
 
-        virtual Result allocate(const std::size_t& size) = 0;
-
      protected:
         std::span<T> container;
         bool managed;
     };
 
     template<typename T>
-    static Result Copy(CustomVector<T>& dst,
-                       const CustomVector<T>& src,
+    static Result Copy(Vector<T>& dst,
+                       const Vector<T>& src,
                        const cudaMemcpyKind& kind,
                        const cudaStream_t& stream = 0) {
         if (dst.size() != src.size()) {
@@ -117,15 +113,15 @@ class BLADE_API Memory {
     }
 
     template<class T>
-    class HostVector : public CustomVector<T> {
+    class HostVector : public Vector<T> {
      public:
-        using CustomVector<T>::CustomVector;
+        using Vector<T>::Vector;
 
         explicit HostVector(const std::size_t& size) {
             BL_CHECK_THROW(this->allocate(size));
         }
 
-        Result allocate(const std::size_t& size) final {
+        Result allocate(const std::size_t& size) {
             if (!this->container.empty() && !this->managed) {
                 return Result::ERROR;
             }
@@ -138,6 +134,7 @@ class BLADE_API Memory {
             });
 
             Get().resources.host += size_bytes;
+
             this->container = std::span<T>(ptr, size);
             this->managed = true;
 
@@ -154,16 +151,40 @@ class BLADE_API Memory {
         }
     };
 
+    template<typename T>
+    static Result Register(const HostVector<T>& mem, const bool& readOnly = false) {
+        cudaPointerAttributes attr;
+        BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, mem.data()), [&]{
+            BL_FATAL("Failed to get pointer attributes: {}", err);
+        });
+
+        if (attr.type != cudaMemoryTypeUnregistered) {
+            BL_WARN("Memory already registered.");
+            return Result::SUCCESS;
+        }
+
+        unsigned int kind = cudaHostRegisterDefault;
+        if (readOnly) {
+            kind = cudaHostRegisterReadOnly;
+        }
+
+        BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(), kind), [&]{
+            BL_FATAL("Failed to register host memory: {}", err);
+        });
+
+        return Result::SUCCESS;
+    }
+
     template<class T>
-    class DeviceVector : public CustomVector<T> {
+    class DeviceVector : public Vector<T> {
      public:
-        using CustomVector<T>::CustomVector;
+        using Vector<T>::Vector;
 
         explicit DeviceVector(const std::size_t& size) {
             BL_CHECK_THROW(this->allocate(size));
         }
 
-        Result allocate(const std::size_t& size) final {
+        Result allocate(const std::size_t& size) {
             if (!this->container.empty() && !this->managed) {
                 return Result::ERROR;
             }
@@ -176,6 +197,7 @@ class BLADE_API Memory {
             });
 
             Get().resources.device += size_bytes;
+
             this->container = std::span<T>(ptr, size);
             this->managed = true;
 
@@ -190,6 +212,50 @@ class BLADE_API Memory {
                 }
             }
         }
+    };
+
+    template<class T>
+    class UnifiedVector : public Vector<T> {
+     public:
+        explicit UnifiedVector(const std::size_t& size) {
+            T* ptr;
+            auto size_bytes = size * sizeof(T);
+
+            BL_CUDA_CHECK_THROW(cudaMallocManaged(&ptr, size_bytes), [&]{
+                BL_FATAL("Failed to allocate unified memory: {}", err);
+            });
+
+            Get().resources.host += size_bytes;
+            Get().resources.device += size_bytes;
+
+            this->container = std::span<T>(ptr, size);
+            this->managed = true;
+
+            this->hostVector = std::make_unique<HostVector<T>>(this->container);
+            this->deviceVector = std::make_unique<DeviceVector<T>>(this->container);
+        }
+
+        operator DeviceVector<T>&() {
+            return *this->deviceVector;
+        }
+
+        operator HostVector<T>&() {
+            return *this->hostVector;
+        }
+
+        ~UnifiedVector() {
+            if (!this->container.empty() && this->managed) {
+                Get().resources.host -= this->container.size_bytes();
+                Get().resources.device -= this->container.size_bytes();
+                if (cudaFree(this->container.data()) != cudaSuccess) {
+                    BL_FATAL("Failed to deallocate unified memory.");
+                }
+            }
+        }
+
+     private:
+        std::unique_ptr<HostVector<T>> hostVector;
+        std::unique_ptr<DeviceVector<T>> deviceVector;
     };
 
     template<typename T>
@@ -218,30 +284,6 @@ class BLADE_API Memory {
                        const DeviceVector<T>& src,
                        const cudaStream_t& stream = 0) {
         return Get().Copy(dst, src, cudaMemcpyDeviceToHost, stream);
-    }
-
-    template<typename T>
-    static Result Register(const HostVector<T>& mem, const bool& readOnly = false) {
-        cudaPointerAttributes attr;
-        BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, mem.data()), [&]{
-            BL_FATAL("Failed to get pointer attributes: {}", err);
-        });
-
-        if (attr.type != cudaMemoryTypeUnregistered) {
-            BL_WARN("Memory already registered.");
-            return Result::SUCCESS;
-        }
-
-        unsigned int kind = cudaHostRegisterDefault;
-        if (readOnly) {
-            kind = cudaHostRegisterReadOnly;
-        }
-
-        BL_CUDA_CHECK(cudaHostRegister(mem.data(), mem.size_bytes(), kind), [&]{
-            BL_FATAL("Failed to register host memory: {}", err);
-        });
-
-        return Result::SUCCESS;
     }
 
  private:
