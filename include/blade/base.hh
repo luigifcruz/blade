@@ -5,6 +5,6 @@
 #include "blade/macros.hh"
 #include "blade/logger.hh"
 #include "blade/pipeline.hh"
-#include "blade/memory.hh"
+#include "blade/memory/base.hh"
 
 #endif

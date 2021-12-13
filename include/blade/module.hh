@@ -5,7 +5,7 @@
 
 #include "blade/types.hh"
 #include "blade/logger.hh"
-#include "blade/memory.hh"
+#include "blade/memory/base.hh"
 
 #include "blade/utils/jitify2.hh"
 using namespace jitify2::reflection;
@@ -35,7 +35,7 @@ class BLADE_API Module {
     static Result InitInput(T& buffer, std::size_t size) {
         if (buffer.empty()) {
             BL_DEBUG("Input is empty, allocating {} elements", size);
-            return buffer.allocate(size);
+            return buffer.resize(size);
         }
 
         if (buffer.size() != size) {
@@ -54,7 +54,7 @@ class BLADE_API Module {
             return Result::ERROR;
         }
 
-        return buffer.allocate(size);
+        return buffer.resize(size);
     }
 
     template<typename T>

@@ -14,8 +14,8 @@ std::size_t Checker::run(IT a, OT b, std::size_t size, std::size_t scale) {
 }
 
 template<typename IT, typename OT>
-std::size_t Checker::run(const Memory::HostVector<std::complex<IT>>& a,
-                         const Memory::HostVector<std::complex<OT>>& b) {
+std::size_t Checker::run(const Vector<Device::CPU, std::complex<IT>>& a,
+                         const Vector<Device::CPU, std::complex<OT>>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -28,8 +28,8 @@ std::size_t Checker::run(const Memory::HostVector<std::complex<IT>>& a,
 }
 
 template<typename IT, typename OT>
-std::size_t Checker::run(const Memory::HostVector<IT>& a,
-                         const Memory::HostVector<OT>& b) {
+std::size_t Checker::run(const Vector<Device::CPU, IT>& a,
+                         const Vector<Device::CPU, OT>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -38,22 +38,22 @@ std::size_t Checker::run(const Memory::HostVector<IT>& a,
     return Checker::run(a.data(), b.data(), a.size());
 }
 
-template std::size_t Checker::run(const Memory::HostVector<CF32>&,
-                                  const Memory::HostVector<CF32>&);
+template std::size_t Checker::run(const Vector<Device::CPU, CF32>&,
+                                  const Vector<Device::CPU, CF32>&);
 
-template std::size_t Checker::run(const Memory::HostVector<CI8>&,
-                                  const Memory::HostVector<CI8>&);
+template std::size_t Checker::run(const Vector<Device::CPU, CI8>&,
+                                  const Vector<Device::CPU, CI8>&);
 
-template std::size_t Checker::run(const Memory::HostVector<CF16>&,
-                                  const Memory::HostVector<CF16>&);
+template std::size_t Checker::run(const Vector<Device::CPU, CF16>&,
+                                  const Vector<Device::CPU, CF16>&);
 
-template std::size_t Checker::run(const Memory::HostVector<F32>&,
-                                  const Memory::HostVector<F32>&);
+template std::size_t Checker::run(const Vector<Device::CPU, F32>&,
+                                  const Vector<Device::CPU, F32>&);
 
-template std::size_t Checker::run(const Memory::HostVector<I8>&,
-                                  const Memory::HostVector<I8>&);
+template std::size_t Checker::run(const Vector<Device::CPU, I8>&,
+                                  const Vector<Device::CPU, I8>&);
 
-template std::size_t Checker::run(const Memory::HostVector<F16>&,
-                                  const Memory::HostVector<F16>&);
+template std::size_t Checker::run(const Vector<Device::CPU, F16>&,
+                                  const Vector<Device::CPU, F16>&);
 
 }  // namespace Blade::Modules

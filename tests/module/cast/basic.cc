@@ -1,7 +1,7 @@
 #include "blade/modules/cast.hh"
 #include "blade/utils/checker.hh"
 #include "blade/pipeline.hh"
-#include "blade/memory.hh"
+#include "blade/memory/base.hh"
 
 using namespace Blade;
 
@@ -12,8 +12,8 @@ class Test : public Pipeline {
         this->connect(cast, {inputSize, 512}, {input});
     }
 
-    Result run(const Memory::HostVector<IT>& input,
-                     Memory::HostVector<OT>& output) {
+    Result run(const Vector<Device::CPU, IT>& input,
+                     Vector<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(cast->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, cast->getOutput()));
@@ -23,7 +23,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Memory::DeviceVector<IT> input;
+    Vector<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Cast<IT, OT>> cast;
 };
 
@@ -31,9 +31,9 @@ template<typename IT, typename OT>
 int complex_test(const std::size_t testSize) {
     auto mod = Test<std::complex<IT>, std::complex<OT>>{testSize};
 
-    Memory::HostVector<std::complex<IT>> input(testSize);
-    Memory::HostVector<std::complex<OT>> output(testSize);
-    Memory::HostVector<std::complex<OT>> result(testSize);
+    Vector<Device::CPU, std::complex<IT>> input(testSize);
+    Vector<Device::CPU, std::complex<OT>> output(testSize);
+    Vector<Device::CPU, std::complex<OT>> result(testSize);
 
     for (std::size_t i = 0; i < testSize; i++) {
         input[i] = {

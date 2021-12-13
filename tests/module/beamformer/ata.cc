@@ -19,9 +19,9 @@ int main() {
         .blockSize = 512,
     });
 
-    Memory::HostVector<CF32> input(mod.getInputSize());
-    Memory::HostVector<CF32> phasors(mod.getPhasorsSize());
-    Memory::HostVector<CF32> output(mod.getOutputSize());
+    Vector<Device::CPU, CF32> input(mod.getInputSize());
+    Vector<Device::CPU, CF32> phasors(mod.getPhasorsSize());
+    Vector<Device::CPU, CF32> output(mod.getOutputSize());
 
     for (int i = 0; i < 24; i++) {
         if (mod.run(input, phasors, output) != Result::SUCCESS) {

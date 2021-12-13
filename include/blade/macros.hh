@@ -7,6 +7,10 @@
 #define BLADE_API __attribute__((visibility("default")))
 #endif
 
+#ifndef BLADE_HIDDEN
+#define BLADE_HIDDEN __attribute__((visibility("hidden")))
+#endif
+
 #ifndef BL_CUDA_CHECK_KERNEL
 #define BL_CUDA_CHECK_KERNEL(callback) { \
     cudaError_t val; \

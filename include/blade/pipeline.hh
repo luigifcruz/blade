@@ -30,26 +30,26 @@ class BLADE_API Pipeline {
     Result compute();
 
     template<typename T>
-    Result copy(Memory::DeviceVector<T>& dst,
-                const Memory::DeviceVector<T>& src) {
+    Result copy(Vector<Device::CUDA, T>& dst,
+                const Vector<Device::CUDA, T>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename T>
-    Result copy(Memory::DeviceVector<T>& dst,
-                const Memory::HostVector<T>& src) {
+    Result copy(Vector<Device::CUDA, T>& dst,
+                const Vector<Device::CPU, T>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename T>
-    Result copy(Memory::HostVector<T>& dst,
-                const Memory::HostVector<T>& src) {
+    Result copy(Vector<Device::CPU, T>& dst,
+                const Vector<Device::CPU, T>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename T>
-    Result copy(Memory::HostVector<T>& dst,
-                const Memory::DeviceVector<T>& src) {
+    Result copy(Vector<Device::CPU, T>& dst,
+                const Vector<Device::CUDA, T>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 

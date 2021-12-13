@@ -1,7 +1,7 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/utils/checker.hh"
 #include "blade/pipeline.hh"
-#include "blade/memory.hh"
+#include "blade/memory/base.hh"
 
 using namespace Blade;
 
@@ -16,8 +16,8 @@ class Test : public Pipeline {
         return channelizer->getBufferSize();
     }
 
-    Result run(const Memory::HostVector<IT>& input,
-                     Memory::HostVector<OT>& output) {
+    Result run(const Vector<Device::CPU, IT>& input,
+                     Vector<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(channelizer->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, channelizer->getOutput()));
@@ -27,7 +27,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Memory::DeviceVector<IT> input;
+    Vector<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Channelizer<IT, OT>> channelizer;
 };
 
@@ -48,8 +48,8 @@ int main() {
         .blockSize = 512,
     });
 
-    Memory::HostVector<CF32> input(mod.getInputSize());
-    Memory::HostVector<CF32> output(mod.getInputSize());
+    Vector<Device::CPU, CF32> input(mod.getInputSize());
+    Vector<Device::CPU, CF32> output(mod.getInputSize());
 
     for (int i = 0; i < 24; i++) {
         if (mod.run(input, output) != Result::SUCCESS) {
