@@ -41,13 +41,6 @@ namespace Blade::Memory {
 
     template<typename T>
     static Result Copy(Vector<Device::CPU, T>& dst,
-                       const Vector<Device::CPU, T>& src,
-                       const cudaStream_t& stream = 0) {
-        return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
-    }
-
-    template<typename T>
-    static Result Copy(Vector<Device::CPU, T>& dst,
                        const Vector<Device::CUDA, T>& src,
                        const cudaStream_t& stream = 0) {
         return Memory::Copy(dst, src, cudaMemcpyDeviceToHost, stream);

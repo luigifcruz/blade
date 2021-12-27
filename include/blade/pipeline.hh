@@ -44,7 +44,7 @@ class BLADE_API Pipeline {
     template<typename T>
     Result copy(Vector<Device::CPU, T>& dst,
                 const Vector<Device::CPU, T>& src) {
-        return Memory::Copy(dst, src, this->stream);
+        return Memory::Copy(dst, src);
     }
 
     template<typename T>
