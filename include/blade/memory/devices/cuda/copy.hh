@@ -1,5 +1,5 @@
-#ifndef BLADE_MEMORY_MEMORY_HH
-#define BLADE_MEMORY_MEMORY_HH
+#ifndef BLADE_MEMORY_CUDA_COPY_HH
+#define BLADE_MEMORY_CUDA_COPY_HH
 
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"

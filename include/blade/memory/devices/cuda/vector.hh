@@ -1,5 +1,5 @@
-#ifndef BLADE_MEMORY_CUDA_HH
-#define BLADE_MEMORY_CUDA_HH
+#ifndef BLADE_MEMORY_CUDA_VECTOR_HH
+#define BLADE_MEMORY_CUDA_VECTOR_HH
 
 #include <memory>
 
