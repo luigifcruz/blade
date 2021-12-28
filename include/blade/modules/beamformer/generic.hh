@@ -17,8 +17,8 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
-        Vector<Device::CUDA, IT>& buf;
-        Vector<Device::CUDA, IT>& phasors;
+        const Vector<Device::CUDA, IT>& buf;
+        const Vector<Device::CUDA, IT>& phasors;
     };
 
     struct Output {
@@ -29,11 +29,11 @@ class BLADE_API Generic : public Module {
     virtual ~Generic() = default;
 
     constexpr Vector<Device::CUDA, IT>& getInput() {
-        return this->input.buf;
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
     }
 
     constexpr Vector<Device::CUDA, IT>& getPhasors() {
-        return this->input.phasors;
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.phasors);
     }
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() const {

@@ -1,11 +1,12 @@
 #include "blade/pipelines/ata/mode_b.hh"
 
 extern "C" {
-    #include "blade/pipelines/ata/mode_b.h"
+#include "blade/pipelines/ata/mode_b.h"
 }
 
 using namespace Blade;
 using namespace Blade::Pipelines::ATA;
+using namespace std::chrono;
 
 struct State {
     ModeB::Config config = {
@@ -32,7 +33,6 @@ struct State {
     std::size_t head = 0;
 
     std::unique_ptr<Logger> guard;
-    std::unique_ptr<Manager> manager;
     std::vector<std::unique_ptr<ModeB>> swapchain;
 
     std::size_t runs = 0;
@@ -49,7 +49,6 @@ blade_module_t blade_ata_b_initialize(size_t number_of_workers) {
 
     // Instantiate modules.
     self->guard = std::make_unique<Logger>();
-    self->manager = std::make_unique<Manager>();
 
     // Logging ready.
     BL_INFO("Pipeline for ATA Mode B started.");
@@ -58,12 +57,6 @@ blade_module_t blade_ata_b_initialize(size_t number_of_workers) {
     for (std::size_t i = 0; i < number_of_workers; i++) {
         self->swapchain.push_back(std::make_unique<ModeB>(self->config));
     }
-
-    // Register resources.
-    for (auto& worker : self->swapchain) {
-        self->manager->save(worker->getResources());
-    }
-    self->manager->report();
 
     return self;
 }
@@ -101,12 +94,15 @@ int process(blade_module_t mod, int idx, void* input, void* output) {
     auto& worker = self->swapchain[idx];
 
     auto ibuf = static_cast<CI8*>(input);
-    auto in = std::span(ibuf, worker->getInputSize());
+    auto in = Vector<Device::CPU, CI8>(ibuf, worker->getInputSize());
+
+    auto pbuf = static_cast<CF32*>(input);
+    auto phasors = Vector<Device::CPU, CF32>(pbuf, worker->getPhasorsSize());
 
     auto obuf = static_cast<CF16*>(output);
-    auto out = std::span(obuf, worker->getOutputSize());
+    auto out = Vector<Device::CPU, CF16>(obuf, worker->getOutputSize());
 
-    if (worker->run(in, out) != Result::SUCCESS) {
+    if (worker->run(in, phasors, out) != Result::SUCCESS) {
         BL_WARN("Can't process data. Test is exiting...");
         return 1;
     }

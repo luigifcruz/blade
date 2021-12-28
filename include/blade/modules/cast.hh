@@ -15,7 +15,7 @@ class BLADE_API Cast : public Module {
     };
 
     struct Input {
-        Vector<Device::CUDA, IT>& buf;
+        const Vector<Device::CUDA, IT>& buf;
     };
 
     struct Output {
@@ -25,7 +25,7 @@ class BLADE_API Cast : public Module {
     explicit Cast(const Config& config, const Input& input);
 
     constexpr Vector<Device::CUDA, IT>& getInput() {
-        return this->input.buf;
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
     }
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() const {

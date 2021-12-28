@@ -32,10 +32,10 @@ class BLADE_API Module {
     dim3 grid, block;
 
     template<typename T>
-    static Result InitInput(T& buffer, std::size_t size) {
+    static Result InitInput(const T& buffer, std::size_t size) {
         if (buffer.empty()) {
             BL_DEBUG("Input is empty, allocating {} elements", size);
-            return buffer.resize(size);
+            return const_cast<T&>(buffer).resize(size);
         }
 
         if (buffer.size() != size) {

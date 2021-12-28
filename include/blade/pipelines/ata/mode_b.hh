@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_ATA_MODE_B_HHH
-#define BLADE_PIPELINES_ATA_MODE_B_HHH
+#ifndef BLADE_PIPELINES_ATA_MODE_B_HH
+#define BLADE_PIPELINES_ATA_MODE_B_HH
 
 #include <memory>
 #include <deque>
@@ -18,6 +18,7 @@ class ModeB : public Pipeline {
         ArrayDims inputDims;
         std::size_t channelizerRate = 4;
         std::size_t beamformerBeams = 16;
+
         std::size_t castBlockSize = 512;
         std::size_t channelizerBlockSize = 512;
         std::size_t beamformerBlockSize = 512;
@@ -25,28 +26,33 @@ class ModeB : public Pipeline {
 
     explicit ModeB(const Config& config);
 
-    constexpr const std::size_t getInputSize() const {
+    const std::size_t getInputSize() const {
         return channelizer->getBufferSize();
     }
 
-    constexpr const std::size_t getOutputSize() const {
+    const std::size_t getPhasorsSize() const {
+        return beamformer->getPhasorsSize();
+    }
+
+    const std::size_t getOutputSize() const {
         return beamformer->getOutputSize();
     }
 
     Result run(const Vector<Device::CPU, CI8>& input,
                const Vector<Device::CPU, CF32>& phasors,
-                     Vector<Device::CPU, CF32>& output);
+                     Vector<Device::CPU, CF16>& output);
 
  private:
     const Config config;
 
-    Vector<Device::CUDA, CF32> input;
+    Vector<Device::CUDA, CI8> input;
     Vector<Device::CUDA, CF32> phasors;
-    Vector<Device::CUDA, CF32> output;
+    Vector<Device::CUDA, CF16> output;
 
-    std::shared_ptr<Modules::Cast<CI8, CF32>> cast;
+    std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
+    std::shared_ptr<Modules::Cast<CF32, CF16>> outputCast;
 };
 
 }  // namespace Blade::Pipelines::ATA

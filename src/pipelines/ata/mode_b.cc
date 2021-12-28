@@ -2,73 +2,39 @@
 
 namespace Blade::Pipelines::ATA {
 
-ModeB::ModeB(const Config& configuration) :
-    Pipeline(true, false), config(configuration) {
-    if (this->setup() != Result::SUCCESS) {
-        throw Result::ERROR;
-    }
-}
-
-Result ModeB::run(const std::span<CI8>& in, std::span<CF16>& out) {
-    this->input = in;
-    this->output = out;
-    return this->loop();
-}
-
-Result ModeB::setupModules() {
-    BL_INFO("Initializing kernels.");
-
-    cast = Factory<Modules::Cast>({
+ModeB::ModeB(const Config& config) : config(config) {
+    this->connect(inputCast, {
+        .inputSize = config.inputDims.getSize(),
         .blockSize = config.castBlockSize,
-    });
+    }, {input});
 
-    channelizer = Factory<Modules::Channelizer>({
+    this->connect(channelizer, {
         .dims = config.inputDims,
         .fftSize = config.channelizerRate,
         .blockSize = config.channelizerBlockSize,
-    });
+    }, {inputCast->getOutput()});
 
     auto dims = channelizer->getOutputDims();
     dims.NBEAMS *= config.beamformerBeams;
 
-    beamformer = Factory<Modules::Beamformer::ATA>({
+    this->connect(beamformer, {
         .dims = dims,
         .blockSize = config.beamformerBlockSize,
-    });
+    }, {channelizer->getOutput(), phasors});
 
-    return Result::SUCCESS;
+    this->connect(outputCast, {
+        .inputSize = beamformer->getOutputSize(),
+        .blockSize = config.castBlockSize,
+    }, {beamformer->getOutput()});
 }
 
-Result ModeB::setupMemory() {
-    BL_INFO("Allocating resources.");
-
-    BL_CHECK(allocateBuffer(phasors, beamformer->getPhasorsSize()));
-    BL_CHECK(allocateBuffer(bufferA, channelizer->getBufferSize()));
-    BL_CHECK(allocateBuffer(bufferB, channelizer->getBufferSize()));
-    BL_CHECK(allocateBuffer(bufferC, channelizer->getBufferSize()));
-    BL_CHECK(allocateBuffer(bufferD, beamformer->getOutputSize()));
-    BL_CHECK(allocateBuffer(bufferE, beamformer->getOutputSize()));
-
-    return Result::SUCCESS;
-}
-
-Result ModeB::loopUpload() {
-    BL_CHECK(this->copyBuffer(bufferA, input, CopyKind::H2D));
-
-    return Result::SUCCESS;
-}
-
-Result ModeB::loopProcess(cudaStream_t& cudaStream) {
-    BL_CHECK(cast->run(bufferA, bufferB, cudaStream));
-    BL_CHECK(channelizer->run(bufferB, bufferC, cudaStream));
-    BL_CHECK(beamformer->run(bufferC, phasors, bufferD, cudaStream));
-    BL_CHECK(cast->run(bufferD, bufferE, cudaStream));
-
-    return Result::SUCCESS;
-}
-
-Result ModeB::loopDownload() {
-    BL_CHECK(this->copyBuffer(output, bufferE, CopyKind::D2H));
+Result ModeB::run(const Vector<Device::CPU, CI8>& input,
+                  const Vector<Device::CPU, CF32>& phasors,
+                        Vector<Device::CPU, CF16>& output) {
+    BL_CHECK(this->copy(inputCast->getInput(), input));
+    BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
+    BL_CHECK(this->compute());
+    BL_CHECK(this->copy(output, outputCast->getOutput()));
 
     return Result::SUCCESS;
 }

@@ -40,6 +40,10 @@ struct ArrayDims {
     std::size_t NCHANS;
     std::size_t NTIME;
     std::size_t NPOLS;
+
+    constexpr const std::size_t getSize() const {
+        return NBEAMS * NANTS * NCHANS * NTIME * NPOLS;
+    }
 };
 
 }  // namespace Blade

@@ -18,7 +18,7 @@ class BLADE_API Channelizer : public Module {
     };
 
     struct Input {
-        Vector<Device::CUDA, IT>& buf;
+        const Vector<Device::CUDA, IT>& buf;
     };
 
     struct Output {
@@ -28,7 +28,7 @@ class BLADE_API Channelizer : public Module {
     explicit Channelizer(const Config& config, const Input& input);
 
     constexpr Vector<Device::CUDA, IT>& getInput() {
-        return this->input.buf;
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
     }
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() const {
@@ -46,7 +46,7 @@ class BLADE_API Channelizer : public Module {
         return cfg;
     }
 
-    constexpr const std::size_t getBufferSize() {
+    constexpr const std::size_t getBufferSize() const {
         return config.dims.NPOLS * config.dims.NTIME *
             config.dims.NANTS * config.dims.NCHANS;
     }
