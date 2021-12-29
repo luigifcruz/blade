@@ -47,7 +47,7 @@ Result Pipeline::compute() {
             });
 
             for (auto& module : this->modules) {
-                BL_CHECK(module->process());
+                BL_CHECK(module->process(this->stream));
             }
 
             BL_CUDA_CHECK(cudaStreamEndCapture(this->stream, &this->graph), [&]{
@@ -64,7 +64,7 @@ Result Pipeline::compute() {
         case State::IDLE:
             BL_DEBUG("Caching kernels ahead of CUDA Graph instantiation.");
             for (auto& module : this->modules) {
-                BL_CHECK(module->process());
+                BL_CHECK(module->process(this->stream));
             }
             this->state = State::CACHED;
             break;

@@ -1,4 +1,4 @@
-#include "advanced.hh"
+#include "pipeline.hh"
 #include "blade/modules/beamformer/ata.hh"
 
 using namespace Blade;
@@ -24,7 +24,7 @@ int main() {
     Vector<Device::CPU, CF32> output(mod.getOutputSize());
 
     for (int i = 0; i < 24; i++) {
-        if (mod.run(input, phasors, output) != Result::SUCCESS) {
+        if (mod.run(input, phasors, output, true) != Result::SUCCESS) {
             BL_WARN("Fault was encountered. Test is exiting...");
             return 1;
         }

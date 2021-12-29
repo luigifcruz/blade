@@ -6,7 +6,9 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
-    explicit Test(const typename Modules::Beamformer::ATA<IT, OT>::Config& config) {
+    typedef typename Modules::Beamformer::ATA<IT, OT>::Config Config;
+
+    explicit Test(const Config& config) {
         this->connect(beamformer, config, {input, phasors});
     }
 
@@ -24,12 +26,15 @@ class Test : public Pipeline {
 
     Result run(const Vector<Device::CPU, IT>& input,
                const Vector<Device::CPU, IT>& phasors,
-                     Vector<Device::CPU, OT>& output) {
+                     Vector<Device::CPU, OT>& output,
+               const bool synchronize = false) {
         BL_CHECK(this->copy(beamformer->getInput(), input));
-        BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, beamformer->getOutput()));
-        BL_CHECK(this->synchronize());
+
+        if (synchronize) {
+            BL_CHECK(this->synchronize());
+        }
 
         return Result::SUCCESS;
     }
