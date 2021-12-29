@@ -48,6 +48,11 @@ class VectorImpl {
         return container[idx];
     }
 
+    // TODO: Implement iterator.
+    constexpr std::span<T>& getUnderlying() {
+        return container;
+    }
+
     virtual Result resize(const std::size_t& size) = 0;
 
  protected:

@@ -15,17 +15,17 @@ Result Init(std::size_t testSize = 8192) {
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
-    std::span input{input_ptr, testSize};
-    std::span output{output_ptr, testSize};
+    Vector<Device::CPU, I8> input{input_ptr, testSize};
+    Vector<Device::CPU, I8> output{output_ptr, testSize};
 
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
 
-    for (auto& element : input) {
+    for (auto& element : input.getUnderlying()) {
         element = std::rand();
     }
 
-    for (auto& element : output) {
+    for (auto& element : output.getUnderlying()) {
         element = 60;
     }
 
