@@ -1,7 +1,7 @@
 project(
   'blade',
   ['cpp', 'c', 'cuda'],
-  version: '0.0.0.8',
+  version: '0.1',
   default_options: [
     'buildtype=release',
     'cpp_std=c++20',
@@ -52,5 +52,10 @@ lib_blade_dep = declare_dependency(
 
 subdir('tests')
 subdir('docs')
+subdir('python')
 
-# TODO: Add pkgconfig module.
+pkg = import('pkgconfig')
+pkg.generate(
+  lnk_lst[-1],
+  libraries: lnk_lst,
+)
