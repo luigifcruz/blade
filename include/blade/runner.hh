@@ -77,7 +77,9 @@ class BLADE_API Runner {
             return false;
         }
 
-        *id = job.id;
+        if (id != nullptr) {
+            *id = job.id;
+        }
 
         jobs.pop_front();
 
