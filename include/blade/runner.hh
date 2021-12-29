@@ -43,7 +43,7 @@ class BLADE_API Runner {
         return head;
     }
 
-    bool enqueue(const std::function<std::size_t(T&)>& jobFunc) {
+    bool enqueue(const std::function<const std::size_t(T&)>& jobFunc) {
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
