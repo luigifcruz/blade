@@ -44,6 +44,7 @@ class BLADE_API Runner {
     }
 
     bool enqueue(const std::function<std::size_t(T&)>& jobFunc) {
+        // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
         }
@@ -59,16 +60,19 @@ class BLADE_API Runner {
     }
 
     bool dequeue(std::size_t* id) {
+        // Return if there are no jobs.
         if (jobs.size() == 0) {
             return false;
         }
 
         const auto& job = jobs.front();
 
+        // Synchronize front if all workers have jobs.
         if (jobs.size() == workers.size()) {
             job.worker->synchronize();
         }
 
+        // Return if front isn't synchronized.
         if (!job.worker->isSyncronized()) {
             return false;
         }
