@@ -29,10 +29,8 @@ ModeB::ModeB(const Config& config) : config(config) {
 }
 
 Result ModeB::run(const Vector<Device::CPU, CI8>& input,
-                  const Vector<Device::CPU, CF32>& phasors,
                         Vector<Device::CPU, CF16>& output) {
     BL_CHECK(this->copy(inputCast->getInput(), input));
-    BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy(output, outputCast->getOutput()));
 

@@ -14,8 +14,15 @@ namespace Blade {
 template<class T>
 class BLADE_API Runner {
  public:
+    static std::unique_ptr<Runner<T>> New(const std::size_t& numberOfWorkers,
+                                          const typename T::Config& config) {
+        return std::make_unique<Runner<T>>(numberOfWorkers, config);
+    }
+
     explicit Runner(const std::size_t& numberOfWorkers,
                     const typename T::Config& config) {
+        BL_INFO("Instantiating new runner.");
+
         if (numberOfWorkers == 0) {
             BL_FATAL("Number of worker has to be larger than zero.");
             BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -27,13 +34,6 @@ class BLADE_API Runner {
     }
 
     virtual ~Runner() = default;
-
-    static Result SetCudaDevice(int device_id) {
-        BL_CUDA_CHECK(cudaSetDevice(device_id), [&]{
-           BL_FATAL("Failed to set device: {}", err);
-        });
-        return Result::SUCCESS;
-    }
 
     constexpr const T& getWorker(const std::size_t& index = 0) const {
         return *workers[index];
@@ -58,7 +58,7 @@ class BLADE_API Runner {
         return true;
     }
 
-    bool dequeue(std::size_t& id) {
+    bool dequeue(std::size_t* id) {
         if (jobs.size() == 0) {
             return false;
         }
@@ -73,7 +73,7 @@ class BLADE_API Runner {
             return false;
         }
 
-        id = job.id;
+        *id = job.id;
 
         jobs.pop_front();
 

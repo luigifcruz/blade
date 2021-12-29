@@ -19,6 +19,9 @@ class VectorImpl {
     explicit VectorImpl(T* ptr, const std::size_t& size)
              : container(ptr, size),
                managed(false) {}
+    explicit VectorImpl(void* ptr, const std::size_t& size)
+             : container(static_cast<T*>(ptr), size),
+               managed(false) {}
 
     VectorImpl(const VectorImpl&) = delete;
     VectorImpl& operator=(const VectorImpl&) = delete;

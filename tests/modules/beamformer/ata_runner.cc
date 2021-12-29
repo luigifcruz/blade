@@ -40,7 +40,7 @@ int main() {
         });
 
         std::size_t id;
-        if (runner.dequeue(id)) {
+        if (runner.dequeue(&id)) {
             BL_INFO("Task {} finished.", id);
         }
     }

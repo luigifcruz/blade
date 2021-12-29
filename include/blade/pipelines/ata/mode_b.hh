@@ -39,7 +39,6 @@ class ModeB : public Pipeline {
     }
 
     Result run(const Vector<Device::CPU, CI8>& input,
-               const Vector<Device::CPU, CF32>& phasors,
                      Vector<Device::CPU, CF16>& output);
 
  private:

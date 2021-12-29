@@ -29,11 +29,6 @@ enum class Result : uint8_t {
     ASSERTION_ERROR,
 };
 
-template <typename E>
-constexpr auto to_underlying(E e) noexcept {
-    return static_cast<std::underlying_type_t<E>>(e);
-}
-
 struct ArrayDims {
     std::size_t NBEAMS;
     std::size_t NANTS;

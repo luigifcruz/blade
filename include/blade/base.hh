@@ -7,4 +7,22 @@
 #include "blade/pipeline.hh"
 #include "blade/memory/base.hh"
 
+namespace Blade {
+
+inline Result SetCudaDevice(int device_id) {
+    BL_CUDA_CHECK(cudaSetDevice(device_id), [&]{
+       BL_FATAL("Failed to set device: {}", err);
+    });
+    return Result::SUCCESS;
+}
+
+inline Result RegisterMemory(void* buffer, size_t size) {
+    BL_CUDA_CHECK(cudaHostRegister(buffer, size, cudaHostRegisterDefault), [&]{
+       BL_FATAL("Failed to register memory: {}", err);
+    });
+    return Result::SUCCESS;
+}
+
+}  // namespace Blade
+
 #endif
