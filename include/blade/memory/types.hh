@@ -9,19 +9,16 @@
 
 namespace Blade {
 
-struct Device {
-    class CPU;
-    class CUDA;
-    class Metal;
-    class Vulkan;
+enum class Device : uint8_t {
+    CPU     = 1 << 0,
+    CUDA    = 1 << 1,
+    Metal   = 1 << 2,
+    Vulkan  = 1 << 3,
 };
 
-struct Unified {
-    class CPU;
-    class CUDA;
-    class Metal;
-    class Vulkan;
-};
+inline constexpr const Device operator|(Device lhs, Device rhs) {
+    return static_cast<Device>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+}
 
 }  // namespace Blade
 

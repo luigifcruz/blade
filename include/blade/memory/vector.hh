@@ -5,7 +5,7 @@
 
 namespace Blade {
 
-template<typename I, typename T> class Vector;
+template<Device I, typename T> class Vector;
 
 template<typename T>
 class VectorImpl {

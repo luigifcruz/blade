@@ -48,7 +48,7 @@ class Vector<Device::CUDA, T> : public VectorImpl<T> {
 };
 
 template<typename T>
-class Vector<Unified::CUDA, T> : public VectorImpl<T> {
+class Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
  public:
     using VectorImpl<T>::VectorImpl;
 

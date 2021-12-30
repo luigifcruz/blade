@@ -22,7 +22,6 @@ inc_lst = [
   include_directories('include'),
   include_directories('.'),
 ]
-lnk_lst = []
 jit_lst = []
 
 subdir('src')
@@ -35,19 +34,18 @@ summary({'cpp_std': get_option('cpp_std'),
          'crossbuild': meson.is_cross_build(),
         }, section: 'General', bool_yn: true)
 
-lnk_lst += library(
+lib_blade = library(
   'blade',
   src_lst,
   include_directories: inc_lst,
   dependencies: dep_lst,
-  link_with: lnk_lst,
   install: true,
 )
 
 lib_blade_dep = declare_dependency(
   include_directories: inc_lst,
   dependencies: dep_lst,
-  link_with: lnk_lst,
+  link_with: lib_blade,
 )
 
 subdir('tests')
@@ -56,6 +54,6 @@ subdir('python')
 
 pkg = import('pkgconfig')
 pkg.generate(
-  lnk_lst[-1],
-  libraries: lnk_lst,
+  lib_blade,
+  libraries: dep_lst,
 )
