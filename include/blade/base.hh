@@ -16,13 +16,6 @@ inline Result SetCudaDevice(int device_id) {
     return Result::SUCCESS;
 }
 
-inline Result RegisterMemory(void* buffer, size_t size) {
-    BL_CUDA_CHECK(cudaHostRegister(buffer, size, cudaHostRegisterDefault), [&]{
-       BL_FATAL("Failed to register memory: {}", err);
-    });
-    return Result::SUCCESS;
-}
-
 }  // namespace Blade
 
 #endif

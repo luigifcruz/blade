@@ -50,7 +50,6 @@ lib_blade_dep = declare_dependency(
 
 subdir('tests')
 subdir('docs')
-subdir('python')
 
 pkg = import('pkgconfig')
 pkg.generate(

@@ -43,31 +43,6 @@ class Vector<Device::CPU, T> : public VectorImpl<T> {
 
         return Result::SUCCESS;
     }
-
-    Result pinMemory(const bool& readOnly = false) {
-        cudaPointerAttributes attr;
-        BL_CUDA_CHECK(cudaPointerGetAttributes(&attr,
-                this->container.data()), [&]{
-            BL_FATAL("Failed to get pointer attributes: {}", err);
-        });
-
-        if (attr.type != cudaMemoryTypeUnregistered) {
-            BL_WARN("Memory already registered.");
-            return Result::SUCCESS;
-        }
-
-        unsigned int kind = cudaHostRegisterDefault;
-        if (readOnly) {
-            kind = cudaHostRegisterReadOnly;
-        }
-
-        BL_CUDA_CHECK(cudaHostRegister(this->container.data(),
-                this->container.size_bytes(), kind), [&]{
-            BL_FATAL("Failed to register CPU memory: {}", err);
-        });
-
-        return Result::SUCCESS;
-    }
 };
 
 }  // namespace Blade

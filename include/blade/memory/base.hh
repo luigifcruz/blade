@@ -9,5 +9,6 @@
 
 #include "blade/memory/devices/cuda/copy.hh"
 #include "blade/memory/devices/cuda/vector.hh"
+#include "blade/memory/devices/cuda/helper.hh"
 
 #endif
