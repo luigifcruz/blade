@@ -25,15 +25,19 @@ inline constexpr const Device operator|(Device lhs, Device rhs) {
 
 typedef __half  F16;
 typedef float   F32;
+typedef double  F64;
 typedef int8_t  I8;
 typedef int16_t I16;
 typedef int32_t I32;
+typedef int64_t I64;
 
 typedef std::complex<F16> CF16;
 typedef std::complex<F32> CF32;
+typedef std::complex<F64> CF64;
 typedef std::complex<I8>  CI8;
 typedef std::complex<I16> CI16;
 typedef std::complex<I32> CI32;
+typedef std::complex<I64> CI64;
 
 }  // namespace Blade
 
