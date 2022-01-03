@@ -137,6 +137,8 @@ void init_vector(const py::module& m, const char* type) {
 }
 
 PYBIND11_MODULE(blade, m) {
+    static Logger logger{};
+
     m.def("BL_CHECK", [](const Result& result) {
         BL_CHECK_THROW(result);
     });

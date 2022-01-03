@@ -46,19 +46,19 @@ if __name__ == "__main__":
     np.copyto(np.array(bl_input, copy=False), input.flatten())
     np.copyto(np.array(bl_output, copy=False), output.flatten())
 
-    # Beamform with Blade.
+    # Channelize with Blade.
     start = time.time()
     mod.run(bl_input, bl_output)
-    print(f"Channelization with Blade took {time.time()-start:.2f} s.")
+    print(f"Channelize with Blade took {time.time()-start:.2f} s.")
 
-    # Beamform with Numpy.
+    # Channelize with Numpy.
     start = time.time()
     for i in range(0, input.shape[0], NFFT):
             _a = input[i:i+NFFT]
             _b = output[i:i+NFFT]
             for pol in range(d.NPOLS):
                 _b[:, pol] = np.fft.fft(_a[:, pol])
-    print(f"Channelization with Numpy took {time.time()-start:.2f} s.")
+    print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
     assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
