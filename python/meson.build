@@ -6,12 +6,12 @@ py = import('python').find_installation('python3', required: false)
 
 deps += py.dependency()
 
-all_deps_found = py.found()
+has_python = py.found()
 foreach x_dep : deps
-  all_deps_found = all_deps_found and x_dep.found()
+  has_python = has_python and x_dep.found()
 endforeach
 
-if all_deps_found
+if has_python
   py.extension_module(
     'blade',
     sources: 'bindings.cc',
@@ -21,4 +21,5 @@ if all_deps_found
     install: true,
     install_dir: py.get_install_dir()
   )
+  python_path = meson.current_build_dir()
 endif
