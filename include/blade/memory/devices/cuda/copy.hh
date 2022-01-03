@@ -20,6 +20,7 @@ static Result Copy(VectorImpl<T>& dst,
     BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),
                 kind, stream), [&]{
         BL_FATAL("Can't copy data: {}", err);
+        return Result::CUDA_ERROR;
     });
 
     return Result::SUCCESS;
