@@ -1,7 +1,3 @@
-pyt_lst += files([
-  'test.cc',
-])
-
 src_lst += files([
   'base.cc',
 ])

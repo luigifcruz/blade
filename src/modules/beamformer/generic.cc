@@ -4,10 +4,11 @@
 
 namespace Blade::Modules::Beamformer {
 
-Generic::Generic(const Config& config) :
-        module(config.blockSize), config(config), cache(100, *beamformer_kernel) {
-    BL_DEBUG("Initilizating class.");
-
+template<typename IT, typename OT>
+Generic<IT, OT>::Generic(const Config& config, const Input& input)
+        : Module(config.blockSize, beamformer_kernel),
+          config(config),
+          input(input) {
     if ((config.dims.NTIME % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by "
                 "the block size ({}).", config.dims.NTIME, config.blockSize);
@@ -15,34 +16,12 @@ Generic::Generic(const Config& config) :
     }
 }
 
-Result Generic::run(const std::span<CF32>& input,
-                    const std::span<CF32>& phasors,
-                          std::span<CF32>& output,
-                          cudaStream_t cudaStream) {
-    if (input.size() != getInputSize()) {
-        BL_FATAL("Size mismatch between input and configuration ({}, {}).",
-                input.size(), getInputSize());
-        return Result::ASSERTION_ERROR;
-    }
-
-    if (phasors.size() != getPhasorsSize()) {
-        BL_FATAL("Size mismatch between phasors and configuration ({}, {}).",
-                phasors.size(), getPhasorsSize());
-        return Result::ASSERTION_ERROR;
-    }
-
-    if (output.size() != getOutputSize()) {
-        BL_FATAL("Size mismatch between output and configuration ({}, {}).",
-                output.size(), getOutputSize());
-        return Result::ASSERTION_ERROR;
-    }
-
-    cache.get_kernel(kernel)
-        ->configure(grid, block, 0, cudaStream)
-        ->launch(
-            reinterpret_cast<const cuFloatComplex*>(input.data()),
-            reinterpret_cast<const cuFloatComplex*>(phasors.data()),
-            reinterpret_cast<cuFloatComplex*>(output.data()));
+template<typename IT, typename OT>
+Result Generic<IT, OT>::process(const cudaStream_t& stream) {
+    cache
+        .get_kernel(kernel)
+        ->configure(grid, block, 0, stream)
+        ->launch(input.buf.data(), input.phasors.data(), output.buf.data());
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Module failed to execute: {}", err);
@@ -51,5 +30,7 @@ Result Generic::run(const std::span<CF32>& input,
 
     return Result::SUCCESS;
 }
+
+template class Generic<CF32, CF32>;
 
 }  // namespace Blade::Modules::Beamformer

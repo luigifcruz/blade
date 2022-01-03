@@ -2,20 +2,27 @@
 
 // 4-point FFT
 
+// TODO: Add multiple formats support.
 template<size_t N, size_t NFFT, size_t NPOLS>
 __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
     const int numThreads = (blockDim.x * gridDim.x) * (NFFT * NPOLS);
     const int threadID = (blockIdx.x * blockDim.x + threadIdx.x) * (NFFT * NPOLS);
 
+    const int pol_index[] = {
+        NPOLS * 0,
+        NPOLS * 1,
+        NPOLS * 2,
+        NPOLS * 3,
+    };
+
     for (int i = threadID; i < N; i += numThreads) {
         for (int j = i; j < i + NPOLS; j += 1) {
-            // TODO: Fix indexes for NPOLS.
             // TODO: Add reordering index.
 
-            const float2 a = input[j+0];
-            const float2 b = input[j+2];
-            const float2 c = input[j+4];
-            const float2 d = input[j+6];
+            const float2 a = input[j + pol_index[0]];
+            const float2 b = input[j + pol_index[1]];
+            const float2 c = input[j + pol_index[2]];
+            const float2 d = input[j + pol_index[3]];
 
             const float r1 = a.x - c.x;
             const float r2 = a.y - c.y;
@@ -37,10 +44,10 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
             const float b1 = r1 + r4;
             const float b4 = r2 + r3;
 
-            output[j+0] = make_cuFloatComplex(a1, a2);
-            output[j+2] = make_cuFloatComplex(b1, b2);
-            output[j+4] = make_cuFloatComplex(a3, a4);
-            output[j+6] = make_cuFloatComplex(b3, b4);
+            output[j + pol_index[0]] = make_cuFloatComplex(a1, a2);
+            output[j + pol_index[1]] = make_cuFloatComplex(b1, b2);
+            output[j + pol_index[2]] = make_cuFloatComplex(a3, a4);
+            output[j + pol_index[3]] = make_cuFloatComplex(b3, b4);
         }
     }
 }

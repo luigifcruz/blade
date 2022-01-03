@@ -1,13 +1,14 @@
-#include "blade/modules/channelizer/base.hh"
+#include "blade/modules/channelizer.hh"
 
 #include "channelizer.jit.hh"
 
 namespace Blade::Modules {
 
-Channelizer::Channelizer(const Config& config) :
-    module(config.blockSize), config(config), cache(100, *channelizer_kernel) {
-    BL_DEBUG("Initilizating class.");
-
+template<typename IT, typename OT>
+Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
+        : Module(config.blockSize, channelizer_kernel),
+          config(config),
+          input(input) {
     if ((config.dims.NTIME % config.fftSize) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the FFT size ({}).", config.dims.NTIME, config.fftSize);
@@ -18,11 +19,6 @@ Channelizer::Channelizer(const Config& config) :
         BL_WARN("Number of beams ({}) should be one.", config.dims.NBEAMS);
     }
 
-    auto size = getBufferSize();
-
-    block = config.blockSize;
-    grid = (size + block.x - 1) / block.x / (config.fftSize * config.dims.NPOLS);
-
     std::string kernel_key;
     switch (config.fftSize) {
         case 4: kernel_key = "fft_4pnt"; break;
@@ -30,34 +26,21 @@ Channelizer::Channelizer(const Config& config) :
             BL_FATAL("The FFT size of {} is not supported yet.", config.fftSize);
             throw Result::ERROR;
     }
+
+    auto size = getBufferSize();
+    grid = (size + block.x - 1) / block.x / (config.fftSize * config.dims.NPOLS);
     kernel = Template(kernel_key).instantiate(size, config.fftSize, config.dims.NPOLS);
+
+    BL_CHECK_THROW(InitInput(input.buf, getBufferSize()));
+    BL_CHECK_THROW(InitOutput(output.buf, getBufferSize()));
 }
 
-Channelizer::~Channelizer() {
-    BL_DEBUG("Destroying class.");
-}
-
-Result Channelizer::run(const std::span<CF32>& input,
-                              std::span<CF32>& output,
-                              cudaStream_t cudaStream) {
-    if (input.size() != output.size()) {
-        BL_FATAL("Size mismatch between input and output ({}, {}).",
-                input.size(), output.size());
-        return Result::ASSERTION_ERROR;
-    }
-
-    if (input.size() != getBufferSize()) {
-        BL_FATAL("Size mismatch between input and configuration ({}, {}).",
-                input.size(), getBufferSize());
-        return Result::ASSERTION_ERROR;
-    }
-
+template<typename IT, typename OT>
+Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
-        ->configure(grid, block, 0, cudaStream)
-        ->launch(
-            reinterpret_cast<const cuFloatComplex*>(input.data()),
-            reinterpret_cast<cuFloatComplex*>(output.data()));
+        ->configure(grid, block, 0, stream)
+        ->launch(input.buf.data(), output.buf.data());
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Module failed to execute: {}", err);
@@ -66,5 +49,7 @@ Result Channelizer::run(const std::span<CF32>& input,
 
     return Result::SUCCESS;
 }
+
+template class Channelizer<CF32, CF32>;
 
 }  // namespace Blade::Modules

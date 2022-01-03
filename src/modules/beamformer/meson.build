@@ -7,8 +7,3 @@ src_lst += files([
 jit_lst += files([
   'beamformer.cu',
 ])
-
-pyt_lst += files([
-  'ata_test.cc',
-  'generic_test.cc',
-])

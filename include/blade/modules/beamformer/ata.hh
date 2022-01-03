@@ -5,25 +5,25 @@
 
 namespace Blade::Modules::Beamformer {
 
-class BLADE_API ATA : public Generic {
+template<typename IT, typename OT>
+class BLADE_API ATA : public Generic<IT, OT> {
  public:
-    class Test;
-
-    explicit ATA(const Config& config);
+    explicit ATA(const typename Generic<IT, OT>::Config& config,
+                 const typename Generic<IT, OT>::Input& input);
 
     constexpr std::size_t getInputSize() const {
-        return config.dims.NANTS * config.dims.NCHANS *
-            config.dims.NTIME * config.dims.NPOLS;
+        return this->config.dims.NANTS * this->config.dims.NCHANS *
+            this->config.dims.NTIME * this->config.dims.NPOLS;
     }
 
     constexpr std::size_t getOutputSize() const {
-        return config.dims.NBEAMS * config.dims.NTIME *
-            config.dims.NCHANS * config.dims.NPOLS;
+        return this->config.dims.NBEAMS * this->config.dims.NTIME *
+            this->config.dims.NCHANS * this->config.dims.NPOLS;
     }
 
     constexpr std::size_t getPhasorsSize() const {
-        return config.dims.NBEAMS * config.dims.NANTS *
-            config.dims.NCHANS * config.dims.NPOLS;
+        return this->config.dims.NBEAMS * this->config.dims.NANTS *
+            this->config.dims.NCHANS * this->config.dims.NPOLS;
     }
 };
 

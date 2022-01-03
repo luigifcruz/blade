@@ -8,17 +8,37 @@
 
 namespace Blade::Modules::Beamformer {
 
-class BLADE_API Generic : public module {
+template<typename IT, typename OT>
+class BLADE_API Generic : public Module {
  public:
-    class Test;
-
     struct Config {
         ArrayDims dims;
         std::size_t blockSize = 512;
     };
 
-    explicit Generic(const Config& config);
+    struct Input {
+        const Vector<Device::CUDA, IT>& buf;
+        const Vector<Device::CUDA, IT>& phasors;
+    };
+
+    struct Output {
+        Vector<Device::CUDA, OT> buf;
+    };
+
+    explicit Generic(const Config& config, const Input& input);
     virtual ~Generic() = default;
+
+    constexpr Vector<Device::CUDA, IT>& getInput() {
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
+    }
+
+    constexpr Vector<Device::CUDA, IT>& getPhasors() {
+        return const_cast<Vector<Device::CUDA, IT>&>(this->input.phasors);
+    }
+
+    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
+        return this->output.buf;
+    }
 
     constexpr Config getConfig() const {
         return config;
@@ -28,16 +48,12 @@ class BLADE_API Generic : public module {
     virtual constexpr std::size_t getOutputSize() const = 0;
     virtual constexpr std::size_t getPhasorsSize() const = 0;
 
-    Result run(const std::span<CF32>& input,
-               const std::span<CF32>& phasors,
-                     std::span<CF32>& output,
-                     cudaStream_t cudaStream = 0);
+    Result process(const cudaStream_t& stream = 0) final;
 
  protected:
     const Config config;
-    std::string kernel;
-    dim3 grid, block;
-    jitify2::ProgramCache<> cache;
+    const Input input;
+    Output output;
 };
 
 }  // namespace Blade::Modules::Beamformer

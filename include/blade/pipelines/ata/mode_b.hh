@@ -1,17 +1,14 @@
-#ifndef BLADE_PIPELINES_ATA_MODE_B_HHH
-#define BLADE_PIPELINES_ATA_MODE_B_HHH
+#ifndef BLADE_PIPELINES_ATA_MODE_B_HH
+#define BLADE_PIPELINES_ATA_MODE_B_HH
 
+#include <memory>
 #include <deque>
 
 #include "blade/pipeline.hh"
-#include "blade/manager.hh"
 
-#include "blade/modules/cast/base.hh"
-#include "blade/modules/checker/base.hh"
-#include "blade/modules/channelizer/base.hh"
+#include "blade/modules/cast.hh"
+#include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
-
-using namespace std::chrono;
 
 namespace Blade::Pipelines::ATA {
 
@@ -21,47 +18,40 @@ class ModeB : public Pipeline {
         ArrayDims inputDims;
         std::size_t channelizerRate = 4;
         std::size_t beamformerBeams = 16;
+
         std::size_t castBlockSize = 512;
         std::size_t channelizerBlockSize = 512;
         std::size_t beamformerBlockSize = 512;
     };
 
-    explicit ModeB(const Config& configuration);
+    explicit ModeB(const Config& config);
 
-    std::size_t getInputSize() const {
+    const std::size_t getInputSize() const {
         return channelizer->getBufferSize();
     }
 
-    std::size_t getOutputSize() const {
+    const std::size_t getPhasorsSize() const {
+        return beamformer->getPhasorsSize();
+    }
+
+    const std::size_t getOutputSize() const {
         return beamformer->getOutputSize();
     }
 
-    Result run(const std::span<CI8>& in, std::span<CF16>& out);
-
- protected:
-    Result setupModules() final;
-    Result setupMemory() final;
-
-    Result loopUpload() final;
-    Result loopProcess(cudaStream_t& cudaStream) final;
-    Result loopDownload() final;
+    Result run(const Vector<Device::CPU, CI8>& input,
+                     Vector<Device::CPU, CF16>& output);
 
  private:
-    const Config& config;
+    const Config config;
 
-    std::span<CI8> input;
-    std::span<CF16> output;
+    Vector<Device::CUDA, CI8> input;
+    Vector<Device::CUDA, CF32> phasors;
+    Vector<Device::CUDA, CF16> output;
 
-    std::span<CF32> phasors;
-    std::span<CI8> bufferA;
-    std::span<CF32> bufferB;
-    std::span<CF32> bufferC;
-    std::span<CF32> bufferD;
-    std::span<CF16> bufferE;
-
-    std::unique_ptr<Modules::Cast> cast;
-    std::unique_ptr<Modules::Beamformer::ATA> beamformer;
-    std::unique_ptr<Modules::Channelizer> channelizer;
+    std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
+    std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
+    std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
+    std::shared_ptr<Modules::Cast<CF32, CF16>> outputCast;
 };
 
 }  // namespace Blade::Pipelines::ATA

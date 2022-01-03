@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "blade/common.hh"
+#include "blade/macros.hh"
 
 #undef SPDLOG_ACTIVE_LEVEL
 #ifdef NDEBUG
@@ -20,23 +20,35 @@ BLADE_API std::string computeMethodName(const std::string&, const std::string&);
 
 #define BL_LOG_ID "BLADE"
 
+#ifndef BL_TRACE
 #define BL_TRACE(...) if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_TRACE(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
+#ifndef BL_DEBUG
 #define BL_DEBUG(...) if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_DEBUG(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
+#ifndef BL_WARN
 #define BL_WARN(...)  if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_WARN(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
+#ifndef BL_INFO
 #define BL_INFO(...)  if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_INFO(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
+#ifndef BL_ERROR
 #define BL_ERROR(...) if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_ERROR(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
+#ifndef BL_FATAL
 #define BL_FATAL(...) if (spdlog::get(BL_LOG_ID)) \
 {SPDLOG_LOGGER_CRITICAL(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+#endif
 
 namespace Blade {
 

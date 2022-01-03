@@ -18,9 +18,6 @@ like the Allen Telescope Array. These Modules are used in conjunction with hashp
 to create an real-time beamformer. A group of modules working together for a common
 purpose is called a Pipeline.
 
-.. doxygenclass:: Blade
-   :content-only:
-
 Indices and tables
 ==================
 

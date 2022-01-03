@@ -1,34 +1,31 @@
 #include <type_traits>
+#include <typeindex>
 
-#include "blade/modules/cast/base.hh"
+#include "blade/modules/cast.hh"
 
 #include "cast.jit.hh"
 
 namespace Blade::Modules {
 
-Cast::Cast(const Config& config) :
-    module(config.blockSize), config(config), cache(100, *cast_kernel) {
-    BL_DEBUG("Initilizating class.");
+template<typename IT, typename OT>
+Cast<IT, OT>::Cast(const Config& config, const Input& input)
+        : Module(config.blockSize, cast_kernel),
+          config(config),
+          input(input) {
+    auto size = config.inputSize * CudaTypeSize<IT>();
+    kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
+    grid = dim3((size + block.x - 1) / block.x);
 
-    block = dim3(config.blockSize);
+    BL_CHECK_THROW(InitInput(input.buf, config.inputSize));
+    BL_CHECK_THROW(InitOutput(output.buf, config.inputSize));
 }
 
-Cast::~Cast() {
-    BL_DEBUG("Destroying class.");
-}
-
-template<typename OT, typename IT>
-Result Cast::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream) {
-    dim3 grid = dim3((size + block.x - 1) / block.x);
-    auto kernel = Template("cast").instantiate(
-        Type<typename std::remove_pointer<IT>::type>(),
-        Type<typename std::remove_pointer<OT>::type>(),
-        size);
-
+template<typename IT, typename OT>
+Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
-        ->configure(grid, block, 0, cudaStream)
-        ->launch(input, output);
+        ->configure(grid, block, 0, stream)
+        ->launch(input.buf.data(), output.buf.data());
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Module failed to execute: {}", err);
@@ -38,29 +35,7 @@ Result Cast::run(IT input, OT output, std::size_t size, cudaStream_t cudaStream)
     return Result::SUCCESS;
 }
 
-template<typename IT, typename OT>
-Result Cast::run(const std::span<std::complex<IT>>& input,
-                       std::span<std::complex<OT>>& output,
-                       cudaStream_t cudaStream) {
-    if (input.size() != output.size()) {
-        BL_FATAL("Size mismatch between input and output ({}, {}).",
-                input.size(), output.size());
-        return Result::ASSERTION_ERROR;
-    }
-
-    return this->run(
-        reinterpret_cast<const IT*>(input.data()),
-        reinterpret_cast<OT*>(output.data()),
-        input.size() * 2,
-        cudaStream);
-}
-
-template Result Cast::run(const std::span<CI8>&,
-                                std::span<CF32>&,
-                                cudaStream_t);
-
-template Result Cast::run(const std::span<CF32>&,
-                                std::span<CF16>&,
-                                cudaStream_t);
+template class Cast<CF32, CF16>;
+template class Cast<CI8, CF32>;
 
 }  // namespace Blade::Modules
