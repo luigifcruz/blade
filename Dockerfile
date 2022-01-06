@@ -3,12 +3,12 @@ FROM ${IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update
+RUN apt-get update --fix-missing
 
 COPY . /blade
 WORKDIR /blade
 
-RUN apt-get install -y g++-10 libspdlog-dev python3-pip cmake ccache
+RUN apt-get install -y g++-10 libfmt-dev pybind11-dev libspdlog-dev python3-pip cmake ccache
 RUN python3 -m pip install meson ninja
 
 ENV CC=gcc-10

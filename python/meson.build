@@ -1,4 +1,5 @@
 deps = [
+  dependency('fmt', required: false),
   dependency('pybind11', required: false),
 ]
 
