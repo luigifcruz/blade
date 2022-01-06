@@ -68,7 +68,7 @@ class BLADE_API Pipeline {
 
         BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),
                     static_cast<cudaMemcpyKind>(dir), cudaStream), [&]{
-            BL_FATAL("Can't copy data: {}", err);
+            BL_FATAL("Can't copy data ({}): {}", dir, err);
         });
 
         return Result::SUCCESS;
@@ -76,34 +76,38 @@ class BLADE_API Pipeline {
 
     template<typename DT, typename ST>
     Result copyBuffer2D(std::span<DT>& dst, size_t dpitch, const std::span<ST>& src, size_t spitch, size_t width, size_t height, CopyKind dir) {
+        auto failure = false;
         if (width > dpitch) {
             BL_FATAL("2D copy 'width' is larger than destination's pitch ({}, {}).",
                     width, dpitch);
-            return Result::ASSERTION_ERROR;
+            failure = true;
         }
         if (dst.size_bytes() != dpitch*height) {
             BL_FATAL("Destination's size is not exactly covered by {} rows of {} ({} vs {}).",
                     height, dpitch, dst.size_bytes(), dpitch*height);
-            return Result::ASSERTION_ERROR;
+            failure = true;
         }
         if (width > spitch) {
             BL_FATAL("2D copy 'width' is larger than source's pitch ({}, {}).",
                     width, spitch);
-            return Result::ASSERTION_ERROR;
+            failure = true;
         }
         if (src.size_bytes() != spitch*height) {
             BL_FATAL("Source's size is not exactly covered by {} rows of {} ({} vs {}).",
                     height, spitch, src.size_bytes(), spitch*height);
-            return Result::ASSERTION_ERROR;
+            failure = true;
         }
         if (width % sizeof(DT) != 0) {
             BL_FATAL("2D copy 'width' is not a multiple of destination's element size ({}, {}).",
                     width, sizeof(DT));
-            return Result::ASSERTION_ERROR;
+            failure = true;
         }
         if (width % sizeof(ST) != 0) {
             BL_FATAL("2D copy 'width' is not a multiple of source's element size ({}, {}).",
                     width, sizeof(ST));
+            failure = true;
+        }
+        if (failure) {
             return Result::ASSERTION_ERROR;
         }
 
@@ -117,7 +121,7 @@ class BLADE_API Pipeline {
                 height,
                 static_cast<cudaMemcpyKind>(dir), cudaStream),
             [&]{
-                BL_FATAL("Can't copy data: {}", err);
+                BL_FATAL("Can't 2D copy data ({}): {}", dir, err);
             }
         );
 
