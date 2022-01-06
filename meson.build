@@ -15,7 +15,7 @@ cfg_lst.set('BUILD_TYPE', get_option('prefix'))
 
 src_lst = []
 dep_lst = [
-  dependency('spdlog'),
+  dependency('spdlog', version: '>=1.5'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
 ]
 inc_lst = [

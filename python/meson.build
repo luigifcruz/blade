@@ -1,6 +1,6 @@
 deps = [
-  dependency('fmt', required: false),
-  dependency('pybind11', required: false),
+  dependency('fmt', version: '>=6.1', required: false),
+  dependency('pybind11', version: '>=2.4', required: false),
 ]
 
 py = import('python').find_installation('python3', required: false)
