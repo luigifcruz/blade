@@ -28,12 +28,6 @@ subdir('src')
 subdir('include')
 subdir('tools')
 
-summary({'cpp_std': get_option('cpp_std'),
-         'prefix': get_option('prefix'),
-         'buildtype': get_option('buildtype'),
-         'crossbuild': meson.is_cross_build(),
-        }, section: 'General', bool_yn: true)
-
 lib_blade = library(
   'blade',
   src_lst,
@@ -51,6 +45,13 @@ lib_blade_dep = declare_dependency(
 subdir('python')
 subdir('tests')
 subdir('docs')
+
+summary({'cpp_std': get_option('cpp_std'),
+         'prefix': get_option('prefix'),
+         'buildtype': get_option('buildtype'),
+         'crossbuild': meson.is_cross_build(),
+         'python bindings': has_python,
+        }, section: 'General', bool_yn: true)
 
 pkg = import('pkgconfig')
 pkg.generate(
