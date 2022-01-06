@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "mode_b.h"
 
@@ -28,6 +29,8 @@ int main(int argc, char **argv) {
 
     int h = 0;
 
+    clock_t begin = clock();
+
     for (int i = 0; i < 510; i++) {
         if (blade_ata_b_enqueue(input_buffers[h], output_buffers[h], i)) {
             h = (h + 1) % number_of_workers;
@@ -38,6 +41,12 @@ int main(int argc, char **argv) {
             printf("Task %zu finished.\n", id);
         }
     }
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Example finished in %lf s.\n", time_spent);
+    double iteration_time = (time_spent / 510) * 1000;
+    printf("Average execution per-iteration: %lf ms.\n", iteration_time);
 
     blade_ata_b_terminate();
 
