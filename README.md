@@ -277,3 +277,68 @@ runner->enqueue([&](auto& worker){
 // The jobId from the enqueue step will be copied to the first argument.
 runner->dequeue(id);
 ```
+
+# Implementation Notes
+## Calling Blade from C
+It's possible to call Blade functions from C by writing an interface file. The recommended design pattern is described below. A complete example of a working C interface can be found at `/tests/pipelines/ata`. A C-header file `api.h` is created containing all interfacing methods from C++ and C. This file can't contain any C++ header or types. These methods are then defined inside a C++ source file called `api.cc`. Here, it's recommended to store the runtime variables with a singleton object. This can be achieved by defining a `static struct`. Finally, Blade can be used normally inside a C application `main.c` by calling the methods defined in the header file.
+```c
+// api.h
+
+void blade_initialize(size_t number_of_workers);
+void blade_enqueue(void* input_ptr, void* output_ptr, size_t* id);
+void blade_dequeue(size_t* id);
+```
+```cpp
+// api.cc
+
+extern "C" {
+#include "api.h"
+}
+
+#include <blade/base.h>
+
+using namespace Blade;
+
+static struct {
+    std::unique_ptr<Logger> guard;
+    std::unique_ptr<Runner<ModeB>> runner;
+} instance;
+
+void blade_initialize(size_t number_of_workers) {
+...
+}
+
+void blade_enqueue(void* input_ptr, void* output_ptr, size_t* id) {
+...
+}
+
+void blade_dequeue(size_t* id) {
+...
+}
+```
+```c
+// main.c
+
+#include "mode_b.h"
+
+int main(int argc, char **argv) {
+size_t number_of_workers = 2;
+blade_ata_b_initialize(number_of_workers);
+
+...
+
+for (int i = 0; i < 510; i++) {
+    if (blade_ata_b_enqueue(input_buffers[h], output_buffers[h], i)) {
+        h = (h + 1) % number_of_workers;
+    }
+
+    size_t id;
+    if (blade_ata_b_dequeue(&id)) {
+        printf("Task %zu finished.\n", id);
+    }
+}
+
+...
+
+}
+```
