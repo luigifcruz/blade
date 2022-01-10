@@ -73,7 +73,7 @@ class BLADE_API Runner {
         }
 
         // Return if front isn't synchronized.
-        if (!job.worker->isSyncronized()) {
+        if (!job.worker->isSynchronized()) {
             return false;
         }
 

@@ -16,7 +16,7 @@ class BLADE_API Pipeline {
     virtual ~Pipeline();
 
     Result synchronize();
-    bool isSyncronized();
+    bool isSynchronized();
 
  protected:
     template<typename T>
