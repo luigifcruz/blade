@@ -1,3 +1,2 @@
 #!/bin/sh
-echo "RUNNING +++++++++++++++++++++++++++++++++++++++++++++++++";
 @DOXYGEN_CMD@ @DOXYGEN_CONF@ && @SPHINX_CMD@ -E -W -q -j auto @SRCDIR@ @OUTDIR@

@@ -24,7 +24,7 @@ Result Pipeline::synchronize() {
     return Result::SUCCESS;
 }
 
-bool Pipeline::isSyncronized() {
+bool Pipeline::isSynchronized() {
     return cudaStreamQuery(this->stream) == cudaSuccess;
 }
 

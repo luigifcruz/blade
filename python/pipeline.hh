@@ -56,7 +56,7 @@ inline void init_pipeline(const py::module& m) {
     pipeline
         .def(py::init<>())
         .def("synchronize", &Pipeline::synchronize)
-        .def("isSyncronized", &Pipeline::isSyncronized)
+        .def("isSynchronized", &Pipeline::isSynchronized)
         .def("compute", &PipelinePub::compute);
 
     init_pipeline_connect<Modules::Beamformer::ATA<CF32, CF32>>(pipeline);
