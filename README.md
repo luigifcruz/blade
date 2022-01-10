@@ -257,6 +257,8 @@ The Runner class will create multiple instances of a Pipeline and run them in pa
 
 Since the Runner leverages the asynchronous nature of the Pipeline execution, the submission of new jobs for processing should also be performed in an asynchronous fashion. The simplest way for doing that is a Queue interface. To accomplish this, the `Blade::Runner` object offers two methods: The `enqueue(1)` to insert a new job into an available worker, and the `dequeue(1)` to check if any job has finished processing. To help keep track of which job corresponds to each buffer, a `std::size_t` variable can be returned in the `enqueue(1)` method, and later retrieved in the `dequeue(1)` method.
 
+When the `enqueue` method is called, the first argument should be a lambda function that accepts a reference of a worker as the first argument. This lambda is responsible to submit the input and output buffers to the pipeline worker using the `worker.run(X)` method. The worker reference passed to the lambda points to the first available internal pipeline instance. To learn more about lambda expressions, please refer to the [C++ reference](https://en.cppreference.com/w/cpp/language/lambda). This lambda also has to return a `std::size_t` value that works as an identification for the job being submitted. Note that in the example below, the lambda is capturing the current context using the `[&](...` decorator. This means that all the variables available outside the lambda are accessible by reference.
+
 ```cpp
 // Create a poll of workers with a Runner.
 auto runner = Blade::Runner<Pipeline>::New(numberOfWorkers, pipelineConfig);
