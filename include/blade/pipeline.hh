@@ -53,6 +53,46 @@ class BLADE_API Pipeline {
         return Memory::Copy(dst, src, this->stream);
     }
 
+    template<typename DT, typename ST>
+    Result copy2D(Vector<Device::CUDA, DT>& dst,
+                   const size_t dpitch,
+                   const Vector<Device::CUDA, ST>& src,
+                   const size_t spitch,
+                   const size_t width,
+                   const size_t height) {
+        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+    }
+
+    template<typename DT, typename ST>
+    Result copy2D(Vector<Device::CUDA, DT>& dst,
+                   const size_t dpitch,
+                   const Vector<Device::CPU, ST>& src,
+                   const size_t spitch,
+                   const size_t width,
+                   const size_t height) {
+        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+    }
+
+    template<typename DT, typename ST>
+    Result copy2D(Vector<Device::CPU, DT>& dst,
+                   const size_t dpitch,
+                   const Vector<Device::CPU, ST>& src,
+                   const size_t spitch,
+                   const size_t width,
+                   const size_t height) {
+        return Memory::Copy2D(dst, dpitch, src, spitch, width, height);
+    }
+
+    template<typename DT, typename ST>
+    Result copy2D(Vector<Device::CPU, DT>& dst,
+                   const size_t dpitch,
+                   const Vector<Device::CUDA, ST>& src,
+                   const size_t spitch,
+                   const size_t width,
+                   const size_t height) {
+        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+    }
+
  private:
     enum State : uint8_t {
         IDLE,
