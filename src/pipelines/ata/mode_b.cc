@@ -8,6 +8,7 @@ ModeB::ModeB(const Config& config) : config(config) {
         .blockSize = config.castBlockSize,
     }, {input});
 
+    #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
     this->connect(channelizer, {
         .dims = config.inputDims,
         .fftSize = config.channelizerRate,
@@ -15,12 +16,21 @@ ModeB::ModeB(const Config& config) : config(config) {
     }, {inputCast->getOutput()});
 
     auto dims = channelizer->getOutputDims();
+    #else
+    auto dims = config.inputDims;
+    #endif
     dims.NBEAMS *= config.beamformerBeams;
 
     this->connect(beamformer, {
         .dims = dims,
         .blockSize = config.beamformerBlockSize,
-    }, {channelizer->getOutput(), phasors});
+    }, {
+    #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
+        channelizer->getOutput(),
+    #else
+        inputCast->getOutput(),
+    #endif
+    phasors});
 
     #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
     // cast from CF32 to BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T

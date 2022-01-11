@@ -31,7 +31,7 @@ bool blade_ata_b_initialize(size_t numberOfWorkers) {
             .NTIME  = BLADE_ATA_MODE_B_NTIME,
             .NPOLS  = BLADE_ATA_MODE_B_NPOL,
         },
-        .channelizerRate = 4,
+        .channelizerRate = BLADE_ATA_MODE_B_CHANNELISER_RATE,
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
         .castBlockSize = 512,
         .channelizerBlockSize = 512,

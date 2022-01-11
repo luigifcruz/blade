@@ -19,7 +19,7 @@ class ModeB : public Pipeline {
  public:
     struct Config {
         ArrayDims inputDims;
-        std::size_t channelizerRate = 4;
+        std::size_t channelizerRate = BLADE_ATA_MODE_B_CHANNELISER_RATE;
         std::size_t beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM;
 
         std::size_t castBlockSize = 512;
@@ -30,7 +30,11 @@ class ModeB : public Pipeline {
     explicit ModeB(const Config& config);
 
     const std::size_t getInputSize() const {
+        #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
         return channelizer->getBufferSize();
+        #else
+        return beamformer->getInputSize();
+        #endif
     }
 
     const std::size_t getPhasorsSize() const {
@@ -58,7 +62,9 @@ class ModeB : public Pipeline {
     Vector<Device::CUDA, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T> output;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
+    #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
+    #endif
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
     #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
     std::shared_ptr<Modules::Cast<CF32, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>> outputCast;
