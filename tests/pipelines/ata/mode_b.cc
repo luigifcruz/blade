@@ -7,6 +7,7 @@
 
 extern "C" {
 #include "mode_b.h"
+#include "blade/pipelines/ata/mode_b_config.h"
 }
 
 using namespace Blade;
@@ -25,13 +26,13 @@ bool blade_ata_b_initialize(size_t numberOfWorkers) {
     Pipelines::ATA::ModeB::Config config = {
         .inputDims = {
             .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 192,
-            .NTIME  = 8192,
-            .NPOLS  = 2,
+            .NANTS  = BLADE_ATA_MODE_B_INPUT_NANT,
+            .NCHANS = BLADE_ATA_MODE_B_ANT_NCHAN,
+            .NTIME  = BLADE_ATA_MODE_B_NTIME,
+            .NPOLS  = BLADE_ATA_MODE_B_NPOL,
         },
         .channelizerRate = 4,
-        .beamformerBeams = 16,
+        .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
         .beamformerBlockSize = 512,
@@ -66,7 +67,7 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, size_t id) {
     assert(instance.runner);
     return instance.runner->enqueue([&](auto& worker){
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
-        auto output = Vector<Device::CPU, CF16>(output_ptr, worker.getOutputSize());
+        auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>(output_ptr, worker.getOutputSize());
 
         worker.run(input, output);
 

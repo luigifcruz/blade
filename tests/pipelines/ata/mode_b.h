@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "blade/pipelines/ata/mode_b_config.h"
+
 bool blade_use_device(int device_id);
 bool blade_ata_b_initialize(size_t numberOfWorkers);
 size_t blade_ata_b_get_input_size();

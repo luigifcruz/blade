@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
         input_buffers[i] = (void*)malloc(input_byte_size);
         blade_pin_memory(input_buffers[i], input_byte_size);
 
-        size_t output_byte_size = blade_ata_b_get_output_size() * sizeof(int16_t) * 2;
+        size_t output_byte_size = blade_ata_b_get_output_size() * BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES;
         output_buffers[i] = (void*)malloc(output_byte_size);
         blade_pin_memory(output_buffers[i], output_byte_size);
     }
