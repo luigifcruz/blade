@@ -171,7 +171,7 @@ A module is the smallest and the most important part of Blade. It is responsible
 to another (e.g. Integer to Float).  A module is not meant to be used alone. It’s supposed to be used inside a Pipeline. This class defines two methods that are automatically called by the Pipeline: 
 
 - **Preprocess**: This is the place to run infrequent data processing. This supports either host or device operations. The code executed here is outside the CUDA Graph. Thus, it’s not meant to be run every iteration. For example, this is the right place to update the phasors of a beamformer module once every several hundreds of milliseconds.
-- **Process**: This is the place to run the bulk of operations of the modules. This supports only host device operations. All host operations here will be ignored in runtime. This code is executed on every loop inside a CUDA Graph.
+- **Process**: This is the place to run the bulk of operations of the modules. This supports only device operations. All host operations here will be ignored in runtime. This code is executed on every loop inside a CUDA Graph.
 
 The constructor of all modules requires a struct-like object containing the configuration in conjunction with another struct-like object containing the input arrays or buffers required to make the computation. The dynamic array allocations are made at instantiation with no further memory being allocated or deallocated after the processing start. The output arrays and buffers are also generated at instantiation and are available to be consumed with specialized methods like `getOutput` or similar. All modules must implement a `getConfig` method that returns the configuration struct.
 
@@ -193,7 +193,7 @@ class BLADE_API Cast : public Module {
 
     explicit Cast(const Config& config, const Input& input);
 
-		constexpr Vector<Device::CUDA, IT>& getInput() {
+    constexpr Vector<Device::CUDA, IT>& getInput() {
         return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
     }
 
