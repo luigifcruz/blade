@@ -2,71 +2,85 @@
 
 namespace Blade::Pipelines::ATA {
 
-ModeB::ModeB(const Config& config) : config(config) {
+template<typename OT>
+ModeB<OT>::ModeB(const Config& config) : config(config) {
+    if ((config.outputMemPad % sizeof(OT)) != 0) {
+        BL_FATAL("The outputMemPad must be a multiple of the output type bytes.")
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
+
+    outputMemPitch = config.outputMemPad + config.outputMemWidth;
+
     this->connect(inputCast, {
         .inputSize = config.inputDims.getSize(),
         .blockSize = config.castBlockSize,
-    }, {input});
-
-    #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
-    BL_INFO("Instantiating channelizer with FFT Size {}.", config.channelizerRate);
-    this->connect(channelizer, {
-        .dims = config.inputDims,
-        .fftSize = config.channelizerRate,
-        .blockSize = config.channelizerBlockSize,
-    }, {inputCast->getOutput()});
-
-    auto dims = channelizer->getOutputDims();
-    #else
-    BL_INFO("Not instantiating channelizer.");
-    auto dims = config.inputDims;
-    #endif
-    dims.NBEAMS *= config.beamformerBeams;
-
-    this->connect(beamformer, {
-        .dims = dims,
-        .blockSize = config.beamformerBlockSize,
     }, {
-    #if BLADE_ATA_MODE_B_CHANNELISER_RATE > 1
-        channelizer->getOutput(),
-    #else
-        inputCast->getOutput(),
-    #endif
-    phasors});
+        .buf = input,
+    });
 
-    #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
-    BL_INFO("Instantiating outputCast to {}.", "BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T");
-    // cast from CF32 to BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T
-    this->connect(outputCast, {
-        .inputSize = beamformer->getOutputSize(),
-        .blockSize = config.castBlockSize,
-    }, {beamformer->getOutput()});
-    #else
-    BL_INFO("Not instantiating outputCast.");
-    #endif
+    if (config.channelizerRate > 1) {
+        BL_DEBUG("Instantiating channelizer with FFT Size {}.", config.channelizerRate);
+
+        this->connect(channelizer, {
+            .dims = config.inputDims,
+            .fftSize = config.channelizerRate,
+            .blockSize = config.channelizerBlockSize,
+        }, {
+            .buf = inputCast->getOutput(),
+        });
+
+        auto dims = channelizer->getOutputDims();
+        dims.NBEAMS *= config.beamformerBeams;
+
+        this->connect(beamformer, {
+            .dims = dims,
+            .blockSize = config.beamformerBlockSize,
+        }, {
+            .buf = channelizer->getOutput(),
+            .phasors = phasors,
+        });
+    } else {
+        BL_DEBUG("Instantiating beamformer module.");
+
+        this->connect(beamformer, {
+            .dims = config.inputDims,
+            .blockSize = config.beamformerBlockSize,
+        }, {
+            .buf = inputCast->getOutput(),
+            .phasors = phasors,
+        });
+    }
+
+    if constexpr (!std::is_same<OT, CF32>::value) {
+        BL_DEBUG("Instantiating output cast from CF32 to {}.", typeid(OT).name());
+
+        // Cast from CF32 to output type.
+        this->connect(outputCast, {
+            .inputSize = beamformer->getOutputSize(),
+            .blockSize = config.castBlockSize,
+        }, {
+            .buf = beamformer->getOutput(),
+        });
+    }
 }
 
-Result ModeB::run(const Vector<Device::CPU, CI8>& input,
-                        Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>& output) {
+template<typename OT>
+Result ModeB<OT>::run(const Vector<Device::CPU, CI8>& input,
+                        Vector<Device::CPU, OT>& output) {
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy2D(
         output,
-        BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_DPITCH,// dpitch
-    #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES != 8
-    // output is casted output
-        outputCast->getOutput(),                // src
-    #else
-    // output is un-casted beamformer output (CF32)
-        beamformer->getOutput(),                // src
-    #endif
-        BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH, // spitch
-        BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH, // width
-        (beamformer->getOutputSize()*sizeof(BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T))/BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH
-        )
-    );
+        outputMemPitch,         // dpitch
+        this->getOutput(),      // src
+        config.outputMemWidth,  // spitch
+        config.outputMemWidth,  // width
+        (beamformer->getOutputSize()*sizeof(OT))/config.outputMemWidth));
 
     return Result::SUCCESS;
 }
+
+template class ModeB<CF16>;
+template class ModeB<CF32>;
 
 }  // namespace Blade::Pipelines::ATA
