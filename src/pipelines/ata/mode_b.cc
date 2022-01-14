@@ -42,8 +42,11 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
     } else {
         BL_DEBUG("Instantiating beamformer module.");
 
+        auto dims = config.inputDims;
+        dims.NBEAMS *= config.beamformerBeams;
+
         this->connect(beamformer, {
-            .dims = config.inputDims,
+            .dims = dims,
             .blockSize = config.beamformerBlockSize,
         }, {
             .buf = inputCast->getOutput(),
