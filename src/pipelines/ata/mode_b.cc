@@ -32,6 +32,8 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         auto dims = channelizer->getOutputDims();
         dims.NBEAMS *= config.beamformerBeams;
 
+        BL_DEBUG("Instantiating beamformer module.");
+
         this->connect(beamformer, {
             .dims = dims,
             .blockSize = config.beamformerBlockSize,
