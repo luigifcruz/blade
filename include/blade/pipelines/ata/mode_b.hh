@@ -51,7 +51,7 @@ class ModeB : public Pipeline {
     Result run(const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
-    Result setPhasors(const Vector<Device::CPU, CF32>& phasors, const bool block = false);
+    Result setPhasors(const Vector<Device::CPU, CF32>& phasors);
 
  private:
     const Config config;

@@ -86,11 +86,8 @@ Result ModeB<OT>::run(const Vector<Device::CPU, CI8>& input,
 }
 
 template<typename OT>
-Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors, const bool block) {
+Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
     BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
-    if (block) {
-        this->synchronize();
-    }
 
     return Result::SUCCESS;
 }

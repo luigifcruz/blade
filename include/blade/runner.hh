@@ -39,6 +39,21 @@ class BLADE_API Runner {
         return *workers[index];
     }
 
+    Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
+                             const bool block = false) {
+        for (auto& worker : workers) {
+             BL_CHECK(modifier(*worker));
+        }
+
+        if (block) {
+            for (auto& worker : workers) {
+                 BL_CHECK(worker->synchronize());
+            }
+        }
+
+        return Result::SUCCESS;
+    }
+
     constexpr const std::size_t& getHead() const {
         return head;
     }

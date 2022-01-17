@@ -75,17 +75,19 @@ bool blade_pin_memory(void* buffer, size_t size) {
 
 bool blade_set_phasors(void* phasors, bool block) {
     assert(instance.runner);
-    auto size = instance.runner->getWorker().getPhasorsSize();
-    return instance.runner->getWorker().setPhasors(
-        Vector<Device::CPU, CF32>(phasors, size), block
-    ) == Result::SUCCESS;
+
+    return instance.runner->applyToAllWorkers([&](auto& worker){
+        const auto& size = worker.getPhasorsSize();
+        return worker.setPhasors(Vector<Device::CPU, CF32>(phasors, size));
+    }, block) == Result::SUCCESS;
 }
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, size_t id) {
     assert(instance.runner);
     return instance.runner->enqueue([&](auto& worker){
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
-        auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>(output_ptr, worker.getOutputSize());
+        auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>
+            (output_ptr, worker.getOutputSize());
 
         worker.run(input, output);
 
