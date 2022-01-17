@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Delete previous containers.
-        run: docker rmi blade
+        run: docker rmi blade || true
 
       - name: Build the Docker image.
         run: docker build . --file Dockerfile --tag blade:latest
