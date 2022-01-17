@@ -1,0 +1,21 @@
+name: Test Dockerfile
+
+on: [push, pull_request]
+
+jobs:
+  build-cuda:
+
+    runs-on: [self-hosted, linux, x64, cuda]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Delete previous containers.
+        run: docker rmi blade
+
+      - name: Build the Docker image.
+        run: docker build . --file Dockerfile --tag blade:latest
+
+      - name: Run ninja test.
+        run: docker run --privileged --gpus all -i -t --rm blade bash -c "cd blade/build && ninja test"
