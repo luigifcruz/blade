@@ -73,7 +73,7 @@ bool blade_pin_memory(void* buffer, size_t size) {
     return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
 }
 
-bool blade_set_phasors(void* phasors, bool block) {
+bool blade_ata_b_set_phasors(void* phasors, bool block) {
     assert(instance.runner);
 
     return instance.runner->applyToAllWorkers([&](auto& worker){
