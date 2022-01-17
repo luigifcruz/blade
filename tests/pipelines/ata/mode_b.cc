@@ -64,8 +64,21 @@ size_t blade_ata_b_get_output_size() {
     return instance.runner->getWorker().getOutputSize();
 }
 
+size_t blade_ata_b_get_phasor_size() {
+    assert(instance.runner);
+    return instance.runner->getWorker().getPhasorsSize();
+}
+
 bool blade_pin_memory(void* buffer, size_t size) {
     return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+}
+
+bool blade_set_phasors(void* phasors, bool block) {
+    assert(instance.runner);
+    auto size = instance.runner->getWorker().getPhasorsSize();
+    return instance.runner->getWorker().setPhasors(
+        Vector<Device::CPU, CF32>(phasors, size), block
+    ) == Result::SUCCESS;
 }
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, size_t id) {
