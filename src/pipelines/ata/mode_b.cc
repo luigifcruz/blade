@@ -85,6 +85,13 @@ Result ModeB<OT>::run(const Vector<Device::CPU, CI8>& input,
     return Result::SUCCESS;
 }
 
+template<typename OT>
+Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
+    BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
+
+    return Result::SUCCESS;
+}
+
 template class ModeB<CF16>;
 template class ModeB<CF32>;
 
