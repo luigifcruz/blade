@@ -35,8 +35,7 @@ if __name__ == "__main__":
     _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.bufferSize())
     _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.bufferSize())
     _c = np.array(_a + _b * 1j).astype(np.complex64)
-    input = _c.reshape((d.NANTS * d.NCHANS * d.NTIME, d.NPOLS))
-
+    input = _c.reshape((d.NANTS, d.NCHANS, d.NTIME, d.NPOLS))
     output = np.zeros_like(input, dtype=np.complex64)
 
     # Import test data from Python to Blade.
@@ -53,13 +52,27 @@ if __name__ == "__main__":
 
     # Channelize with Numpy.
     start = time.time()
-    for i in range(0, input.shape[0], NFFT):
-            _a = input[i:i+NFFT]
-            _b = output[i:i+NFFT]
-            for pol in range(d.NPOLS):
-                _b[:, pol] = np.fft.fft(_a[:, pol])
+    for iant in range(d.NANTS):
+        ant = input[iant]
+
+        for ichan in range(d.NCHANS):
+            ch_ant = ant[ichan]
+
+            for ipol in range(d.NPOLS):
+                pl_arr = ch_ant[:, ipol]
+
+                nspecs = pl_arr.size // NFFT
+                arr_fft = np.zeros_like(pl_arr, dtype=np.complex64).reshape(nspecs, NFFT)
+
+                for ispec in range(nspecs):
+                    arr_fft[ispec] = np.fft.fft(pl_arr[ispec*NFFT:(ispec+1)*NFFT])
+
+                for i in range(NFFT):
+                    output[iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
+    print(output.flatten())
+    print(np.array(bl_output, copy=False).flatten())
     assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
     print("Test successfully completed!")

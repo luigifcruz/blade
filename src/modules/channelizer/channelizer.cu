@@ -3,7 +3,7 @@
 // 4-point FFT
 
 // TODO: Add multiple formats support.
-template<size_t N, size_t NFFT, size_t NPOLS>
+template<size_t N, size_t NFFT, size_t NPOLS, size_t NTIME, size_t NCHANS>
 __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
     const int numThreads = (blockDim.x * gridDim.x) * (NFFT * NPOLS);
     const int threadID = (blockIdx.x * blockDim.x + threadIdx.x) * (NFFT * NPOLS);
@@ -15,14 +15,49 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
         NPOLS * 3,
     };
 
-    for (int i = threadID; i < N; i += numThreads) {
-        for (int j = i; j < i + NPOLS; j += 1) {
-            // TODO: Add reordering index.
+    const int ch_pitch = NTIME / NFFT;
+    const int ch_index[] = {
+        ch_pitch * pol_index[0],
+        ch_pitch * pol_index[1],
+        ch_pitch * pol_index[2],
+        ch_pitch * pol_index[3],
+    };
 
-            const float2 a = input[j + pol_index[0]];
-            const float2 b = input[j + pol_index[1]];
-            const float2 c = input[j + pol_index[2]];
-            const float2 d = input[j + pol_index[3]];
+    const int ant_pitch = NCHANS * NTIME * NPOLS;
+    const int och_pitch = NTIME * NPOLS;
+
+    for (int i = threadID; i < N; i += numThreads) {
+        const int ant_id = i / ant_pitch;
+        const int ant_offset = ant_id * ant_pitch;
+
+        const int ch_id = (i - ant_offset) / och_pitch;
+        const int ch_offset = ch_id * och_pitch;
+
+        const int sauce = ((i - ant_offset - ch_offset) / NFFT) + ant_offset + ch_offset;
+
+        for (int j = 0; j < NPOLS; j += 1) {
+#ifdef KERN_DEBUG
+            printf("%d - %d %d %d %d - %d %d %d %d | %d %d %d | %d %d\n",
+                i,
+
+                j+i+pol_index[0],
+                j+i+pol_index[1],
+                j+i+pol_index[2],
+                j+i+pol_index[3],
+
+                j+sauce+ch_index[0],
+                j+sauce+ch_index[1],
+                j+sauce+ch_index[2],
+                j+sauce+ch_index[3],
+
+                i, ch_pitch, sauce,
+                iant, ichan);
+#endif
+
+            const float2 a = input[i + j + pol_index[0]];
+            const float2 b = input[i + j + pol_index[1]];
+            const float2 c = input[i + j + pol_index[2]];
+            const float2 d = input[i + j + pol_index[3]];
 
             const float r1 = a.x - c.x;
             const float r2 = a.y - c.y;
@@ -44,10 +79,10 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
             const float b1 = r1 + r4;
             const float b4 = r2 + r3;
 
-            output[j + pol_index[0]] = make_cuFloatComplex(a1, a2);
-            output[j + pol_index[1]] = make_cuFloatComplex(b1, b2);
-            output[j + pol_index[2]] = make_cuFloatComplex(a3, a4);
-            output[j + pol_index[3]] = make_cuFloatComplex(b3, b4);
+            output[sauce + j + ch_index[0]] = make_cuFloatComplex(a1, a2);
+            output[sauce + j + ch_index[1]] = make_cuFloatComplex(b1, b2);
+            output[sauce + j + ch_index[2]] = make_cuFloatComplex(a3, a4);
+            output[sauce + j + ch_index[3]] = make_cuFloatComplex(b3, b4);
         }
     }
 }
