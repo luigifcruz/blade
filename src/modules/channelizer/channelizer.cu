@@ -33,7 +33,7 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
         const int ch_id = (i - ant_offset) / och_pitch;
         const int ch_offset = ch_id * och_pitch;
 
-        const int sauce = ((i - ant_offset - ch_offset) / NFFT) + ant_offset + ch_offset;
+        const int io = ((i - ant_offset - ch_offset) / NFFT) + ant_offset + ch_offset;
 
         for (int j = 0; j < NPOLS; j += 1) {
 #ifdef KERN_DEBUG
@@ -45,10 +45,10 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
                 j+i+pol_index[2],
                 j+i+pol_index[3],
 
-                j+sauce+ch_index[0],
-                j+sauce+ch_index[1],
-                j+sauce+ch_index[2],
-                j+sauce+ch_index[3],
+                j+io+ch_index[0],
+                j+io+ch_index[1],
+                j+io+ch_index[2],
+                j+io+ch_index[3],
 
                 i, ch_pitch, sauce,
                 iant, ichan);
@@ -79,10 +79,10 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
             const float b1 = r1 + r4;
             const float b4 = r2 + r3;
 
-            output[sauce + j + ch_index[0]] = make_cuFloatComplex(a1, a2);
-            output[sauce + j + ch_index[1]] = make_cuFloatComplex(b1, b2);
-            output[sauce + j + ch_index[2]] = make_cuFloatComplex(a3, a4);
-            output[sauce + j + ch_index[3]] = make_cuFloatComplex(b3, b4);
+            output[io + j + ch_index[0]] = make_cuFloatComplex(a1, a2);
+            output[io + j + ch_index[1]] = make_cuFloatComplex(b1, b2);
+            output[io + j + ch_index[2]] = make_cuFloatComplex(a3, a4);
+            output[io + j + ch_index[3]] = make_cuFloatComplex(b3, b4);
         }
     }
 }

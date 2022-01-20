@@ -72,7 +72,5 @@ if __name__ == "__main__":
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
-    print(output.flatten())
-    print(np.array(bl_output, copy=False).flatten())
     assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
     print("Test successfully completed!")
