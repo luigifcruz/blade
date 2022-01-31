@@ -92,7 +92,7 @@ Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
     return Result::SUCCESS;
 }
 
-template class ModeB<CF16>;
-template class ModeB<CF32>;
+template class BLADE_API ModeB<CF16>;
+template class BLADE_API ModeB<CF32>;
 
 }  // namespace Blade::Pipelines::ATA

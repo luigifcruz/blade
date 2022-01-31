@@ -35,7 +35,7 @@ Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     return Result::SUCCESS;
 }
 
-template class Cast<CF32, CF16>;
-template class Cast<CI8, CF32>;
+template class BLADE_API Cast<CF32, CF16>;
+template class BLADE_API Cast<CI8, CF32>;
 
 }  // namespace Blade::Modules

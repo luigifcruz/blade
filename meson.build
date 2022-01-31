@@ -1,7 +1,7 @@
 project(
   'blade',
   ['cpp', 'c', 'cuda'],
-  version: '0.1.1',
+  version: '0.1.2',
   default_options: [
     'buildtype=release',
     'cpp_std=c++20',
@@ -33,6 +33,7 @@ lib_blade = library(
   src_lst,
   include_directories: inc_lst,
   dependencies: dep_lst,
+  gnu_symbol_visibility: 'hidden',
   install: true,
 )
 

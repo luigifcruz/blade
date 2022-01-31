@@ -12,7 +12,7 @@
 
 namespace Blade {
 
-enum class Device : uint8_t {
+enum class BLADE_API Device : uint8_t {
     CPU     = 1 << 0,
     CUDA    = 1 << 1,
     METAL   = 1 << 2,

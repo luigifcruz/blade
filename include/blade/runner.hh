@@ -39,6 +39,10 @@ class BLADE_API Runner {
         return *workers[index];
     }
 
+    constexpr const std::size_t& getHead() const {
+        return head;
+    }
+
     Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
                              const bool block = false) {
         for (auto& worker : workers) {
@@ -52,10 +56,6 @@ class BLADE_API Runner {
         }
 
         return Result::SUCCESS;
-    }
-
-    constexpr const std::size_t& getHead() const {
-        return head;
     }
 
     bool enqueue(const std::function<const std::size_t(T&)>& jobFunc) {

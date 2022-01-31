@@ -29,6 +29,6 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
     BL_CHECK_THROW(this->InitOutput(this->output.buf, getOutputSize()));
 }
 
-template class ATA<CF32, CF32>;
+template class BLADE_API ATA<CF32, CF32>;
 
 }  // namespace Blade::Modules::Beamformer

@@ -13,7 +13,7 @@
 namespace Blade::Pipelines::ATA {
 
 template<typename OT = CF16>
-class ModeB : public Pipeline {
+class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
         ArrayDims inputDims;

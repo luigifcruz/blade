@@ -38,22 +38,22 @@ std::size_t Checker::run(const Vector<Device::CPU, IT>& a,
     return Checker::run(a.data(), b.data(), a.size());
 }
 
-template std::size_t Checker::run(const Vector<Device::CPU, CF32>&,
-                                  const Vector<Device::CPU, CF32>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, CF32>&,
+                                            const Vector<Device::CPU, CF32>&);
 
-template std::size_t Checker::run(const Vector<Device::CPU, CI8>&,
-                                  const Vector<Device::CPU, CI8>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, CI8>&,
+                                            const Vector<Device::CPU, CI8>&);
 
-template std::size_t Checker::run(const Vector<Device::CPU, CF16>&,
-                                  const Vector<Device::CPU, CF16>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, CF16>&,
+                                            const Vector<Device::CPU, CF16>&);
 
-template std::size_t Checker::run(const Vector<Device::CPU, F32>&,
-                                  const Vector<Device::CPU, F32>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, F32>&,
+                                            const Vector<Device::CPU, F32>&);
 
-template std::size_t Checker::run(const Vector<Device::CPU, I8>&,
-                                  const Vector<Device::CPU, I8>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, I8>&,
+                                            const Vector<Device::CPU, I8>&);
 
-template std::size_t Checker::run(const Vector<Device::CPU, F16>&,
-                                  const Vector<Device::CPU, F16>&);
+template std::size_t BLADE_API Checker::run(const Vector<Device::CPU, F16>&,
+                                            const Vector<Device::CPU, F16>&);
 
 }  // namespace Blade::Modules

@@ -4,6 +4,7 @@
 #include <span>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "blade/logger.hh"
 #include "blade/module.hh"

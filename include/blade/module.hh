@@ -1,7 +1,9 @@
 #ifndef BLADE_MODULE_HH
 #define BLADE_MODULE_HH
 
+#include <map>
 #include <string>
+#include <typeindex>
 
 #include "blade/types.hh"
 #include "blade/logger.hh"
@@ -12,7 +14,7 @@ using namespace jitify2::reflection;
 
 namespace Blade {
 
-class BLADE_API Module {
+class Module {
  public:
     explicit Module(const std::size_t& blockSize,
                     const jitify2::PreprocessedProgram& kernel);
@@ -58,10 +60,50 @@ class BLADE_API Module {
     }
 
     template<typename T>
-    static const std::string CudaType();
+    static const std::string CudaType() {
+        static std::map<std::type_index, std::string> type_map = {
+            {typeid(CF16),  "__half"},
+            {typeid(CF32),  "float"},
+            {typeid(CI8),   "char"},
+            {typeid(CI16),  "short"},
+            {typeid(CI32),  "long"},
+            {typeid(F16),   "__half"},
+            {typeid(F32),   "float"},
+            {typeid(I8),    "char"},
+            {typeid(I16),   "short"},
+            {typeid(I32),   "long"},
+        };
+
+        auto& type = typeid(T);
+        if (!type_map.contains(type)) {
+            BL_FATAL("Type is not supported by CudaType.");
+            BL_CHECK_THROW(Result::ERROR);
+        }
+        return type_map[type];
+    }
 
     template<typename T>
-    static const std::size_t CudaTypeSize();
+    static const std::size_t CudaTypeSize() {
+        static std::map<std::type_index, std::size_t> size_map = {
+            {typeid(CF16),  2},
+            {typeid(CF32),  2},
+            {typeid(CI8),   2},
+            {typeid(CI16),  2},
+            {typeid(CI32),  2},
+            {typeid(F16),   1},
+            {typeid(F32),   1},
+            {typeid(I8),    1},
+            {typeid(I16),   1},
+            {typeid(I32),   1},
+        };
+
+        auto& type = typeid(T);
+        if (!size_map.contains(type)) {
+            BL_FATAL("Type is not supported by CudaTypeSize.");
+            BL_CHECK_THROW(Result::ERROR);
+        }
+        return size_map[type];
+    }
 };
 
 }  // namespace Blade

@@ -31,6 +31,6 @@ Result Generic<IT, OT>::process(const cudaStream_t& stream) {
     return Result::SUCCESS;
 }
 
-template class Generic<CF32, CF32>;
+template class BLADE_API Generic<CF32, CF32>;
 
 }  // namespace Blade::Modules::Beamformer

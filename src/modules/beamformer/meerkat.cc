@@ -23,6 +23,6 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
     BL_CHECK_THROW(this->InitOutput(this->output.buf, getOutputSize()));
 }
 
-template class MeerKAT<CF32, CF32>;
+template class BLADE_API MeerKAT<CF32, CF32>;
 
 }  // namespace Blade::Modules::Beamformer

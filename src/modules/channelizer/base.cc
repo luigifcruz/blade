@@ -54,6 +54,6 @@ Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     return Result::SUCCESS;
 }
 
-template class Channelizer<CF32, CF32>;
+template class BLADE_API Channelizer<CF32, CF32>;
 
 }  // namespace Blade::Modules

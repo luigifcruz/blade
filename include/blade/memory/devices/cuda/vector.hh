@@ -9,7 +9,7 @@
 namespace Blade {
 
 template<typename T>
-class Vector<Device::CUDA, T> : public VectorImpl<T> {
+class BLADE_API Vector<Device::CUDA, T> : public VectorImpl<T> {
  public:
     using VectorImpl<T>::VectorImpl;
 
@@ -48,7 +48,7 @@ class Vector<Device::CUDA, T> : public VectorImpl<T> {
 };
 
 template<typename T>
-class Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
+class BLADE_API Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
  public:
     using VectorImpl<T>::VectorImpl;
 
