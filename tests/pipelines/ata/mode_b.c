@@ -15,10 +15,12 @@ int main(int argc, char **argv) {
     blade_ata_b_initialize(number_of_workers);
 
     float* phasor_buffer = malloc(blade_ata_b_get_phasor_size() * sizeof(float) * 2);
-    for(int i = 0; i < blade_ata_b_get_phasor_size(); i+=2) { // set only real components
-        phasor_buffer[i] = 1.0;
+    memset(phasor_buffer, 0, blade_ata_b_get_phasor_size() * sizeof(float) * 2);
+    for(int i = 0; i < blade_ata_b_get_phasor_size(); i++) { // set only real components
+        phasor_buffer[i*2] = 1.0;
     }
     blade_ata_b_set_phasors(phasor_buffer, true);
+    free(phasor_buffer);
 
     void** input_buffers = (void**)malloc(number_of_workers * sizeof(void*));
     void** output_buffers = (void**)malloc(number_of_workers * sizeof(void*));
