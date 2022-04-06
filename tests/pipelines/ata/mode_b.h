@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BLADE_ATA_MODE_B_CHANNELIZER_RATE 4 // [1, 4]; <= 1 mitigates the channelization
 
