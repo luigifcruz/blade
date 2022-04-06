@@ -3,6 +3,10 @@
 
 #include "blade/types.hh"
 
+#ifndef PHYSICAL_CONSTANT_C
+#define PHYSICAL_CONSTANT_C (double)299792458.0 // Speed of Light (m/s)
+#endif
+
 #ifndef BLADE_API
 #define BLADE_API __attribute__((visibility("default")))
 #endif

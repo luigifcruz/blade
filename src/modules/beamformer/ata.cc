@@ -12,7 +12,6 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->block = dim3(config.blockSize);
     this->grid = dim3(config.dims.NCHANS, config.dims.NTIME/config.blockSize);
 
     this->kernel = Template("ATA")

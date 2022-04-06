@@ -16,6 +16,8 @@ Module::Module(const std::size_t& blockSize,
         BL_WARN("Best performance is achieved when the block size ({}) "
                 "is a multiple of 32.", blockSize);
     }
+
+    this->block = dim3(blockSize);
 }
 
 }  // namespace Blade

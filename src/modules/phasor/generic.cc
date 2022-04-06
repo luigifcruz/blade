@@ -1,0 +1,47 @@
+#include "blade/modules/phasor/generic.hh"
+
+#include "phasor.jit.hh"
+
+namespace Blade::Modules::Phasor {
+
+template<typename OT>
+Generic<OT>::Generic(const Config& config, const Input& input)
+        : Module(config.blockSize, phasor_kernel),
+          config(config),
+          input(input) {
+    if (config.numberOfBeams != config.beamCoordinates.size()) {
+        BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
+                 "beams coordinates ({}).", config.numberOfBeams,
+                 config.beamCoordinates.size());
+        throw Result::ERROR;
+    }
+
+    if (config.numberOfAntennas != config.antennaPositions.size()) {
+        BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
+                 "antenna positions ({}).", config.numberOfAntennas,
+                 config.antennaPositions.size());
+        throw Result::ERROR;
+    }
+
+    if (config.numberOfAntennas != config.antennaCalibrations.size()) {
+        BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
+                 "antenna calibrations ({}).", config.numberOfAntennas,
+                 config.antennaCalibrations.size());
+        throw Result::ERROR;
+    }
+}
+
+template<typename OT>
+Result Generic<OT>::preprocess(const cudaStream_t& stream) {
+    return Result::SUCCESS;
+}
+
+template<typename OT>
+Result Generic<OT>::process(const cudaStream_t& stream) {
+    return Result::SUCCESS;
+}
+
+template class BLADE_API Generic<CF32>;
+template class BLADE_API Generic<CF64>;
+
+}  // namespace Blade::Modules::Phasor
