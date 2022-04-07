@@ -14,15 +14,15 @@ inline void init_vector(const py::module& m, const char* type) {
 
     py::class_<Class, std::shared_ptr<Class>>(m, type, py::buffer_protocol())
         .def(py::init<>())
-        .def(py::init<const std::size_t&>())
+        .def(py::init<const U64&>())
         .def_buffer([](Class& obj){
             return py::buffer_info(obj.data(), sizeof(T),
                                    py::format_descriptor<T>::format(), obj.size());
         })
-        .def("__getitem__", [](Class& obj, const std::size_t& index){
+        .def("__getitem__", [](Class& obj, const U64& index){
             return obj[index];
         }, py::return_value_policy::reference)
-        .def("__setitem__", [](Class& obj, const std::size_t& index, const T& val){
+        .def("__setitem__", [](Class& obj, const U64& index, const T& val){
             obj[index] = val;
         })
         .def("__len__", [](Class& obj){

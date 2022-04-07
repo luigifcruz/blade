@@ -2,7 +2,7 @@
 
 using namespace Blade;
 
-Result Init(std::size_t testSize = 8192) {
+Result Init(U64 testSize = 8192) {
     BL_INFO("Allocating CUDA memory...");
     static I8* input_ptr;
     static I8* output_ptr;
@@ -30,7 +30,7 @@ Result Init(std::size_t testSize = 8192) {
     }
 
     BL_INFO("Running kernels...");
-    size_t counter = 0;
+    U64 counter = 0;
 
     if ((counter = Checker::run(input, output)) < testSize - 100) {
         BL_FATAL("[SUBTEST {}] Expected over than {} matches but found {}.",

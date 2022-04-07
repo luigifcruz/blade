@@ -2,7 +2,7 @@
 
 namespace Blade {
 
-Module::Module(const std::size_t& blockSize,
+Module::Module(const U64& blockSize,
                const jitify2::PreprocessedProgram& kernel)
         : cache(100, *kernel),
           block(blockSize) {

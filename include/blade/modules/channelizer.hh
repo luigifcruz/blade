@@ -13,8 +13,8 @@ class BLADE_API Channelizer : public Module {
  public:
     struct Config {
         ArrayDims dims;
-        std::size_t fftSize = 4;
-        std::size_t blockSize = 512;
+        U64 fftSize = 4;
+        U64 blockSize = 512;
     };
 
     struct Input {
@@ -46,7 +46,7 @@ class BLADE_API Channelizer : public Module {
         return cfg;
     }
 
-    constexpr const std::size_t getBufferSize() const {
+    constexpr const U64 getBufferSize() const {
         return config.dims.NPOLS * config.dims.NTIME *
             config.dims.NANTS * config.dims.NCHANS;
     }

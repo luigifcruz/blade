@@ -15,11 +15,11 @@ inline void init_types_result(const py::module& m) {
 
 inline void init_types_arraydims(const py::module& m) {
     py::class_<ArrayDims>(m, "ArrayDims")
-        .def(py::init<const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&>(), py::arg("NBEAMS"),
+        .def(py::init<const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&>(), py::arg("NBEAMS"),
                                              py::arg("NANTS"),
                                              py::arg("NCHANS"),
                                              py::arg("NTIME"),

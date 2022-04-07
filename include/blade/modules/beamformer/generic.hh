@@ -13,7 +13,7 @@ class BLADE_API Generic : public Module {
  public:
     struct Config {
         ArrayDims dims;
-        std::size_t blockSize = 512;
+        U64 blockSize = 512;
     };
 
     struct Input {
@@ -44,9 +44,9 @@ class BLADE_API Generic : public Module {
         return config;
     }
 
-    virtual constexpr std::size_t getInputSize() const = 0;
-    virtual constexpr std::size_t getOutputSize() const = 0;
-    virtual constexpr std::size_t getPhasorsSize() const = 0;
+    virtual constexpr U64 getInputSize() const = 0;
+    virtual constexpr U64 getOutputSize() const = 0;
+    virtual constexpr U64 getPhasorsSize() const = 0;
 
     Result process(const cudaStream_t& stream = 0) final;
 

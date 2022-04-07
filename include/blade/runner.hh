@@ -14,12 +14,12 @@ namespace Blade {
 template<class T>
 class BLADE_API Runner {
  public:
-    static std::unique_ptr<Runner<T>> New(const std::size_t& numberOfWorkers,
+    static std::unique_ptr<Runner<T>> New(const U64& numberOfWorkers,
                                           const typename T::Config& config) {
         return std::make_unique<Runner<T>>(numberOfWorkers, config);
     }
 
-    explicit Runner(const std::size_t& numberOfWorkers,
+    explicit Runner(const U64& numberOfWorkers,
                     const typename T::Config& config) {
         BL_INFO("Instantiating new runner.");
 
@@ -28,18 +28,18 @@ class BLADE_API Runner {
             BL_CHECK_THROW(Result::ASSERTION_ERROR);
         }
 
-        for (std::size_t i = 0; i < numberOfWorkers; i++) {
+        for (U64 i = 0; i < numberOfWorkers; i++) {
             workers.push_back(std::make_unique<T>(config));
         }
     }
 
     virtual ~Runner() = default;
 
-    constexpr const T& getWorker(const std::size_t& index = 0) const {
+    constexpr const T& getWorker(const U64& index = 0) const {
         return *workers[index];
     }
 
-    constexpr const std::size_t& getHead() const {
+    constexpr const U64& getHead() const {
         return head;
     }
 
@@ -58,7 +58,7 @@ class BLADE_API Runner {
         return Result::SUCCESS;
     }
 
-    bool enqueue(const std::function<const std::size_t(T&)>& jobFunc) {
+    bool enqueue(const std::function<const U64(T&)>& jobFunc) {
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
@@ -74,7 +74,7 @@ class BLADE_API Runner {
         return true;
     }
 
-    bool dequeue(std::size_t* id) {
+    bool dequeue(U64* id) {
         // Return if there are no jobs.
         if (jobs.size() == 0) {
             return false;
@@ -103,11 +103,11 @@ class BLADE_API Runner {
 
  private:
     struct Job {
-        std::size_t id;
+        U64 id;
         std::unique_ptr<T>& worker;
     };
 
-    std::size_t head = 0;
+    U64 head = 0;
     std::deque<Job> jobs;
     std::vector<std::unique_ptr<T>> workers;
 };

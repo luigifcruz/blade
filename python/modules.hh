@@ -16,7 +16,7 @@ inline void init_beamformer(const py::module& m) {
     py::class_<Class, std::shared_ptr<Class>> beamformer(m, "Beamformer");
 
     py::class_<Class::Config>(beamformer, "Config")
-        .def(py::init<const ArrayDims&, const std::size_t&>(), py::arg("dims"),
+        .def(py::init<const ArrayDims&, const U64&>(), py::arg("dims"),
                                                                py::arg("block_size"));
 
     py::class_<Class::Input>(beamformer, "Input")
@@ -43,8 +43,8 @@ inline void init_channelizer(const py::module& m) {
 
     py::class_<Class::Config>(channelizer, "Config")
         .def(py::init<const ArrayDims&,
-                      const std::size_t&,
-                      const std::size_t&>(), py::arg("dims"),
+                      const U64&,
+                      const U64&>(), py::arg("dims"),
                                              py::arg("fft_size"),
                                              py::arg("block_size"));
 

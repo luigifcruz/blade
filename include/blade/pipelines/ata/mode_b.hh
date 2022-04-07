@@ -17,20 +17,20 @@ class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
         ArrayDims inputDims;
-        std::size_t channelizerRate;  // 1 mitigates the channelization
-        std::size_t beamformerBeams;
+        U64 channelizerRate;  // 1 mitigates the channelization
+        U64 beamformerBeams;
 
-        std::size_t outputMemWidth;
-        std::size_t outputMemPad;
+        U64 outputMemWidth;
+        U64 outputMemPad;
 
-        std::size_t castBlockSize = 512;
-        std::size_t channelizerBlockSize = 512;
-        std::size_t beamformerBlockSize = 512;
+        U64 castBlockSize = 512;
+        U64 channelizerBlockSize = 512;
+        U64 beamformerBlockSize = 512;
     };
 
     explicit ModeB(const Config& config);
 
-    constexpr const std::size_t getInputSize() const {
+    constexpr const U64 getInputSize() const {
         if (config.channelizerRate > 1) {
             return channelizer->getBufferSize();
         } else {
@@ -38,11 +38,11 @@ class BLADE_API ModeB : public Pipeline {
         }
     }
 
-    constexpr const std::size_t getPhasorsSize() const {
+    constexpr const U64 getPhasorsSize() const {
         return beamformer->getPhasorsSize();
     }
 
-    constexpr const std::size_t getOutputSize() const {
+    constexpr const U64 getOutputSize() const {
         return
             (((beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth) *
                 outputMemPitch) / sizeof(OT);
@@ -56,7 +56,7 @@ class BLADE_API ModeB : public Pipeline {
  private:
     const Config config;
 
-    std::size_t outputMemPitch;
+    U64 outputMemPitch;
 
     Vector<Device::CUDA, CI8> input;
     Vector<Device::CUDA, CF32> phasors;

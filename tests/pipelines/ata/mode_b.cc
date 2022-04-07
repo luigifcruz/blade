@@ -23,7 +23,7 @@ bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
 }
 
-bool blade_ata_b_initialize(size_t numberOfWorkers) {
+bool blade_ata_b_initialize(U64 numberOfWorkers) {
     TestPipeline::Config config = {
         .inputDims = {
             .NBEAMS = 1,
@@ -54,22 +54,22 @@ void blade_ata_b_terminate() {
     instance.guard.reset();
 }
 
-size_t blade_ata_b_get_input_size() {
+U64 blade_ata_b_get_input_size() {
     assert(instance.runner);
     return instance.runner->getWorker().getInputSize();
 }
 
-size_t blade_ata_b_get_output_size() {
+U64 blade_ata_b_get_output_size() {
     assert(instance.runner);
     return instance.runner->getWorker().getOutputSize();
 }
 
-size_t blade_ata_b_get_phasor_size() {
+U64 blade_ata_b_get_phasor_size() {
     assert(instance.runner);
     return instance.runner->getWorker().getPhasorsSize();
 }
 
-bool blade_pin_memory(void* buffer, size_t size) {
+bool blade_pin_memory(void* buffer, U64 size) {
     return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
 }
 
@@ -82,7 +82,7 @@ bool blade_ata_b_set_phasors(void* phasors, bool block) {
     }, block) == Result::SUCCESS;
 }
 
-bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, size_t id) {
+bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
     assert(instance.runner);
     return instance.runner->enqueue([&](auto& worker){
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
@@ -95,7 +95,7 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, size_t id) {
     });
 }
 
-bool blade_ata_b_dequeue(size_t* id) {
+bool blade_ata_b_dequeue(U64* id) {
     assert(instance.runner);
     return instance.runner->dequeue(id);
 }

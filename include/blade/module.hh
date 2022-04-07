@@ -16,7 +16,7 @@ namespace Blade {
 
 class Module {
  public:
-    explicit Module(const std::size_t& blockSize,
+    explicit Module(const U64& blockSize,
                     const jitify2::PreprocessedProgram& kernel);
     virtual ~Module() = default;
 

@@ -1,7 +1,8 @@
 #include "cuComplex.h"
+#include <stdint.h>
 
-template<size_t NBEAMS, size_t NANTS, size_t NCHANS,
-         size_t NTIME, size_t NPOLS, size_t TBLOCK>
+template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
+         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK>
 __global__ void ATA(const cuFloatComplex* input,
                     const cuFloatComplex* phasor,
                           cuFloatComplex* out) {
@@ -51,8 +52,8 @@ __global__ void ATA(const cuFloatComplex* input,
     }
 }
 
-template<size_t NBEAMS, size_t NANTS, size_t NCHANS,
-         size_t NTIME, size_t NPOLS, size_t TBLOCK>
+template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
+         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK>
 __global__ void MeerKAT(const cuFloatComplex* input,
                         const cuFloatComplex* phasor,
                               cuFloatComplex* out) {

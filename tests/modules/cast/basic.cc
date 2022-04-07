@@ -8,7 +8,7 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
-    explicit Test(const std::size_t& inputSize) {
+    explicit Test(const U64& inputSize) {
         this->connect(cast, {inputSize, 512}, {input});
     }
 
@@ -28,14 +28,14 @@ class Test : public Pipeline {
 };
 
 template<typename IT, typename OT>
-int complex_test(const std::size_t testSize) {
+int complex_test(const U64 testSize) {
     auto mod = Test<std::complex<IT>, std::complex<OT>>{testSize};
 
     Vector<Device::CPU, std::complex<IT>> input(testSize);
     Vector<Device::CPU, std::complex<OT>> output(testSize);
     Vector<Device::CPU, std::complex<OT>> result(testSize);
 
-    for (std::size_t i = 0; i < testSize; i++) {
+    for (U64 i = 0; i < testSize; i++) {
         input[i] = {
             static_cast<IT>(std::rand()),
             static_cast<IT>(std::rand())
@@ -54,7 +54,7 @@ int complex_test(const std::size_t testSize) {
         }
     }
 
-    std::size_t errors = 0;
+    U64 errors = 0;
     if ((errors = Checker::run(output, result)) != 0) {
         BL_FATAL("Cast produced {} errors.", errors);
         return 1;
@@ -71,7 +71,7 @@ int main() {
 
     BL_INFO("Testing cast module.");
 
-    const std::size_t testSize = 134400000;
+    const U64 testSize = 134400000;
 
     // TODO: Add non-complex tests.
 

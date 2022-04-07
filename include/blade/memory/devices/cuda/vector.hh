@@ -13,7 +13,7 @@ class BLADE_API Vector<Device::CUDA, T> : public VectorImpl<T> {
  public:
     using VectorImpl<T>::VectorImpl;
 
-    explicit Vector(const std::size_t& size) {
+    explicit Vector(const U64& size) {
         BL_CHECK_THROW(this->resize(size));
     }
 
@@ -28,7 +28,7 @@ class BLADE_API Vector<Device::CUDA, T> : public VectorImpl<T> {
     }
 
     // TODO: Implement resize.
-    Result resize(const std::size_t& size) override {
+    Result resize(const U64& size) override {
         if (!this->container.empty() && !this->managed) {
             return Result::ERROR;
         }
@@ -52,7 +52,7 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
  public:
     using VectorImpl<T>::VectorImpl;
 
-    explicit Vector(const std::size_t& size) {
+    explicit Vector(const U64& size) {
         BL_CHECK_THROW(this->resize(size));
     }
 
@@ -67,7 +67,7 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
     }
 
     // TODO: Implement resize.
-    Result resize(const std::size_t& size) override {
+    Result resize(const U64& size) override {
         if (!this->container.empty() && !this->managed) {
             return Result::ERROR;
         }

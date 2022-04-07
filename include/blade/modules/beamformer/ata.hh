@@ -11,17 +11,17 @@ class BLADE_API ATA : public Generic<IT, OT> {
     explicit ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input);
 
-    constexpr std::size_t getInputSize() const {
+    constexpr U64 getInputSize() const {
         return this->config.dims.NANTS * this->config.dims.NCHANS *
             this->config.dims.NTIME * this->config.dims.NPOLS;
     }
 
-    constexpr std::size_t getOutputSize() const {
+    constexpr U64 getOutputSize() const {
         return this->config.dims.NBEAMS * this->config.dims.NTIME *
             this->config.dims.NCHANS * this->config.dims.NPOLS;
     }
 
-    constexpr std::size_t getPhasorsSize() const {
+    constexpr U64 getPhasorsSize() const {
         return this->config.dims.NBEAMS * this->config.dims.NANTS *
             this->config.dims.NCHANS * this->config.dims.NPOLS;
     }

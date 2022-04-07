@@ -43,7 +43,7 @@ class BLADE_API Generic : public Module {
         return config;
     }
 
-    virtual constexpr std::size_t getPhasorsSize() const = 0;
+    virtual constexpr U64 getPhasorsSize() const = 0;
 
     Result preprocess(const cudaStream_t& stream = 0) final;
     Result process(const cudaStream_t& stream = 0) final;

@@ -49,11 +49,11 @@ static Result Copy(Vector<Device::CPU, T>& dst,
 
 template<typename DT, typename ST>
 static Result Copy2D(VectorImpl<DT>& dst,
-                   const size_t dpitch,
+                   const U64 dpitch,
                    const VectorImpl<ST>& src,
-                   const size_t spitch,
-                   const size_t width,
-                   const size_t height,
+                   const U64 spitch,
+                   const U64 width,
+                   const U64 height,
                    const cudaMemcpyKind& kind,
                    const cudaStream_t& stream = 0) {
     auto failure = false;
@@ -111,33 +111,33 @@ static Result Copy2D(VectorImpl<DT>& dst,
 
 template<typename DT, typename ST>
 static Result Copy2D(Vector<Device::CUDA, DT>& dst,
-                   const size_t dpitch,
+                   const U64 dpitch,
                    const Vector<Device::CUDA, ST>& src,
-                   const size_t spitch,
-                   const size_t width,
-                   const size_t height,
+                   const U64 spitch,
+                   const U64 width,
+                   const U64 height,
                    const cudaStream_t& stream = 0) {
     return Memory::Copy2D(dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToDevice, stream);
 }
 
 template<typename DT, typename ST>
 static Result Copy2D(Vector<Device::CUDA, DT>& dst,
-                   const size_t dpitch,
+                   const U64 dpitch,
                    const Vector<Device::CPU, ST>& src,
-                   const size_t spitch,
-                   const size_t width,
-                   const size_t height,
+                   const U64 spitch,
+                   const U64 width,
+                   const U64 height,
                    const cudaStream_t& stream = 0) {
     return Memory::Copy2D(dst, dpitch, src, spitch, width, height, cudaMemcpyHostToDevice, stream);
 }
 
 template<typename DT, typename ST>
 static Result Copy2D(Vector<Device::CPU, DT>& dst,
-                   const size_t dpitch,
+                   const U64 dpitch,
                    const Vector<Device::CUDA, ST>& src,
-                   const size_t spitch,
-                   const size_t width,
-                   const size_t height,
+                   const U64 spitch,
+                   const U64 width,
+                   const U64 height,
                    const cudaStream_t& stream = 0) {
     return Memory::Copy2D(dst, dpitch, src, spitch, width, height, cudaMemcpyDeviceToHost, stream);
 }

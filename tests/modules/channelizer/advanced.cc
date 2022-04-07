@@ -12,7 +12,7 @@ class Test : public Pipeline {
         this->connect(channelizer, config, {input});
     }
 
-    constexpr const std::size_t getInputSize() const {
+    constexpr const U64 getInputSize() const {
         return channelizer->getBufferSize();
     }
 
