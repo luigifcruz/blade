@@ -49,8 +49,20 @@ class VectorImpl {
     }
 
     // TODO: Implement iterator.
-    constexpr std::span<T>& getUnderlying() {
+    constexpr const std::span<T>& getUnderlying() const {
         return container;
+    }
+
+    Result link(const VectorImpl<T>& src) {
+        if (src.empty()) {
+            BL_FATAL("Source can't be empty while linking.");
+            return Result::ERROR;
+        }
+
+        this->managed = false;
+        this->container = src.getUnderlying();
+
+        return Result::SUCCESS;
     }
 
     virtual Result resize(const U64& size) = 0;

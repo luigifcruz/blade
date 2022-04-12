@@ -16,8 +16,17 @@ inline void init_beamformer(const py::module& m) {
     py::class_<Class, std::shared_ptr<Class>> beamformer(m, "Beamformer");
 
     py::class_<Class::Config>(beamformer, "Config")
-        .def(py::init<const ArrayDims&, const U64&>(), py::arg("dims"),
-                                                               py::arg("block_size"));
+        .def(py::init<const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&>(), py::arg("number_of_beams"),
+                                     py::arg("number_of_antennas"),
+                                     py::arg("number_of_frequency_channels"),
+                                     py::arg("number_of_time_samples"),
+                                     py::arg("number_of_polarizations"),
+                                     py::arg("block_size"));
 
     py::class_<Class::Input>(beamformer, "Input")
         .def(py::init<const Vector<Device::CUDA, CF32>&,
@@ -28,9 +37,9 @@ inline void init_beamformer(const py::module& m) {
         .def(py::init<const Class::Config&,
                       const Class::Input&>(), py::arg("config"),
                                               py::arg("input"))
-        .def("inputSize", &Class::getInputSize)
-        .def("outputSize", &Class::getOutputSize)
-        .def("phasorSize", &Class::getPhasorsSize)
+        .def("input_size", &Class::getInputSize)
+        .def("output_size", &Class::getOutputSize)
+        .def("phasor_size", &Class::getPhasorsSize)
         .def("input", &Class::getInput, py::return_value_policy::reference)
         .def("phasor", &Class::getPhasors, py::return_value_policy::reference)
         .def("output", &Class::getOutput, py::return_value_policy::reference);
@@ -42,11 +51,19 @@ inline void init_channelizer(const py::module& m) {
     py::class_<Class, std::shared_ptr<Class>> channelizer(m, "Channelizer");
 
     py::class_<Class::Config>(channelizer, "Config")
-        .def(py::init<const ArrayDims&,
+        .def(py::init<const U64&,
                       const U64&,
-                      const U64&>(), py::arg("dims"),
-                                             py::arg("fft_size"),
-                                             py::arg("block_size"));
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&>(), py::arg("number_of_beams"),
+                                     py::arg("number_of_antennas"),
+                                     py::arg("number_of_frequency_channels"),
+                                     py::arg("number_of_time_samples"),
+                                     py::arg("number_of_polarizations"),
+                                     py::arg("fft_size"),
+                                     py::arg("block_size"));
 
     py::class_<Class::Input>(channelizer, "Input")
         .def(py::init<const Vector<Device::CUDA, CF32>&>(), py::arg("buf"));
@@ -55,8 +72,7 @@ inline void init_channelizer(const py::module& m) {
         .def(py::init<const Class::Config&,
                       const Class::Input&>(), py::arg("config"),
                                               py::arg("input"))
-        .def("bufferSize", &Class::getBufferSize)
-        .def("outputDims", &Class::getOutputDims)
+        .def("buffer_size", &Class::getBufferSize)
         .def("input", &Class::getInput, py::return_value_policy::reference)
         .def("output", &Class::getOutput, py::return_value_policy::reference);
 }

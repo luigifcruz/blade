@@ -16,8 +16,13 @@ template<typename OT = CF16>
 class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
-        ArrayDims inputDims;
-        U64 channelizerRate;  // 1 mitigates the channelization
+        U64 numberOfBeams;
+        U64 numberOfAntennas;
+        U64 numberOfFrequencyChannels;
+        U64 numberOfTimeSamples;
+        U64 numberOfPolarizations;
+
+        U64 channelizerRate;
         U64 beamformerBeams;
 
         U64 outputMemWidth;
@@ -31,11 +36,7 @@ class BLADE_API ModeB : public Pipeline {
     explicit ModeB(const Config& config);
 
     constexpr const U64 getInputSize() const {
-        if (config.channelizerRate > 1) {
-            return channelizer->getBufferSize();
-        } else {
-            return beamformer->getInputSize();
-        }
+        return channelizer->getBufferSize();
     }
 
     constexpr const U64 getPhasorsSize() const {
@@ -43,9 +44,14 @@ class BLADE_API ModeB : public Pipeline {
     }
 
     constexpr const U64 getOutputSize() const {
-        return
-            (((beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth) *
-                outputMemPitch) / sizeof(OT);
+        return 
+            (
+                (
+                    (
+                        beamformer->getOutputSize() * sizeof(OT)
+                    ) / config.outputMemWidth
+                ) * outputMemPitch
+            ) / sizeof(OT);
     }
 
     Result run(const Vector<Device::CPU, CI8>& input,

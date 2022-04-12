@@ -12,7 +12,12 @@ template<typename IT, typename OT>
 class BLADE_API Generic : public Module {
  public:
     struct Config {
-        ArrayDims dims;
+        U64 numberOfBeams;
+        U64 numberOfAntennas;
+        U64 numberOfFrequencyChannels;
+        U64 numberOfTimeSamples;
+        U64 numberOfPolarizations; 
+
         U64 blockSize = 512;
     };
 

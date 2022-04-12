@@ -16,7 +16,7 @@ class BLADE_API Generic : public Module {
         U64 numberOfPolarizations;
 
         LLA arrayReferencePosition; 
-        HA_DEC boresightCoordinate;
+        RA_DEC boresightCoordinate;
 
         std::vector<XYZ> antennaPositions;
         std::vector<F64> antennaCalibrations; 
@@ -26,6 +26,7 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
+        Vector<Device::CUDA, double>& frameTime;
     };
 
     struct Output {

@@ -37,14 +37,12 @@ int main() {
     BL_INFO("Testing advanced channelizer.");
 
     Test<CF32, CF32> mod({
-        .dims = {
-            .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 96,
-            .NTIME  = 35000,
-            .NPOLS  = 2,
-        },
-        .fftSize = 4,
+        .numberOfBeams = 1,
+        .numberOfAntennas = 20,
+        .numberOfFrequencyChannels = 96,
+        .numberOfTimeSamples = 35000,
+        .numberOfPolarizations = 2,
+        .rate = 4,
         .blockSize = 512,
     });
 

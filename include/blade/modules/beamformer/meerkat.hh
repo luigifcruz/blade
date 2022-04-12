@@ -12,17 +12,22 @@ class BLADE_API MeerKAT : public Generic<IT, OT> {
                      const typename Generic<IT, OT>::Input& input);
 
     constexpr U64 getInputSize() const {
-        return this->config.dims.NANTS * this->config.dims.NCHANS *
-            this->config.dims.NTIME * this->config.dims.NPOLS;
+        return this->config.numberOfAntennas *
+               this->config.numberOfFrequencyChannels * 
+               this->config.numberOfTimeSamples *
+               this->config.numberOfPolarizations;
     }
 
     constexpr U64 getOutputSize() const {
-        return this->config.dims.NBEAMS * this->config.dims.NTIME *
-            this->config.dims.NCHANS * this->config.dims.NPOLS;
+        return this->config.numberOfBeams *
+               this->config.numberOfTimeSamples *
+               this->config.numberOfFrequencyChannels *
+               this->config.numberOfPolarizations;
     }
 
     constexpr U64 getPhasorsSize() const {
-        return this->config.dims.NBEAMS * this->config.dims.NANTS;
+        return this->config.numberOfBeams *
+               this->config.numberOfAntennas;
     }
 };
 

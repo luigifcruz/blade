@@ -12,8 +12,13 @@ template<typename IT, typename OT>
 class BLADE_API Channelizer : public Module {
  public:
     struct Config {
-        ArrayDims dims;
-        U64 fftSize = 4;
+        U64 numberOfBeams;
+        U64 numberOfAntennas;
+        U64 numberOfFrequencyChannels;
+        U64 numberOfTimeSamples;
+        U64 numberOfPolarizations; 
+
+        U64 rate = 4;
         U64 blockSize = 512;
     };
 
@@ -39,16 +44,11 @@ class BLADE_API Channelizer : public Module {
         return this->config;
     }
 
-    constexpr const ArrayDims getOutputDims() {
-        auto cfg = config.dims;
-        cfg.NCHANS *= config.fftSize;
-        cfg.NTIME /= config.fftSize;
-        return cfg;
-    }
-
     constexpr const U64 getBufferSize() const {
-        return config.dims.NPOLS * config.dims.NTIME *
-            config.dims.NANTS * config.dims.NCHANS;
+        return config.numberOfPolarizations * 
+               config.numberOfTimeSamples *
+               config.numberOfAntennas * 
+               config.numberOfFrequencyChannels;
     }
 
     Result process(const cudaStream_t& stream = 0) final;

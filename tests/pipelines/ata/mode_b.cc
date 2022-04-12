@@ -25,13 +25,12 @@ bool blade_use_device(int device_id) {
 
 bool blade_ata_b_initialize(U64 numberOfWorkers) {
     TestPipeline::Config config = {
-        .inputDims = {
-            .NBEAMS = 1,
-            .NANTS  = BLADE_ATA_MODE_B_INPUT_NANT,
-            .NCHANS = BLADE_ATA_MODE_B_ANT_NCHAN,
-            .NTIME  = BLADE_ATA_MODE_B_NTIME,
-            .NPOLS  = BLADE_ATA_MODE_B_NPOL,
-        },
+        .numberOfBeams = 1,
+        .numberOfAntennas = BLADE_ATA_MODE_B_INPUT_NANT,
+        .numberOfFrequencyChannels = BLADE_ATA_MODE_B_ANT_NCHAN,
+        .numberOfTimeSamples = BLADE_ATA_MODE_B_NTIME,
+        .numberOfPolarizations = BLADE_ATA_MODE_B_NPOL,
+
         .channelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
 

@@ -9,9 +9,9 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, beamformer_kernel),
           config(config),
           input(input) {
-    if ((config.dims.NTIME % config.blockSize) != 0) {
+    if ((config.numberOfTimeSamples % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by "
-                "the block size ({}).", config.dims.NTIME, config.blockSize);
+                "the block size ({}).", config.numberOfTimeSamples, config.blockSize);
         throw Result::ERROR;
     }
 }

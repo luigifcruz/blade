@@ -23,8 +23,10 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    if (config.numberOfAntennas != config.antennaCalibrations.size()) {
-        BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
+    if (config.numberOfAntennas * config.numberOfFrequencyChannels
+            != config.antennaCalibrations.size()) {
+        BL_FATAL("Number of Antennas times Number of Frequency Channels"
+                 "configuration ({}) mismatches the number of"
                  "antenna calibrations ({}).", config.numberOfAntennas,
                  config.antennaCalibrations.size());
         throw Result::ERROR;

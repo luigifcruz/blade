@@ -43,38 +43,6 @@ struct HA_DEC {
     double DEC;
 };
 
-struct ArrayDims {
-    std::size_t NBEAMS;
-    std::size_t NANTS;
-    std::size_t NCHANS;
-    std::size_t NTIME;
-    std::size_t NPOLS;
-
-    constexpr const std::size_t getNumberOfBeams() const {
-        return this->NBEAMS;
-    }
-
-    constexpr const std::size_t getNumberOfAntennas() const {
-        return this->NANTS;
-    }
-
-    constexpr const std::size_t getNumberOfChannels() const {
-        return this->NCHANS;
-    }
-
-    constexpr const std::size_t getNumberOfTime() const {
-        return this->NTIME;
-    }
-
-    constexpr const std::size_t getNumberOfPolarizations() const {
-        return this->NPOLS;
-    }
-
-    constexpr const std::size_t getSize() const {
-        return NBEAMS * NANTS * NCHANS * NTIME * NPOLS;
-    }
-};
-
 }  // namespace Blade
 
 #endif
