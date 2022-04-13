@@ -17,6 +17,16 @@ class BLADE_API ATA : public Generic<OT> {
                this->config.numberOfFrequencyChannels *
                this->config.numberOfPolarizations;
     }
+
+    Result preprocess(const cudaStream_t& stream = 0) final;
+    Result process(const cudaStream_t& stream = 0) final;
+
+ private:
+    std::vector<XYZ> antennas_xyz;
+    std::vector<UVW> boresight_uvw;
+    std::vector<UVW> source_uvw;
+    std::vector<F64> boresightDelay;
+    Vector<Device::CUDA | Device::CPU, F64> relativeDelay;
 };
 
 }  // namespace Blade::Modules::Phasor

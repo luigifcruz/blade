@@ -35,6 +35,27 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         .buf = inputCast->getOutput(),
     });
 
+    BL_DEBUG("Instantiating phasor module.");
+    this->connect(phasor, {
+        .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
+        .numberOfAntennas = config.numberOfAntennas,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
+        .numberOfPolarizations = config.numberOfPolarizations,
+        
+        .referenceAntennaIndex = config.referenceAntennaIndex,
+        .arrayReferencePosition = config.arrayReferencePosition,
+        .boresightCoordinate = config.boresightCoordinate,
+
+        .antennaPositions = config.antennaPositions,
+        .antennaCalibrations = config.antennaCalibrations,
+        .beamCoordinates = config.beamCoordinates,
+
+        .blockSize = config.phasorsBlockSize,
+    }, {
+        .frameJulianDate = this->frameJulianDate,
+        .differenceUniversalTime1 = this->differenceUniversalTime1,
+    });
+
     BL_DEBUG("Instantiating beamformer module.");
     this->connect(beamformer, {
         .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
@@ -45,7 +66,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         .blockSize = config.beamformerBlockSize,
     }, {
         .buf = channelizer->getOutput(),
-        .phasors = phasors,
+        .phasors = phasor->getPhasors(),
     });
 
     if constexpr (!std::is_same<OT, CF32>::value) {

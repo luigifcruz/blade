@@ -15,9 +15,14 @@ class BLADE_API Generic : public Module {
         U64 numberOfFrequencyChannels;
         U64 numberOfPolarizations;
 
+        F64 rfFrequencyHz;
+        F64 channelBandwidthHz; // 0.5 MHz
+        F64 totalBandwidthHz;
+        U64 frequencyStartIndex;
+
+        U64 referenceAntennaIndex;
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;
-
         std::vector<XYZ> antennaPositions;
         std::vector<F64> antennaCalibrations; 
         std::vector<RA_DEC> beamCoordinates;
@@ -26,7 +31,8 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
-        Vector<Device::CUDA, double>& frameTime;
+        F64& frameJulianDate;
+        F64& differenceUniversalTime1;
     };
 
     struct Output {
@@ -46,8 +52,8 @@ class BLADE_API Generic : public Module {
 
     virtual constexpr U64 getPhasorsSize() const = 0;
 
-    Result preprocess(const cudaStream_t& stream = 0) final;
-    Result process(const cudaStream_t& stream = 0) final;
+    virtual Result preprocess(const cudaStream_t& stream = 0);
+    virtual Result process(const cudaStream_t& stream = 0);
 
  protected:
     const Config config;

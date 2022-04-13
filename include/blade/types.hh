@@ -24,7 +24,7 @@ struct XYZ {
 struct UVW {
     double U;
     double V;
-    double Z;
+    double W;
 };
 
 struct LLA { 

@@ -9,6 +9,7 @@
 #include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
+#include "blade/modules/phasor/ata.hh"
 
 namespace Blade::Pipelines::ATA {
 
@@ -23,13 +24,22 @@ class BLADE_API ModeB : public Pipeline {
         U64 numberOfPolarizations;
 
         U64 channelizerRate;
+
         U64 beamformerBeams;
+
+        U64 referenceAntennaIndex;
+        LLA arrayReferencePosition; 
+        RA_DEC boresightCoordinate;
+        std::vector<XYZ> antennaPositions;
+        std::vector<F64> antennaCalibrations; 
+        std::vector<RA_DEC> beamCoordinates;
 
         U64 outputMemWidth;
         U64 outputMemPad;
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
+        U64 phasorsBlockSize = 512;
         U64 beamformerBlockSize = 512;
     };
 
@@ -65,10 +75,13 @@ class BLADE_API ModeB : public Pipeline {
     U64 outputMemPitch;
 
     Vector<Device::CUDA, CI8> input;
-    Vector<Device::CUDA, CF32> phasors;
+    //  TODO: [RELEASE] REMOVE DEFS.
+    F64 frameJulianDate = (1649366473.0/ 86400) + 2440587.5;
+    F64 differenceUniversalTime1 = 0.0;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
+    std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
 

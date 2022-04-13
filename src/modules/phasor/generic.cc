@@ -11,24 +11,31 @@ Generic<OT>::Generic(const Config& config, const Input& input)
           input(input) {
     if (config.numberOfBeams != config.beamCoordinates.size()) {
         BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
-                 "beams coordinates ({}).", config.numberOfBeams,
+                 " beams coordinates ({}).", config.numberOfBeams,
                  config.beamCoordinates.size());
         throw Result::ERROR;
     }
 
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
-                 "antenna positions ({}).", config.numberOfAntennas,
+                 " antenna positions ({}).", config.numberOfAntennas,
                  config.antennaPositions.size());
         throw Result::ERROR;
     }
 
-    if (config.numberOfAntennas * config.numberOfFrequencyChannels
+    if (config.numberOfAntennas * config.numberOfFrequencyChannels * config.numberOfPolarizations
             != config.antennaCalibrations.size()) {
-        BL_FATAL("Number of Antennas times Number of Frequency Channels"
-                 "configuration ({}) mismatches the number of"
-                 "antenna calibrations ({}).", config.numberOfAntennas,
-                 config.antennaCalibrations.size());
+        BL_FATAL("Insufficient number of antenna calibrations ({}). This number"
+                 " should be the product of Number of Antennas ({}) and Number of"
+                 " Frequency Channels ({}).", config.antennaCalibrations.size(), 
+                 config.numberOfAntennas, config.numberOfFrequencyChannels);
+        throw Result::ERROR;
+    }
+    
+    if (config.referenceAntennaIndex >= config.numberOfAntennas) {
+        BL_FATAL("Reference Antenna Index ({}) is larger than the number of"
+                 " antennas ({}).", config.referenceAntennaIndex,
+                 config.numberOfAntennas);
         throw Result::ERROR;
     }
 }
