@@ -53,27 +53,15 @@ class BLADE_API ModeB : public Pipeline {
         return channelizer->getBufferSize();
     }
 
-    constexpr const U64 getPhasorsSize() const {
-        return beamformer->getPhasorsSize();
-    }
-
     constexpr const U64 getOutputSize() const {
-        return 
-            (
-                (
-                    (
-                        beamformer->getOutputSize() * sizeof(OT)
-                    ) / config.outputMemWidth
-                ) * outputMemPitch
-            ) / sizeof(OT);
+        return (((beamformer->getOutputSize() * sizeof(OT)) / 
+            config.outputMemWidth) * outputMemPitch) / sizeof(OT);
     }
 
     Result run(const F64& frameJulianDate,
                const F64& differenceUniversalTime1,
                const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
-
-    Result setPhasors(const Vector<Device::CPU, CF32>& phasors);
 
  private:
     const Config config;

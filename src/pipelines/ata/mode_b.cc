@@ -106,13 +106,6 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
     return Result::SUCCESS;
 }
 
-template<typename OT>
-Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
-    BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
-
-    return Result::SUCCESS;
-}
-
 template class BLADE_API ModeB<CF16>;
 template class BLADE_API ModeB<CF32>;
 
