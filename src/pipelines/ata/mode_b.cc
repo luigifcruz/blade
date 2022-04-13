@@ -113,6 +113,34 @@ Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
     return Result::SUCCESS;
 }
 
+template<typename OT>
+Result ModeB<OT>::setAntennaPositions(const Vector<Device::CPU, XYZ>& xyz_positions) {
+    BL_CHECK(this->copy(phasor->antennaPositions, xyz_positions));
+
+    return Result::SUCCESS;
+}
+
+template<typename OT>
+Result ModeB<OT>::setAntennaCalibrations(const Vector<Device::CPU, F64>& calibrations) {
+    BL_CHECK(this->copy(phasor->antennaCalibrations, calibrations));
+
+    return Result::SUCCESS;
+}
+
+template<typename OT>
+Result ModeB<OT>::setBeamCoordinates(const Vector<Device::CPU, RA_DEC>& coordinates) {
+    BL_CHECK(this->copy(phasor->beamCoordinates, coordinates));
+
+    return Result::SUCCESS;
+}
+
+template<typename OT>
+Result ModeB<OT>::setBoresightCoordinates(const RA_DEC& coordinate) {
+    BL_CHECK(this->copy(phasor->boresightCoordinate, coordinate));
+
+    return Result::SUCCESS;
+}
+
 template class BLADE_API ModeB<CF16>;
 template class BLADE_API ModeB<CF32>;
 

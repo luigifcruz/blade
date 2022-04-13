@@ -74,6 +74,10 @@ class BLADE_API ModeB : public Pipeline {
                      Vector<Device::CPU, OT>& output);
 
     Result setPhasors(const Vector<Device::CPU, CF32>& phasors);
+    Result setAntennaPositions(const Vector<Device::CPU, XYZ>& xyz_positions);
+    Result setAntennaCalibrations(const Vector<Device::CPU, F64>& calibrations);
+    Result setBeamCoordinates(const Vector<Device::CPU, RA_DEC>& coordinates);
+    Result setBoresightCoordinates(const RA_DEC& coordinate);
 
  private:
     const Config config;
