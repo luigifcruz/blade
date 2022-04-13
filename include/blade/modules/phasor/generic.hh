@@ -16,7 +16,7 @@ class BLADE_API Generic : public Module {
         U64 numberOfPolarizations;
 
         F64 rfFrequencyHz;
-        F64 channelBandwidthHz; // 0.5 MHz
+        F64 channelBandwidthHz;
         F64 totalBandwidthHz;
         U64 frequencyStartIndex;
 

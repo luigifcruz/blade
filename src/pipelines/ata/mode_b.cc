@@ -41,7 +41,11 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
-        
+
+        .rfFrequencyHz = config.rfFrequencyHz,
+        .channelBandwidthHz = config.channelBandwidthHz,
+        .totalBandwidthHz = config.totalBandwidthHz,
+        .frequencyStartIndex = config.frequencyStartIndex,
         .referenceAntennaIndex = config.referenceAntennaIndex,
         .arrayReferencePosition = config.arrayReferencePosition,
         .boresightCoordinate = config.boresightCoordinate,

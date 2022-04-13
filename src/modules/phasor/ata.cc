@@ -10,20 +10,19 @@ template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
-    //  Preallocating arrays.
-    antennas_xyz.resize(this->config.numberOfAntennas);
-    boresight_uvw.resize(this->config.numberOfAntennas);
-    source_uvw.resize(this->config.numberOfAntennas);
+    //  Resizing array to the required length.
+    antennasXyz.resize(this->config.numberOfAntennas);
+    boresightUvw.resize(this->config.numberOfAntennas);
+    sourceUvw.resize(this->config.numberOfAntennas);
     boresightDelay.resize(this->config.numberOfAntennas);
-    BL_CHECK_THROW(this->InitInput(relativeDelay, 
-        this->config.numberOfAntennas * this->config.numberOfBeams));
+    relativeDelay.resize(this->config.numberOfAntennas * this->config.numberOfBeams);
 
     //  Copy Earth Centered XYZ Antenna Coordinates (XYZ) to Receiver (UVW).
-    antennas_xyz = this->config.antennaPositions;
+    antennasXyz = this->config.antennaPositions;
 
     //  Translate Antenna Position (ECEF) to Reference Position (XYZ).
     calc_position_to_xyz_frame_from_ecef(
-        (F64*)antennas_xyz.data(),
+        (F64*)antennasXyz.data(),
         this->config.numberOfAntennas,
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT,
@@ -49,13 +48,13 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         &boresight_ha_dec.DEC);
 
     //  Copy Reference Position (XYZ) to Boresight Position (UVW).
-    for (U64 i = 0; i < antennas_xyz.size(); i++) {
-        boresight_uvw[i] = reinterpret_cast<const UVW&>(antennas_xyz[i]);
+    for (U64 i = 0; i < antennasXyz.size(); i++) {
+        boresightUvw[i] = reinterpret_cast<const UVW&>(antennasXyz[i]);
     }
 
     //  Rotate Reference Position (UVW) towards Boresight (HA, Dec).
     calc_position_to_uvw_frame_from_xyz(
-        (F64*)boresight_uvw.data(),
+        (F64*)boresightUvw.data(),
         this->config.numberOfAntennas,
         boresight_ha_dec.HA,
         boresight_ha_dec.DEC,
@@ -64,8 +63,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     //  Calculate delay for boresight (Ti = (Wi - Wr) / C).
     for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
         boresightDelay[i] = (
-            boresight_uvw[i].W - 
-            boresight_uvw[this->config.referenceAntennaIndex].W
+            boresightUvw[i].W - 
+            boresightUvw[this->config.referenceAntennaIndex].W
         ) / BL_PHYSICAL_CONSTANT_C; 
     }
 
@@ -82,8 +81,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
 
     for (U64 b = 0; b < this->config.numberOfBeams; b++) {
         //  Copy Reference Position (XYZ) to Source Position (UVW).
-        for (U64 i = 0; i < antennas_xyz.size(); i++) {
-            source_uvw[i] = reinterpret_cast<const UVW&>(antennas_xyz[i]);
+        for (U64 i = 0; i < antennasXyz.size(); i++) {
+            sourceUvw[i] = reinterpret_cast<const UVW&>(antennasXyz[i]);
         }
 
         HA_DEC source_ha_dec = {0.0, 0.0};
@@ -98,15 +97,11 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
 
         //  Rotate Reference Position (UVW) towards Source (HA, Dec).
         calc_position_to_uvw_frame_from_xyz(
-            (F64*)source_uvw.data(),
+            (F64*)sourceUvw.data(),
             this->config.numberOfAntennas,
-            boresight_ha_dec.HA,
-            boresight_ha_dec.DEC,
+            source_ha_dec.HA,
+            source_ha_dec.DEC,
             this->config.arrayReferencePosition.LON);
-
-        for (size_t i = 0; i < this->config.numberOfAntennas; i++) {
-            printf("+ %zu: U: %lf V: %lf W: %lf\n", i, source_uvw[i].U, source_uvw[i].V, source_uvw[i].W);
-        }
 
         //  Calculate delay for off-center source and subtract 
         //  from boresight (TPi = Ti - ((WPi - WPr) / C)).
@@ -114,14 +109,10 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             relativeDelay[(b * this->config.numberOfAntennas) + i] = 
                 boresightDelay[i] - (
                     (
-                        source_uvw[i].W -
-                        source_uvw[this->config.referenceAntennaIndex].W
+                        sourceUvw[i].W -
+                        sourceUvw[this->config.referenceAntennaIndex].W
                     ) / BL_PHYSICAL_CONSTANT_C
                 );
-        }
-
-        for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
-            printf("%.13lf\n", relativeDelay[i]);
         }
     }
 

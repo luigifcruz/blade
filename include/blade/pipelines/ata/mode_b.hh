@@ -27,6 +27,10 @@ class BLADE_API ModeB : public Pipeline {
 
         U64 beamformerBeams;
 
+        F64 rfFrequencyHz;
+        F64 channelBandwidthHz;
+        F64 totalBandwidthHz;
+        U64 frequencyStartIndex;
         U64 referenceAntennaIndex;
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;

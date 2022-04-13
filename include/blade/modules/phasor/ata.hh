@@ -22,9 +22,9 @@ class BLADE_API ATA : public Generic<OT> {
     Result process(const cudaStream_t& stream = 0) final;
 
  private:
-    std::vector<XYZ> antennas_xyz;
-    std::vector<UVW> boresight_uvw;
-    std::vector<UVW> source_uvw;
+    std::vector<XYZ> antennasXyz;
+    std::vector<UVW> boresightUvw;
+    std::vector<UVW> sourceUvw;
     std::vector<F64> boresightDelay;
     Vector<Device::CUDA | Device::CPU, F64> relativeDelay;
 };

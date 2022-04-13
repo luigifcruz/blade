@@ -32,8 +32,13 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .numberOfPolarizations = BLADE_ATA_MODE_B_NPOL,
 
         .channelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
+
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
 
+        .rfFrequencyHz = 0,
+        .channelBandwidthHz = 0,
+        .totalBandwidthHz = 0,
+        .frequencyStartIndex = 0,
         .referenceAntennaIndex = 0,
         .arrayReferencePosition = {
             .LON = BL_DEG_TO_RAD(-121.470733), 

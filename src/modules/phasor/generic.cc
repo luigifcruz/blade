@@ -23,12 +23,15 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    if (config.numberOfAntennas * config.numberOfFrequencyChannels * config.numberOfPolarizations
+    if (config.numberOfAntennas *
+        config.numberOfFrequencyChannels * 
+        config.numberOfPolarizations
             != config.antennaCalibrations.size()) {
         BL_FATAL("Insufficient number of antenna calibrations ({}). This number"
-                 " should be the product of Number of Antennas ({}) and Number of"
-                 " Frequency Channels ({}).", config.antennaCalibrations.size(), 
-                 config.numberOfAntennas, config.numberOfFrequencyChannels);
+                 " should be the product of Number of Antennas ({}), Number of"
+                 " Frequency Channels ({}), and Number of Polarizations ({}).",
+                 config.antennaCalibrations.size(), config.numberOfAntennas,
+                 config.numberOfFrequencyChannels, config.numberOfPolarizations);
         throw Result::ERROR;
     }
     
