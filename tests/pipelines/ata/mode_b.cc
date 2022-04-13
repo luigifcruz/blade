@@ -92,8 +92,13 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .beamformerBlockSize = 512,
     };
 
-    //  TODO: [RELEASE] REMOVE.
-    config.antennaCalibrations.resize(20*768*2);
+    config.antennaCalibrations.resize(
+        config.numberOfAntennas *
+        config.numberOfFrequencyChannels *
+        config.channelizerRate *
+        config.numberOfPolarizations);
+    printf(">>> %zu\n", config.antennaCalibrations.size());
+
 
     instance.guard = std::make_unique<Logger>();
     instance.runner = Runner<TestPipeline>::New(numberOfWorkers, config);
@@ -141,7 +146,7 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
         auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>
             (output_ptr, worker.getOutputSize());
 
-        worker.run(input, output);
+        worker.run((1649366473.0/ 86400) + 2440587.5, 0.0, input, output);
 
         return id;
     });

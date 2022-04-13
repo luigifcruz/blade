@@ -68,7 +68,9 @@ class BLADE_API ModeB : public Pipeline {
             ) / sizeof(OT);
     }
 
-    Result run(const Vector<Device::CPU, CI8>& input,
+    Result run(const F64& frameJulianDate,
+               const F64& differenceUniversalTime1,
+               const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
     Result setPhasors(const Vector<Device::CPU, CF32>& phasors);
@@ -79,9 +81,8 @@ class BLADE_API ModeB : public Pipeline {
     U64 outputMemPitch;
 
     Vector<Device::CUDA, CI8> input;
-    //  TODO: [RELEASE] REMOVE DEFS.
-    F64 frameJulianDate = (1649366473.0/ 86400) + 2440587.5;
-    F64 differenceUniversalTime1 = 0.0;
+    F64 frameJulianDate;
+    F64 differenceUniversalTime1;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;

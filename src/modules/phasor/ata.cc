@@ -114,6 +114,10 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                     ) / BL_PHYSICAL_CONSTANT_C
                 );
         }
+
+        for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
+            printf("%.13lf\n", relativeDelay[i]);
+        }
     }
 
     //  TODO: Add hint for CUDA Unified Memory.
