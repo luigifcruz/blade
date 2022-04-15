@@ -12,8 +12,8 @@ class BLADE_API ATA : public Generic<OT> {
                  const typename Generic<OT>::Input& input);
 
     constexpr U64 getPhasorsSize() const {
-        return this->config.numberOfAntennas *
-               this->config.numberOfBeams * 
+        return this->config.numberOfBeams * 
+               this->config.numberOfAntennas *
                this->config.numberOfFrequencyChannels *
                this->config.numberOfPolarizations;
     }

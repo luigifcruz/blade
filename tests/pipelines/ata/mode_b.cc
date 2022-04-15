@@ -35,10 +35,10 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
 
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
 
-        .rfFrequencyHz = 0,
-        .channelBandwidthHz = 0,
-        .totalBandwidthHz = 0,
-        .frequencyStartIndex = 0,
+        .rfFrequencyHz = 6500.125*1e6,
+        .channelBandwidthHz = 0.5e6,
+        .totalBandwidthHz = 1.024e9,
+        .frequencyStartIndex = 352,
         .referenceAntennaIndex = 0,
         .arrayReferencePosition = {
             .LON = BL_DEG_TO_RAD(-121.470733), 
@@ -46,7 +46,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             .ALT = 1020.86,
         },
         .boresightCoordinate = {
-            .RA = 0.94169,
+            .RA = 0.64169,
             .DEC = 1.079896295,
         },
         .antennaPositions = {
@@ -73,7 +73,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         },
         .antennaCalibrations = {},
         .beamCoordinates = {
-            {0.64169, 1.079896295},
+            {0.63722, 1.07552424},
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},

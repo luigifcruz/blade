@@ -36,7 +36,7 @@ class BLADE_API Generic : public Module {
     };
 
     struct Output {
-        Vector<Device::CUDA, OT> phasors;
+        Vector<Device::CPU | Device::CUDA, OT> phasors;
     };
 
     explicit Generic(const Config& config, const Input& input);

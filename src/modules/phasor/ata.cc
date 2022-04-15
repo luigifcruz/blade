@@ -61,9 +61,9 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LON);
 
     //  Calculate delay for boresight (Ti = (Wi - Wr) / C).
-    for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
-        boresightDelay[i] = (
-            boresightUvw[i].W - 
+    for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
+        boresightDelay[a] = (
+            boresightUvw[a].W - 
             boresightUvw[this->config.referenceAntennaIndex].W
         ) / BL_PHYSICAL_CONSTANT_C; 
     }
@@ -105,18 +105,66 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
 
         //  Calculate delay for off-center source and subtract 
         //  from boresight (TPi = Ti - ((WPi - WPr) / C)).
-        for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
-            relativeDelay[(b * this->config.numberOfAntennas) + i] = 
-                boresightDelay[i] - (
+        for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
+            relativeDelay[(b * this->config.numberOfAntennas) + a] = 
+                (
                     (
-                        sourceUvw[i].W -
+                        sourceUvw[a].W -
                         sourceUvw[this->config.referenceAntennaIndex].W
                     ) / BL_PHYSICAL_CONSTANT_C
-                );
+                ) - boresightDelay[a];
         }
     }
 
     //  TODO: Add hint for CUDA Unified Memory.
+
+    //for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
+    //    printf("%zu: %.15lf\n", i, relativeDelay[i]);
+    //}
+
+    std::vector<CF64> phasors(
+        this->config.numberOfBeams *
+        this->config.numberOfAntennas * 
+        this->config.numberOfFrequencyChannels * 
+        this->config.numberOfPolarizations);
+
+    for (U64 b = 0; b < this->config.numberOfBeams; b++) {
+        const U64 beamOffset = (b * 
+                                this->config.numberOfAntennas * 
+                                this->config.numberOfFrequencyChannels * 
+                                this->config.numberOfPolarizations); 
+
+        for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
+            const U64 antennaOffset = (a *
+                                       this->config.numberOfFrequencyChannels *
+                                       this->config.numberOfPolarizations);
+
+            const F64 delay = relativeDelay[(b * this->config.numberOfAntennas) + a];
+            const F64 fringe = (this->config.rfFrequencyHz - this->config.totalBandwidthHz) / 2.0;
+            const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
+
+            for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
+                const U64 frequencyOffset = (f * this->config.numberOfPolarizations);
+
+                const F64 freq = (f + this->config.frequencyStartIndex) * this->config.channelBandwidthHz;
+                const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
+                const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
+                
+                //if (f == 1 && b == 0) {
+                //    BL_TRACE("B: {} A: {} F: {} == {} {}", b, a, f, phasor.real(), phasor.imag());
+                //}
+
+                for (U64 p = 0; p < this->config.numberOfPolarizations; p++) {
+                    const U64 polarizationOffset = p;
+
+                    const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
+                    const U64 phasorsIndex = beamOffset + calibrationIndex;
+
+                    this->output.phasors[phasorsIndex] = phasor; // * this->config.antennaCalibrations[calibrationIndex];
+                }
+            }
+        }
+    }
 
     return Result::SUCCESS;
 }
