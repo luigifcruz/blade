@@ -9,6 +9,10 @@
 #define BL_PHYSICAL_CONSTANT_C (double)299792458.0 // Speed of Light (m/s)
 #endif
 
+#ifndef BL_PHYSICAL_CONSTANT_PI
+#define BL_PHYSICAL_CONSTANT_PI M_PI
+#endif
+
 #ifndef BL_DEG_TO_RAD 
 #define BL_DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
 #endif
