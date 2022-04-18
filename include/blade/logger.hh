@@ -22,33 +22,27 @@ BLADE_API std::string computeMethodName(const std::string&, const std::string&);
 #define BL_LOG_ID "BLADE"
 
 #ifndef BL_TRACE
-#define BL_TRACE(...) if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_TRACE(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_DEBUG
-#define BL_DEBUG(...) if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_DEBUG(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_WARN
-#define BL_WARN(...)  if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_WARN(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_INFO
-#define BL_INFO(...)  if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_INFO(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_ERROR
-#define BL_ERROR(...) if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_ERROR(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_FATAL
-#define BL_FATAL(...) if (spdlog::get(BL_LOG_ID)) \
-{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#define BL_FATAL(...){fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 namespace Blade {
