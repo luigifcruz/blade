@@ -18,6 +18,11 @@ class BLADE_API ATA : public Generic<OT> {
                this->config.numberOfPolarizations;
     }
 
+    constexpr U64 getDelaysSize() const {
+        return this->config.numberOfAntennas * 
+               this->config.numberOfBeams;
+    }
+
     Result preprocess(const cudaStream_t& stream = 0) final;
     Result process(const cudaStream_t& stream = 0) final;
 
@@ -26,7 +31,6 @@ class BLADE_API ATA : public Generic<OT> {
     std::vector<UVW> boresightUvw;
     std::vector<UVW> sourceUvw;
     std::vector<F64> boresightDelay;
-    Vector<Device::CUDA | Device::CPU, F64> relativeDelay;
 };
 
 }  // namespace Blade::Modules::Phasor

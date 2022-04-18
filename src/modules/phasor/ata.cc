@@ -15,7 +15,6 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     boresightUvw.resize(this->config.numberOfAntennas);
     sourceUvw.resize(this->config.numberOfAntennas);
     boresightDelay.resize(this->config.numberOfAntennas);
-    relativeDelay.resize(this->config.numberOfAntennas * this->config.numberOfBeams);
 
     //  Copy Earth Centered XYZ Antenna Coordinates (XYZ) to Receiver (UVW).
     antennasXyz = this->config.antennaPositions;
@@ -28,6 +27,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT);
 
+    BL_CHECK_THROW(this->InitOutput(this->output.delays, getDelaysSize()));
     BL_CHECK_THROW(this->InitOutput(this->output.phasors, getPhasorsSize()));
 }
 
@@ -106,7 +106,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         //  Calculate delay for off-center source and subtract 
         //  from boresight (TPi = Ti - ((WPi - WPr) / C)).
         for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
-            relativeDelay[(b * this->config.numberOfAntennas) + a] = 
+            this->output.delays[(b * this->config.numberOfAntennas) + a] = 
                 (
                     (
                         sourceUvw[a].W -
@@ -119,7 +119,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     //  TODO: Add hint for CUDA Unified Memory.
 
     //for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
-    //    printf("%zu: %.15lf\n", i, relativeDelay[i]);
+    //    printf("%zu: %.15lf\n", i, this->output.delays[i]);
     //}
 
     std::vector<CF64> phasors(
@@ -139,7 +139,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                                        this->config.numberOfFrequencyChannels *
                                        this->config.numberOfPolarizations);
 
-            const F64 delay = relativeDelay[(b * this->config.numberOfAntennas) + a];
+            const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
             const F64 fringe = (this->config.rfFrequencyHz - this->config.totalBandwidthHz) / 2.0;
             const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
 

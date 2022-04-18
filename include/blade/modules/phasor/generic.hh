@@ -36,13 +36,18 @@ class BLADE_API Generic : public Module {
     };
 
     struct Output {
+        Vector<Device::CPU, F64> delays;
         Vector<Device::CPU | Device::CUDA, OT> phasors;
     };
 
     explicit Generic(const Config& config, const Input& input);
     virtual ~Generic() = default;
 
-    constexpr Vector<Device::CUDA, OT>& getPhasors() {
+    constexpr Vector<Device::CPU, F64>& getDelays() {
+        return this->output.delays;
+    } 
+
+    constexpr Vector<Device::CPU | Device::CUDA, OT>& getPhasors() {
         return this->output.phasors;
     } 
 
@@ -51,6 +56,7 @@ class BLADE_API Generic : public Module {
     }
 
     virtual constexpr U64 getPhasorsSize() const = 0;
+    virtual constexpr U64 getDelaysSize() const = 0;
 
     virtual Result preprocess(const cudaStream_t& stream = 0) = 0;
     virtual Result process(const cudaStream_t& stream = 0) = 0;
