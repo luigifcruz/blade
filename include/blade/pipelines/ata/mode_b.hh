@@ -72,8 +72,6 @@ class BLADE_API ModeB : public Pipeline {
     F64 frameJulianDate;
     F64 differenceUniversalTime1;
 
-    std::unique_ptr<Logger> guard;
-
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;

@@ -9,8 +9,6 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    guard = std::make_unique<Logger>();
-
     outputMemPitch = config.outputMemPad + config.outputMemWidth;
 
     BL_DEBUG("Instantiating input cast from I8 to CF32.");

@@ -17,37 +17,38 @@ BLADE_API std::string computeMethodName(const std::string&, const std::string&);
 #define SPDLOG_FUNCTION computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__).c_str()
 
 #include <spdlog/spdlog.h>
+#include <fmt/core.h>
 
 #define BL_LOG_ID "BLADE"
 
 #ifndef BL_TRACE
 #define BL_TRACE(...) if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_TRACE(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_DEBUG
 #define BL_DEBUG(...) if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_DEBUG(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_WARN
 #define BL_WARN(...)  if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_WARN(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_INFO
 #define BL_INFO(...)  if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_INFO(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_ERROR
 #define BL_ERROR(...) if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_ERROR(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 #ifndef BL_FATAL
 #define BL_FATAL(...) if (spdlog::get(BL_LOG_ID)) \
-{SPDLOG_LOGGER_CRITICAL(spdlog::get(BL_LOG_ID), __VA_ARGS__);}
+{fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
 #endif
 
 namespace Blade {
