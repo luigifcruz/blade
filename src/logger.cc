@@ -16,7 +16,11 @@ std::string computeMethodName(const std::string& function,
 namespace Blade {
 
 Logger::Logger() {
-    auto consoleSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+    if (spdlog::get(BL_LOG_ID)) {
+        return;
+    } 
+
+    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     consoleSink->set_pattern("[%Y-%m-%d %T.%e%z] [%n] [%l] [%!] %v%$");
 
     std::vector<spdlog::sink_ptr> sinks{consoleSink};
