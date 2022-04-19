@@ -4,6 +4,48 @@ extern "C" {
 #include "radiointerferometryc99.h"
 }
 
+// [Documentation - ATA Delays Processor] 
+//
+// [Legend]:
+//      - A: Number of Antennas. 
+//      - B: Number of Beams.
+//      - N: Number of Blocks.
+//
+// [Pipeline]:
+// 1. Start with Earth Centered Antenna Positions (ECEF).
+// 2. Translate Earth Centered Antenna Positions (ECEF) to Array Centered Antenna Positions (XYZ).
+//      - Runs on initialization for each antenna (A).
+//      - Based on "calc_position_to_xyz_frame_from_ecef" method.
+//      - Depends on the Array Center Reference Longitude, Latitude, and Altitude values.
+// 3. Rotate Array Centered Antenna Position (XYZ) towards Boresight (UVW).
+//      - Runs on each block for each antenna (A*N). 
+//      - Based on "calc_position_to_uvw_frame_from_xyz" method.
+//      - Depends on the Hour Angle & Declination values of the Boresight. 
+// 4. Calculate time delay on Boresight.
+//      - Runs on each block for each antenna (A*N). 
+//      - Defined by Ti = (Wi - Wr) / C.
+//          - Ti = Time Delay (s) of the signal from Reference Antenna.
+//          - Wi = Distance (m) of the current antenna to the boresight.
+//          - Wr = Distance (m) of the reference antenna to the boresight.
+//          - C  = Speed of Light (m/s).
+//      - Depends on the Array Centered Antenna Position (XYZ) and Hour Angle & Declination of the Boresight.
+// 5. Generate Hour Angle & Declination from RA & Declination according to time.
+//      - Part A runs on each block (N), and Part B runs on each block for every beam (B*N).
+//      - Based on "calc_ha_dec_rad_a" (Part A) and "calc_ha_dec_rad_b" (Part B) methods. 
+//      - Depends on the RA & Declination values of the Source.  
+// 6. Rotate Array Centered Antenna Position (XYZ) towards Source (UVW).
+//      - Runs on each block for each antenna for every beam (A*B*N). 
+//      - Based on "calc_position_to_uvw_frame_from_xyz" method.
+//      - Depends on the Hour Angle & Declination values of the Source. 
+// 7. Calculate time delay on Source.
+//      - Runs on each block for each antenna for every beam (A*B*N).
+//      - Defined by TPi = Ti - ((WPi - WPr) / C).
+//          - TPi = Time Delay (s) from Boresight to Source.
+//          - Ti = Time Delay (s) of the signal from Reference Antenna.
+//          - WPi = Distance (m) of the current antenna to the signal source.
+//          - WPr = Distance (m) of the reference antenna to the signal source.
+//          - C  = Speed of Light (m/s).
+
 namespace Blade::Modules::Phasor {
 
 template<typename OT>
@@ -70,7 +112,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
 
     eraASTROM astrom;
 
-    // Convert source RA & Decligation to Hour Angle (Part A).
+    // Convert source RA & Declination to Hour Angle (Part A).
     calc_ha_dec_rad_a(
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT, 
@@ -115,12 +157,6 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                 ) - boresightDelay[a];
         }
     }
-
-    std::vector<CF64> phasors(
-        this->config.numberOfBeams *
-        this->config.numberOfAntennas * 
-        this->config.numberOfFrequencyChannels * 
-        this->config.numberOfPolarizations);
 
     for (U64 b = 0; b < this->config.numberOfBeams; b++) {
         const U64 beamOffset = (b * 
