@@ -140,7 +140,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                                        this->config.numberOfPolarizations);
 
             const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
-            const F64 fringe = (this->config.rfFrequencyHz - this->config.totalBandwidthHz) / 2.0;
+            const F64 fringe = this->config.rfFrequencyHz - (this->config.totalBandwidthHz / 2.0);
             const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
