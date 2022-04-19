@@ -28,17 +28,17 @@ class Test(bl.Pipeline):
     def input_size(self):
         return self.beamformer.input_size()
 
-    def phasor_size(self):
-        return self.beamformer.phasor_size()
+    def phasors_size(self):
+        return self.beamformer.phasors_size()
 
     def output_size(self):
         return self.beamformer.output_size()
 
     def run(self, input: bl.vector.cpu.cf32,
-                  phasor: bl.vector.cpu.cf32,
+                  phasors: bl.vector.cpu.cf32,
                   output: bl.vector.cpu.cf32):
         self.copy(self.beamformer.input(), input)
-        self.copy(self.beamformer.phasor(), phasor)
+        self.copy(self.beamformer.phasors(), phasors)
         self.compute()
         self.copy(output, self.beamformer.output())
         self.synchronize()
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     # Import test data from Python to Blade.
     bl_input = bl.vector.cpu.cf32(mod.input_size())
-    bl_phasors = bl.vector.cpu.cf32(mod.phasor_size())
+    bl_phasors = bl.vector.cpu.cf32(mod.phasors_size())
     bl_output = bl.vector.cpu.cf32(mod.output_size())
 
     np.copyto(np.array(bl_input, copy=False), input.flatten())

@@ -59,7 +59,7 @@ class BLADE_API ModeB : public Pipeline {
     }
 
     Result run(const F64& frameJulianDate,
-               const F64& differenceUniversalTime1,
+               const F64& frameDut1,
                const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
@@ -70,7 +70,7 @@ class BLADE_API ModeB : public Pipeline {
 
     Vector<Device::CUDA, CI8> input;
     F64 frameJulianDate;
-    F64 differenceUniversalTime1;
+    F64 frameDut1;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;

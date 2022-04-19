@@ -40,7 +40,7 @@ inline void init_beamformer(const py::module& m) {
                                               py::arg("input"))
         .def("input_size", &Class::getInputSize)
         .def("output_size", &Class::getOutputSize)
-        .def("phasor_size", &Class::getPhasorsSize)
+        .def("phasors_size", &Class::getPhasorsSize)
         .def("input", &Class::getInput, py::return_value_policy::reference)
         .def("phasors", &Class::getPhasors, py::return_value_policy::reference)
         .def("output", &Class::getOutput, py::return_value_policy::reference);
@@ -85,13 +85,15 @@ inline void init_phasor(const py::module& m) {
     py::class_<Class::Input>(phasor, "Input")
         .def(py::init<F64&,
                       F64&>(), py::arg("frame_julian_date"),
-                               py::arg("difference_universal_time"));
+                               py::arg("frame_dut1"));
 
     phasor
         .def(py::init<const Class::Config&,
                       const Class::Input&>(), py::arg("config"),
                                               py::arg("input"))
-        .def("phasor_size", &Class::getPhasorsSize)
+        .def("phasors_size", &Class::getPhasorsSize)
+        .def("delays_size", &Class::getDelaysSize)
+        .def("delays", &Class::getDelays, py::return_value_policy::reference)
         .def("phasors", &Class::getPhasors, py::return_value_policy::reference);
 }
 

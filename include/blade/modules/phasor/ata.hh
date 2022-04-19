@@ -24,7 +24,6 @@ class BLADE_API ATA : public Generic<OT> {
     }
 
     Result preprocess(const cudaStream_t& stream = 0) final;
-    Result process(const cudaStream_t& stream = 0) final;
 
  private:
     std::vector<XYZ> antennasXyz;

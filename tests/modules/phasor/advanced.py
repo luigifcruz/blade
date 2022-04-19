@@ -6,7 +6,7 @@ import numpy as np
 class Test(bl.Pipeline):
     phasor: bl.Phasor
     frame_julian_date: float = (1649366473.0/ 86400.0) + 2440587.5
-    difference_universal_time1: float = 0.0
+    frame_dut1: float = 0.0
 
     def __init__(self, phasor_config: bl.Phasor.Config):
         bl.Pipeline.__init__(self)
@@ -18,10 +18,10 @@ class Test(bl.Pipeline):
         return self.phasor.buffer_size()
 
     def run(self, frame_julian_date: float,
-                  difference_universal_time1: float,
+                  frame_dut1: float,
                   phasors: bl.vector.cpu.cf32):
         self.frame_julian_date = frame_julian_date
-        self.difference_universal_time1 = difference_universal_time1
+        self.frame_dut1 = frame_dut1
         self.copy(self.phasor.input(), input)
         self.compute()
         self.copy(phasors, self.phasor.phasors())

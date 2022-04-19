@@ -31,8 +31,8 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
-        F64& frameJulianDate;
-        F64& differenceUniversalTime1;
+        const F64& frameJulianDate;
+        const F64& frameDut1;
     };
 
     struct Output {
@@ -59,7 +59,6 @@ class BLADE_API Generic : public Module {
     virtual constexpr U64 getDelaysSize() const = 0;
 
     virtual Result preprocess(const cudaStream_t& stream = 0) = 0;
-    virtual Result process(const cudaStream_t& stream = 0) = 0;
 
  protected:
     const Config config;

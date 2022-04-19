@@ -58,7 +58,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
         .blockSize = config.phasorsBlockSize,
     }, {
         .frameJulianDate = this->frameJulianDate,
-        .differenceUniversalTime1 = this->differenceUniversalTime1,
+        .frameDut1 = this->frameDut1,
     });
 
     BL_DEBUG("Instantiating beamformer module.");
@@ -87,11 +87,11 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
 
 template<typename OT>
 Result ModeB<OT>::run(const F64& frameJulianDate,
-                      const F64& differenceUniversalTime1,
+                      const F64& frameDut1,
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
     this->frameJulianDate = frameJulianDate;
-    this->differenceUniversalTime1 = differenceUniversalTime1;
+    this->frameDut1 = frameDut1;
 
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());

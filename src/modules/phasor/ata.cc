@@ -43,7 +43,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT,
         this->input.frameJulianDate,
-        this->input.differenceUniversalTime1,
+        this->input.frameDut1,
         &boresight_ha_dec.HA,
         &boresight_ha_dec.DEC);
 
@@ -76,7 +76,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LAT, 
         this->config.arrayReferencePosition.ALT,
         this->input.frameJulianDate,
-        this->input.differenceUniversalTime1,
+        this->input.frameDut1,
         &astrom);
 
     for (U64 b = 0; b < this->config.numberOfBeams; b++) {
@@ -116,12 +116,6 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         }
     }
 
-    //  TODO: Add hint for CUDA Unified Memory.
-
-    //for (U64 i = 0; i < this->config.numberOfAntennas; i++) {
-    //    printf("%zu: %.15lf\n", i, this->output.delays[i]);
-    //}
-
     std::vector<CF64> phasors(
         this->config.numberOfBeams *
         this->config.numberOfAntennas * 
@@ -149,10 +143,6 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                 const F64 freq = (f + this->config.frequencyStartIndex) * this->config.channelBandwidthHz;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
-                
-                //if (f == 1 && b == 0) {
-                //    BL_TRACE("B: {} A: {} F: {} == {} {}", b, a, f, phasor.real(), phasor.imag());
-                //}
 
                 for (U64 p = 0; p < this->config.numberOfPolarizations; p++) {
                     const U64 polarizationOffset = p;
@@ -165,13 +155,6 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             }
         }
     }
-
-    return Result::SUCCESS;
-}
-
-template<typename OT>
-Result ATA<OT>::process(const cudaStream_t& stream) {
-    //  TODO: Add phasors kernel.
 
     return Result::SUCCESS;
 }
