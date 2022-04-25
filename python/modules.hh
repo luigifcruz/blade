@@ -82,9 +82,9 @@ inline void init_phasor(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(phasor, "Input")
-        .def(py::init<F64&,
-                      F64&>(), py::arg("frame_julian_date"),
-                               py::arg("frame_dut1"));
+        .def(py::init<const Vector<Device::CPU, F64>&,
+                      const Vector<Device::CPU, F64>&>(), py::arg("frame_julian_date"),
+                                                          py::arg("frame_dut1"));
 
     phasor
         .def(py::init<const Class::Config&,

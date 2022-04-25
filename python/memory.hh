@@ -13,7 +13,7 @@ inline void init_vector(const py::module& m, const char* type) {
 
     py::class_<Class, std::shared_ptr<Class>>(m, type, py::buffer_protocol())
         .def(py::init<>())
-        .def(py::init<const U64&>())
+        .def(py::init<const U64&>(), py::arg("size"))
         .def_buffer([](Class& obj){
             return py::buffer_info(obj.data(), sizeof(T),
                                    py::format_descriptor<T>::format(), obj.size());
@@ -35,10 +35,17 @@ inline void init_memory_vector(py::module& m) {
     py::module cpu = vector.def_submodule("cpu");
     init_vector<Device::CPU, CF32>(cpu, "cf32");
     init_vector<Device::CPU, F32>(cpu, "f32");
+    init_vector<Device::CPU, F64>(cpu, "f64");
 
     py::module cuda = vector.def_submodule("cuda");
     init_vector<Device::CUDA, CF32>(cuda, "cf32");
     init_vector<Device::CUDA, F32>(cuda, "f32");
+    init_vector<Device::CUDA, F64>(cuda, "f64");
+
+    py::module unified = vector.def_submodule("unified");
+    init_vector<Device::CUDA | Device::CPU, CF32>(unified, "cf32");
+    init_vector<Device::CUDA | Device::CPU, F32>(unified, "f32");
+    init_vector<Device::CUDA | Device::CPU, F64>(unified, "f64");
 }
 
 inline void init_memory(py::module& m) {

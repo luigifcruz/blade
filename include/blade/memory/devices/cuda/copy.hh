@@ -47,6 +47,41 @@ static Result Copy(Vector<Device::CPU, T>& dst,
     return Memory::Copy(dst, src, cudaMemcpyDeviceToHost, stream);
 }
 
+template<typename T>
+static Result Copy(Vector<Device::CPU, T>& dst,
+                   const Vector<Device::CUDA | Device::CPU, T>& src,
+                   const cudaStream_t& stream = 0) {
+    return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
+}
+
+template<typename T>
+static Result Copy(Vector<Device::CUDA, T>& dst,
+                   const Vector<Device::CUDA | Device::CPU, T>& src,
+                   const cudaStream_t& stream = 0) {
+    return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
+}
+
+template<typename T>
+static Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                   const Vector<Device::CUDA, T>& src,
+                   const cudaStream_t& stream = 0) {
+    return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
+}
+
+template<typename T>
+static Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                   const Vector<Device::CPU, T>& src,
+                   const cudaStream_t& stream = 0) {
+    return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
+}
+
+template<typename T>
+static Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                   const Vector<Device::CUDA | Device::CPU, T>& src,
+                   const cudaStream_t& stream = 0) {
+    return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
+}
+
 template<typename DT, typename ST>
 static Result Copy2D(VectorImpl<DT>& dst,
                    const U64 dpitch,

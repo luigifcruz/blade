@@ -54,6 +54,36 @@ class BLADE_API Pipeline {
         return Memory::Copy(dst, src, this->stream);
     }
 
+    template<typename T>
+    Result copy(Vector<Device::CPU, T>& dst,
+                const Vector<Device::CUDA | Device::CPU, T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
+    template<typename T>
+    Result copy(Vector<Device::CUDA, T>& dst,
+                const Vector<Device::CUDA | Device::CPU, T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
+    template<typename T>
+    Result copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                const Vector<Device::CUDA, T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
+    template<typename T>
+    Result copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                const Vector<Device::CPU, T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
+    template<typename T>
+    Result copy(Vector<Device::CUDA | Device::CPU, T>& dst,
+                const Vector<Device::CUDA | Device::CPU, T>& src) {
+        return Memory::Copy(dst, src, this->stream);
+    }
+
     template<typename DT, typename ST>
     Result copy2D(Vector<Device::CUDA, DT>& dst,
                    const U64 dpitch,

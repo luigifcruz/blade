@@ -13,6 +13,11 @@ class VectorImpl {
     VectorImpl()
              : container(),
                managed(false) {}
+    explicit VectorImpl(const U64& size)
+             : container(),
+               managed(true) {
+        this->resize(size);
+    }
     explicit VectorImpl(const std::span<T>& other)
              : container(other),
                managed(false) {}

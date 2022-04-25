@@ -3,7 +3,7 @@
 namespace Blade::Pipelines::ATA {
 
 template<typename OT>
-ModeB<OT>::ModeB(const Config& config) : config(config) {
+ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), frameDut1(1) {
     if ((config.outputMemPad % sizeof(OT)) != 0) {
         BL_FATAL("The outputMemPad must be a multiple of the output type bytes.")
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -90,8 +90,8 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
                       const F64& frameDut1,
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
-    this->frameJulianDate = frameJulianDate;
-    this->frameDut1 = frameDut1;
+    this->frameJulianDate[0] = frameJulianDate;
+    this->frameDut1[0] = frameDut1;
 
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());

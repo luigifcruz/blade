@@ -69,8 +69,8 @@ class BLADE_API ModeB : public Pipeline {
     U64 outputMemPitch;
 
     Vector<Device::CUDA, CI8> input;
-    F64 frameJulianDate;
-    F64 frameDut1;
+    Vector<Device::CPU, F64> frameJulianDate;
+    Vector<Device::CPU, F64> frameDut1;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;

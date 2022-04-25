@@ -39,6 +39,11 @@ inline void init_pipeline_copy(auto& m) {
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
     m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
                                        const Vector<Device::CPU, T>& src){
         return obj.copy(dst, src);
@@ -46,6 +51,26 @@ inline void init_pipeline_copy(auto& m) {
 
     m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
                                        const Vector<Device::CUDA, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 }

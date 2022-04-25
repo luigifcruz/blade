@@ -31,8 +31,8 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
-        const F64& frameJulianDate;
-        const F64& frameDut1;
+        const Vector<Device::CPU, F64>& frameJulianDate;
+        const Vector<Device::CPU, F64>& frameDut1;
     };
 
     struct Output {
