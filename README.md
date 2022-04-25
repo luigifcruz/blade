@@ -27,6 +27,11 @@ Blade is organized into three parts: Modules, Pipelines, and Runners. The Module
 - Pybind11 >=2.4
 - Python >=3.6
 
+### Test Dependencies (Optional)
+
+- Python Astropy
+- Python Pandas
+
 ### Installation
 
 Any up-to-date Linux:
