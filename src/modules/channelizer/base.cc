@@ -11,6 +11,8 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         : Module(config.blockSize, channelizer_kernel),
           config(config),
           input(input) {
+    BL_INFO("===== Channelizer Module Configuration");
+
     if ((config.numberOfTimeSamples % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the channelizer rate ({}).", config.numberOfTimeSamples,
@@ -51,6 +53,13 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                          config.numberOfPolarizations,
                          config.numberOfTimeSamples,
                          config.numberOfFrequencyChannels);
+
+    BL_INFO("Number of Beams: {}", config.numberOfBeams);
+    BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
+    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
+    BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);
+    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    BL_INFO("Channelizer Rate: {}", config.rate);
 
     BL_CHECK_THROW(InitInput(input.buf, getBufferSize()));
     BL_CHECK_THROW(InitOutput(output.buf, getBufferSize()));

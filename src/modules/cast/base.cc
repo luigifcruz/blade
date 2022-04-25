@@ -12,9 +12,13 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
         : Module(config.blockSize, cast_kernel),
           config(config),
           input(input) {
+    BL_INFO("===== Cast Module Configuration");
+
     auto size = config.inputSize * CudaTypeSize<IT>();
     kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
     grid = dim3((size + block.x - 1) / block.x);
+
+    BL_INFO("Input Size: {}", config.inputSize);
 
     BL_CHECK_THROW(InitInput(input.buf, config.inputSize));
     BL_CHECK_THROW(InitOutput(output.buf, config.inputSize));

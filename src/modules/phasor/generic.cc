@@ -9,6 +9,8 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, phasor_kernel),
           config(config),
           input(input) {
+    BL_INFO("===== Phasor Module Configuration");
+
     if (config.numberOfBeams != config.beamCoordinates.size()) {
         BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
                  " beams coordinates ({}).", config.numberOfBeams,

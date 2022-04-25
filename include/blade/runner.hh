@@ -31,6 +31,7 @@ class BLADE_API Runner {
         }
 
         for (U64 i = 0; i < numberOfWorkers; i++) {
+            BL_DEBUG("Initializing new worker.");
             workers.push_back(std::make_unique<T>(config));
         }
     }
