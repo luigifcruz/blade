@@ -1,5 +1,4 @@
 src_lst += files([
-  'logger.cc',
   'module.cc',
   'pipeline.cc',
 ])

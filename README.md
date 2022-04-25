@@ -1,13 +1,22 @@
 # BLADE - Breakthrough Listen Accelerated DSP Engine
 
+```
+                       .-.
+        .-""`""-.    |(@ @)
+     _/`oOoOoOoOo`\_ \ \-/
+    '.-=-=-=-=-=-=-.' \/ \
+      `-=.=-.-=.=-'    \ /\
+         ^  ^  ^       _H_ \ art by jgs
+```
+
 The Blade library provides accelerated signal processing modules for radio telescopes like the Allen Telescope Array. The core library is written in modern C++20 and makes use of just-in-time (JIT) compilation of CUDA kernels to deliver accelerated processing with runtime customizability. Performant Python bindings are also available.
 
 Blade is organized into three parts: Modules, Pipelines, and Runners. The Module performs the data manipulation, the Pipeline integrates multiple Modules together, and the Runner runs multiple Pipelines instances asynchronously to yield the best parallelization.
 
 ### Dependencies
 
+- fmtlib >=6.1
 - GCC >=10.3
-- spdlog >=1.5
 - CUDA >=11
 - Meson >=0.58
 - Ninja >=1.10.2
@@ -17,7 +26,6 @@ Blade is organized into three parts: Modules, Pipelines, and Runners. The Module
 
 - Pybind11 >=2.4
 - Python >=3.6
-- Fmt >=6.1
 
 ### Installation
 
@@ -281,10 +289,7 @@ extern "C" {
 
 using namespace Blade;
 
-static struct {
-    std::unique_ptr<Logger> guard;
-    std::unique_ptr<Runner<ModeB>> runner;
-} instance;
+static std::unique_ptr<Runner<ModeB>> runner;
 
 void blade_initialize(size_t number_of_workers) {
 ...

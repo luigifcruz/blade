@@ -66,7 +66,6 @@ int complex_test(const U64 testSize) {
 }
 
 int main() {
-    Logger guard{};
     std::srand(unsigned(std::time(nullptr)));
 
     BL_INFO("Testing cast module.");

@@ -16,8 +16,8 @@ cfg_lst.set('BUILD_TYPE', get_option('prefix'))
 src_lst = []
 dep_lst = [
   subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
-  dependency('spdlog', version: '>=1.5'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
+  dependency('fmt'),
 ]
 inc_lst = [
   include_directories('include'),

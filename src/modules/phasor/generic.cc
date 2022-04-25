@@ -42,30 +42,30 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    BL_DEBUG("Number of Beams: {}", config.numberOfBeams);
-    BL_DEBUG("Number of Antennas: {}", config.numberOfAntennas);
-    BL_DEBUG("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_DEBUG("Number of Polarizations: {}", config.numberOfPolarizations);
-    BL_DEBUG("RF Frequency (Hz): {}", config.rfFrequencyHz);
-    BL_DEBUG("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
-    BL_DEBUG("Total Bandwidth (Hz): {}", config.totalBandwidthHz);
-    BL_DEBUG("Frequency Start Index: {}", config.frequencyStartIndex);
-    BL_DEBUG("Reference Antenna Index: {}", config.referenceAntennaIndex);
-    BL_DEBUG("Array Reference Position (LON, LAT, ALT): ({}, {}, {})",
+    BL_INFO("Number of Beams: {}", config.numberOfBeams);
+    BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
+    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
+    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    BL_INFO("RF Frequency (Hz): {}", config.rfFrequencyHz);
+    BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
+    BL_INFO("Total Bandwidth (Hz): {}", config.totalBandwidthHz);
+    BL_INFO("Frequency Start Index: {}", config.frequencyStartIndex);
+    BL_INFO("Reference Antenna Index: {}", config.referenceAntennaIndex);
+    BL_INFO("Array Reference Position (LON, LAT, ALT): ({}, {}, {})",
         config.arrayReferencePosition.LON, config.arrayReferencePosition.LAT,
         config.arrayReferencePosition.ALT);
-    BL_DEBUG("Boresight Coordinate (RA, DEC): ({}, {})",
+    BL_INFO("Boresight Coordinate (RA, DEC): ({}, {})",
         config.boresightCoordinate.RA, config.boresightCoordinate.DEC);
 
-    BL_DEBUG("ECEF Antenna Positions (X, Y, Z):");
+    BL_INFO("ECEF Antenna Positions (X, Y, Z):");
     for (U64 i = 0; i < config.antennaPositions.size(); i++) {
-        BL_DEBUG("    {}: ({}, {}, {})", i, config.antennaPositions[i].X, 
+        BL_INFO("    {}: ({}, {}, {})", i, config.antennaPositions[i].X, 
             config.antennaPositions[i].Y, config.antennaPositions[i].Z);
     }
 
-    BL_DEBUG("Beam Coordinates (RA, DEC):");
+    BL_INFO("Beam Coordinates (RA, DEC):");
     for (U64 i = 0; i < config.beamCoordinates.size(); i++) {
-        BL_DEBUG("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
+        BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
 }

@@ -1,4 +1,5 @@
 #include <memory>
+#include <cassert>
 
 #include "blade/base.hh"
 #include "blade/logger.hh"
@@ -14,16 +15,18 @@ using namespace Blade::Pipelines::ATA;
 
 using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
-static struct {
-    std::unique_ptr<Logger> guard;
-    std::unique_ptr<Runner<TestPipeline>> runner;
-} instance;
+static std::unique_ptr<Runner<TestPipeline>> runner;
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
 }
 
 bool blade_ata_b_initialize(U64 numberOfWorkers) {
+    if (runner) {
+        BL_FATAL("Can't initialize because Blade Runner is already initialized.");
+        throw Result::ASSERTION_ERROR;
+    }
+
     TestPipeline::Config config = {
         .numberOfBeams = 1,
         .numberOfAntennas = BLADE_ATA_MODE_B_INPUT_NANT,
@@ -98,25 +101,27 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         config.channelizerRate *
         config.numberOfPolarizations);
 
-    instance.guard = std::make_unique<Logger>();
-    instance.runner = Runner<TestPipeline>::New(numberOfWorkers, config);
+    runner = Runner<TestPipeline>::New(numberOfWorkers, config);
 
     return true;
 }
 
 void blade_ata_b_terminate() {
-    instance.runner.reset();
-    instance.guard.reset();
+    if (!runner) {
+        BL_FATAL("Can't terminate because Blade Runner isn't initialized.");
+        throw Result::ASSERTION_ERROR;
+    }
+    runner.reset();
 }
 
 U64 blade_ata_b_get_input_size() {
-    assert(instance.runner);
-    return instance.runner->getWorker().getInputSize();
+    assert(runner);
+    return runner->getWorker().getInputSize();
 }
 
 U64 blade_ata_b_get_output_size() {
-    assert(instance.runner);
-    return instance.runner->getWorker().getOutputSize();
+    assert(runner);
+    return runner->getWorker().getOutputSize();
 }
 
 bool blade_pin_memory(void* buffer, U64 size) {
@@ -124,8 +129,8 @@ bool blade_pin_memory(void* buffer, U64 size) {
 }
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
-    assert(instance.runner);
-    return instance.runner->enqueue([&](auto& worker){
+    assert(runner);
+    return runner->enqueue([&](auto& worker){
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
         auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>
             (output_ptr, worker.getOutputSize());
@@ -137,6 +142,6 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
 }
 
 bool blade_ata_b_dequeue(U64* id) {
-    assert(instance.runner);
-    return instance.runner->dequeue(id);
+    assert(runner);
+    return runner->dequeue(id);
 }

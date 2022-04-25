@@ -71,8 +71,6 @@ Result Init(U64 testSize = 8192) {
 }
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing complex checker.");
 
     if (Init() != Result::SUCCESS) {

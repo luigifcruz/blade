@@ -4,8 +4,6 @@
 using namespace Blade;
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing beamformer with the ATA kernel.");
 
     Test<CF32, CF32> mod({

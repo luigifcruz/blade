@@ -1,9 +1,9 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "base.hh"
 
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
 #include <blade/modules/channelizer.hh>
+#include <blade/modules/phasor/ata.hh>
 
 #include <memory>
 
@@ -61,5 +61,6 @@ inline void init_pipeline(const py::module& m) {
 
     init_pipeline_connect<Modules::Beamformer::ATA<CF32, CF32>>(pipeline);
     init_pipeline_connect<Modules::Channelizer<CF32, CF32>>(pipeline);
+    init_pipeline_connect<Modules::Phasor::ATA<CF32>>(pipeline);
     init_pipeline_copy<CF32>(pipeline);
 }

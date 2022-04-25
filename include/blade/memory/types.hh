@@ -9,6 +9,7 @@
 
 #include "blade/logger.hh"
 #include "blade/types.hh"
+#include "blade/macros.hh"
 
 namespace Blade {
 

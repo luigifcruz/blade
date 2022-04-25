@@ -1,58 +1,49 @@
 #ifndef BLADE_LOGGER_HH
 #define BLADE_LOGGER_HH
 
-#include <string>
+#include <iostream>
 
-#include "blade/macros.hh"
+#include <fmt/format.h>
+#include <fmt/color.h>
 
-#undef SPDLOG_ACTIVE_LEVEL
-#ifdef NDEBUG
-    #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
-#else
-    #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define BL_LOG_HEAD_DECR fmt::emphasis::bold
+#define BL_LOG_HEAD_NAME fmt::format(BL_LOG_HEAD_DECR, "BLADE ")
+#define BL_LOG_HEAD_FILE fmt::format(BL_LOG_HEAD_DECR, "[{}@{}] ", __FILENAME__, __LINE__)
+#define BL_LOG_HEAD BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE 
+
+#define BL_LOG_HEAD_TRACE fmt::format(BL_LOG_HEAD_DECR, "[TRACE] ")
+#define BL_LOG_HEAD_DEBUG fmt::format(BL_LOG_HEAD_DECR, "[DEBUG] ")
+#define BL_LOG_HEAD_WARN fmt::format(BL_LOG_HEAD_DECR, "[WARN] ")
+#define BL_LOG_HEAD_INFO fmt::format(BL_LOG_HEAD_DECR, "[INFO] ")
+#define BL_LOG_HEAD_ERROR fmt::format(BL_LOG_HEAD_DECR, "[ERROR] ")
+#define BL_LOG_HEAD_FATAL fmt::format(BL_LOG_HEAD_DECR, "[FATAL] ")
+
+#define BL_LOG_HEAD_SEPR fmt::format(BL_LOG_HEAD_DECR, "| ")
+
+#if !defined(BL_TRACE) || !defined(NDEBUG)
+#define BL_TRACE(...) std::cout << BL_LOG_HEAD << BL_LOG_HEAD_TRACE << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::white), __VA_ARGS__) << std::endl;
 #endif
 
-#undef  SPDLOG_FUNCTION
-BLADE_API std::string computeMethodName(const std::string&, const std::string&);
-#define SPDLOG_FUNCTION computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__).c_str()
-
-#include <spdlog/spdlog.h>
-#include <fmt/core.h>
-
-#define BL_LOG_ID "BLADE"
-
-#ifndef BL_TRACE
-#define BL_TRACE(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#if !defined(BL_DEBUG) || !defined(NDEBUG)
+#define BL_DEBUG(...) std::cout << BL_LOG_HEAD << BL_LOG_HEAD_DEBUG << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::orange), __VA_ARGS__) << std::endl;
 #endif
 
-#ifndef BL_DEBUG
-#define BL_DEBUG(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#if !defined(BL_WARN) || defined(NDEBUG)
+#define BL_WARN(...) std::cout << BL_LOG_HEAD << BL_LOG_HEAD_WARN << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::yellow), __VA_ARGS__) << std::endl;
 #endif
 
-#ifndef BL_WARN
-#define BL_WARN(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#if !defined(BL_INFO) || defined(NDEBUG)
+#define BL_INFO(...) std::cout << BL_LOG_HEAD << BL_LOG_HEAD_INFO << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::cyan), __VA_ARGS__) << std::endl;
 #endif
 
-#ifndef BL_INFO
-#define BL_INFO(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#if !defined(BL_ERROR) || defined(NDEBUG)
+#define BL_ERROR(...) std::cerr << BL_LOG_HEAD << BL_LOG_HEAD_ERROR << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::red), __VA_ARGS__) << std::endl;
 #endif
 
-#ifndef BL_ERROR
-#define BL_ERROR(...) {fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
+#if !defined(BL_FATAL) || defined(NDEBUG)
+#define BL_FATAL(...) std::cerr << BL_LOG_HEAD << BL_LOG_HEAD_FATAL << BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::magenta), __VA_ARGS__) << std::endl;
 #endif
-
-#ifndef BL_FATAL
-#define BL_FATAL(...){fprintf(stderr, "%s\n", fmt::format(__VA_ARGS__).c_str());}
-#endif
-
-namespace Blade {
-
-class BLADE_API Logger {
- public:
-    Logger();
-    ~Logger();
-};
-
-}  // namespace Blade
 
 #endif

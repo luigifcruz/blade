@@ -7,6 +7,7 @@
 
 #include "blade/types.hh"
 #include "blade/logger.hh"
+#include "blade/macros.hh"
 #include "blade/memory/base.hh"
 
 #include "blade/utils/jitify2.hh"

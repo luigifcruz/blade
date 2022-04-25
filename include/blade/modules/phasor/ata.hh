@@ -23,6 +23,12 @@ class BLADE_API ATA : public Generic<OT> {
                this->config.numberOfBeams;
     }
 
+    constexpr U64 getCalibrationsSize() const {
+        return this->config.numberOfAntennas *
+               this->config.numberOfFrequencyChannels *
+               this->config.numberOfPolarizations;
+    }
+
     Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:

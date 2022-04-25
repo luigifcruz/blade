@@ -1,5 +1,4 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "base.hh"
 
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
@@ -70,7 +69,7 @@ inline void init_phasor(const py::module& m) {
                                      py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),
                                      py::arg("number_of_polarizations"),
-                                     py::arg("rf_frequency_hf"),
+                                     py::arg("rf_frequency_hz"),
                                      py::arg("channel_bandwidth_hz"),
                                      py::arg("total_bandwidth_hz"),
                                      py::arg("frequency_start_index"),
@@ -93,6 +92,7 @@ inline void init_phasor(const py::module& m) {
                                               py::arg("input"))
         .def("phasors_size", &Class::getPhasorsSize)
         .def("delays_size", &Class::getDelaysSize)
+        .def("calibration_size", &Class::getCalibrationsSize)
         .def("delays", &Class::getDelays, py::return_value_policy::reference)
         .def("phasors", &Class::getPhasors, py::return_value_policy::reference);
 }

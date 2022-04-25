@@ -32,8 +32,6 @@ class Test : public Pipeline {
 };
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing advanced channelizer.");
 
     Test<CF32, CF32> mod({
