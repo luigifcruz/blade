@@ -10,8 +10,8 @@ project(
 )
 
 cfg_lst = configuration_data()
-cfg_lst.set('VERSION', meson.project_version())
-cfg_lst.set('BUILD_TYPE', get_option('prefix'))
+cfg_lst.set('version', meson.project_version())
+cfg_lst.set('build_type', get_option('buildtype'))
 
 src_lst = []
 dep_lst = [

@@ -6,6 +6,8 @@
 #include <span>
 #include <complex>
 
+#include "blade_config.hh"
+
 namespace Blade {
 
 enum class Result : uint8_t {

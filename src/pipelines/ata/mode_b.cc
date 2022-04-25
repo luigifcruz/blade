@@ -4,6 +4,8 @@ namespace Blade::Pipelines::ATA {
 
 template<typename OT>
 ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), frameDut1(1) {
+    BL_INFO("Initializing ATA Pipeline Mode B.");
+
     if ((config.outputMemPad % sizeof(OT)) != 0) {
         BL_FATAL("The outputMemPad must be a multiple of the output type bytes.")
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
