@@ -1,9 +1,9 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "base.hh"
 
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
 #include <blade/modules/channelizer.hh>
+#include <blade/modules/phasor/ata.hh>
 
 #include <memory>
 
@@ -39,6 +39,11 @@ inline void init_pipeline_copy(auto& m) {
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
     m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
                                        const Vector<Device::CPU, T>& src){
         return obj.copy(dst, src);
@@ -46,6 +51,26 @@ inline void init_pipeline_copy(auto& m) {
 
     m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
                                        const Vector<Device::CUDA, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CPU, T>& src){
+        return obj.copy(dst, src);
+    }, py::arg("dst"), py::arg("src"));
+
+    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
+                                       const Vector<Device::CUDA | Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 }
@@ -56,10 +81,11 @@ inline void init_pipeline(const py::module& m) {
     pipeline
         .def(py::init<>())
         .def("synchronize", &Pipeline::synchronize)
-        .def("isSynchronized", &Pipeline::isSynchronized)
+        .def("is_synchronized", &Pipeline::isSynchronized)
         .def("compute", &PipelinePub::compute);
 
     init_pipeline_connect<Modules::Beamformer::ATA<CF32, CF32>>(pipeline);
     init_pipeline_connect<Modules::Channelizer<CF32, CF32>>(pipeline);
+    init_pipeline_connect<Modules::Phasor::ATA<CF32>>(pipeline);
     init_pipeline_copy<CF32>(pipeline);
 }

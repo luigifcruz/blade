@@ -12,7 +12,7 @@ class Test : public Pipeline {
         this->connect(channelizer, config, {input});
     }
 
-    constexpr const std::size_t getInputSize() const {
+    constexpr const U64 getInputSize() const {
         return channelizer->getBufferSize();
     }
 
@@ -32,19 +32,15 @@ class Test : public Pipeline {
 };
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing advanced channelizer.");
 
     Test<CF32, CF32> mod({
-        .dims = {
-            .NBEAMS = 1,
-            .NANTS  = 20,
-            .NCHANS = 96,
-            .NTIME  = 35000,
-            .NPOLS  = 2,
-        },
-        .fftSize = 4,
+        .numberOfBeams = 1,
+        .numberOfAntennas = 20,
+        .numberOfFrequencyChannels = 96,
+        .numberOfTimeSamples = 35000,
+        .numberOfPolarizations = 2,
+        .rate = 4,
         .blockSize = 512,
     });
 

@@ -3,7 +3,9 @@
 namespace Blade::Pipelines::ATA {
 
 template<typename OT>
-ModeB<OT>::ModeB(const Config& config) : config(config) {
+ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), frameDut1(1) {
+    BL_DEBUG("Initializing ATA Pipeline Mode B.");
+
     if ((config.outputMemPad % sizeof(OT)) != 0) {
         BL_FATAL("The outputMemPad must be a multiple of the output type bytes.")
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -11,55 +13,71 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
 
     outputMemPitch = config.outputMemPad + config.outputMemWidth;
 
+    BL_DEBUG("Instantiating input cast from I8 to CF32.");
     this->connect(inputCast, {
-        .inputSize = config.inputDims.getSize(),
+        .inputSize = config.numberOfBeams *
+                     config.numberOfAntennas *
+                     config.numberOfFrequencyChannels *
+                     config.numberOfTimeSamples *
+                     config.numberOfPolarizations,
         .blockSize = config.castBlockSize,
     }, {
         .buf = input,
     });
 
-    if (config.channelizerRate > 1) {
-        BL_DEBUG("Instantiating channelizer with FFT Size {}.", config.channelizerRate);
+    BL_DEBUG("Instantiating channelizer with rate {}.", config.channelizerRate);
+    this->connect(channelizer, {
+        .numberOfBeams = config.numberOfBeams,
+        .numberOfAntennas = config.numberOfAntennas,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels,
+        .numberOfTimeSamples = config.numberOfTimeSamples,
+        .numberOfPolarizations = config.numberOfPolarizations,
+        .rate = config.channelizerRate,
+        .blockSize = config.channelizerBlockSize,
+    }, {
+        .buf = inputCast->getOutput(),
+    });
 
-        this->connect(channelizer, {
-            .dims = config.inputDims,
-            .fftSize = config.channelizerRate,
-            .blockSize = config.channelizerBlockSize,
-        }, {
-            .buf = inputCast->getOutput(),
-        });
+    BL_DEBUG("Instantiating phasor module.");
+    this->connect(phasor, {
+        .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
+        .numberOfAntennas = config.numberOfAntennas,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
+        .numberOfPolarizations = config.numberOfPolarizations,
 
-        auto dims = channelizer->getOutputDims();
-        dims.NBEAMS *= config.beamformerBeams;
+        .rfFrequencyHz = config.rfFrequencyHz,
+        .channelBandwidthHz = config.channelBandwidthHz,
+        .totalBandwidthHz = config.totalBandwidthHz,
+        .frequencyStartIndex = config.frequencyStartIndex,
+        .referenceAntennaIndex = config.referenceAntennaIndex,
+        .arrayReferencePosition = config.arrayReferencePosition,
+        .boresightCoordinate = config.boresightCoordinate,
 
-        BL_DEBUG("Instantiating beamformer module.");
+        .antennaPositions = config.antennaPositions,
+        .antennaCalibrations = config.antennaCalibrations,
+        .beamCoordinates = config.beamCoordinates,
 
-        this->connect(beamformer, {
-            .dims = dims,
-            .blockSize = config.beamformerBlockSize,
-        }, {
-            .buf = channelizer->getOutput(),
-            .phasors = phasors,
-        });
-    } else {
-        BL_DEBUG("Instantiating beamformer module.");
+        .blockSize = config.phasorsBlockSize,
+    }, {
+        .frameJulianDate = this->frameJulianDate,
+        .frameDut1 = this->frameDut1,
+    });
 
-        auto dims = config.inputDims;
-        dims.NBEAMS *= config.beamformerBeams;
-
-        this->connect(beamformer, {
-            .dims = dims,
-            .blockSize = config.beamformerBlockSize,
-        }, {
-            .buf = inputCast->getOutput(),
-            .phasors = phasors,
-        });
-    }
+    BL_DEBUG("Instantiating beamformer module.");
+    this->connect(beamformer, {
+        .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
+        .numberOfAntennas = config.numberOfAntennas,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
+        .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
+        .numberOfPolarizations = config.numberOfPolarizations,
+        .blockSize = config.beamformerBlockSize,
+    }, {
+        .buf = channelizer->getOutput(),
+        .phasors = phasor->getPhasors(),
+    });
 
     if constexpr (!std::is_same<OT, CF32>::value) {
         BL_DEBUG("Instantiating output cast from CF32 to {}.", typeid(OT).name());
-
-        // Cast from CF32 to output type.
         this->connect(outputCast, {
             .inputSize = beamformer->getOutputSize(),
             .blockSize = config.castBlockSize,
@@ -70,8 +88,13 @@ ModeB<OT>::ModeB(const Config& config) : config(config) {
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const Vector<Device::CPU, CI8>& input,
-                        Vector<Device::CPU, OT>& output) {
+Result ModeB<OT>::run(const F64& frameJulianDate,
+                      const F64& frameDut1,
+                      const Vector<Device::CPU, CI8>& input,
+                            Vector<Device::CPU, OT>& output) {
+    this->frameJulianDate[0] = frameJulianDate;
+    this->frameDut1[0] = frameDut1;
+
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy2D(
@@ -81,13 +104,6 @@ Result ModeB<OT>::run(const Vector<Device::CPU, CI8>& input,
         config.outputMemWidth,  // spitch
         config.outputMemWidth,  // width
         (beamformer->getOutputSize()*sizeof(OT))/config.outputMemWidth));
-
-    return Result::SUCCESS;
-}
-
-template<typename OT>
-Result ModeB<OT>::setPhasors(const Vector<Device::CPU, CF32>& phasors) {
-    BL_CHECK(this->copy(beamformer->getPhasors(), phasors));
 
     return Result::SUCCESS;
 }

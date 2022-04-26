@@ -1,0 +1,3 @@
+[submodule "subprojects/radiointerferometryc99"]
+	path = subprojects/radiointerferometryc99
+	url = https://github.com/luigifcruz/radiointerferometryc99.git

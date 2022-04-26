@@ -13,13 +13,18 @@ class VectorImpl {
     VectorImpl()
              : container(),
                managed(false) {}
+    explicit VectorImpl(const U64& size)
+             : container(),
+               managed(true) {
+        this->resize(size);
+    }
     explicit VectorImpl(const std::span<T>& other)
              : container(other),
                managed(false) {}
-    explicit VectorImpl(T* ptr, const std::size_t& size)
+    explicit VectorImpl(T* ptr, const U64& size)
              : container(ptr, size),
                managed(false) {}
-    explicit VectorImpl(void* ptr, const std::size_t& size)
+    explicit VectorImpl(void* ptr, const U64& size)
              : container(static_cast<T*>(ptr), size),
                managed(false) {}
 
@@ -32,11 +37,11 @@ class VectorImpl {
         return container.data();
     }
 
-    constexpr std::size_t size() const noexcept {
+    constexpr U64 size() const noexcept {
         return container.size();
     }
 
-    constexpr std::size_t size_bytes() const noexcept {
+    constexpr U64 size_bytes() const noexcept {
         return container.size_bytes();
     }
 
@@ -44,16 +49,28 @@ class VectorImpl {
         return container.empty();
     }
 
-    constexpr T& operator[](std::size_t idx) const {
+    constexpr T& operator[](U64 idx) const {
         return container[idx];
     }
 
     // TODO: Implement iterator.
-    constexpr std::span<T>& getUnderlying() {
+    constexpr const std::span<T>& getUnderlying() const {
         return container;
     }
 
-    virtual Result resize(const std::size_t& size) = 0;
+    Result link(const VectorImpl<T>& src) {
+        if (src.empty()) {
+            BL_FATAL("Source can't be empty while linking.");
+            return Result::ERROR;
+        }
+
+        this->managed = false;
+        this->container = src.getUnderlying();
+
+        return Result::SUCCESS;
+    }
+
+    virtual Result resize(const U64& size) = 0;
 
  protected:
     std::span<T> container;

@@ -6,6 +6,8 @@
 #include <span>
 #include <complex>
 
+#include "blade_config.hh"
+
 namespace Blade {
 
 enum class Result : uint8_t {
@@ -15,16 +17,32 @@ enum class Result : uint8_t {
     ASSERTION_ERROR,
 };
 
-struct ArrayDims {
-    std::size_t NBEAMS;
-    std::size_t NANTS;
-    std::size_t NCHANS;
-    std::size_t NTIME;
-    std::size_t NPOLS;
+struct XYZ {
+    double X;
+    double Y;
+    double Z;
+};
 
-    constexpr const std::size_t getSize() const {
-        return NBEAMS * NANTS * NCHANS * NTIME * NPOLS;
-    }
+struct UVW {
+    double U;
+    double V;
+    double W;
+};
+
+struct LLA { 
+    double LON;
+    double LAT;
+    double ALT;
+};
+
+struct RA_DEC {
+    double RA;
+    double DEC;
+};
+
+struct HA_DEC {
+    double HA;
+    double DEC;
 };
 
 }  // namespace Blade

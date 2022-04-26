@@ -1,0 +1,2 @@
+#define BLADE_VERSION_STR "@version@"
+#define BLADE_BUILD_TYPE "@build_type@"

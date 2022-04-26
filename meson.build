@@ -1,7 +1,7 @@
 project(
   'blade',
   ['cpp', 'c', 'cuda'],
-  version: '0.1.2',
+  version: '0.2.1',
   default_options: [
     'buildtype=release',
     'cpp_std=c++20',
@@ -10,13 +10,14 @@ project(
 )
 
 cfg_lst = configuration_data()
-cfg_lst.set('VERSION', meson.project_version())
-cfg_lst.set('BUILD_TYPE', get_option('prefix'))
+cfg_lst.set('version', meson.project_version())
+cfg_lst.set('build_type', get_option('buildtype'))
 
 src_lst = []
 dep_lst = [
-  dependency('spdlog', version: '>=1.5'),
+  subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda']),
+  dependency('fmt'),
 ]
 inc_lst = [
   include_directories('include'),

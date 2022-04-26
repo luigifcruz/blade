@@ -11,19 +11,25 @@ class BLADE_API ATA : public Generic<IT, OT> {
     explicit ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input);
 
-    constexpr std::size_t getInputSize() const {
-        return this->config.dims.NANTS * this->config.dims.NCHANS *
-            this->config.dims.NTIME * this->config.dims.NPOLS;
+    constexpr U64 getInputSize() const {
+       return this->config.numberOfAntennas *
+              this->config.numberOfFrequencyChannels *
+              this->config.numberOfTimeSamples * 
+              this->config.numberOfPolarizations;
     }
 
-    constexpr std::size_t getOutputSize() const {
-        return this->config.dims.NBEAMS * this->config.dims.NTIME *
-            this->config.dims.NCHANS * this->config.dims.NPOLS;
+    constexpr U64 getOutputSize() const {
+        return this->config.numberOfBeams *
+               this->config.numberOfTimeSamples *
+               this->config.numberOfFrequencyChannels *
+               this->config.numberOfPolarizations;
     }
 
-    constexpr std::size_t getPhasorsSize() const {
-        return this->config.dims.NBEAMS * this->config.dims.NANTS *
-            this->config.dims.NCHANS * this->config.dims.NPOLS;
+    constexpr U64 getPhasorsSize() const {
+        return this->config.numberOfBeams *
+               this->config.numberOfAntennas *
+               this->config.numberOfFrequencyChannels *
+               this->config.numberOfPolarizations;
     }
 };
 

@@ -2,7 +2,7 @@
 
 using namespace Blade;
 
-Result Init(std::size_t testSize = 8192) {
+Result Init(U64 testSize = 8192) {
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;
     static CF32* output_ptr;
@@ -35,7 +35,7 @@ Result Init(std::size_t testSize = 8192) {
     }
 
     BL_INFO("Running kernels...");
-    size_t counter = 0;
+    U64 counter = 0;
 
     if ((counter = Checker::run(input, output)) != testSize) {
         BL_FATAL("[SUBTEST {}] Expected {} matches but found {}.",
@@ -71,8 +71,6 @@ Result Init(std::size_t testSize = 8192) {
 }
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing complex checker.");
 
     if (Init() != Result::SUCCESS) {

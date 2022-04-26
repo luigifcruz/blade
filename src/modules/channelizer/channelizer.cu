@@ -1,9 +1,10 @@
 #include <cuComplex.h>
+#include <stdint.h>
 
 // 4-point FFT
 
 // TODO: Add multiple formats support.
-template<size_t N, size_t NFFT, size_t NPOLS, size_t NTIME, size_t NCHANS>
+template<uint64_t N, uint64_t NFFT, uint64_t NPOLS, uint64_t NTIME, uint64_t NCHANS>
 __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
     const int numThreads = (blockDim.x * gridDim.x) * (NFFT * NPOLS);
     const int threadID = (blockIdx.x * blockDim.x + threadIdx.x) * (NFFT * NPOLS);

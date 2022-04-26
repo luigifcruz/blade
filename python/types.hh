@@ -1,4 +1,4 @@
-#include <pybind11/pybind11.h>
+#include "base.hh"
 
 #include <blade/base.hh>
 
@@ -13,38 +13,55 @@ inline void init_types_result(const py::module& m) {
         .value("ASSERTION_ERROR", Result::ASSERTION_ERROR);
 }
 
-inline void init_types_arraydims(const py::module& m) {
-    py::class_<ArrayDims>(m, "ArrayDims")
-        .def(py::init<const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&,
-                      const std::size_t&>(), py::arg("NBEAMS"),
-                                             py::arg("NANTS"),
-                                             py::arg("NCHANS"),
-                                             py::arg("NTIME"),
-                                             py::arg("NPOLS"))
-        .def_property_readonly("NBEAMS", [](ArrayDims& obj){
-            return obj.NBEAMS;
-        })
-        .def_property_readonly("NANTS", [](ArrayDims& obj){
-            return obj.NANTS;
-        })
-        .def_property_readonly("NCHANS", [](ArrayDims& obj){
-            return obj.NCHANS;
-        })
-        .def_property_readonly("NTIME", [](ArrayDims& obj){
-            return obj.NTIME;
-        })
-        .def_property_readonly("NPOLS", [](ArrayDims& obj){
-            return obj.NPOLS;
-        })
-        .def("size", [](ArrayDims& obj){
-            return obj.getSize();
-        });
+inline void init_types_xyz(const py::module& m) {
+    py::class_<XYZ>(m, "XYZ", py::dynamic_attr())
+        .def(py::init<F64, F64, F64>(), py::arg("X"),
+                                        py::arg("Y"),
+                                        py::arg("Z"))
+        .def_readwrite("X", &XYZ::X)
+        .def_readwrite("Y", &XYZ::Y)
+        .def_readwrite("Z", &XYZ::Z);
+}
+
+inline void init_types_uvw(const py::module& m) {
+    py::class_<UVW>(m, "UVW", py::dynamic_attr())
+        .def(py::init<F64, F64, F64>(), py::arg("U"),
+                                        py::arg("V"),
+                                        py::arg("W"))
+        .def_readwrite("U", &UVW::U)
+        .def_readwrite("V", &UVW::V)
+        .def_readwrite("W", &UVW::W);
+}
+
+inline void init_types_lla(const py::module& m) {
+    py::class_<LLA>(m, "LLA", py::dynamic_attr())
+        .def(py::init<F64, F64, F64>(), py::arg("LON"),
+                                        py::arg("LAT"),
+                                        py::arg("ALT"))
+        .def_readwrite("LON", &LLA::LON)
+        .def_readwrite("LAT", &LLA::LAT)
+        .def_readwrite("ALT", &LLA::ALT);
+}
+
+inline void init_types_ra_dec(const py::module& m) {
+    py::class_<RA_DEC>(m, "RA_DEC", py::dynamic_attr())
+        .def(py::init<F64, F64>(), py::arg("RA"), py::arg("DEC"))
+        .def_readwrite("RA", &RA_DEC::RA)
+        .def_readwrite("DEC", &RA_DEC::DEC);
+}
+
+inline void init_types_ha_dec(const py::module& m) {
+    py::class_<HA_DEC>(m, "HA_DEC", py::dynamic_attr())
+        .def(py::init<F64, F64>(), py::arg("HA"), py::arg("DEC"))
+        .def_readwrite("HA", &HA_DEC::HA)
+        .def_readwrite("DEC", &HA_DEC::DEC);
 }
 
 inline void init_types(const py::module& m) {
     init_types_result(m);
-    init_types_arraydims(m);
+    init_types_xyz(m);
+    init_types_uvw(m);
+    init_types_lla(m);
+    init_types_ra_dec(m);
+    init_types_ha_dec(m);
 }

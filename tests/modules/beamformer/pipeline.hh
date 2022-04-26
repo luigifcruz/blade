@@ -12,15 +12,15 @@ class Test : public Pipeline {
         this->connect(beamformer, config, {input, phasors});
     }
 
-    constexpr const std::size_t getInputSize() const {
+    constexpr const U64 getInputSize() const {
         return beamformer->getInputSize();
     }
 
-    constexpr const std::size_t getPhasorsSize() const {
+    constexpr const U64 getPhasorsSize() const {
         return beamformer->getPhasorsSize();
     }
 
-    constexpr const std::size_t getOutputSize() const {
+    constexpr const U64 getOutputSize() const {
         return beamformer->getOutputSize();
     }
 

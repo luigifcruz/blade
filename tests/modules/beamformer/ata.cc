@@ -4,18 +4,14 @@
 using namespace Blade;
 
 int main() {
-    Logger guard{};
-
     BL_INFO("Testing beamformer with the ATA kernel.");
 
     Test<CF32, CF32> mod({
-        .dims = {
-            .NBEAMS = 16,
-            .NANTS  = 20,
-            .NCHANS = 192,
-            .NTIME  = 8192,
-            .NPOLS  = 2,
-        },
+        .numberOfBeams = 16,
+        .numberOfAntennas = 20,
+        .numberOfFrequencyChannels = 192,
+        .numberOfTimeSamples = 8192,
+        .numberOfPolarizations = 2,
         .blockSize = 512,
     });
 
