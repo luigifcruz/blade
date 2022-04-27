@@ -26,6 +26,6 @@ __global__ void detector(const cuFloatComplex* input, float* output) {
         atomicAdd(output + oid + 0, X.x);
         atomicAdd(output + oid + 1, Y.x);
         atomicAdd(output + oid + 2, Z.x);
-        atomicAdd(output + oid + 3, 0.0);
+        atomicAdd(output + oid + 3, Z.y);
     }
 }

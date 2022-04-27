@@ -28,9 +28,9 @@ class Test(bl.Pipeline):
 
 
 if __name__ == "__main__":
-    NTIME = 2
-    TFACT = 2
-    NCHANS = 3
+    NTIME = 8750
+    TFACT = 10
+    NCHANS = 192
     OUTPOLS = 4
     NBEAMS = 2
     NPOLS = 2
@@ -59,12 +59,11 @@ if __name__ == "__main__":
     bl_input = np.array(bl_input_raw, copy=False).reshape((NBEAMS, NCHANS, NTIME, NPOLS))
     bl_output = np.array(bl_output_raw, copy=False).reshape((NBEAMS, NCHANS, NTIME//TFACT, OUTPOLS))
 
-    for i in range(len(bl_input)):
-        bl_input[i] = random() + 1j*random()
+    np.copyto(bl_input, np.random.random(size=bl_input.shape) + 1j*np.random.random(size=bl_input.shape))
 
-    print(bl_input)
-
+    start = time.time()
     mod.run(bl_input_raw, bl_output_raw)
+    print(f"Detection with Blade took {time.time()-start:.2f} s.")
 
     #
     # Python Implementation
@@ -72,6 +71,7 @@ if __name__ == "__main__":
 
     py_output = np.zeros((NBEAMS, NCHANS, NTIME//TFACT, OUTPOLS), dtype=np.float32)
     
+    start = time.time()
     for ibeam in range(NBEAMS):
         for ichan in range(NCHANS):
             for isamp in range(NTIME//TFACT):
@@ -86,9 +86,7 @@ if __name__ == "__main__":
                 py_output[ibeam, ichan, isamp, 1] = np.sum(auto_y.real) #real is actually abs() too, because y*yT
                 py_output[ibeam, ichan, isamp, 2] = np.sum(cross.real)
                 py_output[ibeam, ichan, isamp, 3] = np.sum(cross.imag)
-
-    print(bl_output)
-    print(py_output)
+    print(f"Detection with Python took {time.time()-start:.2f} s.")
 
     #
     # Compare Results
