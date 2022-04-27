@@ -22,6 +22,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
 
     if (config.numberOfBeams != 1) {
         BL_WARN("Number of beams ({}) should be one.", config.numberOfBeams);
+        throw Result::ERROR;
     }
 
     if (config.rate == 1) {

@@ -1,4 +1,5 @@
 subdir('cast')
 subdir('phasor')
+subdir('detector')
 subdir('beamformer')
 subdir('channelizer')
