@@ -22,7 +22,19 @@ class BLADE_API Runner {
 
     explicit Runner(const U64& numberOfWorkers,
                     const typename T::Config& config) {
-        BL_INFO("Blade Version {}-{}", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+        BL_INFO(R"(
+
+Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
+Version {} | Build Type: {}
+                   .-.
+    .-""`""-.    |(0 0)
+ _/`oOoOoOoOo`\_ \ \-/
+'.-=-=-=-=-=-=-.' \/ \
+  `-=.=-.-=.=-'    \ /\
+     ^  ^  ^       _H_ \
+        )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+
+
         BL_INFO("Instantiating new runner.");
 
         if (numberOfWorkers == 0) {
