@@ -18,11 +18,6 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    if (config.numberOfOutputPolarizations != 4) {
-        BL_FATAL("Number of output polarizations ({}) should be four (4).", config.numberOfOutputPolarizations);
-        throw Result::ERROR;
-    }
-
     if (config.numberOfPolarizations != 2) {
         BL_FATAL("Number of polarizations ({}) should be two (2).", config.numberOfPolarizations);
         throw Result::ERROR;
@@ -40,8 +35,18 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 
     grid = dim3((((getInputSize() / config.numberOfPolarizations) + block.x - 1) / block.x));
 
+    std::string kernel_key;
+    switch (config.numberOfOutputPolarizations) {
+        case 4: kernel_key = "detector_4pol"; break;
+        case 1: kernel_key = "detector_1pol"; break;
+        default:
+            BL_FATAL("Number of output polarizations ({}) not supported.", 
+                config.numberOfOutputPolarizations);
+            throw Result::ERROR;
+    }
+
     kernel =
-        Template("detector")
+        Template(kernel_key)
             .instantiate(getInputSize() / 
                          config.numberOfPolarizations,
                          config.numberOfFrequencyChannels,
