@@ -36,7 +36,7 @@ class BLADE_API ModeA : public Pipeline {
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;
         std::vector<XYZ> antennaPositions;
-        std::vector<F64> antennaCalibrations; 
+        std::vector<CF64> antennaCalibrations; 
         std::vector<RA_DEC> beamCoordinates;
 
         U64 integrationSize;

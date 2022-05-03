@@ -81,7 +81,7 @@ if __name__ == "__main__":
             bl.XYZ(-2523898.1150373477, -4123456.314794732, 4147860.3045849088),    # 4j 
             bl.XYZ(-2523824.598229116, -4123527.93080514, 4147833.98936114),        # 5b
         ],
-        antenna_calibrations = np.ones(20*192*2),
+        antenna_calibrations = np.ones(20*192*2, dtype=np.complex128),
         beam_coordinates = [
             bl.RA_DEC(0.63722, 1.07552424)
         ],
@@ -153,11 +153,7 @@ if __name__ == "__main__":
         # Now convert to Hz
         freqs = freqs_idx * chanwidth
 
-        phasors = np.exp(-1j*2*np.pi*delay*freqs)
-        return phasors
-
-        phasors *= get_fringe_rate(delay, rfFrequencyHz, 
-                totalBandwidthHz)
+        return np.exp(-1j*2*np.pi*delay*freqs)
 
 
     def get_fringe_rate(delay, rffreq, totalbw):

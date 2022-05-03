@@ -64,7 +64,7 @@ inline void init_phasor(const py::module& m) {
                       const LLA&,
                       const RA_DEC&,
                       const std::vector<XYZ>&,
-                      const std::vector<F64>&,
+                      const std::vector<CF64>&,
                       const std::vector<RA_DEC>&,
                       const U64&>(), py::arg("number_of_beams"),
                                      py::arg("number_of_antennas"),
