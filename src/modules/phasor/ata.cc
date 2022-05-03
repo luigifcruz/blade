@@ -186,7 +186,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                     const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
                     const U64 phasorsIndex = beamOffset + calibrationIndex;
 
-                    this->output.phasors[phasorsIndex] = phasor; // * this->config.antennaCalibrations[calibrationIndex];
+                    this->output.phasors[phasorsIndex] = phasor * this->config.antennaCalibrations[calibrationIndex];
                 }
             }
         }

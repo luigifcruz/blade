@@ -81,7 +81,7 @@ if __name__ == "__main__":
             bl.XYZ(-2523898.1150373477, -4123456.314794732, 4147860.3045849088),    # 4j 
             bl.XYZ(-2523824.598229116, -4123527.93080514, 4147833.98936114),        # 5b
         ],
-        antenna_calibrations = np.zeros(20*192*2),
+        antenna_calibrations = np.ones(20*192*2),
         beam_coordinates = [
             bl.RA_DEC(0.63722, 1.07552424)
         ],
