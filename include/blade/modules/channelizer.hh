@@ -2,6 +2,7 @@
 #define BLADE_MODULES_CHANNELIZER_HH
 
 #include <string>
+#include <cufft.h>
 
 #include "blade/base.hh"
 #include "blade/module.hh"
@@ -57,6 +58,11 @@ class BLADE_API Channelizer : public Module {
     const Config config;
     const Input input;
     Output output;
+
+    cufftHandle plan;
+
+    Result initializeCufft();
+    Result initializeInternal();
 };
 
 }  // namespace Blade::Modules
