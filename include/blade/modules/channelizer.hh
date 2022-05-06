@@ -49,7 +49,8 @@ class BLADE_API Channelizer : public Module {
         return config.numberOfPolarizations * 
                config.numberOfTimeSamples *
                config.numberOfAntennas * 
-               config.numberOfFrequencyChannels;
+               config.numberOfFrequencyChannels * 
+               config.numberOfBeams;
     }
 
     Result process(const cudaStream_t& stream = 0) final;

@@ -28,7 +28,6 @@ bool blade_ata_a_initialize(U64 numberOfWorkers) {
     }
 
     TestPipeline::Config config = {
-        .numberOfBeams = 1,
         .numberOfAntennas = BLADE_ATA_MODE_A_INPUT_NANT,
         .numberOfFrequencyChannels = BLADE_ATA_MODE_A_ANT_NCHAN,
         .numberOfTimeSamples = BLADE_ATA_MODE_A_NTIME,

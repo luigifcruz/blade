@@ -82,11 +82,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    if (config.numberOfBeams != 1) {
-        BL_WARN("Number of beams ({}) should be one.", config.numberOfBeams);
-        throw Result::ERROR;
-    }
-
     if (config.rate == config.numberOfTimeSamples) {
         BL_INFO("FFT Backend: cuFFT");
         BL_CHECK_THROW(initializeCufft());
@@ -95,6 +90,11 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
             BL_INFO("FFT Backend: Bypass");
             BL_CHECK_THROW(output.buf.link(input.buf));
         } else {
+            if (config.numberOfBeams != 1) {
+                BL_WARN("Number of beams ({}) should be one.", config.numberOfBeams);
+                throw Result::ERROR;
+            }
+
             BL_INFO("FFT Backend: Internal");
             BL_CHECK_THROW(initializeInternal());
         }
