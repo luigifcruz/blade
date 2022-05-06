@@ -15,8 +15,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating input cast from I8 to CF32.");
     this->connect(inputCast, {
-        .inputSize = config.numberOfBeams *
-                     config.numberOfAntennas *
+        .inputSize = config.numberOfAntennas *
                      config.numberOfFrequencyChannels *
                      config.numberOfTimeSamples *
                      config.numberOfPolarizations,
@@ -27,7 +26,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating channelizer with rate {}.", config.channelizerRate);
     this->connect(channelizer, {
-        .numberOfBeams = config.numberOfBeams,
+        .numberOfBeams = 1,
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels,
         .numberOfTimeSamples = config.numberOfTimeSamples,
@@ -40,7 +39,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating phasor module.");
     this->connect(phasor, {
-        .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
+        .numberOfBeams = config.beamformerBeams,
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
@@ -65,7 +64,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating beamformer module.");
     this->connect(beamformer, {
-        .numberOfBeams = config.numberOfBeams * config.beamformerBeams,
+        .numberOfBeams = config.beamformerBeams,
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
@@ -76,13 +75,26 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
         .phasors = phasor->getPhasors(),
     });
 
+    BL_DEBUG("Instantiating high-resolution channelizer module.");
+    this->connect(hires_channelizer, {
+        .numberOfBeams = config.beamformerBeams,
+        .numberOfAntennas = 1,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
+        .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
+        .numberOfPolarizations = config.numberOfPolarizations,
+        .rate = config.numberOfTimeSamples / config.channelizerRate,
+        .blockSize = config.beamformerBlockSize,
+    }, {
+        .buf = beamformer->getOutput(),
+    });
+
     if constexpr (!std::is_same<OT, CF32>::value) {
         BL_DEBUG("Instantiating output cast from CF32 to {}.", typeid(OT).name());
         this->connect(outputCast, {
-            .inputSize = beamformer->getOutputSize(),
+            .inputSize = hires_channelizer->getBufferSize(),
             .blockSize = config.castBlockSize,
         }, {
-            .buf = beamformer->getOutput(),
+            .buf = hires_channelizer->getOutput(),
         });
     }
 }

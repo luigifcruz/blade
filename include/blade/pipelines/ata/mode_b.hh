@@ -17,7 +17,6 @@ template<typename OT = CF16>
 class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
-        U64 numberOfBeams;
         U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
         U64 numberOfTimeSamples;
@@ -76,6 +75,7 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
+    std::shared_ptr<Modules::Channelizer<CF32, CF32>> hires_channelizer;
     std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
