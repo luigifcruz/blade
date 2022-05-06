@@ -3,6 +3,7 @@
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
 #include <blade/modules/channelizer.hh>
+#include <blade/modules/detector.hh>
 #include <blade/modules/phasor/ata.hh>
 
 #include <memory>
@@ -63,7 +64,7 @@ inline void init_phasor(const py::module& m) {
                       const LLA&,
                       const RA_DEC&,
                       const std::vector<XYZ>&,
-                      const std::vector<F64>&,
+                      const std::vector<CF64>&,
                       const std::vector<RA_DEC>&,
                       const U64&>(), py::arg("number_of_beams"),
                                      py::arg("number_of_antennas"),
@@ -129,8 +130,42 @@ inline void init_channelizer(const py::module& m) {
         .def("output", &Class::getOutput, py::return_value_policy::reference);
 }
 
+inline void init_detector(const py::module& m) {
+    using Class = Modules::Detector<CF32, F32>;
+
+    py::class_<Class, std::shared_ptr<Class>> detector(m, "Detector");
+
+    py::class_<Class::Config>(detector, "Config")
+        .def(py::init<const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&>(), py::arg("number_of_beams"),
+                                     py::arg("number_of_frequency_channels"),
+                                     py::arg("number_of_time_samples"),
+                                     py::arg("number_of_polarizations"),
+                                     py::arg("integration_size"),
+                                     py::arg("number_of_output_polarizations"),
+                                     py::arg("block_size"));
+
+    py::class_<Class::Input>(detector, "Input")
+        .def(py::init<const Vector<Device::CUDA, CF32>&>(), py::arg("buf"));
+        
+    detector
+        .def(py::init<const Class::Config&,
+                      const Class::Input&>(), py::arg("config"),
+                                              py::arg("input"))
+        .def("input_size", &Class::getInputSize)
+        .def("output_size", &Class::getOutputSize)
+        .def("input", &Class::getInput, py::return_value_policy::reference)
+        .def("output", &Class::getOutput, py::return_value_policy::reference);
+}
+
 inline void init_modules(const py::module& m) {
     init_channelizer(m);
     init_beamformer(m);
     init_phasor(m);
+    init_detector(m);
 }

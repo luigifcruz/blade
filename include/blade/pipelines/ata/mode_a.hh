@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_ATA_MODE_B_HH
-#define BLADE_PIPELINES_ATA_MODE_B_HH
+#ifndef BLADE_PIPELINES_ATA_MODE_A_HH
+#define BLADE_PIPELINES_ATA_MODE_A_HH
 
 #include <memory>
 #include <deque>
@@ -10,11 +10,12 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
+#include "blade/modules/detector.hh"
 
 namespace Blade::Pipelines::ATA {
 
-template<typename OT = CF16>
-class BLADE_API ModeB : public Pipeline {
+template<typename OT = F32>
+class BLADE_API ModeA : public Pipeline {
  public:
     struct Config {
         U64 numberOfBeams;
@@ -38,6 +39,9 @@ class BLADE_API ModeB : public Pipeline {
         std::vector<CF64> antennaCalibrations; 
         std::vector<RA_DEC> beamCoordinates;
 
+        U64 integrationSize;
+        U64 numberOfOutputPolarizations;
+
         U64 outputMemWidth;
         U64 outputMemPad;
 
@@ -45,17 +49,17 @@ class BLADE_API ModeB : public Pipeline {
         U64 channelizerBlockSize = 512;
         U64 phasorsBlockSize = 512;
         U64 beamformerBlockSize = 512;
+        U64 detectorBlockSize = 512;
     };
 
-    explicit ModeB(const Config& config);
+    explicit ModeA(const Config& config);
 
     constexpr const U64 getInputSize() const {
         return channelizer->getBufferSize();
     }
 
     constexpr const U64 getOutputSize() const {
-        return (((beamformer->getOutputSize() * sizeof(OT)) / 
-            config.outputMemWidth) * outputMemPitch) / sizeof(OT);
+        return detector->getOutputSize();
     }
 
     Result run(const F64& frameJulianDate,
@@ -76,16 +80,10 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
-    std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
+    std::shared_ptr<Modules::Detector<CF32, F32>> detector;
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
-        if constexpr (!std::is_same<OT, CF32>::value) {
-            // output is casted output
-            return outputCast->getOutput();
-        } else {
-            // output is un-casted beamformer output (CF32)
-            return beamformer->getOutput();
-        }
+        return detector->getOutput();
     }
 };
 

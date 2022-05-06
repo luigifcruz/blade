@@ -52,6 +52,13 @@ template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
+    if (this->getCalibrationsSize() != config.antennaCalibrations.size()) {
+        BL_FATAL("Number of antenna calibrations ({}) doesn't match with" 
+                 " the expected size ({}).", this->getCalibrationsSize(),
+                 config.antennaCalibrations.size());
+        throw Result::ERROR;
+    }
+
     //  Resizing array to the required length.
     antennasXyz.resize(this->config.numberOfAntennas);
     boresightUvw.resize(this->config.numberOfAntennas);
@@ -186,7 +193,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                     const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
                     const U64 phasorsIndex = beamOffset + calibrationIndex;
 
-                    this->output.phasors[phasorsIndex] = phasor; // * this->config.antennaCalibrations[calibrationIndex];
+                    this->output.phasors[phasorsIndex] = phasor * this->config.antennaCalibrations[calibrationIndex];
                 }
             }
         }

@@ -38,6 +38,10 @@ if __name__ == "__main__":
     # Blade Implementation
     #
 
+    cal_shape = (20, 192, 2)
+    calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
+    calibration = np.array(calibration, dtype=np.complex128)
+
     phasor_config = bl.Phasor.Config(
         number_of_beams = 1,
         number_of_antennas = 20,
@@ -81,7 +85,7 @@ if __name__ == "__main__":
             bl.XYZ(-2523898.1150373477, -4123456.314794732, 4147860.3045849088),    # 4j 
             bl.XYZ(-2523824.598229116, -4123527.93080514, 4147833.98936114),        # 5b
         ],
-        antenna_calibrations = np.zeros(20*192*2),
+        antenna_calibrations = calibration.flatten(),
         beam_coordinates = [
             bl.RA_DEC(0.63722, 1.07552424)
         ],
@@ -153,11 +157,7 @@ if __name__ == "__main__":
         # Now convert to Hz
         freqs = freqs_idx * chanwidth
 
-        phasors = np.exp(-1j*2*np.pi*delay*freqs)
-        return phasors
-
-        phasors *= get_fringe_rate(delay, rfFrequencyHz, 
-                totalBandwidthHz)
+        return np.exp(-1j*2*np.pi*delay*freqs)
 
 
     def get_fringe_rate(delay, rffreq, totalbw):
@@ -217,6 +217,7 @@ if __name__ == "__main__":
                 obsnchan, channelBandwidthHz)
         py_phasors[i, :] *= get_fringe_rate(delay, rfFrequencyHz, 
                 totalBandwidthHz)
+        py_phasors[i, :] *= calibration[i, :, 0]
 
     #
     # Compare Results

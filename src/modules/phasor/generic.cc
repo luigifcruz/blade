@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "blade/modules/phasor/generic.hh"
 
 #include "phasor.jit.hh"
@@ -24,24 +26,41 @@ Generic<OT>::Generic(const Config& config, const Input& input)
                  config.antennaPositions.size());
         throw Result::ERROR;
     }
-
-    if (config.numberOfAntennas *
-        config.numberOfFrequencyChannels * 
-        config.numberOfPolarizations
-            != config.antennaCalibrations.size()) {
-        BL_FATAL("Insufficient number of antenna calibrations ({}). This number"
-                 " should be the product of Number of Antennas ({}), Number of"
-                 " Frequency Channels ({}), and Number of Polarizations ({}).",
-                 config.antennaCalibrations.size(), config.numberOfAntennas,
-                 config.numberOfFrequencyChannels, config.numberOfPolarizations);
-        throw Result::ERROR;
-    }
     
     if (config.referenceAntennaIndex >= config.numberOfAntennas) {
         BL_FATAL("Reference Antenna Index ({}) is larger than the number of"
                  " antennas ({}).", config.referenceAntennaIndex,
                  config.numberOfAntennas);
         throw Result::ERROR;
+    }
+
+    const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
+    const F64& min_value = max_value * -1.0;
+
+    F64 max_cal = 0.0, min_cal = 0.0;
+    for (const auto& calibration : config.antennaCalibrations) {
+        if (calibration.real() > max_cal) {
+            max_cal = calibration.real();
+        }
+
+        if (calibration.imag() > max_cal) {
+            max_cal = calibration.imag();
+        }
+
+        if (calibration.real() < min_cal) {
+            min_cal = calibration.real();
+        }
+
+        if (calibration.imag() < min_cal) {
+            min_cal = calibration.imag();
+        }
+    }
+
+    if ((max_value < max_cal) || ((min_value > min_cal))) {
+        BL_WARN("Overflow Possible! At least one calibration value is smaller" 
+                " or larger ({:.2f}, {:.2f}) than what CF16 can hold ({:.2f}, {:.2f})"
+                " with current configuration parameters.",
+                min_cal, max_cal, min_value, max_value); 
     }
 
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
