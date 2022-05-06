@@ -37,6 +37,8 @@ class BLADE_API ModeB : public Pipeline {
         std::vector<CF64> antennaCalibrations; 
         std::vector<RA_DEC> beamCoordinates;
 
+        BOOL enableHiResChannelizer; 
+
         U64 outputMemWidth;
         U64 outputMemPad;
 
@@ -75,7 +77,7 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
-    std::shared_ptr<Modules::Channelizer<CF32, CF32>> hires_channelizer;
+    std::shared_ptr<Modules::Channelizer<CF32, CF32>> hiResChannelizer;
     std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {

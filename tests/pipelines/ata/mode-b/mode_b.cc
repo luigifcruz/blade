@@ -85,6 +85,8 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
         },
 
+        .enableHiResChannelizer = false,
+
         .outputMemWidth = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH,
         .outputMemPad = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD,
 
