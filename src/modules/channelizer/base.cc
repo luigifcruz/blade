@@ -82,24 +82,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    if (config.rate == config.numberOfTimeSamples) {
-        BL_INFO("FFT Backend: cuFFT");
-        BL_CHECK_THROW(initializeCufft());
-    } else {
-        if (config.rate == 1) {
-            BL_INFO("FFT Backend: Bypass");
-            BL_CHECK_THROW(output.buf.link(input.buf));
-        } else {
-            if (config.numberOfBeams != 1) {
-                BL_WARN("Number of beams ({}) should be one.", config.numberOfBeams);
-                throw Result::ERROR;
-            }
-
-            BL_INFO("FFT Backend: Internal");
-            BL_CHECK_THROW(initializeInternal());
-        }
-    } 
-
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
@@ -107,12 +89,35 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
     BL_INFO("Channelizer Rate: {}", config.rate);
 
+    if (config.rate == 1) {
+        BL_INFO("FFT Backend: Bypass");
+        BL_CHECK_THROW(output.buf.link(input.buf));
+        return;
+    }
+
+    if (config.rate == config.numberOfTimeSamples) {
+        BL_INFO("FFT Backend: cuFFT");
+        BL_CHECK_THROW(initializeCufft());
+    } else {
+            if (config.numberOfBeams != 1) {
+                BL_WARN("Number of beams ({}) should be one.", config.numberOfBeams);
+                throw Result::ERROR;
+            }
+
+            BL_INFO("FFT Backend: Internal");
+            BL_CHECK_THROW(initializeInternal());
+    }
+
     BL_CHECK_THROW(InitInput(input.buf, getBufferSize()));
     BL_CHECK_THROW(InitOutput(output.buf, getBufferSize()));
 }
 
 template<typename IT, typename OT>
 Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
+    if (config.rate == 1) {
+        return Result::SUCCESS;
+    } 
+
     if (config.rate == config.numberOfTimeSamples) {
         cufftSetStream(plan, stream);
         for (U64 pol = 0; pol < config.numberOfPolarizations; pol++) {
@@ -121,15 +126,11 @@ Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
             cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
         }
     } else {
-        if (config.rate == 1) {
-            return Result::SUCCESS;
-        } else {
             cache
                 .get_kernel(kernel)
                 ->configure(grid, block, 0, stream)
                 ->launch(input.buf.data(), output.buf.data());
-        }
-    } 
+    }
 
     BL_CUDA_CHECK_KERNEL([&]{
         BL_FATAL("Module failed to execute: {}", err);
