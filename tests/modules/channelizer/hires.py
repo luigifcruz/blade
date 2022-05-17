@@ -39,12 +39,12 @@ class Test(bl.Pipeline):
 
 if __name__ == "__main__":
     # Specify dimension of array.
-    number_of_beams = 1
-    number_of_antennas = 20
-    number_of_frequency_channels = 96
-    number_of_time_samples = 35000
-    number_of_polarizations = 2
-    channelizer_rate = 35000
+    number_of_beams = 2
+    number_of_antennas = 1
+    number_of_frequency_channels = 1
+    number_of_time_samples = 8
+    number_of_polarizations = 1
+    channelizer_rate = 4
 
     # Initialize Blade pipeline.
     mod = Test(
@@ -57,10 +57,12 @@ if __name__ == "__main__":
     )
 
     # Generate test data with Python.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _a = np.linspace(0, mod.buffer_size() -1, mod.buffer_size(), dtype=np.int32)
+    _b = np.linspace(0, mod.buffer_size() -1, mod.buffer_size(), dtype=np.int32)
+    print(_a)
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     input = _c.reshape((
+            number_of_beams,
             number_of_antennas, 
             number_of_frequency_channels,
             number_of_time_samples,
@@ -82,24 +84,30 @@ if __name__ == "__main__":
 
     # Channelize with Numpy.
     start = time.time()
-    for iant in range(number_of_antennas):
-        ant = input[iant]
+    for ibeam in range(number_of_beams):
+        beam = input[ibeam]
 
-        for ichan in range(number_of_frequency_channels):
-            ch_ant = ant[ichan]
+        for iant in range(number_of_antennas):
+            ant = beam[iant]
 
-            for ipol in range(number_of_polarizations):
-                pl_arr = ch_ant[:, ipol]
+            for ichan in range(number_of_frequency_channels):
+                ch_ant = ant[ichan]
 
-                nspecs = pl_arr.size // channelizer_rate
-                arr_fft = np.zeros_like(pl_arr, dtype=np.complex64).reshape(nspecs, channelizer_rate)
+                for ipol in range(number_of_polarizations):
+                    pl_arr = ch_ant[:, ipol]
 
-                for ispec in range(nspecs):
-                    arr_fft[ispec] = np.fft.fft(pl_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate])
+                    nspecs = pl_arr.size // channelizer_rate
+                    arr_fft = np.zeros_like(pl_arr, dtype=np.complex64).reshape(nspecs, channelizer_rate)
 
-                for i in range(channelizer_rate):
-                    output[iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
+                    for ispec in range(nspecs):
+                        arr_fft[ispec] = np.fft.fft(pl_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate])
+
+                    for i in range(channelizer_rate):
+                        output[ibeam, iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
+
+    print(np.array(bl_output, copy=False).real)
+    print(output.flatten().real)
 
     # Check both answers.
     assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)

@@ -60,10 +60,10 @@ class BLADE_API Channelizer : public Module {
     const Input input;
     Output output;
 
-    cufftHandle plan;
+    Vector<Device::CUDA, OT> buffer;
+    Vector<Device::CPU | Device::CUDA, U64> indices;
 
-    Result initializeCufft();
-    Result initializeInternal();
+    cufftHandle plan;
 };
 
 }  // namespace Blade::Modules
