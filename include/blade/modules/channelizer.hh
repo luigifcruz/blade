@@ -64,6 +64,7 @@ class BLADE_API Channelizer : public Module {
     Vector<Device::CPU | Device::CUDA, U64> indices;
 
     cufftHandle plan;
+    std::string kernel_key;
 };
 
 }  // namespace Blade::Modules

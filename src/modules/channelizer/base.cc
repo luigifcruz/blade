@@ -32,67 +32,101 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         return;
     }
 
-    BL_INFO("FFT Backend: cuFFT");
+    switch (config.rate) {
+        case 4:  kernel_key = "fft_4pnt"; break;
+        default: kernel_key = "cufft"; break;
+    }
 
-    // FFT dimension (1D, 2D, ...)
-    int rank = 1;
+    if (config.numberOfBeams != 1) {
+        kernel_key = "cufft";
+    }
 
-    // FFT size for each dimension
-    int n[] = { static_cast<int>(config.rate) }; 
+    if (kernel_key == "cufft") {
+        BL_INFO("FFT Backend: cuFFT");
 
-    // Distance between successive input element and output element.
-    int istride = config.numberOfPolarizations;
-    int ostride = config.numberOfPolarizations;
+        // FFT dimension (1D, 2D, ...)
+        int rank = 1;
 
-    // Distance between input batches and output batches.
-    int idist = (config.rate * config.numberOfPolarizations);
-    int odist = (config.rate * config.numberOfPolarizations);
+        // FFT size for each dimension
+        int n[] = { static_cast<int>(config.rate) }; 
 
-    // Input size with pitch, this is ignored for 1D tansformations.
-    int inembed[] = { 0 }; 
-    int onembed[] = { 0 };
+        // Distance between successive input element and output element.
+        int istride = config.numberOfPolarizations;
+        int ostride = config.numberOfPolarizations;
 
-    // Number of batched FFTs.
-    int batch = (getBufferSize() / config.numberOfPolarizations) / config.rate; 
+        // Distance between input batches and output batches.
+        int idist = (config.rate * config.numberOfPolarizations);
+        int odist = (config.rate * config.numberOfPolarizations);
 
-    // Create cuFFT plan.
-    cufftPlanMany(&plan, rank, n, 
-                  inembed, istride, idist,
-                  onembed, ostride, odist,
-                  CUFFT_C2C, batch);
+        // Input size with pitch, this is ignored for 1D tansformations.
+        int inembed[] = { 0 }; 
+        int onembed[] = { 0 };
 
-    BL_CHECK_THROW(buffer.resize(getBufferSize()));
-    BL_CHECK_THROW(indices.resize(getBufferSize()));
+        // Number of batched FFTs.
+        int batch = (getBufferSize() / config.numberOfPolarizations) / config.rate; 
 
-    // Generate post-FFT indices.
-    U64 numberOfBeams = config.numberOfBeams;
-    U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.rate;
-    U64 numberOfTimeSamples = config.numberOfTimeSamples / config.rate;
-    U64 numberOfPolarizations = config.numberOfPolarizations;
+        // Create cuFFT plan.
+        cufftPlanMany(&plan, rank, n, 
+                      inembed, istride, idist,
+                      onembed, ostride, odist,
+                      CUFFT_C2C, batch);
 
-    for (U64 beam = 0; beam < numberOfBeams; beam++) {
-        const U64 beam_off = beam * numberOfFrequencyChannels * numberOfTimeSamples * numberOfPolarizations;
+        BL_CHECK_THROW(buffer.resize(getBufferSize()));
+        BL_CHECK_THROW(indices.resize(getBufferSize()));
 
-        for (U64 ch = 0; ch < numberOfFrequencyChannels; ch++) {
-            const U64 ch_off = ch * numberOfTimeSamples * numberOfPolarizations;
-            const U64 ch_res = ch * numberOfPolarizations;
+        // Generate post-FFT indices.
+        U64 numberOfBeams = config.numberOfBeams;
+        U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.rate;
+        U64 numberOfTimeSamples = config.numberOfTimeSamples / config.rate;
+        U64 numberOfPolarizations = config.numberOfPolarizations;
 
-            for (U64 ts = 0; ts < numberOfTimeSamples; ts++) {
-                const U64 ts_off = ts * numberOfPolarizations;
-                const U64 ts_res = ts * numberOfPolarizations * numberOfFrequencyChannels;
+        for (U64 beam = 0; beam < numberOfBeams; beam++) {
+            const U64 beam_off = beam * numberOfFrequencyChannels * numberOfTimeSamples * numberOfPolarizations;
 
-                for (U64 pol = 0; pol < numberOfPolarizations; pol++) {
-                    const U64 pol_off = pol;
-                    const U64 pol_res = pol;
+            for (U64 ch = 0; ch < numberOfFrequencyChannels; ch++) {
+                const U64 ch_off = ch * numberOfTimeSamples * numberOfPolarizations;
+                const U64 ch_res = ch * numberOfPolarizations;
 
-                    indices[beam_off + ch_off + ts_off + pol_off] = beam_off + ch_res + ts_res + pol_res;
+                for (U64 ts = 0; ts < numberOfTimeSamples; ts++) {
+                    const U64 ts_off = ts * numberOfPolarizations;
+                    const U64 ts_res = ts * numberOfPolarizations * numberOfFrequencyChannels;
+
+                    for (U64 pol = 0; pol < numberOfPolarizations; pol++) {
+                        const U64 pol_off = pol;
+                        const U64 pol_res = pol;
+
+                        indices[beam_off + ch_off + ts_off + pol_off] = beam_off + ch_res + ts_res + pol_res;
+                    }
                 }
             }
         }
-    }
 
-    kernel = Template("shuffle").instantiate(getBufferSize());
-    grid = dim3((getBufferSize() + block.x - 1) / block.x);
+        for (const auto& n : indices.getUnderlying()) {
+            BL_INFO("{}", n);
+        }
+
+        kernel = Template("shuffle").instantiate(getBufferSize());
+        grid = dim3((getBufferSize() + block.x - 1) / block.x);
+    } else {
+        BL_INFO("FFT Backend: Internal");
+
+        grid = 
+            (
+                (
+                    getBufferSize() / 
+                    config.rate /
+                    config.numberOfPolarizations
+                ) + block.x - 1
+            ) / block.x;
+
+        kernel =
+            Template(kernel_key)
+                .instantiate(getBufferSize(),
+                             config.rate,
+                             config.numberOfPolarizations,
+                             config.numberOfTimeSamples,
+                             config.numberOfFrequencyChannels);
+    }
 
     BL_CHECK_THROW(InitInput(input.buf, getBufferSize()));
     BL_CHECK_THROW(InitOutput(output.buf, getBufferSize()));
@@ -104,18 +138,27 @@ Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
         return Result::SUCCESS;
     } 
 
-    cufftSetStream(plan, stream);
-    for (U64 pol = 0; pol < config.numberOfPolarizations; pol++) {
-        cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
-        cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
-        cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
-    }
+    if (kernel_key == "cufft") {
+        cufftSetStream(plan, stream);
+        for (U64 pol = 0; pol < config.numberOfPolarizations; pol++) {
+            cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+            cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
+            cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
+        }
 
-    if (config.rate != config.numberOfTimeSamples) {
+        if (config.rate != config.numberOfTimeSamples) {
+            cache
+                .get_kernel(kernel)
+                ->configure(grid, block, 0, stream)
+                ->launch(buffer.data(), indices.data(), output.buf.data());
+        } else {
+            Memory::Copy(output.buf, buffer, stream);
+        }
+    } else {
         cache
             .get_kernel(kernel)
             ->configure(grid, block, 0, stream)
-            ->launch(buffer.data(), indices.data(), output.buf.data());
+            ->launch(input.buf.data(), output.buf.data());
     }
 
     BL_CUDA_CHECK_KERNEL([&]{

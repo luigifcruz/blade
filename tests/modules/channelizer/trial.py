@@ -1,6 +1,7 @@
 import time
 import blade as bl
 import numpy as np
+import sys
 
 class Test(bl.Pipeline):
     channelizer: bl.Channelizer
@@ -36,16 +37,8 @@ class Test(bl.Pipeline):
         self.copy(output, self.channelizer.output())
         self.synchronize()
 
-
-if __name__ == "__main__":
-    # Specify dimension of array.
-    number_of_beams = 2
-    number_of_antennas = 1
-    number_of_frequency_channels = 1
-    number_of_time_samples = 8
-    number_of_polarizations = 1
-    channelizer_rate = 4
-
+def trial(number_of_beams, number_of_antennas, number_of_frequency_channels, 
+        number_of_time_samples, number_of_polarizations, channelizer_rate):
     # Initialize Blade pipeline.
     mod = Test(
         number_of_beams,
@@ -57,9 +50,8 @@ if __name__ == "__main__":
     )
 
     # Generate test data with Python.
-    _a = np.linspace(0, mod.buffer_size() -1, mod.buffer_size(), dtype=np.int32)
-    _b = np.linspace(0, mod.buffer_size() -1, mod.buffer_size(), dtype=np.int32)
-    print(_a)
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     input = _c.reshape((
             number_of_beams,
@@ -106,9 +98,16 @@ if __name__ == "__main__":
                         output[ibeam, iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
-    print(np.array(bl_output, copy=False).real)
-    print(output.flatten().real)
-
     # Check both answers.
     assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
     print("Test successfully completed!")
+
+
+if __name__ == "__main__":
+    print(sys.argv[6])
+    trial(int(sys.argv[1]),
+          int(sys.argv[2]),
+          int(sys.argv[3]), 
+          int(sys.argv[4]), 
+          int(sys.argv[5]), 
+          int(sys.argv[6])) 
