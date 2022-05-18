@@ -102,7 +102,20 @@ Result ModeA<OT>::run(const F64& frameJulianDate,
 
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
-    BL_CHECK(this->copy(output, this->getOutput()));
+    // BL_CHECK(this->copy(output, this->getOutput()));
+    // Copy Freq-Time-Pol to Freq-Pol-Time
+    //  copy 1 pol at a time, after which:
+    //    stride across all time in the dest (dpitch)
+    //    stride across all pols in the source (spitch)
+    auto output_time = config.numberOfTimeSamples / config.integrationSize;
+    BL_CHECK(this->copy2D(
+        output,
+        output_time*sizeof(OT),         // dpitch
+        this->getOutput(),      // src
+        config.numberOfOutputPolarizations*sizeof(OT),  // spitch (bytes)
+        sizeof(OT),  // width (bytes)
+        output_time // height (rows of width)
+    ));
 
     return Result::SUCCESS;
 }
