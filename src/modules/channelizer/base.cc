@@ -40,6 +40,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
     if (config.numberOfBeams != 1) {
         kernel_key = "cufft";
     }
+    kernel_key = "cufft";
 
     if (kernel_key == "cufft") {
         BL_INFO("FFT Backend: cuFFT");
@@ -71,42 +72,55 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                       onembed, ostride, odist,
                       CUFFT_C2C, batch);
 
-        BL_CHECK_THROW(buffer.resize(getBufferSize()));
-        BL_CHECK_THROW(indices.resize(getBufferSize()));
+        if (config.rate != config.numberOfTimeSamples) {
+            BL_CHECK_THROW(buffer.resize(getBufferSize()));
+            BL_CHECK_THROW(indices.resize(getBufferSize()));
 
-        // Generate post-FFT indices.
-        U64 numberOfBeams = config.numberOfBeams;
-        U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.rate;
-        U64 numberOfTimeSamples = config.numberOfTimeSamples / config.rate;
-        U64 numberOfPolarizations = config.numberOfPolarizations;
+            for (U64 i = 0; i < getBufferSize(); i += config.rate) {
+                for (U64 j = 0; j < config.rate; j++) {
+                    indices[i + j*2] = i + j;
+                    BL_INFO("{} {}", i + j*2, i + j);
+                }
+            }
 
-        for (U64 beam = 0; beam < numberOfBeams; beam++) {
-            const U64 beam_off = beam * numberOfFrequencyChannels * numberOfTimeSamples * numberOfPolarizations;
+            for (const auto& n : indices.getUnderlying()) {
+                BL_TRACE("{}", n)
+            }
 
-            for (U64 ch = 0; ch < numberOfFrequencyChannels; ch++) {
-                const U64 ch_off = ch * numberOfTimeSamples * numberOfPolarizations;
-                const U64 ch_res = ch * numberOfPolarizations;
+            // Generate post-FFT indices.
+            U64 numberOfBeams = config.numberOfBeams;
+            U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.rate;
+            U64 numberOfTimeSamples = config.numberOfTimeSamples / config.rate;
+            U64 numberOfPolarizations = config.numberOfPolarizations;
 
-                for (U64 ts = 0; ts < numberOfTimeSamples; ts++) {
-                    const U64 ts_off = ts * numberOfPolarizations;
-                    const U64 ts_res = ts * numberOfPolarizations * numberOfFrequencyChannels;
+            for (U64 beam = 0; beam < numberOfBeams; beam++) {
+                const U64 beam_off = beam * numberOfFrequencyChannels * numberOfTimeSamples * numberOfPolarizations;
 
-                    for (U64 pol = 0; pol < numberOfPolarizations; pol++) {
-                        const U64 pol_off = pol;
-                        const U64 pol_res = pol;
+                for (U64 ch = 0; ch < numberOfFrequencyChannels; ch++) {
+                    const U64 ch_off = ch * numberOfTimeSamples * numberOfPolarizations;
+                    const U64 ch_res = ch * numberOfPolarizations;
 
-                        indices[beam_off + ch_off + ts_off + pol_off] = beam_off + ch_res + ts_res + pol_res;
+                    for (U64 ts = 0; ts < numberOfTimeSamples; ts++) {
+                        const U64 ts_off = ts * numberOfPolarizations;
+                        const U64 ts_res = ts * numberOfPolarizations * numberOfFrequencyChannels;
+
+                        for (U64 pol = 0; pol < numberOfPolarizations; pol++) {
+                            const U64 pol_off = pol;
+                            const U64 pol_res = pol;
+
+                            indices[beam_off + ch_off + ts_off + pol_off] = beam_off + ch_res + ts_res + pol_res;
+                        }
                     }
                 }
             }
-        }
 
-        for (const auto& n : indices.getUnderlying()) {
-            BL_INFO("{}", n);
-        }
+            for (const auto& n : indices.getUnderlying()) {
+                BL_INFO("{}", n)
+            }
 
-        kernel = Template("shuffle").instantiate(getBufferSize());
-        grid = dim3((getBufferSize() + block.x - 1) / block.x);
+            kernel = Template("shuffle").instantiate(getBufferSize());
+            grid = dim3((getBufferSize() + block.x - 1) / block.x);
+        }
     } else {
         BL_INFO("FFT Backend: Internal");
 
@@ -143,6 +157,11 @@ Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
         for (U64 pol = 0; pol < config.numberOfPolarizations; pol++) {
             cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
             cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
+
+            if (config.rate == config.numberOfTimeSamples) {
+                output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
+            }
+
             cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
         }
 
@@ -151,8 +170,6 @@ Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
                 .get_kernel(kernel)
                 ->configure(grid, block, 0, stream)
                 ->launch(buffer.data(), indices.data(), output.buf.data());
-        } else {
-            Memory::Copy(output.buf, buffer, stream);
         }
     } else {
         cache
