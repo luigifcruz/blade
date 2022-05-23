@@ -62,7 +62,8 @@ if __name__ == "__main__":
     np.copyto(bl_input, np.random.random(size=bl_input.shape) + 1j*np.random.random(size=bl_input.shape))
 
     start = time.time()
-    mod.run(bl_input_raw, bl_output_raw)
+    for _ in range(10):
+        mod.run(bl_input_raw, bl_output_raw)
     print(f"Detection with Blade took {time.time()-start:.2f} s.")
 
     #

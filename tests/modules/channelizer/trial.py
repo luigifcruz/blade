@@ -1,7 +1,7 @@
+import sys
 import time
 import blade as bl
 import numpy as np
-import sys
 
 class Test(bl.Pipeline):
     channelizer: bl.Channelizer
@@ -104,7 +104,6 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
 
 
 if __name__ == "__main__":
-    print(sys.argv[6])
     trial(int(sys.argv[1]),
           int(sys.argv[2]),
           int(sys.argv[3]), 
