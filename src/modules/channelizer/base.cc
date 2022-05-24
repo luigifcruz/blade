@@ -40,7 +40,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
     if (config.numberOfBeams != 1) {
         kernel_key = "cufft";
     }
-    kernel_key = "cufft";
 
     if (kernel_key == "cufft") {
         BL_INFO("FFT Backend: cuFFT");
