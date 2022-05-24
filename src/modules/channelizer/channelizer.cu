@@ -87,7 +87,7 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
 }
 
 template<uint64_t N>
-__global__ void shuffle(const cuFloatComplex* input, const uint64_t* indices, cuFloatComplex* output) {
+__global__ void shuffler(const cuFloatComplex* input, const uint64_t* indices, cuFloatComplex* output) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (tid < N){

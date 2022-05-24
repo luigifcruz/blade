@@ -76,49 +76,52 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
             BL_CHECK_THROW(buffer.resize(getBufferSize()));
             BL_CHECK_THROW(indices.resize(getBufferSize()));
 
-            for (U64 i = 0; i < getBufferSize(); i += config.rate) {
-                for (U64 j = 0; j < config.rate; j++) {
-                    indices[i + j*2] = i + j;
-                    BL_INFO("{} {}", i + j*2, i + j);
-                }
-            }
-
-            for (const auto& n : indices.getUnderlying()) {
-                BL_TRACE("{}", n)
-            }
-
             // Generate post-FFT indices.
+            // This really should be calculated on the GPU, 
+            // but this is faster to write and it probably
+            // won't be used much. Please rewrite this if
+            // used regurlarly.
+            U64 i = 0;
             U64 numberOfBeams = config.numberOfBeams;
-            U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.rate;
-            U64 numberOfTimeSamples = config.numberOfTimeSamples / config.rate;
+            U64 numberOfAntennas = config.numberOfAntennas;
+            U64 numberOfFrequencyChannels = config.numberOfFrequencyChannels;
+            U64 numberOfTimeSamples = config.numberOfTimeSamples;
             U64 numberOfPolarizations = config.numberOfPolarizations;
 
-            for (U64 beam = 0; beam < numberOfBeams; beam++) {
-                const U64 beam_off = beam * numberOfFrequencyChannels * numberOfTimeSamples * numberOfPolarizations;
+            for (U64 b = 0; b < numberOfBeams; b++) {
+                const U64 b_off = b * 
+                                  numberOfAntennas *
+                                  numberOfFrequencyChannels * 
+                                  numberOfTimeSamples * 
+                                  numberOfPolarizations; 
 
-                for (U64 ch = 0; ch < numberOfFrequencyChannels; ch++) {
-                    const U64 ch_off = ch * numberOfTimeSamples * numberOfPolarizations;
-                    const U64 ch_res = ch * numberOfPolarizations;
+                for (U64 a = 0; a < numberOfAntennas; a++) {
+                    const U64 a_off = a * 
+                                      numberOfFrequencyChannels * 
+                                      numberOfTimeSamples * 
+                                      numberOfPolarizations; 
 
-                    for (U64 ts = 0; ts < numberOfTimeSamples; ts++) {
-                        const U64 ts_off = ts * numberOfPolarizations;
-                        const U64 ts_res = ts * numberOfPolarizations * numberOfFrequencyChannels;
+                    for (U64 c = 0; c < numberOfFrequencyChannels; c++) {
+                        const U64 c_off = c * 
+                                        numberOfTimeSamples * 
+                                        numberOfPolarizations; 
 
-                        for (U64 pol = 0; pol < numberOfPolarizations; pol++) {
-                            const U64 pol_off = pol;
-                            const U64 pol_res = pol;
+                        for (U64 r = 0; r < config.rate; r++) {
+                            const U64 r_off = r * numberOfPolarizations;
 
-                            indices[beam_off + ch_off + ts_off + pol_off] = beam_off + ch_res + ts_res + pol_res;
+                            for (U64 o = 0; o < (numberOfTimeSamples / config.rate); o++) {
+                                const U64 o_off = o * config.rate * numberOfPolarizations;
+
+                                for (U64 p = 0; p < numberOfPolarizations; p++) {
+                                    indices[i++] = b_off + a_off + c_off + o_off + r_off + p;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            for (const auto& n : indices.getUnderlying()) {
-                BL_INFO("{}", n)
-            }
-
-            kernel = Template("shuffle").instantiate(getBufferSize());
+            kernel = Template("shuffler").instantiate(getBufferSize());
             grid = dim3((getBufferSize() + block.x - 1) / block.x);
         }
     } else {

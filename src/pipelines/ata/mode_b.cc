@@ -75,26 +75,13 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
         .phasors = phasor->getPhasors(),
     });
 
-    BL_DEBUG("Instantiating high-resolution channelizer module.");
-    this->connect(hiResChannelizer, {
-        .numberOfBeams = config.beamformerBeams,
-        .numberOfAntennas = 1,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
-        .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
-        .numberOfPolarizations = config.numberOfPolarizations,
-        .rate = (config.enableHiResChannelizer) ? (config.numberOfTimeSamples / config.channelizerRate) : 1,
-        .blockSize = config.beamformerBlockSize,
-    }, {
-        .buf = beamformer->getOutput(),
-    });
-
     if constexpr (!std::is_same<OT, CF32>::value) {
         BL_DEBUG("Instantiating output cast from CF32 to {}.", typeid(OT).name());
         this->connect(outputCast, {
-            .inputSize = hiResChannelizer->getBufferSize(),
+            .inputSize = beamformer->getOutputSize(),
             .blockSize = config.castBlockSize,
         }, {
-            .buf = hiResChannelizer->getOutput(),
+            .buf = beamformer->getOutput(),
         });
     }
 }
