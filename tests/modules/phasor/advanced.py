@@ -42,8 +42,12 @@ if __name__ == "__main__":
     calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
     calibration = np.array(calibration, dtype=np.complex128)
 
+    phase_center_pos_rad = [0.64169, 1.079896295]
+    beam1_pos_rad        = [0.63722, 1.07552424]
+    beam2_pos_rad        = [0.65063, 1.08426835]
+
     phasor_config = bl.Phasor.Config(
-        number_of_beams = 1,
+        number_of_beams = 2,
         number_of_antennas = 20,
         number_of_frequency_channels = 192,
         number_of_polarizations = 2,
@@ -60,8 +64,8 @@ if __name__ == "__main__":
             ALT = 1020.86
         ),
         boresight_coordinate = bl.RA_DEC(
-            RA = 0.64169,
-            DEC = 1.079896295
+            RA = phase_center_pos_rad[0],
+            DEC = phase_center_pos_rad[1]
         ),
         antenna_positions = [
             bl.XYZ(-2524041.5388905862, -4123587.965024342, 4147646.4222955606),    # 1c 
@@ -87,7 +91,8 @@ if __name__ == "__main__":
         ],
         antenna_calibrations = calibration.flatten(),
         beam_coordinates = [
-            bl.RA_DEC(0.63722, 1.07552424)
+            bl.RA_DEC(*beam1_pos_rad),
+            bl.RA_DEC(*beam2_pos_rad)
         ],
 
         block_size = 512
@@ -101,7 +106,7 @@ if __name__ == "__main__":
 
     bl_phasors = np.array(bl_output, copy=False)
     bl_phasors = bl_phasors.reshape((1, 20, 192, 2))
-    bl_phasors = bl_phasors[0, :, :, 0]
+    bl_phasors = bl_phasors[:, :, :, 0]
 
     #
     # Python Implementation
@@ -171,20 +176,14 @@ if __name__ == "__main__":
     frequencyStartIndex = 352
     obsnchan = 192 
 
-    boresight_ra  = 2.451075 # hours
-    boresight_dec = 61.87350 # degrees
+    boresight_ra, boresight_dec = np.rad2deg(phase_center_pos_rad)
 
-    # Convert to degrees
-    boresight_ra = boresight_ra * 360 / 24.
     source = SkyCoord(boresight_ra, boresight_dec, unit='deg')
 
-    # forming a single beam
-    beam_ra  = 2.434000 # hours
-    beam_dec = 61.6230 # degrees
-
-    # Convert to degrees
-    beam_ra = beam_ra * 360 / 24.
-    beam = SkyCoord(beam_ra, beam_dec, unit='deg')
+    beam1_ra, beam1_dec = np.rad2deg(beam1_pos_rad)
+    beam2_ra, beam2_dec = np.rad2deg(beam2_pos_rad)
+    beam1 = SkyCoord(beam1_ra, beam1_dec, unit='deg')
+    beam2 = SkyCoord(beam2_ra, beam2_dec, unit='deg')
 
     antnames = ["1C", "1E", "1G", "1H", "1K", "2A", "2B", "2C", "2E", "2H", "2J", "2L", "2K", "2M", "3D", "3L", "4E", "4G", "4J", "5B"]
     itrf_sub = ITRF.loc[antnames]
@@ -201,23 +200,33 @@ if __name__ == "__main__":
     boresight_uvw = compute_uvw(ts, source, 
             itrf_sub[['x','y','z']], itrf_sub[['x','y','z']].values[irefant])
 
-    beam_uvw = compute_uvw(ts, beam,
+    beam1_uvw = compute_uvw(ts, beam1,
+            itrf_sub[['x','y','z']], itrf_sub[['x','y','z']].values[irefant])
+
+    beam2_uvw = compute_uvw(ts, beam2,
             itrf_sub[['x','y','z']], itrf_sub[['x','y','z']].values[irefant])
 
     # subtracting the W-coordinate from boresights
     # to get the delays needed to steer relative to boresight
-    delays = (beam_uvw[:,2] - boresight_uvw[:,2] ) / const.c.value
+    delays1 = (beam1_uvw[:,2] - boresight_uvw[:,2] ) / const.c.value
+    delays2 = (beam2_uvw[:,2] - boresight_uvw[:,2] ) / const.c.value
 
     IF_freq = np.arange(frequencyStartIndex, 
             frequencyStartIndex+obsnchan)
 
-    py_phasors = np.zeros((20, 192), dtype=np.complex128)
+    py_phasors = np.zeros((2, 20, 192), dtype=np.complex128)
     for i, delay in enumerate(delays):
-        py_phasors[i, :] = create_delay_phasors(delay, frequencyStartIndex, 
+        py_phasors[0, i, :] = create_delay_phasors(delay1, frequencyStartIndex,
                 obsnchan, channelBandwidthHz)
-        py_phasors[i, :] *= get_fringe_rate(delay, rfFrequencyHz, 
+        py_phasors[0, i, :] *= get_fringe_rate(delay1, rfFrequencyHz,
                 totalBandwidthHz)
-        py_phasors[i, :] *= calibration[i, :, 0]
+        py_phasors[0, i, :] *= calibration[i, :, 0]
+
+        py_phasors[1, i, :] = create_delay_phasors(delay2, frequencyStartIndex,
+                obsnchan, channelBandwidthHz)
+        py_phasors[1, i, :] *= get_fringe_rate(delay2, rfFrequencyHz,
+                totalBandwidthHz)
+        py_phasors[1, i, :] *= calibration[i, :, 0]
 
     #
     # Compare Results
