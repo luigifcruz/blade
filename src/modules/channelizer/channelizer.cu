@@ -1,9 +1,7 @@
 #include <cuComplex.h>
+#include <cuda_fp16.h>
 #include <stdint.h>
 
-// 4-point FFT
-
-// TODO: Add multiple formats support.
 template<uint64_t N, uint64_t NFFT, uint64_t NPOLS, uint64_t NTIME, uint64_t NCHANS>
 __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
     const int numThreads = (blockDim.x * gridDim.x) * (NFFT * NPOLS);
@@ -85,5 +83,14 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
             output[io + j + ch_index[2]] = make_cuFloatComplex(a3, a4);
             output[io + j + ch_index[3]] = make_cuFloatComplex(b3, b4);
         }
+    }
+}
+
+template<uint64_t N>
+__global__ void shuffler(const cuFloatComplex* input, const uint64_t* indices, cuFloatComplex* output) {
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid < N){
+        output[tid] = input[indices[tid]];
     }
 }

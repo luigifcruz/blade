@@ -2,6 +2,7 @@
 #define BLADE_MODULES_CHANNELIZER_HH
 
 #include <string>
+#include <cufft.h>
 
 #include "blade/base.hh"
 #include "blade/module.hh"
@@ -48,7 +49,8 @@ class BLADE_API Channelizer : public Module {
         return config.numberOfPolarizations * 
                config.numberOfTimeSamples *
                config.numberOfAntennas * 
-               config.numberOfFrequencyChannels;
+               config.numberOfFrequencyChannels * 
+               config.numberOfBeams;
     }
 
     Result process(const cudaStream_t& stream = 0) final;
@@ -57,6 +59,12 @@ class BLADE_API Channelizer : public Module {
     const Config config;
     const Input input;
     Output output;
+
+    Vector<Device::CUDA, OT> buffer;
+    Vector<Device::CPU | Device::CUDA, U64> indices;
+
+    cufftHandle plan;
+    std::string kernel_key;
 };
 
 }  // namespace Blade::Modules

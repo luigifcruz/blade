@@ -17,7 +17,6 @@ template<typename OT = CF16>
 class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
-        U64 numberOfBeams;
         U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
         U64 numberOfTimeSamples;
