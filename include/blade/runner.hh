@@ -16,24 +16,27 @@ template<class T>
 class BLADE_API Runner {
  public:
     static std::unique_ptr<Runner<T>> New(const U64& numberOfWorkers,
-                                          const typename T::Config& config) {
-        return std::make_unique<Runner<T>>(numberOfWorkers, config);
+                                          const typename T::Config& config,
+                                          const BOOL& printET = true) {
+        return std::make_unique<Runner<T>>(numberOfWorkers, config, printET);
     }
 
     explicit Runner(const U64& numberOfWorkers,
-                    const typename T::Config& config) {
-        BL_INFO(R"(
+                    const typename T::Config& config,
+                    const BOOL& printET = true) {
+        if (printET) {
+            BL_INFO(R"(
 
 Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
 Version {} | Build Type: {}
-                   .-.
+                .-.
     .-""`""-.    |(0 0)
- _/`oOoOoOoOo`\_ \ \-/
+_/`oOoOoOoOo`\_ \ \-/
 '.-=-=-=-=-=-=-.' \/ \
-  `-=.=-.-=.=-'    \ /\
-     ^  ^  ^       _H_ \
-        )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
-
+`-=.=-.-=.=-'    \ /\
+    ^  ^  ^       _H_ \
+            )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+        }
 
         BL_INFO("Instantiating new runner.");
 
@@ -56,6 +59,14 @@ Version {} | Build Type: {}
 
     constexpr const U64& getHead() const {
         return head;
+    }
+    
+    constexpr const bool slotAvailable() const {
+        return jobs.size() != workers.size();
+    }
+    
+    constexpr const T& getNextWorker() const {
+        return *workers[head];
     }
 
     Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,

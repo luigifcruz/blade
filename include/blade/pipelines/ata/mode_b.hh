@@ -62,6 +62,13 @@ class BLADE_API ModeB : public Pipeline {
                const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
+    Result run(const F64& frameJulianDate,
+               const F64& frameDut1,
+               const Vector<Device::CPU, CI8>& input,
+               const U64& outputBlockIndex,
+               const U64& outputNumberOfBlocks,
+                     Vector<Device::CUDA, OT>& output);
+
  private:
     const Config config;
 
