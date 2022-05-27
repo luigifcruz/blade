@@ -15,7 +15,7 @@ jobs:
         run: docker rmi blade || true
 
       - name: Build the Docker image.
-        run: docker build . --file Dockerfile --tag blade:latest
+        run: docker build . --no-cache --file Dockerfile --tag blade:latest
 
       - name: Run ninja test.
         run: docker run --gpus all --rm blade bash -c "cd blade/build && ninja test"
