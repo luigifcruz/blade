@@ -2,8 +2,8 @@ FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
-    && dpkg -i cuda-keyring_1.0-1_all.deb
+RUN curl https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb -o cuda.deb \
+        && dpkg -i ./cuda.deb
 
 RUN apt-get update --fix-missing
 
