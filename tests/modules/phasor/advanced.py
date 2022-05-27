@@ -105,7 +105,7 @@ if __name__ == "__main__":
     mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, bl_output)
 
     bl_phasors = np.array(bl_output, copy=False)
-    bl_phasors = bl_phasors.reshape((1, 20, 192, 2))
+    bl_phasors = bl_phasors.reshape((2, 20, 192, 2))
     bl_phasors = bl_phasors[:, :, :, 0]
 
     #
@@ -215,7 +215,10 @@ if __name__ == "__main__":
             frequencyStartIndex+obsnchan)
 
     py_phasors = np.zeros((2, 20, 192), dtype=np.complex128)
-    for i, delay in enumerate(delays):
+    for i in range(len(delays1)):
+        delay1 = delays1[i]
+        delay2 = delays2[i]
+
         py_phasors[0, i, :] = create_delay_phasors(delay1, frequencyStartIndex,
                 obsnchan, channelBandwidthHz)
         py_phasors[0, i, :] *= get_fringe_rate(delay1, rfFrequencyHz,
