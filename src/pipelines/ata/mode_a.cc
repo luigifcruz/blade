@@ -99,6 +99,11 @@ Result ModeA<OT>::run(const F64& frameJulianDate,
     this->frameJulianDate[0] = frameJulianDate;
     this->frameDut1[0] = frameDut1;
 
+    if (this->getStepCount() == 0) {
+        BL_DEBUG("Frame Julian Date: {}", frameJulianDate);
+        BL_DEBUG("Frame DUT1: {}", frameDut1);
+    }
+
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy(output, this->getOutput()));

@@ -2,7 +2,7 @@
 
 namespace Blade {
 
-Pipeline::Pipeline() : state(State::IDLE) {
+Pipeline::Pipeline() : state(State::IDLE), stepCount(0) {
     BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream,
             cudaStreamNonBlocking), [&]{
         BL_FATAL("Failed to create stream for CUDA steam: {}", err);
@@ -77,6 +77,8 @@ Result Pipeline::compute() {
         BL_FATAL("Failed to process: {}", err);
         return Result::CUDA_ERROR;
     });
+
+    stepCount += 1;
 
     return Result::SUCCESS;
 }

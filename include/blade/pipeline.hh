@@ -136,6 +136,10 @@ class BLADE_API Pipeline {
             src_pad, width, height, this->stream);
     }
 
+    constexpr const U64& getStepCount() const {
+        return stepCount;
+    }
+
  private:
     enum State : uint8_t {
         IDLE,
@@ -144,6 +148,7 @@ class BLADE_API Pipeline {
     };
 
     State state;
+    U64 stepCount;
     cudaGraph_t graph;
     cudaStream_t stream;
     cudaGraphExec_t instance;
