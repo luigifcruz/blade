@@ -27,11 +27,11 @@ int main(int argc, char **argv) {
         blade_pin_memory(output_buffers[i], output_byte_size);
     }
 
-    int h = 0, y = 0;
+    int h = 0, y = 0, i = 0;
 
     clock_t begin = clock();
 
-    for (int i = 0; i < (BLADE_ATA_MODE_H_ACCUMULATE_RATE * 8); i++) {
+    while (i < 8) {
         if (blade_ata_h_enqueue_b(input_buffers[h], h)) {
             h = (h + 1) % number_of_workers;
         }
@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
         size_t h_id;
         if (blade_ata_h_dequeue_h(&h_id)) {
             printf("Task H %zu finished.\n", h_id);
+            i++;
         }
     }
 
