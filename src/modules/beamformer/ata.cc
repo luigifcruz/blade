@@ -17,7 +17,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         config.numberOfTimeSamples / config.blockSize);
 
     this->kernel = 
-        Template("ATA")
+        Template("dotproduct_optimized")
             .instantiate(
                 config.numberOfBeams,
                 config.numberOfAntennas,
