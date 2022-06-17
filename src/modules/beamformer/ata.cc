@@ -45,7 +45,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         this->getInputBuffer().dims().numberOfTimeSamples() / config.blockSize);
 
     this->kernel = 
-        Template("ATA")
+        Template("dotproduct_optimized")
             .instantiate(
                 this->getInputPhasors().dims().numberOfBeams(),
                 this->getInputPhasors().dims().numberOfAntennas(),

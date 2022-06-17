@@ -9,6 +9,7 @@ endforeach
 if all_deps_found
     src_lst += files([
         'ata.cc',
+        'vla.cc',
         'meerkat.cc',
         'generic.cc',
     ])
