@@ -69,6 +69,8 @@ ModeA<OT>::ModeA(const Config& config) : config(config), frameJulianDate(1), fra
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
+        .enableIncoherentBeam = config.enableIncoherentBeam, 
+        .enableIncoherentBeamSqrt = true,
         .blockSize = config.beamformerBlockSize,
     }, {
         .buf = channelizer->getOutput(),
@@ -77,7 +79,7 @@ ModeA<OT>::ModeA(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
-        .numberOfBeams = config.beamformerBeams, 
+        .numberOfBeams = config.beamformerBeams + (config.enableIncoherentBeam ? 1 : 0), 
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,

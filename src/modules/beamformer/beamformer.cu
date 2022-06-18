@@ -1,8 +1,13 @@
 #include "cuComplex.h"
 #include <stdint.h>
 
+__device__ cuFloatComplex detect(const cuFloatComplex a) {
+    return make_cuFloatComplex((a.x * a.x) + (a.y * a.y), 0.0f);
+}
+
 template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
-         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK>
+         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
+         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
 __global__ void ATA(const cuFloatComplex* input,
                     const cuFloatComplex* phasor,
                           cuFloatComplex* out) {
@@ -50,10 +55,27 @@ __global__ void ATA(const cuFloatComplex* input,
 
         reinterpret_cast<float4*>(out)[iz] = *reinterpret_cast<float4*>(acc);
     }
+
+    if (EnableIncoherentBeam) {
+        cuFloatComplex acc[NPOLS] = {{0.0, 0.0}};
+
+        for (int a = 0; a < NANTS; a++) {
+            acc[0] = cuCaddf(acc[0], detect(cuCmulf(ant_cache[a][0], phr_cache[0][a][0])));
+            acc[1] = cuCaddf(acc[1], detect(cuCmulf(ant_cache[a][1], phr_cache[0][a][1])));
+        }
+
+        if (EnableIncoherentBeamSqrt) {
+            acc[0] = make_cuFloatComplex(sqrt(acc[0].x), acc[0].y);
+            acc[1] = make_cuFloatComplex(sqrt(acc[1].x), acc[1].y);
+        }
+
+        reinterpret_cast<float4*>(out)[iz] = *reinterpret_cast<float4*>(acc);
+    }
 }
 
 template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
-         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK>
+         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
+         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
 __global__ void MeerKAT(const cuFloatComplex* input,
                         const cuFloatComplex* phasor,
                               cuFloatComplex* out) {
