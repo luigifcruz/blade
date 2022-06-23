@@ -1,10 +1,10 @@
-#include "pipeline_ata.hh"
-#include "blade/modules/beamformer/ata.hh"
+#include "pipeline_vla.hh"
+#include "blade/modules/beamformer/vla.hh"
 
 using namespace Blade;
 
 int main() {
-    BL_INFO("Testing beamformer with the ATA kernel.");
+    BL_INFO("Testing beamformer with the VLA kernel.");
 
     Test<CF32, CF32> mod({
         .numberOfBeams = 16,
