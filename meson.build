@@ -18,6 +18,7 @@ dep_lst = [
   subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'cufft']),
   dependency('fmt'),
+  dependency('benchmark'),
 ]
 inc_lst = [
   include_directories('include'),

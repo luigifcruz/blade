@@ -3,10 +3,20 @@ test('beamformer-ata', executable(
   dependencies: lib_blade_dep,
 ), is_parallel: false, timeout: 0)
 
+executable(
+  'blade-beamformer-ata-benchmark', ['pipeline_ata.hh', 'ata_benchmark.cc'],
+  dependencies: lib_blade_dep,
+)
+
 test('beamformer-vla', executable(
   'blade-beamformer-vla', ['pipeline_vla.hh', 'vla.cc'],
   dependencies: lib_blade_dep,
 ), is_parallel: false, timeout: 0)
+
+executable(
+  'blade-beamformer-vla-benchmark', ['pipeline_vla.hh', 'vla_benchmark.cc'],
+  dependencies: lib_blade_dep,
+)
 
 if has_python
   test(
