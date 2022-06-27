@@ -15,14 +15,14 @@ static void PIPELINE(benchmark::State& state) {
     BenchPipeline::Config config = {
         .numberOfAntennas = 27,
         .numberOfFrequencyChannels = 32,
-        .numberOfTimeSamples = 8192,
+        .numberOfTimeSamples = 16384,
         .numberOfPolarizations = 2,
 
-        .channelizerRate = 8192/512,
+        .channelizerRate = 1,//16384/512,
 
         .beamformerBeams = U64(state.range(0)),
 
-        .outputMemWidth = 8192,
+        .outputMemWidth = 16384,
         .outputMemPad = 0,
 
         .castBlockSize = 512,
@@ -64,6 +64,6 @@ static void PIPELINE(benchmark::State& state) {
     );
 }
 
-BENCHMARK(PIPELINE)->Iterations(100)->DenseRange(1, 16, 4);
+BENCHMARK(PIPELINE)->Iterations(500)->DenseRange(1, 33, 4);
 
 BENCHMARK_MAIN();
