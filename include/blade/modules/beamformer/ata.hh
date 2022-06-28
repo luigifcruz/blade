@@ -19,7 +19,10 @@ class BLADE_API ATA : public Generic<IT, OT> {
     }
 
     constexpr U64 getOutputSize() const {
-        return this->config.numberOfBeams *
+        return (
+                    this->config.numberOfBeams +
+                    (this->config.enableIncoherentBeam ? 1 : 0)
+               ) *
                this->config.numberOfTimeSamples *
                this->config.numberOfFrequencyChannels *
                this->config.numberOfPolarizations;

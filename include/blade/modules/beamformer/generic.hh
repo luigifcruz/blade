@@ -18,6 +18,9 @@ class BLADE_API Generic : public Module {
         U64 numberOfTimeSamples;
         U64 numberOfPolarizations; 
 
+        BOOL enableIncoherentBeam = false;
+        BOOL enableIncoherentBeamSqrt = false;
+
         U64 blockSize = 512;
     };
 

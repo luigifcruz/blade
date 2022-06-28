@@ -20,6 +20,8 @@ class Test(bl.Pipeline):
             number_of_frequency_channels,
             number_of_time_samples,
             number_of_polarizations,
+            True, 
+            True,
             512
         )
         _input = bl.Beamformer.Input(self.input, self.phasors)
@@ -62,8 +64,8 @@ if __name__ == "__main__":
     )
 
     # Generate test data with Python.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.input_size())
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.input_size())
+    _a = np.random.uniform(-int(2**8/2), int(2**8/2), mod.input_size())
+    _b = np.random.uniform(-int(2**8/2), int(2**8/2), mod.input_size())
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     input = _c.reshape((
             number_of_antennas, 
@@ -81,7 +83,7 @@ if __name__ == "__main__":
     phasors = np.random.random(size=_a.shape) + 1j*np.random.random(size=_a.shape)
 
     output = np.zeros((
-            number_of_beams,
+            number_of_beams + 1,
             number_of_frequency_channels,
             number_of_time_samples,
             number_of_polarizations
@@ -106,8 +108,18 @@ if __name__ == "__main__":
     for ibeam in range(number_of_beams):
         phased = input * phasors[ibeam][..., np.newaxis, :]
         output[ibeam] = phased.sum(axis=0)
+    phased = input * phasors[-1][..., np.newaxis, :]
+    phased = (phased.real * phased.real) + (phased.imag * phased.imag)
+    output[-1] = np.sqrt(phased.sum(axis=0))
     print(f"Beamform with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
-    assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
+    bl_out = np.array(bl_output, copy=False).reshape(output.shape)
+    py_out = output
+
+    print(bl_out[0, 0, :16, 0])
+    print(py_out[0, 0, :16, 0])
+
+    assert np.allclose(bl_out[:-1, :, :, :], py_out[:-1, :, :, :], rtol=0.01)
+    assert np.allclose(bl_out[-1, :, :, :], py_out[-1, :, :, :], atol=250)
     print("Test successfully completed!")

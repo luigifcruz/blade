@@ -22,6 +22,8 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
     BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    BL_INFO("Enable Incoherent Beam: {}", config.enableIncoherentBeam ? "YES" : "NO");
+    BL_INFO("Enable Incoherent Beam Square Root: {}", config.enableIncoherentBeamSqrt ? "YES" : "NO");
 }
 
 template<typename IT, typename OT>

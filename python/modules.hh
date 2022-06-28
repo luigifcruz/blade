@@ -22,11 +22,15 @@ inline void init_beamformer(const py::module& m) {
                       const U64&,
                       const U64&,
                       const U64&,
+                      const BOOL&,
+                      const BOOL&,
                       const U64&>(), py::arg("number_of_beams"),
                                      py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),
                                      py::arg("number_of_time_samples"),
                                      py::arg("number_of_polarizations"),
+                                     py::arg("enable_incoherent_beam"),
+                                     py::arg("enable_incoherent_beam_sqrt"),
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(beamformer, "Input")

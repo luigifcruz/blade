@@ -36,6 +36,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .channelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
+        .enableIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
         .rfFrequencyHz = 6500.125*1e6,
         .channelBandwidthHz = 0.5e6,
