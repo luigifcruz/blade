@@ -20,8 +20,8 @@ class BLADE_API MeerKAT : public Generic<IT, OT> {
 
     constexpr U64 getOutputSize() const {
         return (
-                this->config.numberOfBeams +
-                (this->config.enableIncoherentBeam ? 1 : 0)
+                    this->config.numberOfBeams +
+                    (this->config.enableIncoherentBeam ? 1 : 0)
                ) *
                this->config.numberOfTimeSamples *
                this->config.numberOfFrequencyChannels *
