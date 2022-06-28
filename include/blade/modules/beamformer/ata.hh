@@ -23,8 +23,8 @@ class BLADE_API ATA : public Generic<IT, OT> {
                     this->config.numberOfBeams +
                     (this->config.enableIncoherentBeam ? 1 : 0)
                ) *
-               this->config.numberOfTimeSamples *
                this->config.numberOfFrequencyChannels *
+               this->config.numberOfTimeSamples *
                this->config.numberOfPolarizations;
     }
 

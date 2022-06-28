@@ -96,15 +96,58 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
     this->frameJulianDate[0] = frameJulianDate;
     this->frameDut1[0] = frameDut1;
 
+    if (this->getStepCount() == 0) {
+        BL_DEBUG("Frame Julian Date: {}", frameJulianDate);
+        BL_DEBUG("Frame DUT1: {}", frameDut1);
+    }
+
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy2D(
         output,
         outputMemPitch,         // dpitch
+        0,
         this->getOutput(),      // src
         config.outputMemWidth,  // spitch
+        0,
         config.outputMemWidth,  // width
-        (beamformer->getOutputSize()*sizeof(OT))/config.outputMemWidth));
+        (beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth
+    ));
+
+    return Result::SUCCESS;
+}
+
+template<typename OT>
+Result ModeB<OT>::run(const F64& frameJulianDate,
+                      const F64& frameDut1,
+                      const Vector<Device::CPU, CI8>& input, 
+                      const U64& outputBlockIndex,
+                      const U64& outputNumberOfBlocks,
+                            Vector<Device::CUDA, OT>& output) {
+    this->frameJulianDate[0] = frameJulianDate;
+    this->frameDut1[0] = frameDut1;
+
+    if (this->getStepCount() == 0) {
+        BL_DEBUG("Frame Julian Date: {}", frameJulianDate);
+        BL_DEBUG("Frame DUT1: {}", frameDut1);
+    }
+
+    BL_CHECK(this->copy(inputCast->getInput(), input));
+    BL_CHECK(this->compute());
+
+    const auto& width = (beamformer->getOutputSize() / config.beamformerBeams / (config.numberOfFrequencyChannels * config.channelizerRate)) * sizeof(OT);
+    const auto& height = config.beamformerBeams * (config.numberOfFrequencyChannels * config.channelizerRate);
+
+    BL_CHECK(this->copy2D(
+        output,
+        width * outputNumberOfBlocks,
+        0,
+        this->getOutput(),
+        width,
+        0,
+        width,
+        height
+    )); 
 
     return Result::SUCCESS;
 }

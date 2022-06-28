@@ -86,42 +86,58 @@ class BLADE_API Pipeline {
 
     template<typename DT, typename ST>
     Result copy2D(Vector<Device::CUDA, DT>& dst,
-                   const U64 dpitch,
+                   const U64& dst_pitch,
+                   const U64& dst_pad,
                    const Vector<Device::CUDA, ST>& src,
-                   const U64 spitch,
-                   const U64 width,
-                   const U64 height) {
-        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+                   const U64& src_pitch,
+                   const U64& src_pad,
+                   const U64& width,
+                   const U64& height) {
+        return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
+            src_pad, width, height, this->stream);
     }
 
     template<typename DT, typename ST>
     Result copy2D(Vector<Device::CUDA, DT>& dst,
-                   const U64 dpitch,
+                   const U64& dst_pitch,
+                   const U64& dst_pad,
                    const Vector<Device::CPU, ST>& src,
-                   const U64 spitch,
-                   const U64 width,
-                   const U64 height) {
-        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+                   const U64& src_pitch,
+                   const U64& src_pad,
+                   const U64& width,
+                   const U64& height) {
+        return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
+            src_pad, width, height, this->stream);
     }
 
     template<typename DT, typename ST>
     Result copy2D(Vector<Device::CPU, DT>& dst,
-                   const U64 dpitch,
+                   const U64& dst_pitch,
+                   const U64& dst_pad,
                    const Vector<Device::CPU, ST>& src,
-                   const U64 spitch,
-                   const U64 width,
-                   const U64 height) {
-        return Memory::Copy2D(dst, dpitch, src, spitch, width, height);
+                   const U64& src_pitch,
+                   const U64& src_pad,
+                   const U64& width,
+                   const U64& height) {
+        return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
+            src_pad, width, height, this->stream);
     }
 
     template<typename DT, typename ST>
     Result copy2D(Vector<Device::CPU, DT>& dst,
-                   const U64 dpitch,
+                   const U64& dst_pitch,
+                   const U64& dst_pad,
                    const Vector<Device::CUDA, ST>& src,
-                   const U64 spitch,
-                   const U64 width,
-                   const U64 height) {
-        return Memory::Copy2D(dst, dpitch, src, spitch, width, height, this->stream);
+                   const U64& src_pitch,
+                   const U64& src_pad,
+                   const U64& width,
+                   const U64& height) {
+        return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
+            src_pad, width, height, this->stream);
+    }
+
+    constexpr const U64& getStepCount() const {
+        return stepCount;
     }
 
  private:
@@ -132,6 +148,7 @@ class BLADE_API Pipeline {
     };
 
     State state;
+    U64 stepCount;
     cudaGraph_t graph;
     cudaStream_t stream;
     cudaGraphExec_t instance;
