@@ -26,6 +26,7 @@ class BLADE_API ModeA : public Pipeline {
         U64 channelizerRate;
 
         U64 beamformerBeams;
+        BOOL enableIncoherentBeam = false;
 
         F64 rfFrequencyHz;
         F64 channelBandwidthHz;

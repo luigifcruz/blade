@@ -64,11 +64,13 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating beamformer module.");
     this->connect(beamformer, {
-        .numberOfBeams = config.beamformerBeams,
+        .numberOfBeams = config.beamformerBeams, 
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
         .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
+        .enableIncoherentBeam = config.enableIncoherentBeam,
+        .enableIncoherentBeamSqrt = false,
         .blockSize = config.beamformerBlockSize,
     }, {
         .buf = channelizer->getOutput(),

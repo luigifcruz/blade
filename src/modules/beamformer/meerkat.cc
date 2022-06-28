@@ -18,7 +18,9 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
                 config.numberOfFrequencyChannels,
                 config.numberOfTimeSamples,
                 config.numberOfPolarizations,
-                config.blockSize);
+                config.blockSize,
+                config.enableIncoherentBeam,
+                config.enableIncoherentBeamSqrt);
 
     BL_CHECK_THROW(this->InitInput(this->input.buf, getInputSize()));
     BL_CHECK_THROW(this->InitInput(this->input.phasors, getPhasorsSize()));
