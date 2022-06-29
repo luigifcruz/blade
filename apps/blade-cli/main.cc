@@ -8,43 +8,71 @@
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/ata/mode_h.hh"
 
+typedef enum {
+    ATA,
+    VLA,
+    MEERKAT,
+} TelescopeID;
+
+typedef enum {
+    MODE_B,
+    MODE_A,
+} ModeID;
+
 int main(int argc, char **argv) {
 
-    CLI::App app("configuration print example");
+    CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) Command Line Tool");
 
-    app.add_flag("-p,--print", "Print configuration and exit")->configurable(false);  // NEW: print flag
+    //  Read target telescope. 
 
-    std::string file;
-    CLI::Option *opt = app.add_option("-f,--file,file", file, "File name")
-                           ->capture_default_str()
-                           ->run_callback_for_default();  // NEW: capture_default_str()
+    TelescopeID telescope = TelescopeID::ATA;
 
-    int count{0};
-    CLI::Option *copt =
-        app.add_option("-c,--count", count, "Counter")->capture_default_str();  // NEW: capture_default_str()
+    std::map<std::string, TelescopeID> telescopeMap = {
+        {"ATA",     TelescopeID::ATA}, 
+        {"VLA",     TelescopeID::VLA},
+        {"MEERKAT", TelescopeID::MEERKAT}
+    };
 
-    int v{0};
-    CLI::Option *flag = app.add_flag("--flag", v, "Some flag that can be passed multiple times")
-                            ->capture_default_str();  // NEW: capture_default_str()
+    app
+        .add_option("-t,--telescope", telescope, "Telescope ID (ATA, VLA, MEETKAT)")
+            ->required()
+            ->transform(CLI::CheckedTransformer(telescopeMap, CLI::ignore_case));
 
-    double value{0.0};                                                          // = 3.14;
-    app.add_option("-d,--double", value, "Some Value")->capture_default_str();  // NEW: capture_default_str()
+    //  Read target mode. 
 
-    app.get_config_formatter_base()->quoteCharacter('"', '"');
+    ModeID mode = ModeID::MODE_B;
+
+    std::map<std::string, ModeID> modeMap = {
+        {"MODE_B",     ModeID::MODE_B}, 
+        {"MODE_A",     ModeID::MODE_A},
+        {"B",          ModeID::MODE_B}, 
+        {"A",          ModeID::MODE_A},
+    };
+
+    app
+        .add_option("-m,--mode", mode, "Mode ID (MODE_B, MODE_A)")
+            ->required()
+            ->transform(CLI::CheckedTransformer(modeMap, CLI::ignore_case));
+
+    //  Read input file.
+
+    std::string inputFile;
+
+    app
+        .add_option("-i,--input,input", inputFile, "Input filepath")
+            ->required()
+            ->capture_default_str()
+            ->run_callback_for_default();
+
+    //  Parse arguments.
 
     CLI11_PARSE(app, argc, argv);
 
-    if(app.get_option("--print")->as<bool>()) {  // NEW: print configuration and exit
-        std::cout << app.config_to_str(true, false);
-        return 0;
-    }
-
-    std::cout << "Working on file: " << file << ", direct count: " << app.count("--file")
-              << ", opt count: " << opt->count() << std::endl;
-    std::cout << "Working on count: " << count << ", direct count: " << app.count("--count")
-              << ", opt count: " << copt->count() << std::endl;
-    std::cout << "Received flag: " << v << " (" << flag->count() << ") times\n";
-    std::cout << "Some value: " << value << std::endl;
+    //  Print argument configurations.
+    
+    BL_INFO("Input File Path: {}", inputFile);
+    BL_INFO("Telescope: {}", telescope);
+    BL_INFO("Mode: {}", mode);
 
     return 0;
 }

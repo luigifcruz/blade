@@ -1,5 +1,6 @@
 deps = [
-    dependency('cli11', required: false),
+    subproject('CLI11').get_variable('CLI11_dep'),
+    subproject('guppirawc99').get_variable('lib_guppiraw_dep'),
 ]
 
 all_deps_found = true
@@ -11,7 +12,8 @@ all_deps_found = all_deps_found and not meson.is_cross_build()
 if all_deps_found
     executable(
         'blade-cli', 'main.cc',
-        dependencies: dep_lst + cli_dep_lst,
+        include_directories: inc_lst,
+        dependencies: dep_lst + deps,
         install: true,
     )
 endif
