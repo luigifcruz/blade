@@ -1,6 +1,5 @@
 deps = [
     subproject('CLI11').get_variable('CLI11_dep'),
-    subproject('guppirawc99').get_variable('lib_guppiraw_dep'),
 ]
 
 all_deps_found = true
