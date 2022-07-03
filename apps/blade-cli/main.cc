@@ -8,6 +8,10 @@
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/ata/mode_h.hh"
 
+extern "C" {
+    #include "guppiraw.h"
+}
+
 typedef enum {
     ATA,
     VLA,
@@ -18,6 +22,8 @@ typedef enum {
     MODE_B,
     MODE_A,
 } ModeID;
+
+using namespace Blade;
 
 int main(int argc, char **argv) {
 
@@ -64,6 +70,38 @@ int main(int argc, char **argv) {
             ->capture_default_str()
             ->run_callback_for_default();
 
+    // Read target beams.
+
+    U64 beams = 8;
+
+    app
+        .add_option("-b,--beams", beams, "Number of beams")
+            ->default_val(8);
+
+    // Read target fine-time.
+
+    U64 fine_time = 32;
+
+    app
+        .add_option("-T,--fine-time", fine_time, "Number of fine-timesamples")
+            ->default_val(32);
+
+    // Read target channelizer-rate.
+
+    U64 channelizer_rate = 1024;
+
+    app
+        .add_option("-c,--channelizer", channelizer_rate, "Channelizer (FFT) rate")
+            ->default_val(1024);
+
+    // Read target coarse-channels.
+
+    U64 coarse_channels = 32;
+
+    app
+        .add_option("-C,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
+            ->default_val(32);
+
     //  Parse arguments.
 
     CLI11_PARSE(app, argc, argv);
@@ -73,6 +111,60 @@ int main(int argc, char **argv) {
     BL_INFO("Input File Path: {}", inputFile);
     BL_INFO("Telescope: {}", telescope);
     BL_INFO("Mode: {}", mode);
+    BL_INFO("Beams: {}", beams);
+    BL_INFO("Fine-time: {}", fine_time);
+    BL_INFO("Channelizer-rate: {}", channelizer_rate);
+    BL_INFO("Coarse-channels: {}", coarse_channels);
+
+    guppiraw_iterate_info_t gr_iterate = {0};
+
+    if (guppiraw_iterate_open_stem(inputFile.c_str(), &gr_iterate)) {
+        BL_ERROR("Could not open: {}.{:04d}.raw\n", gr_iterate.stempath, gr_iterate.fileenum);
+        return 1;
+    }
+    guppiraw_datashape_t *datashape = &gr_iterate.file_info.block_info.datashape;
+    BL_INFO("GUPPI RAW file datashape: [{}, {}, {}, CI{}] ({} bytes)",
+        datashape->n_obschan,
+        datashape->n_time,
+        datashape->n_pol,
+        datashape->n_bit,
+        datashape->block_size
+    );
+
+    // Argument-conditional Pipeline
+    // Runner<Blade::Pipeline>* runner;
+    // const int numberOfWorkers = 1;
+    // switch (telescope) {
+    //     case TelescopeID::ATA:
+    //         switch (mode) {
+    //             case ModeID::MODE_B:
+    //                 using CLIPipeline = Blade::Pipelines::ATA::ModeB<CF32>;
+    //                 CLIPipeline::Config config = {
+    //                     .numberOfAntennas = 1,
+    //                     .numberOfFrequencyChannels = coarse_channels,
+    //                     .numberOfTimeSamples = fine_time*channelizer_rate,
+    //                     .numberOfPolarizations = datashape->n_pol,
+
+    //                     .channelizerRate = channelizer_rate,
+
+    //                     .beamformerBeams = beams,
+
+    //                     .outputMemWidth = 8192,
+    //                     .outputMemPad = 0,
+
+    //                     .castBlockSize = 32,
+    //                     .channelizerBlockSize = fine_time,
+    //                     .phasorsBlockSize = 32,
+    //                     .beamformerBlockSize = fine_time
+    //                 };
+    //                 runner = new Runner<CLIPipeline>(numberOfWorkers, config);
+    //                 break;
+    //         }
+    //         break;
+    //     default:
+    //         BL_ERROR("Unsupported telescope selected.");
+    //         return 1;
+    // }
 
     return 0;
 }
