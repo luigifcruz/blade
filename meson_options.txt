@@ -1,0 +1,4 @@
+option(
+  'binaries', type: 'boolean', value: true,
+  description: 'Build and install standalone binaries'
+)

@@ -61,3 +61,7 @@ pkg.generate(
   lib_blade,
   libraries: dep_lst,
 )
+
+if(get_option('binaries'))
+  subdir('binaries')
+endif
