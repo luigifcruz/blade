@@ -2,6 +2,7 @@
 
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
+#include <blade/modules/beamformer/vla.hh>
 #include <blade/modules/channelizer.hh>
 #include <blade/modules/detector.hh>
 #include <blade/modules/phasor/ata.hh>
@@ -12,7 +13,7 @@ using namespace Blade;
 namespace py = pybind11;
 
 inline void init_beamformer(const py::module& m) {
-    using Class = Modules::Beamformer::ATA<CF32, CF32>;
+    using Class = Modules::Beamformer::VLA<CF32, CF32>;
 
     py::class_<Class, std::shared_ptr<Class>> beamformer(m, "Beamformer");
 

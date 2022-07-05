@@ -2,6 +2,7 @@
 
 #include <blade/base.hh>
 #include <blade/modules/beamformer/ata.hh>
+#include <blade/modules/beamformer/vla.hh>
 #include <blade/modules/channelizer.hh>
 #include <blade/modules/detector.hh>
 #include <blade/modules/phasor/ata.hh>
@@ -85,7 +86,7 @@ inline void init_pipeline(const py::module& m) {
         .def("is_synchronized", &Pipeline::isSynchronized)
         .def("compute", &PipelinePub::compute);
 
-    init_pipeline_connect<Modules::Beamformer::ATA<CF32, CF32>>(pipeline);
+    init_pipeline_connect<Modules::Beamformer::VLA<CF32, CF32>>(pipeline);
     init_pipeline_connect<Modules::Channelizer<CF32, CF32>>(pipeline);
     init_pipeline_connect<Modules::Detector<CF32, F32>>(pipeline);
     init_pipeline_connect<Modules::Phasor::ATA<CF32>>(pipeline);

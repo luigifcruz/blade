@@ -120,7 +120,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     eraASTROM astrom;
 
     // Convert source RA & Declination to Hour Angle (Part A).
-    calc_ha_dec_rad_a(
+    calc_independent_astrom(
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT, 
         this->config.arrayReferencePosition.ALT,
@@ -137,7 +137,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         HA_DEC source_ha_dec = {0.0, 0.0};
 
         //  Convert source RA & Decligation to Hour Angle (Part B).
-        calc_ha_dec_rad_b(
+        calc_ha_dec_rad_with_independent_astrom(
             this->config.beamCoordinates[b].RA,
             this->config.beamCoordinates[b].DEC,
             &astrom, 
