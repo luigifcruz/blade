@@ -5,6 +5,7 @@
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
+#include "blade/modules/guppi/reader.hh"
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/ata/mode_h.hh"
 
@@ -23,22 +24,9 @@ typedef enum {
     MODE_A,
 } ModeID;
 
-typedef struct {
-  int nants;
-} guppiraw_block_meta_t;
-
-void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
-  guppiraw_block_meta_t* block_meta = (guppiraw_block_meta_t*) block_meta_void;
-  switch (((uint64_t*)entry)[0]) {
-    case KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' '):
-      hgeti4(entry, "NANTS", &block_meta->nants);
-      break;
-    default:
-      break;
-  }
-}
-
 using namespace Blade;
+
+using GuppiReader = Blade::Modules::Guppi::Reader<CI8>;
 
 int main(int argc, char **argv) {
 
@@ -131,22 +119,12 @@ int main(int argc, char **argv) {
     BL_INFO("Channelizer-rate: {}", channelizer_rate);
     BL_INFO("Coarse-channels: {}", coarse_channels);
 
-    guppiraw_iterate_info_t gr_iterate = {0};
-    gr_iterate.file_info.block_info.header_user_data = malloc(sizeof(guppiraw_block_meta_t));
-    gr_iterate.file_info.block_info.header_entry_callback = guppiraw_parse_block_meta;
-
-    if (guppiraw_iterate_open_stem(inputFile.c_str(), &gr_iterate)) {
-        BL_ERROR("Could not open: {}.{:04d}.raw\n", gr_iterate.stempath, gr_iterate.fileenum);
-        return 1;
-    }
-    guppiraw_datashape_t *datashape = &gr_iterate.file_info.block_info.datashape;
-    BL_INFO("GUPPI RAW file datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
-        ((guppiraw_block_meta_t*)gr_iterate.file_info.block_info.header_user_data)->nants,
-        datashape->n_obschan/((guppiraw_block_meta_t*)gr_iterate.file_info.block_info.header_user_data)->nants,
-        datashape->n_time,
-        datashape->n_pol,
-        datashape->n_bit,
-        datashape->block_size
+    GuppiReader guppi = GuppiReader(
+        {
+            .filepath = inputFile,
+            .blockSize = 32
+        },
+        {}
     );
 
     // Argument-conditional Pipeline

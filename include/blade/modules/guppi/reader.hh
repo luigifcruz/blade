@@ -13,6 +13,21 @@ extern "C" {
 
 namespace Blade::Modules::Guppi {
 
+typedef struct {
+  int nants;
+} guppiraw_block_meta_t;
+
+void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
+  guppiraw_block_meta_t* block_meta = (guppiraw_block_meta_t*) block_meta_void;
+  switch (((uint64_t*)entry)[0]) {
+    case KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' '):
+      hgeti4(entry, "NANTS", &block_meta->nants);
+      break;
+    default:
+      break;
+  }
+}
+
 template<typename OT>
 class BLADE_API Reader : public Module {
  public:
@@ -39,20 +54,24 @@ class BLADE_API Reader : public Module {
         return this->config;
     }
 
+    constexpr const U64 getNumberOfAntenna() const {
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->nants;
+    }
+
     constexpr const U64 getNumberOfFrequencyChannels() const {
-        return this->gr_blockinfo.n_obschan;
+        return this->getDatashape().n_obschan;
     }
 
     constexpr const U64 getNumberOfOutputPolarizations() const {
-        return this->gr_blockinfo.n_pol;
+        return this->getDatashape().n_pol;
     }
 
     constexpr const U64 getNumberOfTimeSamples() const {
-        return this->gr_blockinfo.n_time;
+        return this->getDatashape().n_time;
     }
 
     constexpr const U64 getOutputSize() const {
-        return gr_blockinfo.n_obschan * gr_blockinfo.n_time * gr_blockinfo.n_pol;
+        return getNumberOfFrequencyChannels() * getNumberOfOutputPolarizations() * getNumberOfTimeSamples();
     }
 
     Result preprocess(const cudaStream_t& stream = 0) final;
@@ -62,8 +81,11 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    int input_fd;
-    guppiraw_block_info_t gr_blockinfo;
+    guppiraw_iterate_info_t gr_iterate;
+
+    constexpr const guppiraw_datashape_t getDatashape() const {
+        return this->gr_iterate.file_info.block_info.datashape;
+    }
 };
 
 }  // namespace Blade::Modules
