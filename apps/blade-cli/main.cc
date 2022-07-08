@@ -6,6 +6,7 @@
 #include "blade/logger.hh"
 #include "blade/runner.hh"
 #include "blade/modules/guppi/reader.hh"
+#include "blade/modules/bfr5/reader.hh"
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/ata/mode_h.hh"
 
@@ -27,6 +28,7 @@ typedef enum {
 using namespace Blade;
 
 using GuppiReader = Blade::Modules::Guppi::Reader<CI8>;
+using Bfr5Reader = Blade::Modules::Bfr5::Reader;
 
 int main(int argc, char **argv) {
 
@@ -63,12 +65,22 @@ int main(int argc, char **argv) {
             ->required()
             ->transform(CLI::CheckedTransformer(modeMap, CLI::ignore_case));
 
-    //  Read input file.
+    //  Read input GUPPI RAW file.
 
-    std::string inputFile;
+    std::string inputGuppiFile;
 
     app
-        .add_option("-i,--input,input", inputFile, "Input filepath")
+        .add_option("-i,--input,input", inputGuppiFile, "Input GUPPI RAW filepath")
+            ->required()
+            ->capture_default_str()
+            ->run_callback_for_default();
+
+    //  Read input BFR5 file.
+
+    std::string inputBfr5File;
+
+    app
+        .add_option("-r,--recipe", inputBfr5File, "Input BFR5 filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
@@ -111,7 +123,8 @@ int main(int argc, char **argv) {
 
     //  Print argument configurations.
     
-    BL_INFO("Input File Path: {}", inputFile);
+    BL_INFO("Input GUPPI RAW File Path: {}", inputGuppiFile);
+    BL_INFO("Input BFR5 File Path: {}", inputBfr5File);
     BL_INFO("Telescope: {}", telescope);
     BL_INFO("Mode: {}", mode);
     BL_INFO("Beams: {}", beams);
@@ -121,11 +134,12 @@ int main(int argc, char **argv) {
 
     GuppiReader guppi = GuppiReader(
         {
-            .filepath = inputFile,
+            .filepath = inputGuppiFile,
             .blockSize = 32
         },
         {}
     );
+    Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
 
     // Argument-conditional Pipeline
     // Runner<Blade::Pipeline>* runner;

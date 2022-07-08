@@ -11,10 +11,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
           input(input) {
     BL_INFO("===== GUPPI Reader Module Configuration");
 
-    if (std::filesystem::exists(config.filepath)) {
-        BL_FATAL("Input file ({}) doesn't not exist.", config.filepath)
-    }
-
     this->gr_iterate.file_info.block_info.header_user_data = malloc(sizeof(guppiraw_block_meta_t));
     this->gr_iterate.file_info.block_info.header_entry_callback = guppiraw_parse_block_meta;
     
@@ -26,7 +22,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 
     BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
     
-    BL_INFO("GUPPI RAW file datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
+    BL_INFO("Datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
         this->getNumberOfAntenna(),
         this->getNumberOfFrequencyChannels()/this->getNumberOfAntenna(),
         this->getNumberOfTimeSamples(),

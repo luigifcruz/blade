@@ -7,3 +7,9 @@
 [submodule "subprojects/guppirawc99"]
 	path = subprojects/guppirawc99
 	url = https://github.com/MydonSolutions/guppirawc99.git
+[submodule "subprojects/bfr5c99"]
+	path = subprojects/bfr5c99
+	url = http://github.com/MydonSolutions/bfr5c99
+[submodule "subprojects/--force"]
+	path = subprojects/--force
+	url = http://github.com/MydonSolutions/bfr5c99
