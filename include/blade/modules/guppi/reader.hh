@@ -15,6 +15,9 @@ namespace Blade::Modules::Guppi {
 
 typedef struct {
   int nants;
+  double chan_bw_mhz;
+  int chan_start;
+  double obs_freq_mhz;
 } guppiraw_block_meta_t;
 
 void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
@@ -22,6 +25,15 @@ void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
   switch (((uint64_t*)entry)[0]) {
     case KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' '):
       hgeti4(entry, "NANTS", &block_meta->nants);
+      break;
+    case KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' '):
+      hgeti4(entry, "SCHAN", &block_meta->chan_start);
+      break;
+    case KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' '):
+      hgetr8(entry, "CHAN_BW", &block_meta->chan_bw_mhz);
+      break;
+    case KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' '):
+      hgetr8(entry, "OBSFREQ", &block_meta->obs_freq_mhz);
       break;
     default:
       break;
@@ -56,6 +68,18 @@ class BLADE_API Reader : public Module {
 
     constexpr const U64 getNumberOfAntenna() const {
         return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->nants;
+    }
+
+    constexpr const F64 getBandwidthOfChannel() const {
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->chan_bw_mhz * 1e6;
+    }
+
+    constexpr const U64 getChannelStartIndex() const {
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->chan_start;
+    }
+
+    constexpr const F64 getBandwidthCenter() const {
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->obs_freq_mhz * 1e6;
     }
 
     constexpr const U64 getNumberOfFrequencyChannels() const {
