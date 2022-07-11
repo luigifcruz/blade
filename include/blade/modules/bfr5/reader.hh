@@ -57,6 +57,10 @@ public:
       );
    }
 
+   constexpr const complex_float_t* getCalinfo_b() const {
+      return this->bfr5_file.cal_info.cal_b;
+   }
+
 
  private:
     BFR5_file_t bfr5_file;
