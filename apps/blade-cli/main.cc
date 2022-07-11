@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
                         .numberOfAntennas = guppi.getNumberOfAntenna(),
                         .numberOfFrequencyChannels = coarse_channels,
                         .numberOfTimeSamples = fine_time*channelizer_rate,
-                        .numberOfPolarizations = guppi.getNumberOfOutputPolarizations(),
+                        .numberOfPolarizations = guppi.getNumberOfPolarizations(),
 
                         .channelizerRate = channelizer_rate,
 

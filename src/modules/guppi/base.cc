@@ -26,7 +26,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         this->getNumberOfAntenna(),
         this->getNumberOfFrequencyChannels()/this->getNumberOfAntenna(),
         this->getNumberOfTimeSamples(),
-        this->getNumberOfOutputPolarizations(),
+        this->getNumberOfPolarizations(),
         this->getDatashape().n_bit,
         this->getDatashape().block_size
     );

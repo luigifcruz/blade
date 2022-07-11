@@ -86,7 +86,7 @@ class BLADE_API Reader : public Module {
         return this->getDatashape().n_obschan;
     }
 
-    constexpr const U64 getNumberOfOutputPolarizations() const {
+    constexpr const U64 getNumberOfPolarizations() const {
         return this->getDatashape().n_pol;
     }
 
@@ -95,7 +95,7 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const U64 getOutputSize() const {
-        return getNumberOfFrequencyChannels() * getNumberOfOutputPolarizations() * getNumberOfTimeSamples();
+        return getNumberOfFrequencyChannels() * getNumberOfPolarizations() * getNumberOfTimeSamples();
     }
 
     Result preprocess(const cudaStream_t& stream = 0) final;
