@@ -90,20 +90,12 @@ int main(int argc, char **argv) {
         .add_option("-T,--fine-time", fine_time, "Number of fine-timesamples")
             ->default_val(32);
 
-    // Read target channelizer-rate.
-
-    U64 channelizer_rate = 1024;
-
-    app
-        .add_option("-c,--channelizer", channelizer_rate, "Channelizer (FFT) rate")
-            ->default_val(1024);
-
     // Read target coarse-channels.
 
     U64 coarse_channels = 32;
 
     app
-        .add_option("-C,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
+        .add_option("-c,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
             ->default_val(32);
 
     //  Parse arguments.
@@ -117,7 +109,6 @@ int main(int argc, char **argv) {
     BL_INFO("Telescope: {}", telescope);
     BL_INFO("Mode: {}", mode);
     BL_INFO("Fine-time: {}", fine_time);
-    BL_INFO("Channelizer-rate: {}", channelizer_rate);
     BL_INFO("Coarse-channels: {}", coarse_channels);
 
     GuppiReader guppi = GuppiReader(
@@ -128,6 +119,45 @@ int main(int argc, char **argv) {
         {}
     );
     Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
+    if(guppi.getNumberOfAntenna() != bfr5.getDiminfo_nants()) {
+        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
+        return 1;
+    }
+    if(guppi.getNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
+        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
+        return 1;
+    }
+
+    U64 channelizer_rate = (bfr5.getDiminfo_nants()*bfr5.getDiminfo_nchan())/guppi.getNumberOfFrequencyChannels();
+    BL_INFO("Inferred channelizer rate: {}", channelizer_rate);
+    if(channelizer_rate == 0) {
+        BL_FATAL("Channelizer rate cannot be 0.");
+        return 1;
+    }
+    
+    if(coarse_channels != guppi.getNumberOfFrequencyChannels()) {
+        BL_WARN(
+            "Sub-band processing of the coarse-channels ({}/{}) is incompletely implemented: "
+            "only the first sub-band is processed.",
+            coarse_channels,
+            guppi.getNumberOfFrequencyChannels()
+        );
+    }
+
+    std::vector<std::complex<double>> antenna_weights(
+        guppi.getNumberOfAntenna()*
+        coarse_channels*channelizer_rate*
+        guppi.getNumberOfPolarizations()
+    );
+    gather_antenna_weights_from_bfr5_cal_b(
+        bfr5.getCalinfo_b(),
+        guppi.getNumberOfAntenna(),
+        bfr5.getDiminfo_nchan(),
+        guppi.getNumberOfPolarizations(),
+        0, // the first channel
+        coarse_channels*channelizer_rate, // the number of channels
+        antenna_weights.data() // [NANTS=slowest, number_of_channels, NPOL=fastest)]
+    );
 
     // Argument-conditional Pipeline
     const int numberOfWorkers = 1;
@@ -151,7 +181,7 @@ int main(int argc, char **argv) {
 
                         .rfFrequencyHz = guppi.getBandwidthCenter(),
                         .channelBandwidthHz = guppi.getBandwidthOfChannel(),
-                        .totalBandwidthHz = guppi.getBandwidthOfChannel()*guppi.getNumberOfFrequencyChannels(),
+                        .totalBandwidthHz = guppi.getBandwidthOfChannel()*coarse_channels,
                         .frequencyStartIndex = guppi.getChannelStartIndex(),
                         .referenceAntennaIndex = 0,
                         .arrayReferencePosition = bfr5.getTelinfo_lla(),
