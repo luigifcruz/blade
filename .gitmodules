@@ -10,6 +10,3 @@
 [submodule "subprojects/bfr5c99"]
 	path = subprojects/bfr5c99
 	url = http://github.com/MydonSolutions/bfr5c99
-[submodule "subprojects/--force"]
-	path = subprojects/--force
-	url = http://github.com/MydonSolutions/bfr5c99
