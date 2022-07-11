@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 
+#include "antenna_weights.cc"
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
@@ -187,7 +188,7 @@ int main(int argc, char **argv) {
                         .arrayReferencePosition = bfr5.getTelinfo_lla(),
                         .boresightCoordinate = bfr5.getObsinfo_phase_center(),
                         .antennaPositions = bfr5.getTelinfo_antenna_positions(),
-                        .antennaCalibrations = {},
+                        .antennaCalibrations = antenna_weights,
                         .beamCoordinates = bfr5.getBeaminfo_coordinates(),
 
                         .outputMemWidth = 8192,
@@ -198,12 +199,6 @@ int main(int argc, char **argv) {
                         .phasorsBlockSize = 32,
                         .beamformerBlockSize = fine_time
                     };
-                    config.antennaCalibrations.resize(
-                        config.numberOfAntennas *
-                        config.numberOfFrequencyChannels *
-                        config.channelizerRate *
-                        config.numberOfPolarizations
-                    );
                     runner = Runner<CLIPipeline>::New(numberOfWorkers, config);
                     break;
             }
