@@ -9,6 +9,7 @@
 
 extern "C" {
 #include "guppiraw.h"
+#include "radiointerferometryc99.h"
 }
 
 namespace Blade::Modules::Guppi {
@@ -18,12 +19,18 @@ typedef struct {
   double chan_bw_mhz;
   int chan_start;
   double obs_freq_mhz;
+  uint64_t synctime;
+  uint64_t piperblk;
+  uint64_t pktidx;
 } guppiraw_block_meta_t;
 
 const uint64_t KEY_NANTS_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' ');
 const uint64_t KEY_SCHAN_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
 const uint64_t KEY_CHAN_BW_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
 const uint64_t KEY_OBSFREQ_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
+const uint64_t KEY_SYNCTIME_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
+const uint64_t KEY_PIPERBLK_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
+const uint64_t KEY_PKTIDX_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
 
 void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
   guppiraw_block_meta_t* block_meta = (guppiraw_block_meta_t*) block_meta_void;
@@ -35,6 +42,12 @@ void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
     hgetr8(entry, "CHAN_BW", &block_meta->chan_bw_mhz);
   else if(((uint64_t*)entry)[0] == KEY_OBSFREQ_UINT64)
     hgetr8(entry, "OBSFREQ", &block_meta->obs_freq_mhz);
+  else if(((uint64_t*)entry)[0] == KEY_SYNCTIME_UINT64)
+    hgetu8(entry, "SYNCTIME", &block_meta->synctime);
+  else if(((uint64_t*)entry)[0] == KEY_PIPERBLK_UINT64)
+    hgetu8(entry, "PIPERBLK", &block_meta->piperblk);
+  else if(((uint64_t*)entry)[0] == KEY_PKTIDX_UINT64)
+    hgetu8(entry, "PKTIDX", &block_meta->pktidx);
 }
 
 template<typename OT>
@@ -64,19 +77,19 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const U64 getNumberOfAntenna() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->nants;
+        return this->getBlockMeta()->nants;
     }
 
     constexpr const F64 getBandwidthOfChannel() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->chan_bw_mhz * 1e6;
+        return this->getBlockMeta()->chan_bw_mhz * 1e6;
     }
 
     constexpr const U64 getChannelStartIndex() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->chan_start;
+        return this->getBlockMeta()->chan_start;
     }
 
     constexpr const F64 getBandwidthCenter() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data)->obs_freq_mhz * 1e6;
+        return this->getBlockMeta()->obs_freq_mhz * 1e6;
     }
 
     constexpr const U64 getNumberOfFrequencyChannels() const {
@@ -95,6 +108,16 @@ class BLADE_API Reader : public Module {
         return getNumberOfFrequencyChannels() * getNumberOfPolarizations() * getNumberOfTimeSamples();
     }
 
+    constexpr const F64 getBlockEpochSeconds() {
+        return calc_epoch_seconds_from_guppi_param(
+            1.0/this->getBandwidthOfChannel(),
+            this->getNumberOfTimeSamples(),
+            this->getBlockMeta()->piperblk,
+            this->getBlockMeta()->synctime,
+            this->getBlockMeta()->pktidx
+        );
+    }
+
     Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
@@ -102,10 +125,16 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
+    uint64_t block_pktidx;
+
     guppiraw_iterate_info_t gr_iterate;
 
     constexpr const guppiraw_datashape_t getDatashape() const {
         return this->gr_iterate.file_info.block_info.datashape;
+    }
+
+    constexpr guppiraw_block_meta_t* getBlockMeta() const {
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data);
     }
 };
 
