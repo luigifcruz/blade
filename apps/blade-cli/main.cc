@@ -91,12 +91,20 @@ int main(int argc, char **argv) {
         .add_option("-T,--fine-time", fine_time, "Number of fine-timesamples")
             ->default_val(32);
 
+    // Read target channelizer-rate.
+
+    U64 channelizer_rate = 1024;
+
+    app
+        .add_option("-c,--channelizer-rate", channelizer_rate, "Channelizer rate (FFT points)")
+            ->default_val(1024);
+
     // Read target coarse-channels.
 
     U64 coarse_channels = 32;
 
     app
-        .add_option("-c,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
+        .add_option("-C,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
             ->default_val(32);
 
     //  Parse arguments.
@@ -124,15 +132,12 @@ int main(int argc, char **argv) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
-    if(guppi.getNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
-        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
+    if(bfr5.getDiminfo_nants()*bfr5.getDiminfo_nchan() != guppi.getNumberOfFrequencyChannels()) {
+        BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
         return 1;
     }
-
-    U64 channelizer_rate = (bfr5.getDiminfo_nants()*bfr5.getDiminfo_nchan())/guppi.getNumberOfFrequencyChannels();
-    BL_INFO("Inferred channelizer rate: {}", channelizer_rate);
-    if(channelizer_rate == 0) {
-        BL_FATAL("Channelizer rate cannot be 0.");
+    if(guppi.getNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
+        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
     
@@ -156,7 +161,8 @@ int main(int argc, char **argv) {
         bfr5.getDiminfo_nchan(),
         guppi.getNumberOfPolarizations(),
         0, // the first channel
-        coarse_channels*channelizer_rate, // the number of channels
+        coarse_channels, // the number of channels
+        channelizer_rate,
         antenna_weights.data() // [NANTS=slowest, number_of_channels, NPOL=fastest)]
     );
 

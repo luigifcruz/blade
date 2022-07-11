@@ -12,6 +12,7 @@ void gather_antenna_weights_from_bfr5_cal(
     const uint32_t npol,
 	const uint32_t starting_channel, // the first channel
 	const uint32_t number_of_channels, // the number of channels
+	const uint32_t channelizer_rate, // the ratio of coarse to fine channels (NFFT)
 	std::complex<double>* weights // [NANTS=slowest, number_of_channels, NPOL=fastest)]
 ) {
     const size_t cal_ant_stride = 1;
@@ -22,20 +23,22 @@ void gather_antenna_weights_from_bfr5_cal(
     const size_t weights_chan_stride = npol*weights_pol_stride;
     const size_t weights_ant_stride = number_of_channels*weights_chan_stride;
 
-    size_t ant_i, chan_i, pol_i;
+    size_t ant_i, chan_i, pol_i, fchan_i;
 
     for(ant_i = 0; ant_i < nants; ant_i++) {
         for(chan_i = 0; chan_i < number_of_channels; chan_i++) {
             for(pol_i = 0; pol_i < npol; pol_i++) {
-                weights[
-                    ant_i * weights_ant_stride +
-                    chan_i * weights_chan_stride +
-                    pol_i * weights_pol_stride
-                ] = CAST_COMPLEX_DOUBLE(cal[
-                    (starting_channel + chan_i) * cal_chan_stride +
-                    pol_i * cal_pol_stride +
-                    ant_i * cal_ant_stride
-                ]);
+                for(fchan_i = 0; fchan_i < channelizer_rate; fchan_i++) {
+                    weights[
+                        ant_i * weights_ant_stride +
+                        (chan_i*channelizer_rate + fchan_i) * weights_chan_stride +
+                        pol_i * weights_pol_stride
+                    ] = CAST_COMPLEX_DOUBLE(cal[
+                        (starting_channel + chan_i) * cal_chan_stride +
+                        pol_i * cal_pol_stride +
+                        ant_i * cal_ant_stride
+                    ]);
+                }
             }
         }
     }
