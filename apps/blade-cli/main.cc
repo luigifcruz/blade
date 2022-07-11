@@ -150,8 +150,8 @@ int main(int argc, char **argv) {
         coarse_channels*channelizer_rate*
         guppi.getNumberOfPolarizations()
     );
-    gather_antenna_weights_from_bfr5_cal_b(
-        bfr5.getCalinfo_b(),
+    gather_antenna_weights_from_bfr5_cal(
+        bfr5.getCalinfo_all(),
         guppi.getNumberOfAntenna(),
         bfr5.getDiminfo_nchan(),
         guppi.getNumberOfPolarizations(),
