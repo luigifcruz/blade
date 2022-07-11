@@ -20,24 +20,21 @@ typedef struct {
   double obs_freq_mhz;
 } guppiraw_block_meta_t;
 
+const uint64_t KEY_NANTS_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' ');
+const uint64_t KEY_SCHAN_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
+const uint64_t KEY_CHAN_BW_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
+const uint64_t KEY_OBSFREQ_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
+
 void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
   guppiraw_block_meta_t* block_meta = (guppiraw_block_meta_t*) block_meta_void;
-  switch (((uint64_t*)entry)[0]) {
-    case KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' '):
-      hgeti4(entry, "NANTS", &block_meta->nants);
-      break;
-    case KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' '):
-      hgeti4(entry, "SCHAN", &block_meta->chan_start);
-      break;
-    case KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' '):
-      hgetr8(entry, "CHAN_BW", &block_meta->chan_bw_mhz);
-      break;
-    case KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' '):
-      hgetr8(entry, "OBSFREQ", &block_meta->obs_freq_mhz);
-      break;
-    default:
-      break;
-  }
+  if(((uint64_t*)entry)[0] == KEY_NANTS_UINT64)
+    hgeti4(entry, "NANTS", &block_meta->nants);
+  else if(((uint64_t*)entry)[0] == KEY_SCHAN_UINT64)
+    hgeti4(entry, "SCHAN", &block_meta->chan_start);
+  else if(((uint64_t*)entry)[0] == KEY_CHAN_BW_UINT64)
+    hgetr8(entry, "CHAN_BW", &block_meta->chan_bw_mhz);
+  else if(((uint64_t*)entry)[0] == KEY_OBSFREQ_UINT64)
+    hgetr8(entry, "OBSFREQ", &block_meta->obs_freq_mhz);
 }
 
 template<typename OT>
