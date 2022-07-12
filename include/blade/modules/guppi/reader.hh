@@ -32,22 +32,21 @@ const uint64_t KEY_SYNCTIME_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C',
 const uint64_t KEY_PIPERBLK_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
 const uint64_t KEY_PKTIDX_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
 
-void guppiraw_parse_block_meta(char* entry, void* block_meta_void) {
-  guppiraw_block_meta_t* block_meta = (guppiraw_block_meta_t*) block_meta_void;
+void guppiraw_parse_block_meta(char* entry, void* block_meta) {
   if(((uint64_t*)entry)[0] == KEY_NANTS_UINT64)
-    hgeti4(entry, "NANTS", &block_meta->nants);
+    hgeti4(entry, "NANTS", &((guppiraw_block_meta_t*)block_meta)->nants);
   else if(((uint64_t*)entry)[0] == KEY_SCHAN_UINT64)
-    hgeti4(entry, "SCHAN", &block_meta->chan_start);
+    hgeti4(entry, "SCHAN", &((guppiraw_block_meta_t*)block_meta)->chan_start);
   else if(((uint64_t*)entry)[0] == KEY_CHAN_BW_UINT64)
-    hgetr8(entry, "CHAN_BW", &block_meta->chan_bw_mhz);
+    hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
   else if(((uint64_t*)entry)[0] == KEY_OBSFREQ_UINT64)
-    hgetr8(entry, "OBSFREQ", &block_meta->obs_freq_mhz);
+    hgetr8(entry, "OBSFREQ", &((guppiraw_block_meta_t*)block_meta)->obs_freq_mhz);
   else if(((uint64_t*)entry)[0] == KEY_SYNCTIME_UINT64)
-    hgetu8(entry, "SYNCTIME", &block_meta->synctime);
+    hgetu8(entry, "SYNCTIME", &((guppiraw_block_meta_t*)block_meta)->synctime);
   else if(((uint64_t*)entry)[0] == KEY_PIPERBLK_UINT64)
-    hgetu8(entry, "PIPERBLK", &block_meta->piperblk);
+    hgetu8(entry, "PIPERBLK", &((guppiraw_block_meta_t*)block_meta)->piperblk);
   else if(((uint64_t*)entry)[0] == KEY_PKTIDX_UINT64)
-    hgetu8(entry, "PKTIDX", &block_meta->pktidx);
+    hgetu8(entry, "PKTIDX", &((guppiraw_block_meta_t*)block_meta)->pktidx);
 }
 
 template<typename OT>
