@@ -130,15 +130,14 @@ class BLADE_API Reader : public Module {
     guppiraw_iterate_info_t gr_iterate;
 
     constexpr const guppiraw_datashape_t getDatashape() const {
-        return this->gr_iterate.file_info.block_info.datashape;
+        return this->gr_iterate.file_info.block_info.metadata.datashape;
     }
 
     constexpr guppiraw_block_meta_t* getBlockMeta() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.header_user_data);
+        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.metadata.user_data);
     }
 };
 
 }  // namespace Blade::Modules
 
 #endif
-

@@ -11,8 +11,8 @@ Reader<OT>::Reader(const Config& config, const Input& input)
           input(input) {
     BL_INFO("===== GUPPI Reader Module Configuration");
 
-    this->gr_iterate.file_info.block_info.header_user_data = calloc(sizeof(guppiraw_block_meta_t), 1);
-    this->gr_iterate.file_info.block_info.header_entry_callback = guppiraw_parse_block_meta;
+    this->gr_iterate.file_info.block_info.metadata.user_data = calloc(sizeof(guppiraw_block_meta_t), 1);
+    this->gr_iterate.file_info.block_info.metadata.user_callback = guppiraw_parse_block_meta;
     
     if (guppiraw_iterate_open_stem(config.filepath.c_str(), &this->gr_iterate)) {
         BL_FATAL("Could not open: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum);
