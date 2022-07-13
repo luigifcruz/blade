@@ -216,5 +216,38 @@ int main(int argc, char **argv) {
             return 1;
     }
 
+    Vector<Device::CPU, CF32>* output_buffers[numberOfWorkers];
+    for (int i = 0; i < numberOfWorkers; i++) {
+        output_buffers[i] = new Vector<Device::CPU, CF32>(runner->getWorker().getOutputSize());
+        BL_INFO(
+            "Allocated Runner output buffer {}: {} ({} bytes)",
+            i,
+            output_buffers[i]->size(),
+            output_buffers[i]->size_bytes()
+        );
+    }
+
+    U64 buffer_idx = 0;
+    U64 job_idx = 0;
+
+    while(guppi.canRead()) {
+        if (runner->enqueue(
+        [&](auto& worker){
+            worker.run(
+                0.0,
+                0.0,
+                guppi.getOutput(),
+                *output_buffers[buffer_idx]
+            );
+            return job_idx;
+        }
+        )) {
+            buffer_idx = (buffer_idx + 1) % numberOfWorkers;
+        }
+
+        if (runner->dequeue(nullptr)) {
+            job_idx++;
+        }
+    }
     return 0;
 }
