@@ -24,7 +24,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     
     BL_INFO("Datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
         this->getNumberOfAntenna(),
-        this->getNumberOfFrequencyChannels()/this->getNumberOfAntenna(),
+        this->getNumberOfFrequencyChannels(),
         this->getNumberOfTimeSamples(),
         this->getNumberOfPolarizations(),
         this->getDatashape().n_bit,
@@ -35,6 +35,33 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         this->getBlockMeta()->piperblk = this->getNumberOfTimeSamples();
     }
     this->block_pktidx = this->getBlockMeta()->pktidx;
+
+    if(this->config.step_n_aspect == 0) {
+        this->config.step_n_aspect = this->getNumberOfAntenna();
+    }
+
+    if(this->config.step_n_chan == 0) {
+        this->config.step_n_chan = this->getNumberOfFrequencyChannels();
+    }
+
+    if(this->config.step_n_time == 0) {
+        this->config.step_n_time = this->getNumberOfTimeSamples();
+    }
+
+    this->output.buf.resize(
+        this->config.step_n_aspect*
+        this->config.step_n_chan*
+        this->config.step_n_time*
+        this->getNumberOfPolarizations()
+    );
+    BL_INFO("Read {} Elements, Dimension Lengths: [{}, {}, {}, {}] ({} bytes)",
+        this->output.buf.size(),
+        this->config.step_n_aspect,
+        this->config.step_n_chan,
+        this->config.step_n_time,
+        this->getNumberOfPolarizations(),
+        this->output.buf.size_bytes()
+    );
 }
 
 template<typename OT>

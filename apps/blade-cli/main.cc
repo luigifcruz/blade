@@ -123,6 +123,8 @@ int main(int argc, char **argv) {
     GuppiReader guppi = GuppiReader(
         {
             .filepath = inputGuppiFile,
+            .step_n_time = channelizer_rate*fine_time,
+            .step_n_chan = coarse_channels,
             .blockSize = 32
         },
         {}
@@ -132,7 +134,7 @@ int main(int argc, char **argv) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
-    if(bfr5.getDiminfo_nants()*bfr5.getDiminfo_nchan() != guppi.getNumberOfFrequencyChannels()) {
+    if(guppi.getNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
         return 1;
     }

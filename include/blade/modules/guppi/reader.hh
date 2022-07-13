@@ -24,7 +24,6 @@ typedef struct {
   uint64_t pktidx;
 } guppiraw_block_meta_t;
 
-const uint64_t KEY_NANTS_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('N','A','N','T','S',' ',' ',' ');
 const uint64_t KEY_SCHAN_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
 const uint64_t KEY_CHAN_BW_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
 const uint64_t KEY_OBSFREQ_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
@@ -32,10 +31,8 @@ const uint64_t KEY_SYNCTIME_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C',
 const uint64_t KEY_PIPERBLK_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
 const uint64_t KEY_PKTIDX_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
 
-void guppiraw_parse_block_meta(char* entry, void* block_meta) {
-  if(((uint64_t*)entry)[0] == KEY_NANTS_UINT64)
-    hgeti4(entry, "NANTS", &((guppiraw_block_meta_t*)block_meta)->nants);
-  else if(((uint64_t*)entry)[0] == KEY_SCHAN_UINT64)
+void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
+  if(((uint64_t*)entry)[0] == KEY_SCHAN_UINT64)
     hgeti4(entry, "SCHAN", &((guppiraw_block_meta_t*)block_meta)->chan_start);
   else if(((uint64_t*)entry)[0] == KEY_CHAN_BW_UINT64)
     hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
@@ -55,6 +52,10 @@ class BLADE_API Reader : public Module {
     struct Config {
         std::string filepath;
 
+        U64 step_n_time;
+        U64 step_n_chan;
+        U64 step_n_aspect;
+
         U64 blockSize = 512;
     };
 
@@ -67,16 +68,29 @@ class BLADE_API Reader : public Module {
 
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const Vector<Device::CPU, OT>& getOutput() const {
+    constexpr const bool canRead() const {
+        return !this->error_encountered &&
+            guppiraw_iterate_filentime_remaining(&this->gr_iterate) > this->config.step_n_time
+        ;
+    }
+
+    constexpr const Vector<Device::CPU, OT>& getOutput() {
+        const I64 bytes_read = guppiraw_iterate_read(
+            &this->gr_iterate,
+            this->config.step_n_time,
+            this->config.step_n_chan,
+            this->config.step_n_aspect,
+            this->output.buf.data()
+        );
+        if(bytes_read <= 0) {
+            BL_ERROR("Guppi::Reader encountered error: {}.", bytes_read);
+            this->error_encountered = true;
+        }
         return this->output.buf;
     }
 
     constexpr const Config& getConfig() const {
         return this->config;
-    }
-
-    constexpr const U64 getNumberOfAntenna() const {
-        return this->getBlockMeta()->nants;
     }
 
     constexpr const F64 getBandwidthOfChannel() const {
@@ -91,8 +105,12 @@ class BLADE_API Reader : public Module {
         return this->getBlockMeta()->obs_freq_mhz * 1e6;
     }
 
+    constexpr const U64 getNumberOfAntenna() const {
+        return this->getDatashape().n_aspect;
+    }
+
     constexpr const U64 getNumberOfFrequencyChannels() const {
-        return this->getDatashape().n_obschan;
+        return this->getDatashape().n_aspectchan;
     }
 
     constexpr const U64 getNumberOfPolarizations() const {
@@ -120,13 +138,14 @@ class BLADE_API Reader : public Module {
     Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
-    const Config config;
+    Config config;
     const Input input;
     Output output;
+    bool error_encountered = false;
 
     uint64_t block_pktidx;
 
-    guppiraw_iterate_info_t gr_iterate;
+    guppiraw_iterate_info_t gr_iterate = {0};
 
     constexpr const guppiraw_datashape_t getDatashape() const {
         return this->gr_iterate.file_info.block_info.metadata.datashape;
