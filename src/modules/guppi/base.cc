@@ -10,12 +10,9 @@ Reader<OT>::Reader(const Config& config, const Input& input)
           config(config),
           input(input) {
     BL_INFO("===== GUPPI Reader Module Configuration");
-
-    this->gr_iterate.file_info.block_info.metadata.user_data = calloc(sizeof(guppiraw_block_meta_t), 1);
-    this->gr_iterate.file_info.block_info.metadata.user_callback = guppiraw_parse_block_meta;
     
-    if (guppiraw_iterate_open_stem(config.filepath.c_str(), &this->gr_iterate)) {
-        BL_FATAL("Could not open: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum);
+    if (guppiraw_iterate_open_with_user_metadata(&this->gr_iterate, config.filepath.c_str(), sizeof(guppiraw_block_meta_t), guppiraw_parse_block_meta)) {
+        BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
     }
 
     BL_INFO("Input File Path: {}", config.filepath);
@@ -27,14 +24,13 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         this->getNumberOfFrequencyChannels(),
         this->getNumberOfTimeSamples(),
         this->getNumberOfPolarizations(),
-        this->getDatashape().n_bit,
-        this->getDatashape().block_size
+        this->getDatashape()->n_bit,
+        this->getDatashape()->block_size
     );
 
     if(this->getBlockMeta()->piperblk == 0) {
         this->getBlockMeta()->piperblk = this->getNumberOfTimeSamples();
     }
-    this->block_pktidx = this->getBlockMeta()->pktidx;
 
     if(this->config.step_n_aspect == 0) {
         this->config.step_n_aspect = this->getNumberOfAntenna();

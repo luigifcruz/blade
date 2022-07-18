@@ -69,12 +69,16 @@ class BLADE_API Reader : public Module {
     explicit Reader(const Config& config, const Input& input);
 
     constexpr const bool canRead() const {
-        return !this->error_encountered &&
-            guppiraw_iterate_filentime_remaining(&this->gr_iterate) > this->config.step_n_time
+        return !this->flag_error &&
+            guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->config.step_n_time
         ;
     }
 
     constexpr const Vector<Device::CPU, OT>& getOutput() {
+        this->lastread_block_index++;
+        this->lastread_aspect_index = gr_iterate.aspect_index;
+        this->lastread_channel_index = gr_iterate.chan_index;
+        this->lastread_time_index = gr_iterate.time_index;
         const I64 bytes_read = guppiraw_iterate_read(
             &this->gr_iterate,
             this->config.step_n_time,
@@ -84,7 +88,7 @@ class BLADE_API Reader : public Module {
         );
         if(bytes_read <= 0) {
             BL_ERROR("Guppi::Reader encountered error: {}.", bytes_read);
-            this->error_encountered = true;
+            this->flag_error = true;
         }
         return this->output.buf;
     }
@@ -106,19 +110,19 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const U64 getNumberOfAntenna() const {
-        return this->getDatashape().n_aspect;
+        return this->getDatashape()->n_aspect;
     }
 
     constexpr const U64 getNumberOfFrequencyChannels() const {
-        return this->getDatashape().n_aspectchan;
+        return this->getDatashape()->n_aspectchan;
     }
 
     constexpr const U64 getNumberOfPolarizations() const {
-        return this->getDatashape().n_pol;
+        return this->getDatashape()->n_pol;
     }
 
     constexpr const U64 getNumberOfTimeSamples() const {
-        return this->getDatashape().n_time;
+        return this->getDatashape()->n_time;
     }
 
     constexpr const U64 getOutputSize() const {
@@ -126,12 +130,16 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const F64 getBlockEpochSeconds() {
+        return this->getBlockEpochSeconds(0);
+    }
+    constexpr const F64 getBlockEpochSeconds(U64 block_time_offset) {
         return calc_epoch_seconds_from_guppi_param(
             1.0/this->getBandwidthOfChannel(),
             this->getNumberOfTimeSamples(),
             this->getBlockMeta()->piperblk,
             this->getBlockMeta()->synctime,
-            this->getBlockMeta()->pktidx
+            this->getBlockMeta()->pktidx + 
+                (this->lastread_block_index + block_time_offset)*this->getNumberOfTimeSamples()
         );
     }
 
@@ -141,18 +149,21 @@ class BLADE_API Reader : public Module {
     Config config;
     const Input input;
     Output output;
-    bool error_encountered = false;
+    bool flag_error = false;
 
-    uint64_t block_pktidx;
+    I64 lastread_block_index = -1;
+    U64 lastread_aspect_index;
+    U64 lastread_channel_index;
+    U64 lastread_time_index;
 
     guppiraw_iterate_info_t gr_iterate = {0};
 
-    constexpr const guppiraw_datashape_t getDatashape() const {
-        return this->gr_iterate.file_info.block_info.metadata.datashape;
+    constexpr const guppiraw_datashape_t* getDatashape() const {
+        return guppiraw_iterate_datashape(&this->gr_iterate);
     }
 
     constexpr guppiraw_block_meta_t* getBlockMeta() const {
-        return ((guppiraw_block_meta_t*)this->gr_iterate.file_info.block_info.metadata.user_data);
+        return ((guppiraw_block_meta_t*) guppiraw_iterate_metadata(&this->gr_iterate));
     }
 };
 

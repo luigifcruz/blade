@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
         if (runner->enqueue(
         [&](auto& worker){
             worker.run(
-                0.0,
+                guppi.getBlockEpochSeconds(guppi.getNumberOfTimeSamples()/2),
                 0.0,
                 guppi.getOutput(),
                 *output_buffers[buffer_idx]
