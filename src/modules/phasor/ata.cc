@@ -83,11 +83,11 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 template<typename OT>
 const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     HA_DEC boresight_ha_dec = {0.0, 0.0};
+    
+    eraASTROM astrom;
 
-    //  Convert Boresight RA & Declination to Hour Angle & Declination.
-    calc_ha_dec_rad(
-        this->config.boresightCoordinate.RA,
-        this->config.boresightCoordinate.DEC,
+    // Convert source RA & Declination to Hour Angle.
+    calc_independent_astrom(
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT,
@@ -101,26 +101,12 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         boresightUvw[i] = reinterpret_cast<const UVW&>(antennasXyz[i]);
     }
 
-    //  Rotate Reference Position (UVW) towards Boresight (HA, Dec).
-    calc_position_to_uvw_frame_from_xyz(
+    calc_position_delays(
         (F64*)boresightUvw.data(),
         this->config.numberOfAntennas,
+        this->config.referenceAntennaIndex,
         boresight_ha_dec.HA,
         boresight_ha_dec.DEC,
-        this->config.arrayReferencePosition.LON);
-
-    //  Calculate delay for boresight (Ti = (Wi - Wr) / C).
-    for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
-        boresightDelay[a] = (
-            boresightUvw[a].W - 
-            boresightUvw[this->config.referenceAntennaIndex].W
-        ) / BL_PHYSICAL_CONSTANT_C; 
-    }
-
-    eraASTROM astrom;
-
-    // Convert source RA & Declination to Hour Angle (Part A).
-    calc_independent_astrom(
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT, 
         this->config.arrayReferencePosition.ALT,
@@ -136,7 +122,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
 
         HA_DEC source_ha_dec = {0.0, 0.0};
 
-        //  Convert source RA & Decligation to Hour Angle (Part B).
+        //  Convert source RA & Declination to Hour Angle
         calc_ha_dec_rad_with_independent_astrom(
             this->config.beamCoordinates[b].RA,
             this->config.beamCoordinates[b].DEC,
@@ -144,24 +130,19 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             &source_ha_dec.HA,
             &source_ha_dec.DEC);
 
-        //  Rotate Reference Position (UVW) towards Source (HA, Dec).
-        calc_position_to_uvw_frame_from_xyz(
+        calc_position_delays(
             (F64*)sourceUvw.data(),
             this->config.numberOfAntennas,
+            this->config.referenceAntennaIndex,
             source_ha_dec.HA,
             source_ha_dec.DEC,
-            this->config.arrayReferencePosition.LON);
+            this->config.arrayReferencePosition.LON,
+            this->output.delays.data() + (b * this->config.numberOfAntennas)
+        );
 
-        //  Calculate delay for off-center source and subtract 
-        //  from boresight (TPi = Ti - ((WPi - WPr) / C)).
+        //  Subtract boresight (TPi = ((WPi - WPr) / C) - Ti).
         for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
-            this->output.delays[(b * this->config.numberOfAntennas) + a] = 
-                (
-                    (
-                        sourceUvw[a].W -
-                        sourceUvw[this->config.referenceAntennaIndex].W
-                    ) / BL_PHYSICAL_CONSTANT_C
-                ) - boresightDelay[a];
+            this->output.delays[(b * this->config.numberOfAntennas) + a] -= boresightDelay[a];
         }
     }
 
