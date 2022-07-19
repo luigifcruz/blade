@@ -1,10 +1,7 @@
 #include "base.hh"
 
 #include <blade/base.hh>
-#include <blade/modules/beamformer/ata.hh>
-#include <blade/modules/channelizer.hh>
-#include <blade/modules/detector.hh>
-#include <blade/modules/phasor/ata.hh>
+#include <blade/modules/base.hh>
 
 #include <memory>
 
@@ -85,10 +82,18 @@ inline void init_pipeline(const py::module& m) {
         .def("is_synchronized", &Pipeline::isSynchronized)
         .def("compute", &PipelinePub::compute);
 
+#ifdef BLADE_MODULE_ATA_BEAMFORMER
     init_pipeline_connect<Modules::Beamformer::ATA<CF32, CF32>>(pipeline);
+#endif
+#ifdef BLADE_MODULE_CHANNELIZER
     init_pipeline_connect<Modules::Channelizer<CF32, CF32>>(pipeline);
+#endif
+#ifdef BLADE_MODULE_DETECTOR
     init_pipeline_connect<Modules::Detector<CF32, F32>>(pipeline);
+#endif
+#ifdef BLADE_MODULE_ATA_PHASOR
     init_pipeline_connect<Modules::Phasor::ATA<CF32>>(pipeline);
+#endif
     init_pipeline_copy<CF32>(pipeline);
     init_pipeline_copy<F32>(pipeline);
 }

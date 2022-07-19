@@ -1,17 +1,16 @@
 #include "base.hh"
 
 #include <blade/base.hh>
-#include <blade/modules/beamformer/ata.hh>
-#include <blade/modules/channelizer.hh>
-#include <blade/modules/detector.hh>
-#include <blade/modules/phasor/ata.hh>
+#include <blade/modules/base.hh>
 
 #include <memory>
 
 using namespace Blade;
 namespace py = pybind11;
 
-inline void init_beamformer(const py::module& m) {
+#ifdef BLADE_MODULE_ATA_BEAMFORMER
+
+inline void init_ata_beamformer(const py::module& m) {
     using Class = Modules::Beamformer::ATA<CF32, CF32>;
 
     py::class_<Class, std::shared_ptr<Class>> beamformer(m, "Beamformer");
@@ -50,7 +49,11 @@ inline void init_beamformer(const py::module& m) {
         .def("output", &Class::getOutput, py::return_value_policy::reference);
 }
 
-inline void init_phasor(const py::module& m) {
+#endif
+
+#ifdef BLADE_MODULE_ATA_PHASOR
+
+inline void init_ata_phasor(const py::module& m) {
     using Class = Modules::Phasor::ATA<CF32>;
 
     py::class_<Class, std::shared_ptr<Class>> phasor(m, "Phasor");
@@ -102,6 +105,10 @@ inline void init_phasor(const py::module& m) {
         .def("phasors", &Class::getPhasors, py::return_value_policy::reference);
 }
 
+#endif
+
+#ifdef BLADE_MODULE_CHANNELIZER
+
 inline void init_channelizer(const py::module& m) {
     using Class = Modules::Channelizer<CF32, CF32>;
 
@@ -133,6 +140,10 @@ inline void init_channelizer(const py::module& m) {
         .def("input", &Class::getInput, py::return_value_policy::reference)
         .def("output", &Class::getOutput, py::return_value_policy::reference);
 }
+
+#endif 
+
+#ifdef BLADE_MODULE_DETECTOR
 
 inline void init_detector(const py::module& m) {
     using Class = Modules::Detector<CF32, F32>;
@@ -167,9 +178,19 @@ inline void init_detector(const py::module& m) {
         .def("output", &Class::getOutput, py::return_value_policy::reference);
 }
 
+#endif
+
 inline void init_modules(const py::module& m) {
+#ifdef BLADE_MODULE_ATA_BEAMFORMER
+    init_ata_beamformer(m);
+#endif
+#ifdef BLADE_MODULE_ATA_PHASOR
+    init_ata_phasor(m);
+#endif
+#ifdef BLADE_MODULE_CHANNELIZER
     init_channelizer(m);
-    init_beamformer(m);
-    init_phasor(m);
+#endif
+#ifdef BLADE_MODULE_DETECTOR
     init_detector(m);
+#endif
 }

@@ -1,6 +1,6 @@
 src_lst += files([
-  'module.cc',
-  'pipeline.cc',
+    'module.cc',
+    'pipeline.cc',
 ])
 
 subdir('utils')
