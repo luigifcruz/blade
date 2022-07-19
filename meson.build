@@ -16,6 +16,7 @@ cfg_lst.set('build_type', get_option('buildtype'))
 src_lst = []
 dep_lst = [
   subproject('guppirawc99').get_variable('lib_guppiraw_dep'),
+  subproject('bfr5c99').get_variable('lib_bfr5c99_dep'),
   subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'cufft']),
   dependency('fmt'),

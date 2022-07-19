@@ -10,17 +10,54 @@ Reader<OT>::Reader(const Config& config, const Input& input)
           config(config),
           input(input) {
     BL_INFO("===== GUPPI Reader Module Configuration");
-
-    if (std::filesystem::exists(config.filepath)) {
-        BL_FATAL("Input file ({}) doesn't not exist.", config.filepath)
+    
+    if (guppiraw_iterate_open_with_user_metadata(&this->gr_iterate, config.filepath.c_str(), sizeof(guppiraw_block_meta_t), guppiraw_parse_block_meta)) {
+        BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
     }
-
-    input_fd = open(config.filepath, O_RDONLY);
-    guppiraw_read_blockheader(input_fd, &gr_blockinfo);
 
     BL_INFO("Input File Path: {}", config.filepath);
 
     BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
+    
+    BL_INFO("Datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
+        this->getNumberOfAntenna(),
+        this->getNumberOfFrequencyChannels(),
+        this->getNumberOfTimeSamples(),
+        this->getNumberOfPolarizations(),
+        this->getDatashape()->n_bit,
+        this->getDatashape()->block_size
+    );
+
+    if(this->getBlockMeta()->piperblk == 0) {
+        this->getBlockMeta()->piperblk = this->getNumberOfTimeSamples();
+    }
+
+    if(this->config.step_n_aspect == 0) {
+        this->config.step_n_aspect = this->getNumberOfAntenna();
+    }
+
+    if(this->config.step_n_chan == 0) {
+        this->config.step_n_chan = this->getNumberOfFrequencyChannels();
+    }
+
+    if(this->config.step_n_time == 0) {
+        this->config.step_n_time = this->getNumberOfTimeSamples();
+    }
+
+    this->output.buf.resize(
+        this->config.step_n_aspect*
+        this->config.step_n_chan*
+        this->config.step_n_time*
+        this->getNumberOfPolarizations()
+    );
+    BL_INFO("Read {} Elements, Dimension Lengths: [{}, {}, {}, {}] ({} bytes)",
+        this->output.buf.size(),
+        this->config.step_n_aspect,
+        this->config.step_n_chan,
+        this->config.step_n_time,
+        this->getNumberOfPolarizations(),
+        this->output.buf.size_bytes()
+    );
 }
 
 template<typename OT>

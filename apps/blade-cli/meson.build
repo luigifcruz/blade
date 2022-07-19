@@ -12,7 +12,7 @@ if all_deps_found
     executable(
         'blade-cli', 'main.cc',
         include_directories: inc_lst,
-        dependencies: dep_lst + deps,
+        dependencies: dep_lst + deps + lib_blade_dep,
         install: true,
     )
 endif
