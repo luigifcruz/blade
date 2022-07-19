@@ -163,7 +163,7 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr guppiraw_block_meta_t* getBlockMeta() const {
-        return ((guppiraw_block_meta_t*) guppiraw_iterate_metadata(&this->gr_iterate));
+        return ((guppiraw_block_meta_t*) guppiraw_iterate_metadata(&this->gr_iterate)->user_data);
     }
 };
 
