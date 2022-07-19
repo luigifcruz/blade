@@ -89,7 +89,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     // Convert source RA & Declination to Hour Angle.
     calc_independent_astrom(
         this->config.arrayReferencePosition.LON,
-        this->config.arrayReferencePosition.LAT, 
+        this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT,
         this->input.frameJulianDate[0],
         this->input.frameDut1[0],
@@ -144,7 +144,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             this->output.delays.data() + (b * this->config.numberOfAntennas)
         );
 
-        //  subtract boresight (TPi = ((WPi - WPr) / C) - Ti).
+        //  Subtract boresight (TPi = ((WPi - WPr) / C) - Ti).
         for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
             this->output.delays[(b * this->config.numberOfAntennas) + a] -= boresightDelay[a];
         }
