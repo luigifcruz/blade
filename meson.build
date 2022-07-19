@@ -15,6 +15,7 @@ cfg_lst.set('build_type', get_option('buildtype'))
 
 src_lst = []
 dep_lst = [
+  subproject('guppirawc99').get_variable('lib_guppiraw_dep'),
   subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
   dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'cufft']),
   dependency('fmt'),
@@ -47,6 +48,7 @@ lib_blade_dep = declare_dependency(
 subdir('python')
 subdir('tests')
 subdir('docs')
+subdir('apps')
 
 summary({'cpp_std': get_option('cpp_std'),
          'prefix': get_option('prefix'),

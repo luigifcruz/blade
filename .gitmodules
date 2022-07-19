@@ -1,3 +1,9 @@
 [submodule "subprojects/radiointerferometryc99"]
 	path = subprojects/radiointerferometryc99
 	url = https://github.com/MydonSolutions/radiointerferometryc99.git
+[submodule "subprojects/CLI11"]
+	path = subprojects/CLI11
+	url = https://github.com/CLIUtils/CLI11.git
+[submodule "subprojects/guppirawc99"]
+	path = subprojects/guppirawc99
+	url = https://github.com/MydonSolutions/guppirawc99.git
