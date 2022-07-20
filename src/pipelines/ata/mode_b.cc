@@ -24,14 +24,14 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
         .buf = input,
     });
 
-    BL_DEBUG("Instantiating channelizer with rate {}.", config.channelizerRate);
+    BL_DEBUG("Instantiating pre-channelizer with rate {}.", config.preChannelizerRate);
     this->connect(channelizer, {
         .numberOfBeams = 1,
         .numberOfAntennas = config.numberOfAntennas,
         .numberOfFrequencyChannels = config.numberOfFrequencyChannels,
         .numberOfTimeSamples = config.numberOfTimeSamples,
         .numberOfPolarizations = config.numberOfPolarizations,
-        .rate = config.channelizerRate,
+        .rate = config.preChannelizerRate,
         .blockSize = config.channelizerBlockSize,
     }, {
         .buf = inputCast->getOutput(),
@@ -41,7 +41,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
     this->connect(phasor, {
         .numberOfBeams = config.beamformerBeams,
         .numberOfAntennas = config.numberOfAntennas,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.preChannelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
 
         .rfFrequencyHz = config.rfFrequencyHz,
@@ -66,8 +66,8 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
     this->connect(beamformer, {
         .numberOfBeams = config.beamformerBeams, 
         .numberOfAntennas = config.numberOfAntennas,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.channelizerRate,
-        .numberOfTimeSamples = config.numberOfTimeSamples / config.channelizerRate,
+        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.preChannelizerRate,
+        .numberOfTimeSamples = config.numberOfTimeSamples / config.preChannelizerRate,
         .numberOfPolarizations = config.numberOfPolarizations,
         .enableIncoherentBeam = config.enableIncoherentBeam,
         .enableIncoherentBeamSqrt = false,
@@ -135,8 +135,10 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
 
-    const auto& width = (beamformer->getOutputSize() / config.beamformerBeams / (config.numberOfFrequencyChannels * config.channelizerRate)) * sizeof(OT);
-    const auto& height = config.beamformerBeams * (config.numberOfFrequencyChannels * config.channelizerRate);
+    const auto& width = (beamformer->getOutputSize() / config.beamformerBeams / 
+            (config.numberOfFrequencyChannels * config.preChannelizerRate)) * sizeof(OT);
+    const auto& height = config.beamformerBeams * 
+            (config.numberOfFrequencyChannels * config.preChannelizerRate);
 
     BL_CHECK(this->copy2D(
         output,

@@ -129,21 +129,23 @@ int main(int argc, char **argv) {
         },
         {}
     );
+
     Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
-    if(guppi.getTotalNumberOfAntennas() != bfr5.getDiminfo_nants()) {
+
+    if (guppi.getTotalNumberOfAntennas() != bfr5.getDiminfo_nants()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
-    if(guppi.getTotalNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
+    if (guppi.getTotalNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
         return 1;
     }
-    if(guppi.getTotalNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
+    if (guppi.getTotalNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
     
-    if(coarse_channels != guppi.getTotalNumberOfFrequencyChannels()) {
+    if (coarse_channels != guppi.getTotalNumberOfFrequencyChannels()) {
         BL_WARN(
             "Sub-band processing of the coarse-channels ({}/{}) is incompletely implemented: "
             "only the first sub-band is processed.",
@@ -157,6 +159,7 @@ int main(int argc, char **argv) {
         coarse_channels*channelizer_rate*
         guppi.getTotalNumberOfPolarizations()
     );
+
     gather_antenna_weights_from_bfr5_cal(
         bfr5.getCalinfo_all(),
         guppi.getTotalNumberOfAntennas(),
@@ -183,7 +186,7 @@ int main(int argc, char **argv) {
                         .numberOfTimeSamples = fine_time*channelizer_rate,
                         .numberOfPolarizations = guppi.getTotalNumberOfPolarizations(),
 
-                        .channelizerRate = channelizer_rate,
+                        .preChannelizerRate = channelizer_rate,
 
                         .beamformerBeams = bfr5.getDiminfo_nbeams(),
                         .enableIncoherentBeam = false,
@@ -249,5 +252,8 @@ int main(int argc, char **argv) {
             job_idx++;
         }
     }
+
+    runner.reset();
+
     return 0;
 }

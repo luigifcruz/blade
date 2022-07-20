@@ -33,7 +33,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .numberOfTimeSamples = BLADE_ATA_MODE_B_NTIME,
         .numberOfPolarizations = BLADE_ATA_MODE_B_NPOL,
 
-        .channelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
+        .preChannelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
         .beamformerBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
         .enableIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
@@ -98,7 +98,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     config.antennaCalibrations.resize(
         config.numberOfAntennas *
         config.numberOfFrequencyChannels *
-        config.channelizerRate *
+        config.preChannelizerRate *
         config.numberOfPolarizations);
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, config);

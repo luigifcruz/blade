@@ -22,7 +22,7 @@ class BLADE_API ModeB : public Pipeline {
         U64 numberOfTimeSamples;
         U64 numberOfPolarizations;
 
-        U64 channelizerRate;
+        U64 preChannelizerRate;
 
         U64 beamformerBeams;
         BOOL enableIncoherentBeam = false;

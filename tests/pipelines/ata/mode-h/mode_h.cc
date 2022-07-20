@@ -56,7 +56,7 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
         .numberOfTimeSamples = BLADE_ATA_MODE_H_NTIME,
         .numberOfPolarizations = BLADE_ATA_MODE_H_NPOL,
 
-        .channelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
+        .preChannelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
 
         .beamformerBeams = BLADE_ATA_MODE_H_OUTPUT_NBEAM,
 
@@ -119,16 +119,16 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
     State.RunnersConfig.B.antennaCalibrations.resize(
         State.RunnersConfig.B.numberOfAntennas *
         State.RunnersConfig.B.numberOfFrequencyChannels *
-        State.RunnersConfig.B.channelizerRate *
+        State.RunnersConfig.B.preChannelizerRate *
         State.RunnersConfig.B.numberOfPolarizations
     );
 
     State.RunnersConfig.H = {
         .numberOfBeams = State.RunnersConfig.B.beamformerBeams,
         .numberOfFrequencyChannels = State.RunnersConfig.B.numberOfFrequencyChannels * 
-                                     State.RunnersConfig.B.channelizerRate,
+                                     State.RunnersConfig.B.preChannelizerRate,
         .numberOfTimeSamples = State.RunnersConfig.B.numberOfTimeSamples / 
-                               State.RunnersConfig.B.channelizerRate,
+                               State.RunnersConfig.B.preChannelizerRate,
         .numberOfPolarizations = State.RunnersConfig.B.numberOfPolarizations,
 
         .accumulateRate = BLADE_ATA_MODE_H_ACCUMULATE_RATE, 
