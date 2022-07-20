@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     std::string inputGuppiFile;
 
     app
-        .add_option("-i,--input,input", inputGuppiFile, "Input GUPPI RAW filepath")
+        .add_option("-i,--input", inputGuppiFile, "Input GUPPI RAW filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
@@ -78,12 +78,12 @@ int main(int argc, char **argv) {
     std::string inputBfr5File;
 
     app
-        .add_option("-r,--recipe,recipe", inputBfr5File, "Input BFR5 filepath")
+        .add_option("-r,--recipe", inputBfr5File, "Input BFR5 filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
 
-    // Read target fine-time.
+    //  Read target fine-time.
 
     U64 fine_time = 32;
 
@@ -91,15 +91,15 @@ int main(int argc, char **argv) {
         .add_option("-T,--fine-time", fine_time, "Number of fine-timesamples")
             ->default_val(32);
 
-    // Read target channelizer-rate.
+    //  Read target channelizer-rate.
 
     U64 channelizer_rate = 1024;
 
     app
-        .add_option("-c,--channelizer-rate", channelizer_rate, "Channelizer rate (FFT points)")
+        .add_option("-c,--channelizer-rate", channelizer_rate, "Channelizer rate (FFT-size)")
             ->default_val(1024);
 
-    // Read target coarse-channels.
+    //  Read target coarse-channels.
 
     U64 coarse_channels = 32;
 
@@ -123,14 +123,14 @@ int main(int argc, char **argv) {
     GuppiReader guppi = GuppiReader(
         {
             .filepath = inputGuppiFile,
-            .step_n_time = channelizer_rate*fine_time,
-            .step_n_chan = coarse_channels,
+            .stepNumberOfTimeSamples = channelizer_rate * fine_time,
+            .stepNumberOfFrequencyChannels = coarse_channels,
             .blockSize = 32
         },
         {}
     );
     Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
-    if(guppi.getNumberOfAntenna() != bfr5.getDiminfo_nants()) {
+    if(guppi.getNumberOfAntennas() != bfr5.getDiminfo_nants()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
@@ -153,13 +153,13 @@ int main(int argc, char **argv) {
     }
 
     std::vector<std::complex<double>> antenna_weights(
-        guppi.getNumberOfAntenna()*
+        guppi.getNumberOfAntennas()*
         coarse_channels*channelizer_rate*
         guppi.getNumberOfPolarizations()
     );
     gather_antenna_weights_from_bfr5_cal(
         bfr5.getCalinfo_all(),
-        guppi.getNumberOfAntenna(),
+        guppi.getNumberOfAntennas(),
         bfr5.getDiminfo_nchan(),
         guppi.getNumberOfPolarizations(),
         0, // the first channel
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
                     break;
                 case ModeID::MODE_B:
                     CLIPipeline::Config config = {
-                        .numberOfAntennas = guppi.getNumberOfAntenna(),
+                        .numberOfAntennas = guppi.getNumberOfAntennas(),
                         .numberOfFrequencyChannels = coarse_channels,
                         .numberOfTimeSamples = fine_time*channelizer_rate,
                         .numberOfPolarizations = guppi.getNumberOfPolarizations(),

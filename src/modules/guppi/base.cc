@@ -4,6 +4,43 @@
 
 namespace Blade::Modules::Guppi {
 
+typedef struct {
+    I32 nants;
+    F64 chan_bw_mhz;
+    I32 chan_start;
+    F64 obs_freq_mhz;
+    U64 synctime;
+    U64 piperblk;
+    U64 pktidx;
+} guppiraw_block_meta_t;
+
+const U64 KEY_SCHAN_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
+const U64 KEY_CHAN_BW_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
+const U64 KEY_OBSFREQ_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
+const U64 KEY_SYNCTIME_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
+const U64 KEY_PIPERBLK_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
+const U64 KEY_PKTIDX_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
+
+void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
+    if        (((U64*)entry)[0] == KEY_SCHAN_UINT64) {
+        hgeti4(entry, "SCHAN", &((guppiraw_block_meta_t*)block_meta)->chan_start);
+    } else if (((U64*)entry)[0] == KEY_CHAN_BW_UINT64) {
+        hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
+    } else if (((U64*)entry)[0] == KEY_OBSFREQ_UINT64) {
+        hgetr8(entry, "OBSFREQ", &((guppiraw_block_meta_t*)block_meta)->obs_freq_mhz);
+    } else if (((U64*)entry)[0] == KEY_SYNCTIME_UINT64) {
+        hgetu8(entry, "SYNCTIME", &((guppiraw_block_meta_t*)block_meta)->synctime);
+    } else if (((U64*)entry)[0] == KEY_PIPERBLK_UINT64) {
+        hgetu8(entry, "PIPERBLK", &((guppiraw_block_meta_t*)block_meta)->piperblk);
+    } else if (((U64*)entry)[0] == KEY_PKTIDX_UINT64) {
+        hgetu8(entry, "PKTIDX", &((guppiraw_block_meta_t*)block_meta)->pktidx);
+    } 
+}
+
+inline guppiraw_block_meta_t* getBlockMeta(guppiraw_iterate_info_t* gr_iterate_ptr) {
+    return ((guppiraw_block_meta_t*) guppiraw_iterate_metadata(gr_iterate_ptr)->user_data);
+}
+
 template<typename OT>
 Reader<OT>::Reader(const Config& config, const Input& input)
         : Module(config.blockSize, guppi_kernel),
@@ -15,49 +52,61 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
     }
 
-    BL_INFO("Input File Path: {}", config.filepath);
+    if (getBlockMeta(&gr_iterate)->piperblk == 0) {
+        getBlockMeta(&gr_iterate)->piperblk = this->getTotalNumberOfTimeSamples();
+    }
+
+    if (this->getNumberOfAntennas() == 0) {
+        this->config.stepNumberOfAntennas = this->getTotalNumberOfAntennas();
+    }
+
+    if (this->getNumberOfFrequencyChannels() == 0) {
+        this->config.stepNumberOfFrequencyChannels = this->getTotalNumberOfFrequencyChannels();
+    }
+
+    if (this->getNumberOfTimeSamples() == 0) {
+        this->config.stepNumberOfTimeSamples = this->getTotalNumberOfTimeSamples();
+    }
 
     BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
-    
-    BL_INFO("Datashape: [{}, {}, {}, {}, CI{}] ({} bytes)",
-        this->getNumberOfAntenna(),
-        this->getNumberOfFrequencyChannels(),
-        this->getNumberOfTimeSamples(),
-        this->getNumberOfPolarizations(),
-        this->getDatashape()->n_bit,
-        this->getDatashape()->block_size
+
+    BL_INFO("Input File Path: {}", config.filepath);
+    BL_INFO("Sample Size: {} bits", this->getDatashape()->n_bit);
+    BL_INFO("Total Number of Antennas: {}", this->getTotalNumberOfAntennas());
+    BL_INFO("Total Number of Frequency Channels: {}", this->getTotalNumberOfFrequencyChannels());
+    BL_INFO("Total Number of Time Samples: {}", this->getTotalNumberOfTimeSamples());
+    BL_INFO("Total Number of Polarizations: {}", this->getTotalNumberOfPolarizations());
+    BL_INFO("Step Number of Antennas: {}", this->getNumberOfAntennas());
+    BL_INFO("Step Number of Frequency Channels: {}", this->getNumberOfFrequencyChannels());
+    BL_INFO("Step Number of Time Samples: {}", this->getNumberOfTimeSamples());
+    BL_INFO("Step Number of Polarizations: {}", this->getNumberOfPolarizations());
+}
+
+template<typename OT>
+const F64 Reader<OT>::getBlockEpochSeconds(U64 block_time_offset) {
+    return calc_epoch_seconds_from_guppi_param(
+        1.0 / this->getBandwidthOfChannel(),
+        this->getTotalNumberOfTimeSamples(),
+        getBlockMeta(&gr_iterate)->piperblk,
+        getBlockMeta(&gr_iterate)->synctime,
+        getBlockMeta(&gr_iterate)->pktidx + 
+            (this->lastread_block_index + block_time_offset) * this->getTotalNumberOfTimeSamples()
     );
+}
 
-    if(this->getBlockMeta()->piperblk == 0) {
-        this->getBlockMeta()->piperblk = this->getNumberOfTimeSamples();
-    }
+template<typename OT>
+const F64 Reader<OT>::getBandwidthOfChannel() {
+    return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
+}
 
-    if(this->config.step_n_aspect == 0) {
-        this->config.step_n_aspect = this->getNumberOfAntenna();
-    }
+template<typename OT>
+const U64 Reader<OT>::getChannelStartIndex() {
+    return getBlockMeta(&gr_iterate)->chan_start;
+}
 
-    if(this->config.step_n_chan == 0) {
-        this->config.step_n_chan = this->getNumberOfFrequencyChannels();
-    }
-
-    if(this->config.step_n_time == 0) {
-        this->config.step_n_time = this->getNumberOfTimeSamples();
-    }
-
-    this->output.buf.resize(
-        this->config.step_n_aspect*
-        this->config.step_n_chan*
-        this->config.step_n_time*
-        this->getNumberOfPolarizations()
-    );
-    BL_INFO("Read {} Elements, Dimension Lengths: [{}, {}, {}, {}] ({} bytes)",
-        this->output.buf.size(),
-        this->config.step_n_aspect,
-        this->config.step_n_chan,
-        this->config.step_n_time,
-        this->getNumberOfPolarizations(),
-        this->output.buf.size_bytes()
-    );
+template<typename OT>
+const F64 Reader<OT>::getBandwidthCenter() {
+    return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
 }
 
 template<typename OT>
