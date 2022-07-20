@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     std::string inputGuppiFile;
 
     app
-        .add_option("-i,--input", inputGuppiFile, "Input GUPPI RAW filepath")
+        .add_option("-i,--input,input", inputGuppiFile, "Input GUPPI RAW filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     std::string inputBfr5File;
 
     app
-        .add_option("-r,--recipe", inputBfr5File, "Input BFR5 filepath")
+        .add_option("-r,--recipe,recipe", inputBfr5File, "Input BFR5 filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
@@ -130,38 +130,38 @@ int main(int argc, char **argv) {
         {}
     );
     Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
-    if(guppi.getNumberOfAntennas() != bfr5.getDiminfo_nants()) {
+    if(guppi.getTotalNumberOfAntennas() != bfr5.getDiminfo_nants()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
-    if(guppi.getNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
+    if(guppi.getTotalNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
         return 1;
     }
-    if(guppi.getNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
+    if(guppi.getTotalNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
     
-    if(coarse_channels != guppi.getNumberOfFrequencyChannels()) {
+    if(coarse_channels != guppi.getTotalNumberOfFrequencyChannels()) {
         BL_WARN(
             "Sub-band processing of the coarse-channels ({}/{}) is incompletely implemented: "
             "only the first sub-band is processed.",
             coarse_channels,
-            guppi.getNumberOfFrequencyChannels()
+            guppi.getTotalNumberOfFrequencyChannels()
         );
     }
 
     std::vector<std::complex<double>> antenna_weights(
-        guppi.getNumberOfAntennas()*
+        guppi.getTotalNumberOfAntennas()*
         coarse_channels*channelizer_rate*
-        guppi.getNumberOfPolarizations()
+        guppi.getTotalNumberOfPolarizations()
     );
     gather_antenna_weights_from_bfr5_cal(
         bfr5.getCalinfo_all(),
-        guppi.getNumberOfAntennas(),
+        guppi.getTotalNumberOfAntennas(),
         bfr5.getDiminfo_nchan(),
-        guppi.getNumberOfPolarizations(),
+        guppi.getTotalNumberOfPolarizations(),
         0, // the first channel
         coarse_channels, // the number of channels
         channelizer_rate,
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
                         .numberOfAntennas = guppi.getNumberOfAntennas(),
                         .numberOfFrequencyChannels = coarse_channels,
                         .numberOfTimeSamples = fine_time*channelizer_rate,
-                        .numberOfPolarizations = guppi.getNumberOfPolarizations(),
+                        .numberOfPolarizations = guppi.getTotalNumberOfPolarizations(),
 
                         .channelizerRate = channelizer_rate,
 
