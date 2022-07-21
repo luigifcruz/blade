@@ -14,60 +14,81 @@ extern "C" {
 
 namespace Blade::Modules::Bfr5 {
 
-class BLADE_API Reader {
-public:
-   explicit Reader(const std::string& filepath);
-   
-   std::vector<RA_DEC> getBeaminfo_coordinates();
+class BLADE_API Reader : public Module {
+ public:
+    struct Config {
+        std::string filepath;
 
-   constexpr const U64 getDiminfo_nants() const {
-      return this->bfr5_file.dim_info.nants;
-   }
+        U64 channelizerRate = 1;
 
-   constexpr const U64 getDiminfo_nbeams() const {
-      return this->bfr5_file.dim_info.nbeams;
-   }
+        U64 blockSize = 512;
+    };
 
-   constexpr const U64 getDiminfo_nchan() const {
-      return this->bfr5_file.dim_info.nchan;
-   }
+    struct Input {
+    };
 
-   constexpr const U64 getDiminfo_npol() const {
-      return this->bfr5_file.dim_info.npol;
-   }
+    struct Output {
+    };
 
-   constexpr const U64 getDiminfo_ntimes() const {
-      return this->bfr5_file.dim_info.ntimes;
-   }
+    explicit Reader(const Config& config, const Input& input);
 
-   constexpr const LLA getTelinfo_lla() const {
-      return LLA(
-         this->bfr5_file.tel_info.latitude,
-         this->bfr5_file.tel_info.longitude,
-         this->bfr5_file.tel_info.altitude
-      );
-   }
+    constexpr const U64 getNumberOfAntennas() const {
+        return this->bfr5.dim_info.nants;
+    }
 
-   std::vector<XYZ> getTelinfo_antenna_positions();
+    constexpr const U64 getNumberOfBeams() const {
+        return this->bfr5.dim_info.nbeams;
+    }
 
-   constexpr const RA_DEC getObsinfo_phase_center() const {
-      return RA_DEC(
-         this->bfr5_file.obs_info.phase_center_ra,
-         this->bfr5_file.obs_info.phase_center_dec
-      );
-   }
+    constexpr const U64 getNumberOfFrequencyChannels() const {
+        return this->bfr5.dim_info.nchan;
+    }
 
-   constexpr const complex_float_t* getCalinfo_b() const {
-      return this->bfr5_file.cal_info.cal_b;
-   }
+    constexpr const U64 getNumberOfPolarizations() const {
+        return this->bfr5.dim_info.npol;
+    }
 
-   constexpr const complex_float_t* getCalinfo_all() const {
-      return this->bfr5_file.cal_info.cal_all;
-   }
+    constexpr const U64 getNumberOfTimeSamples() const {
+        return this->bfr5.dim_info.ntimes;
+    }
 
+    constexpr const LLA getReferencePosition() const {
+        return LLA {
+            this->bfr5.tel_info.latitude,
+            this->bfr5.tel_info.longitude,
+            this->bfr5.tel_info.altitude
+        };
+    }
+
+    constexpr const RA_DEC getBoresightCoordinate() const {
+        return RA_DEC {
+            this->bfr5.obs_info.phase_center_ra,
+            this->bfr5.obs_info.phase_center_dec
+        };
+    }
+
+    constexpr const std::vector<XYZ> getAntennaPositions() const {
+        return this->antennaPositions;
+    }
+
+    constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
+        return this->beamCoordinates;
+    }
+
+    const std::vector<CF64> getAntennaCalibrations() const {
+        return this->antennaCalibrations;
+    }
 
  private:
-    BFR5_file_t bfr5_file;
+    Config config;
+    const Input input;
+    Output output;
+
+    BFR5_file_t bfr5;
+
+    std::vector<XYZ> antennaPositions;
+    std::vector<RA_DEC> beamCoordinates;
+    std::vector<CF64> antennaCalibrations;
 };
 
 }  // namespace Blade::Modules

@@ -1,4 +1,6 @@
 deps = [
+    'BLADE_LOADER_RADIOINTERFEROMETRY',
+    'BLADE_LOADER_BFR5',
 ]
 
 all_deps_found = true
@@ -9,6 +11,10 @@ endforeach
 if all_deps_found
     src_lst += files([
         'base.cc',
+    ])
+
+    jit_lst += files([
+        'bfr5.cu',
     ])
 endif
 

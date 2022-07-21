@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 
-#include "antenna_weights.cc"
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
@@ -23,8 +22,6 @@ typedef enum {
 
 using namespace Blade;
 
-using GuppiReader = Blade::Modules::Guppi::Reader<CI8>;
-using Bfr5Reader = Blade::Modules::Bfr5::Reader;
 using CLIPipeline = Blade::Pipelines::ATA::ModeB<CF32>;
 static std::unique_ptr<Runner<CLIPipeline>> runner;
 
@@ -83,28 +80,28 @@ int main(int argc, char **argv) {
             ->capture_default_str()
             ->run_callback_for_default();
 
-    //  Read target fine-time.
+    //  Read target step number of time samples.
 
-    U64 fine_time = 32;
+    U64 numberOfTimeSamples = 32;
 
     app
-        .add_option("-T,--fine-time", fine_time, "Number of fine-timesamples")
+        .add_option("-T,--time-samples", numberOfTimeSamples, "Step number of time samples")
             ->default_val(32);
 
-    //  Read target channelizer-rate.
+    //  Read target pre-channelizer rate.
 
-    U64 channelizer_rate = 1024;
+    U64 preChannelizerRate = 1024;
 
     app
-        .add_option("-c,--channelizer-rate", channelizer_rate, "Channelizer rate (FFT-size)")
+        .add_option("-c,--pre-channelizer-rate", preChannelizerRate, "Pre-channelizer rate (FFT-size)")
             ->default_val(1024);
 
-    //  Read target coarse-channels.
+    //  Read target step number of frequency channels.
 
-    U64 coarse_channels = 32;
+    U64 numberOfFrequencyChannels = 32;
 
     app
-        .add_option("-C,--coarse-channels", coarse_channels, "Coarse-channel ingest rate")
+        .add_option("-C,--frequency-channels", numberOfFrequencyChannels, "Step number of frequency channels")
             ->default_val(32);
 
     //  Parse arguments.
@@ -117,59 +114,43 @@ int main(int argc, char **argv) {
     BL_INFO("Input BFR5 File Path: {}", inputBfr5File);
     BL_INFO("Telescope: {}", telescope);
     BL_INFO("Mode: {}", mode);
-    BL_INFO("Fine-time: {}", fine_time);
-    BL_INFO("Coarse-channels: {}", coarse_channels);
+    BL_INFO("Pre-channelizer rate: {}", preChannelizerRate);
+    BL_INFO("Step number of time samples: {}", numberOfTimeSamples * preChannelizerRate);
+    BL_INFO("Step number of frequency channels: {}", numberOfFrequencyChannels);
 
-    GuppiReader guppi = GuppiReader(
-        {
-            .filepath = inputGuppiFile,
-            .stepNumberOfTimeSamples = channelizer_rate * fine_time,
-            .stepNumberOfFrequencyChannels = coarse_channels,
-            .blockSize = 32
-        },
-        {}
-    );
+    auto guppi = Blade::Modules::Guppi::Reader<CI8>({
+        .filepath = inputGuppiFile,
+        .stepNumberOfTimeSamples = numberOfTimeSamples * preChannelizerRate,
+        .stepNumberOfFrequencyChannels = numberOfFrequencyChannels,
+    }, {});
 
-    Bfr5Reader bfr5 = Bfr5Reader(inputBfr5File);
+    auto bfr5 = Blade::Modules::Bfr5::Reader({
+        .filepath = inputBfr5File,
+        .channelizerRate = preChannelizerRate,
+    }, {});
 
-    if (guppi.getTotalNumberOfAntennas() != bfr5.getDiminfo_nants()) {
+    if (guppi.getTotalNumberOfAntennas() != bfr5.getNumberOfAntennas()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
-    if (guppi.getTotalNumberOfFrequencyChannels() != bfr5.getDiminfo_nchan()) {
+    if (guppi.getTotalNumberOfFrequencyChannels() != bfr5.getNumberOfFrequencyChannels()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
         return 1;
     }
-    if (guppi.getTotalNumberOfPolarizations() != bfr5.getDiminfo_npol()) {
+    if (guppi.getTotalNumberOfPolarizations() != bfr5.getNumberOfPolarizations()) {
         BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
         return 1;
     }
     
-    if (coarse_channels != guppi.getTotalNumberOfFrequencyChannels()) {
+    if (numberOfFrequencyChannels != guppi.getTotalNumberOfFrequencyChannels()) {
         BL_WARN(
             "Sub-band processing of the coarse-channels ({}/{}) is incompletely implemented: "
             "only the first sub-band is processed.",
-            coarse_channels,
-            guppi.getTotalNumberOfFrequencyChannels()
-        );
+            numberOfFrequencyChannels,
+            guppi.getTotalNumberOfFrequencyChannels());
     }
 
-    std::vector<std::complex<double>> antenna_weights(
-        guppi.getTotalNumberOfAntennas()*
-        coarse_channels*channelizer_rate*
-        guppi.getTotalNumberOfPolarizations()
-    );
-
-    gather_antenna_weights_from_bfr5_cal(
-        bfr5.getCalinfo_all(),
-        guppi.getTotalNumberOfAntennas(),
-        bfr5.getDiminfo_nchan(),
-        guppi.getTotalNumberOfPolarizations(),
-        0, // the first channel
-        coarse_channels, // the number of channels
-        channelizer_rate,
-        antenna_weights.data() // [NANTS=slowest, number_of_channels, NPOL=fastest)]
-    );
+    BL_TRACE("{} {}", guppi.getNumberOfTimeSamples(), guppi.getTotalNumberOfTimeSamples());
 
     // Argument-conditional Pipeline
     const int numberOfWorkers = 1;
@@ -182,33 +163,33 @@ int main(int argc, char **argv) {
                 case ModeID::MODE_B:
                     CLIPipeline::Config config = {
                         .numberOfAntennas = guppi.getNumberOfAntennas(),
-                        .numberOfFrequencyChannels = coarse_channels,
-                        .numberOfTimeSamples = fine_time*channelizer_rate,
-                        .numberOfPolarizations = guppi.getTotalNumberOfPolarizations(),
+                        .numberOfFrequencyChannels = numberOfFrequencyChannels,
+                        .numberOfTimeSamples = guppi.getNumberOfTimeSamples(),
+                        .numberOfPolarizations = guppi.getNumberOfPolarizations(),
 
-                        .preChannelizerRate = channelizer_rate,
+                        .preChannelizerRate = preChannelizerRate,
 
-                        .beamformerBeams = bfr5.getDiminfo_nbeams(),
+                        .beamformerBeams = bfr5.getNumberOfBeams(),
                         .enableIncoherentBeam = false,
 
                         .rfFrequencyHz = guppi.getBandwidthCenter(),
                         .channelBandwidthHz = guppi.getBandwidthOfChannel(),
-                        .totalBandwidthHz = guppi.getBandwidthOfChannel()*coarse_channels,
+                        .totalBandwidthHz = guppi.getBandwidthOfChannel() * numberOfFrequencyChannels,
                         .frequencyStartIndex = guppi.getChannelStartIndex(),
                         .referenceAntennaIndex = 0,
-                        .arrayReferencePosition = bfr5.getTelinfo_lla(),
-                        .boresightCoordinate = bfr5.getObsinfo_phase_center(),
-                        .antennaPositions = bfr5.getTelinfo_antenna_positions(),
-                        .antennaCalibrations = antenna_weights,
-                        .beamCoordinates = bfr5.getBeaminfo_coordinates(),
+                        .arrayReferencePosition = bfr5.getReferencePosition(),
+                        .boresightCoordinate = bfr5.getBoresightCoordinate(),
+                        .antennaPositions = bfr5.getAntennaPositions(),
+                        .antennaCalibrations = bfr5.getAntennaCalibrations(),
+                        .beamCoordinates = bfr5.getBeamCoordinates(),
 
                         .outputMemWidth = 8192,
                         .outputMemPad = 0,
 
                         .castBlockSize = 32,
-                        .channelizerBlockSize = fine_time,
+                        .channelizerBlockSize = numberOfTimeSamples,
                         .phasorsBlockSize = 32,
-                        .beamformerBlockSize = fine_time
+                        .beamformerBlockSize = numberOfTimeSamples
                     };
                     runner = Runner<CLIPipeline>::New(numberOfWorkers, config);
                     break;

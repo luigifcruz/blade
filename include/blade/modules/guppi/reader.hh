@@ -57,7 +57,7 @@ class BLADE_API Reader : public Module {
 
         if (bytes_read <= 0) {
             BL_ERROR("Guppi::Reader encountered error: {}.", bytes_read);
-            this->flag_error = true;
+            this->flag_error = true; // << HAS TO GO 
         }
 
         return this->output.buf;
@@ -128,7 +128,8 @@ class BLADE_API Reader : public Module {
     Config config;
     const Input input;
     Output output;
-    bool flag_error = false;
+
+    bool flag_error = false; // << HAS TO GO
 
     I64 lastread_block_index = -1;
     U64 lastread_aspect_index;
