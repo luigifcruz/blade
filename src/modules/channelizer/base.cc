@@ -19,12 +19,14 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
+    BL_INFO("Channelizer Rate: {}", config.rate);
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
-    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
-    BL_INFO("Channelizer Rate: {}", config.rate);
+    BL_INFO("Input Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
+    BL_INFO("Input Number of Time Samples: {}", config.numberOfTimeSamples);
+    BL_INFO("Output Number of Frequency Channels: {}", config.numberOfFrequencyChannels * config.rate);
+    BL_INFO("Output Number of Time Samples: {}", config.numberOfTimeSamples / config.rate);
 
     if (config.rate == 1) {
         BL_INFO("FFT Backend: Bypass");

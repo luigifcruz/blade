@@ -19,8 +19,6 @@ class BLADE_API Reader : public Module {
     struct Config {
         std::string filepath;
 
-        U64 channelizerRate = 1;
-
         U64 blockSize = 512;
     };
 
@@ -32,23 +30,23 @@ class BLADE_API Reader : public Module {
 
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const U64 getNumberOfAntennas() const {
+    constexpr const U64 getTotalNumberOfAntennas() const {
         return this->bfr5.dim_info.nants;
     }
 
-    constexpr const U64 getNumberOfBeams() const {
+    constexpr const U64 getTotalNumberOfBeams() const {
         return this->bfr5.dim_info.nbeams;
     }
 
-    constexpr const U64 getNumberOfFrequencyChannels() const {
+    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
         return this->bfr5.dim_info.nchan;
     }
 
-    constexpr const U64 getNumberOfPolarizations() const {
+    constexpr const U64 getTotalNumberOfPolarizations() const {
         return this->bfr5.dim_info.npol;
     }
 
-    constexpr const U64 getNumberOfTimeSamples() const {
+    constexpr const U64 getTotalNumberOfTimeSamples() const {
         return this->bfr5.dim_info.ntimes;
     }
 
@@ -75,9 +73,8 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    const std::vector<CF64> getAntennaCalibrations() const {
-        return this->antennaCalibrations;
-    }
+    const std::vector<CF64> getAntennaCalibrations(const U64& numberOfFrequencyChannels, 
+                                                   const U64& channelizerRate = 1);
 
  private:
     Config config;
@@ -88,7 +85,6 @@ class BLADE_API Reader : public Module {
 
     std::vector<XYZ> antennaPositions;
     std::vector<RA_DEC> beamCoordinates;
-    std::vector<CF64> antennaCalibrations;
 };
 
 }  // namespace Blade::Modules

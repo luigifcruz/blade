@@ -28,9 +28,9 @@ Reader::Reader(const Config& config, const Input& input)
 
     // Calculate antenna positions
 
-    antennaPositions.resize(getNumberOfAntennas());
+    antennaPositions.resize(getTotalNumberOfAntennas());
 
-    const U64 antennaPositionsByteSize = getNumberOfAntennas() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getTotalNumberOfAntennas() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
@@ -55,50 +55,54 @@ Reader::Reader(const Config& config, const Input& input)
         }
     }
 
-    // Calculate antenna calibration coefficients
+    BL_INFO("Input File Path: {}", config.filepath);
+    BL_INFO("Total Number of Beams: {}", getTotalNumberOfBeams());
+    BL_INFO("Total Number of Antennas: {}", getTotalNumberOfAntennas());
+    BL_INFO("Total Number of Frequency Channels: {}", getTotalNumberOfFrequencyChannels());
+    BL_INFO("Total Number of Time Samples: {}", getTotalNumberOfTimeSamples());
+    BL_INFO("Total Number of Polarizations: {}", getTotalNumberOfPolarizations());
+
+    BFR5close(&this->bfr5);
+}
+
+const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFrequencyChannels,
+                                                       const U64& channelizerRate) {
+    std::vector<CF64> antennaCalibrations;
 
     antennaCalibrations.resize(
-            getNumberOfAntennas() *
-            getNumberOfFrequencyChannels() * config.channelizerRate * 
-            getNumberOfPolarizations());
+            getTotalNumberOfAntennas() *
+            numberOfFrequencyChannels * channelizerRate * 
+            getTotalNumberOfPolarizations());
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = getNumberOfAntennas() * calAntStride;
-    const size_t calChnStride = getNumberOfPolarizations() * calPolStride;
+    const size_t calPolStride = getTotalNumberOfAntennas() * calAntStride;
+    const size_t calChnStride = getTotalNumberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = getNumberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = getNumberOfFrequencyChannels() * weightsChnStride;
+    const size_t weightsChnStride = getTotalNumberOfPolarizations() * weightsPolStride;
+    const size_t weightsAntStride = numberOfFrequencyChannels * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getNumberOfAntennas(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < getNumberOfFrequencyChannels(); chnIdx++) {
-            for (U64 polIdx = 0; polIdx < getNumberOfPolarizations(); polIdx++) {
-                for (U64 fchIdx = 0; fchIdx < config.channelizerRate; fchIdx++) {
+    for (U64 antIdx = 0; antIdx < getTotalNumberOfAntennas(); antIdx++) {
+        for (U64 chnIdx = 0; chnIdx < numberOfFrequencyChannels; chnIdx++) {
+            for (U64 polIdx = 0; polIdx < getTotalNumberOfPolarizations(); polIdx++) {
+                for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 
                                           antIdx * calAntStride;
 
-                    const auto frqIdx = chnIdx * config.channelizerRate + fchIdx;
-
+                    const auto frqIdx = chnIdx * channelizerRate + fchIdx;
                     const auto outputIdx = antIdx * weightsAntStride +
                                            polIdx * weightsPolStride +
                                            frqIdx * weightsChnStride;
 
                     const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
-                    //antennaCalibrations[outputIdx] = {coeff.re, coeff.im};
+                    antennaCalibrations[outputIdx] = {coeff.re, coeff.im};
                 }
             }
         }
     }
 
-    BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Number of Beams: {}", getNumberOfBeams());
-    BL_INFO("Number of Antennas: {}", getNumberOfAntennas());
-    BL_INFO("Number of Frequency Channels: {}", getNumberOfFrequencyChannels());
-    BL_INFO("Number of Time Samples: {}", getNumberOfTimeSamples());
-    BL_INFO("Number of Polarizations: {}", getNumberOfPolarizations());
-
-    BFR5close(&this->bfr5);
+    return antennaCalibrations;
 }
 
 }  // namespace Blade::Modules::Bfr5
