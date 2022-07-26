@@ -23,6 +23,7 @@ Writer<IT>::Writer(const Config& config)
     this->gr_header.metadata.datashape.n_beam = this->config.numberOfBeams;
     this->gr_header.metadata.datashape.n_ant = this->config.numberOfAntennas;
     this->gr_header.metadata.datashape.n_aspectchan = this->getTotalNumberOfFrequencyChannels();
+    this->gr_header.metadata.datashape.n_time = this->getNumberOfTimeSamples();
     this->gr_header.metadata.datashape.n_pol = this->getNumberOfPolarizations();
     this->gr_header.metadata.datashape.n_bit = sizeof(IT)*8/2;
     this->gr_header.metadata.directio = this->config.directio ? 1 : 0;
