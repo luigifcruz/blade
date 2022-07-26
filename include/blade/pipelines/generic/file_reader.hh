@@ -90,8 +90,8 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getOutput();
     }
 
-    const F64 getOutputEpochSeconds() {
-        return guppi->getBlockEpochSeconds(getNumberOfTimeSamples() / 2); 
+    constexpr const F64 getOutputEpochSeconds() {
+        return guppi->getBlockEpochSeconds(); 
     }
 
  private:

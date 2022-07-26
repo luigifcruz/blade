@@ -96,7 +96,10 @@ const F64 Reader<OT>::getBlockEpochSeconds(U64 block_time_offset) {
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
         getBlockMeta(&gr_iterate)->pktidx + 
-            (this->lastread_block_index + blockTimeOffset) * this->getBlockNumberOfTimeSamples());
+            (
+                this->lastread_block_index + 0.5*getBlockMeta(&gr_iterate)->piperblk
+            ) * this->getBlockNumberOfTimeSamples()
+    );
 }
 
 template<typename OT>

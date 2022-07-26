@@ -119,10 +119,7 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time;
     }
 
-    constexpr const F64 getBlockEpochSeconds() {
-        return this->getBlockEpochSeconds(0);
-    }
-    const F64 getBlockEpochSeconds(const U64& blockTimeOffset);
+    const F64 getBlockEpochSeconds();
 
     Result preprocess(const cudaStream_t& stream = 0) final;
 
