@@ -14,7 +14,7 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
     if ((config.numberOfTimeSamples % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by "
                 "the block size ({}).", config.numberOfTimeSamples, config.blockSize);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     BL_INFO("Number of Beams: {}", config.numberOfBeams);

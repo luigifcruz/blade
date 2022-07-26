@@ -67,9 +67,10 @@ class BLADE_API Reader : public Module {
         return this->config;
     }
 
-    const F64 getBandwidthOfChannel();
+    const F64 getTotalBandwidth();
+    const F64 getChannelBandwidth();
     const U64 getChannelStartIndex();
-    const F64 getBandwidthCenter();
+    const F64 getObservationFrequency();
 
     constexpr const U64 getTotalNumberOfAntennas() const {
         return this->getDatashape()->n_aspect;
@@ -84,7 +85,7 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const U64 getTotalNumberOfTimeSamples() const {
-        return this->getDatashape()->n_time;
+        return this->getDatashape()->n_time * this->gr_iterate.n_block;
     }
 
     constexpr const U64 getTotalOutputSize() const {
@@ -115,6 +116,10 @@ class BLADE_API Reader : public Module {
                this->getNumberOfFrequencyChannels() *
                this->getNumberOfTimeSamples() * 
                this->getNumberOfPolarizations();
+    }
+
+    constexpr const U64 getBlockNumberOfTimeSamples() {
+        return this->getDatashape()->n_time;
     }
 
     constexpr const F64 getBlockEpochSeconds() {

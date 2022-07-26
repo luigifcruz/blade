@@ -17,21 +17,21 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
                  " beams coordinates ({}).", config.numberOfBeams,
                  config.beamCoordinates.size());
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
                  " antenna positions ({}).", config.numberOfAntennas,
                  config.antennaPositions.size());
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
     
     if (config.referenceAntennaIndex >= config.numberOfAntennas) {
         BL_FATAL("Reference Antenna Index ({}) is larger than the number of"
                  " antennas ({}).", config.referenceAntennaIndex,
                  config.numberOfAntennas);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
@@ -67,7 +67,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
-    BL_INFO("RF Frequency (Hz): {}", config.rfFrequencyHz);
+    BL_INFO("Observation Frequency (Hz): {}", config.observationFrequencyHz);
     BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
     BL_INFO("Total Bandwidth (Hz): {}", config.totalBandwidthHz);
     BL_INFO("Frequency Start Index: {}", config.frequencyStartIndex);

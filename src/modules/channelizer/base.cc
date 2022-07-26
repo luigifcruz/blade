@@ -16,7 +16,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the channelizer rate ({}).", config.numberOfTimeSamples,
                 config.rate);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     BL_INFO("Channelizer Rate: {}", config.rate);

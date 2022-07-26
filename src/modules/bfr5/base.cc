@@ -12,6 +12,7 @@ Reader::Reader(const Config& config, const Input& input)
 
     if (!std::filesystem::exists(config.filepath)) {
         BL_FATAL("Input file ({}) doesn't not exist.", config.filepath);
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     BFR5open(config.filepath.c_str(), &this->bfr5);

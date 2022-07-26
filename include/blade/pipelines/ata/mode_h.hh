@@ -6,11 +6,8 @@
 
 #include "blade/pipeline.hh"
 
-#include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
-#include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/detector.hh"
-#include "blade/modules/phasor/ata.hh"
 
 namespace Blade::Pipelines::ATA {
 
@@ -18,14 +15,14 @@ template<typename OT = F32>
 class BLADE_API ModeH : public Pipeline {
  public:
     struct Config {
-        U64 numberOfBeams;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations;
-
         U64 accumulateRate;
 
-        U64 numberOfOutputPolarizations;
+        U64 channelizerNumberOfBeams;
+        U64 channelizerNumberOfFrequencyChannels;
+        U64 channelizerNumberOfTimeSamples;
+        U64 channelizerNumberOfPolarizations;
+
+        U64 detectorNumberOfOutputPolarizations;
 
         U64 channelizerBlockSize = 512;
         U64 detectorBlockSize = 512;

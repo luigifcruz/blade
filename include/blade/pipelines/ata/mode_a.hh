@@ -18,36 +18,35 @@ template<typename OT = F32>
 class BLADE_API ModeA : public Pipeline {
  public:
     struct Config {
-        U64 numberOfAntennas;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations;
+        U64 preBeamformerChannelizerRate;
 
-        U64 preChannelizerRate;
+        F64 phasorObservationFrequencyHz;
+        F64 phasorChannelBandwidthHz;
+        F64 phasorTotalBandwidthHz;
+        U64 phasorFrequencyStartIndex;
+        U64 phasorReferenceAntennaIndex;
+        LLA phasorArrayReferencePosition; 
+        RA_DEC phasorBoresightCoordinate;
+        std::vector<XYZ> phasorAntennaPositions;
+        std::vector<CF64> phasorAntennaCalibrations; 
+        std::vector<RA_DEC> phasorBeamCoordinates;
 
-        U64 beamformerBeams;
-        BOOL enableIncoherentBeam = false;
+        U64 beamformerNumberOfAntennas;
+        U64 beamformerNumberOfFrequencyChannels;
+        U64 beamformerNumberOfTimeSamples;
+        U64 beamformerNumberOfPolarizations;
+        U64 beamformerNumberOfBeams;
+        BOOL beamformerIncoherentBeam = false;
 
-        F64 rfFrequencyHz;
-        F64 channelBandwidthHz;
-        F64 totalBandwidthHz;
-        U64 frequencyStartIndex;
-        U64 referenceAntennaIndex;
-        LLA arrayReferencePosition; 
-        RA_DEC boresightCoordinate;
-        std::vector<XYZ> antennaPositions;
-        std::vector<CF64> antennaCalibrations; 
-        std::vector<RA_DEC> beamCoordinates;
-
-        U64 integrationSize;
-        U64 numberOfOutputPolarizations;
+        U64 detectorIntegrationSize;
+        U64 detectorNumberOfOutputPolarizations;
 
         U64 outputMemWidth;
         U64 outputMemPad;
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
-        U64 phasorsBlockSize = 512;
+        U64 phasorBlockSize = 512;
         U64 beamformerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };

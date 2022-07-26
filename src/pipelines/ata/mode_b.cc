@@ -15,23 +15,24 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating input cast from I8 to CF32.");
     this->connect(inputCast, {
-        .inputSize = config.numberOfAntennas *
-                     config.numberOfFrequencyChannels *
-                     config.numberOfTimeSamples *
-                     config.numberOfPolarizations,
+        .inputSize = config.beamformerNumberOfAntennas *
+                     config.beamformerNumberOfFrequencyChannels *
+                     config.beamformerNumberOfTimeSamples *
+                     config.beamformerNumberOfPolarizations,
         .blockSize = config.castBlockSize,
     }, {
         .buf = input,
     });
 
-    BL_DEBUG("Instantiating pre-channelizer with rate {}.", config.preChannelizerRate);
+    BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
+            config.preBeamformerChannelizerRate);
     this->connect(channelizer, {
         .numberOfBeams = 1,
-        .numberOfAntennas = config.numberOfAntennas,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels,
-        .numberOfTimeSamples = config.numberOfTimeSamples,
-        .numberOfPolarizations = config.numberOfPolarizations,
-        .rate = config.preChannelizerRate,
+        .numberOfAntennas = config.beamformerNumberOfAntennas,
+        .numberOfFrequencyChannels = config.beamformerNumberOfFrequencyChannels,
+        .numberOfTimeSamples = config.beamformerNumberOfTimeSamples,
+        .numberOfPolarizations = config.beamformerNumberOfPolarizations,
+        .rate = config.preBeamformerChannelizerRate,
         .blockSize = config.channelizerBlockSize,
     }, {
         .buf = inputCast->getOutput(),
@@ -39,24 +40,25 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating phasor module.");
     this->connect(phasor, {
-        .numberOfBeams = config.beamformerBeams,
-        .numberOfAntennas = config.numberOfAntennas,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.preChannelizerRate,
-        .numberOfPolarizations = config.numberOfPolarizations,
+        .numberOfBeams = config.beamformerNumberOfBeams,
+        .numberOfAntennas = config.beamformerNumberOfAntennas,
+        .numberOfFrequencyChannels = config.beamformerNumberOfFrequencyChannels * 
+                                     config.preBeamformerChannelizerRate,
+        .numberOfPolarizations = config.beamformerNumberOfPolarizations,
 
-        .rfFrequencyHz = config.rfFrequencyHz,
-        .channelBandwidthHz = config.channelBandwidthHz,
-        .totalBandwidthHz = config.totalBandwidthHz,
-        .frequencyStartIndex = config.frequencyStartIndex,
-        .referenceAntennaIndex = config.referenceAntennaIndex,
-        .arrayReferencePosition = config.arrayReferencePosition,
-        .boresightCoordinate = config.boresightCoordinate,
+        .observationFrequencyHz = config.phasorObservationFrequencyHz,
+        .channelBandwidthHz = config.phasorChannelBandwidthHz,
+        .totalBandwidthHz = config.phasorTotalBandwidthHz,
+        .frequencyStartIndex = config.phasorFrequencyStartIndex,
+        .referenceAntennaIndex = config.phasorReferenceAntennaIndex,
+        .arrayReferencePosition = config.phasorArrayReferencePosition,
+        .boresightCoordinate = config.phasorBoresightCoordinate,
 
-        .antennaPositions = config.antennaPositions,
-        .antennaCalibrations = config.antennaCalibrations,
-        .beamCoordinates = config.beamCoordinates,
+        .antennaPositions = config.phasorAntennaPositions,
+        .antennaCalibrations = config.phasorAntennaCalibrations,
+        .beamCoordinates = config.phasorBeamCoordinates,
 
-        .blockSize = config.phasorsBlockSize,
+        .blockSize = config.phasorBlockSize,
     }, {
         .frameJulianDate = this->frameJulianDate,
         .frameDut1 = this->frameDut1,
@@ -64,12 +66,14 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
     BL_DEBUG("Instantiating beamformer module.");
     this->connect(beamformer, {
-        .numberOfBeams = config.beamformerBeams, 
-        .numberOfAntennas = config.numberOfAntennas,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * config.preChannelizerRate,
-        .numberOfTimeSamples = config.numberOfTimeSamples / config.preChannelizerRate,
-        .numberOfPolarizations = config.numberOfPolarizations,
-        .enableIncoherentBeam = config.enableIncoherentBeam,
+        .numberOfBeams = config.beamformerNumberOfBeams, 
+        .numberOfAntennas = config.beamformerNumberOfAntennas,
+        .numberOfFrequencyChannels = config.beamformerNumberOfFrequencyChannels * 
+                                     config.preBeamformerChannelizerRate,
+        .numberOfTimeSamples = config.beamformerNumberOfTimeSamples / 
+                               config.preBeamformerChannelizerRate,
+        .numberOfPolarizations = config.beamformerNumberOfPolarizations,
+        .enableIncoherentBeam = config.beamformerIncoherentBeam,
         .enableIncoherentBeamSqrt = false,
         .blockSize = config.beamformerBlockSize,
     }, {
@@ -135,10 +139,10 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
 
-    const auto& width = (beamformer->getOutputSize() / config.beamformerBeams / 
-            (config.numberOfFrequencyChannels * config.preChannelizerRate)) * sizeof(OT);
-    const auto& height = config.beamformerBeams * 
-            (config.numberOfFrequencyChannels * config.preChannelizerRate);
+    const auto& width = (beamformer->getOutputSize() / config.beamformerNumberOfBeams / 
+            (config.beamformerNumberOfFrequencyChannels * config.preBeamformerChannelizerRate)) * sizeof(OT);
+    const auto& height = config.beamformerNumberOfBeams * 
+            (config.beamformerNumberOfFrequencyChannels * config.preBeamformerChannelizerRate);
 
     BL_CHECK(this->copy2D(
         output,

@@ -56,7 +56,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         BL_FATAL("Number of antenna calibrations ({}) doesn't match with" 
                  " the expected size ({}).", config.antennaCalibrations.size(),
                  this->getCalibrationsSize());
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     //  Resizing array to the required length.
@@ -177,7 +177,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                                        this->config.numberOfPolarizations);
 
             const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
-            const F64 fringe = this->config.rfFrequencyHz - (this->config.totalBandwidthHz / 2.0);
+            const F64 fringe = this->config.observationFrequencyHz - (this->config.totalBandwidthHz / 2.0);
             const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {

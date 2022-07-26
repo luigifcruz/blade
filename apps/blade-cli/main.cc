@@ -25,6 +25,129 @@ using namespace Blade;
 using CLIPipeline = Blade::Pipelines::ATA::ModeB<CF32>;
 static std::unique_ptr<Runner<CLIPipeline>> runner;
 
+template<typename OT = CI8>
+class ReaderPipeline : public Pipeline {
+ public:
+    struct Config {
+        std::string inputGuppiFile;
+        std::string inputBfr5File; 
+
+        U64 stepNumberOfTimeSamples;
+        U64 stepNumberOfFrequencyChannels;
+    };
+
+    explicit ReaderPipeline(const Config& config) : config(config) {
+        BL_DEBUG("Initializing CLI Reader Pipeline.");
+
+        BL_DEBUG("Instantiating GUPPI RAW file reader.");
+        this->connect(guppi, {
+            .filepath = config.inputGuppiFile,
+            .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples, 
+            .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+        }, {});
+
+        BL_DEBUG("Instantiating BFR5 file reader.");
+        this->connect(bfr5, {
+            .filepath = config.inputBfr5File,
+        }, {});
+
+        // Checking file and recipe bounds.
+
+        if (guppi->getTotalNumberOfAntennas() != bfr5->getTotalNumberOfAntennas()) {
+            BL_FATAL("Number of antennas from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+                    guppi->getTotalNumberOfAntennas(), bfr5->getTotalNumberOfAntennas());
+            BL_CHECK_THROW(Result::ASSERTION_ERROR);
+        }
+
+        if (guppi->getTotalNumberOfFrequencyChannels() != bfr5->getTotalNumberOfFrequencyChannels()) {
+            BL_FATAL("Number of frequency channels from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+                    guppi->getTotalNumberOfFrequencyChannels(), bfr5->getTotalNumberOfFrequencyChannels());
+            BL_CHECK_THROW(Result::ASSERTION_ERROR);
+        }
+
+        if (guppi->getTotalNumberOfPolarizations() != bfr5->getTotalNumberOfPolarizations()) {
+            BL_FATAL("Number of polarizations from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+                    guppi->getTotalNumberOfPolarizations(), bfr5->getTotalNumberOfPolarizations());
+            BL_CHECK_THROW(Result::ASSERTION_ERROR);
+        }
+   
+        if (config.stepNumberOfFrequencyChannels != guppi->getTotalNumberOfFrequencyChannels()) {
+            BL_WARN("Sub-band processing of the frequency channels ({}/{}) is not perfect yet.",
+                config.stepNumberOfFrequencyChannels, guppi->getTotalNumberOfFrequencyChannels());
+        }
+    }
+
+    const bool canRead() const {
+        return guppi->canRead();
+    }
+
+    constexpr const U64 getNumberOfBeams() const {
+        return bfr5->getTotalNumberOfBeams();
+    }
+
+    constexpr const U64 getNumberOfAntennas() const {
+        return guppi->getNumberOfAntennas();
+    }
+
+    constexpr const U64 getNumberOfFrequencyChannels() const {
+        return guppi->getNumberOfFrequencyChannels();
+    }
+
+    constexpr const U64 getNumberOfTimeSamples() const {
+        return guppi->getNumberOfTimeSamples();
+    }
+
+    constexpr const U64 getNumberOfPolarizations() const {
+        return guppi->getNumberOfPolarizations();
+    }
+
+    constexpr const F64 getObservationFrequency() const {
+        return guppi->getObservationFrequency();
+    }
+
+    constexpr const F64 getChannelBandwidth() const {
+        return guppi->getChannelBandwidth();
+    }
+
+    constexpr const F64 getTotalBandwidth() const {
+        return guppi->getTotalBandwidth();
+    }
+
+    constexpr const U64 getChannelStartIndex() const {
+        return guppi->getChannelStartIndex();
+    }
+
+    constexpr const LLA getReferencePosition() const {
+        return bfr5->getReferencePosition();
+    }
+
+    constexpr const RA_DEC getBoresightCoordinate() const {
+        return bfr5->getBoresightCoordinate();
+    }
+
+    constexpr const std::vector<XYZ> getAntennaPositions() const {
+        return bfr5->getAntennaPositions();
+    }
+
+    constexpr const std::vector<CF64> getAntennaCalibrations(const U64& preBeamformerChannelizerRate) {
+        return bfr5->getAntennaCalibrations(guppi->getNumberOfFrequencyChannels(), preBeamformerChannelizerRate);
+    }
+
+    constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
+        return bfr5->getBeamCoordinates();
+    }
+
+    constexpr Modules::Guppi::Reader<OT>& getGuppi() {
+        return *guppi;
+    }
+
+ private:
+    const Config config;
+
+    std::shared_ptr<Modules::Guppi::Reader<OT>> guppi;
+    std::shared_ptr<Modules::Bfr5::Reader> bfr5;
+};
+
 int main(int argc, char **argv) {
 
     CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) Command Line Tool");
@@ -88,12 +211,13 @@ int main(int argc, char **argv) {
         .add_option("-T,--time-samples", numberOfTimeSamples, "Step number of time samples")
             ->default_val(32);
 
-    // Read target pre-channelizer rate.
+    // Read target pre-beamformer channelizer rate.
 
-    U64 preChannelizerRate = 1024;
+    U64 preBeamformerChannelizerRate = 1024;
 
     app
-        .add_option("-c,--pre-channelizer-rate", preChannelizerRate, "Pre-channelizer rate (FFT-size)")
+        .add_option("-c,--pre-beamformer-channelizer-rate", preBeamformerChannelizerRate, 
+            "Pre-beamformer channelizer rate (FFT-size)")
             ->default_val(1024);
 
     // Read target step number of frequency channels.
@@ -103,8 +227,6 @@ int main(int argc, char **argv) {
     app
         .add_option("-C,--frequency-channels", numberOfFrequencyChannels, "Step number of frequency channels")
             ->default_val(32);
-
-    // TODO: How the frequency channel offset is handled?
 
     // Parse arguments.
 
@@ -116,42 +238,14 @@ int main(int argc, char **argv) {
     BL_INFO("Input BFR5 File Path: {}", inputBfr5File);
     BL_INFO("Telescope: {}", telescope);
     BL_INFO("Mode: {}", mode);
-    BL_INFO("Pre-channelizer rate: {}", preChannelizerRate);
+    BL_INFO("Pre-beamformer channelizer rate: {}", preBeamformerChannelizerRate);
 
-    auto guppi = Blade::Modules::Guppi::Reader<CI8>({
-        .filepath = inputGuppiFile,
-        .stepNumberOfTimeSamples = numberOfTimeSamples * preChannelizerRate,  // TODO: Larger than the original file. Error? 
+    auto reader = ReaderPipeline<CI8>({
+        .inputGuppiFile = inputGuppiFile,
+        .inputBfr5File = inputBfr5File,
+        .stepNumberOfTimeSamples = numberOfTimeSamples * preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = numberOfFrequencyChannels,
-    }, {});
-
-    auto bfr5 = Blade::Modules::Bfr5::Reader({
-        .filepath = inputBfr5File,
-    }, {});
-
-    if (guppi.getTotalNumberOfAntennas() != bfr5.getTotalNumberOfAntennas()) {
-        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
-        return 1;
-    }
-
-    if (guppi.getTotalNumberOfFrequencyChannels() != bfr5.getTotalNumberOfFrequencyChannels()) {
-        BL_FATAL("BFR5 and RAW files must specify the same number of frequency channels.");
-        return 1;
-    }
-
-    if (guppi.getTotalNumberOfPolarizations() != bfr5.getTotalNumberOfPolarizations()) {
-        BL_FATAL("BFR5 and RAW files must specify the same number of antenna.");
-        return 1;
-    }
-
-    // TODO: How about Time Samples?
-    
-    if (numberOfFrequencyChannels != guppi.getTotalNumberOfFrequencyChannels()) {
-        BL_WARN(
-            "Sub-band processing of the coarse-channels ({}/{}) is incompletely implemented: "
-            "only the first sub-band is processed.",
-            numberOfFrequencyChannels,
-            guppi.getTotalNumberOfFrequencyChannels());
-    }
+    });
 
     const int numberOfWorkers = 1;
     switch (telescope) {
@@ -162,34 +256,32 @@ int main(int argc, char **argv) {
                     break;
                 case ModeID::MODE_B:
                     CLIPipeline::Config config = {
-                        .numberOfAntennas = guppi.getNumberOfAntennas(),
-                        .numberOfFrequencyChannels = numberOfFrequencyChannels,
-                        .numberOfTimeSamples = guppi.getNumberOfTimeSamples(),
-                        .numberOfPolarizations = guppi.getNumberOfPolarizations(),
+                        .preBeamformerChannelizerRate = preBeamformerChannelizerRate,
 
-                        .preChannelizerRate = preChannelizerRate,
+                        .phasorObservationFrequencyHz = reader.getObservationFrequency(),
+                        .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
+                        .phasorTotalBandwidthHz = reader.getTotalBandwidth(),
+                        .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
+                        .phasorReferenceAntennaIndex = 0,
+                        .phasorArrayReferencePosition = reader.getReferencePosition(),
+                        .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
+                        .phasorAntennaPositions = reader.getAntennaPositions(),
+                        .phasorAntennaCalibrations = reader.getAntennaCalibrations(preBeamformerChannelizerRate),
+                        .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
-                        .beamformerBeams = bfr5.getTotalNumberOfBeams(),
-                        .enableIncoherentBeam = false,
-
-                        .rfFrequencyHz = guppi.getBandwidthCenter(),
-                        .channelBandwidthHz = guppi.getBandwidthOfChannel(),
-                        .totalBandwidthHz = guppi.getBandwidthOfChannel() * numberOfFrequencyChannels,
-                        .frequencyStartIndex = guppi.getChannelStartIndex(),
-                        .referenceAntennaIndex = 0,
-                        .arrayReferencePosition = bfr5.getReferencePosition(),
-                        .boresightCoordinate = bfr5.getBoresightCoordinate(),
-                        .antennaPositions = bfr5.getAntennaPositions(),
-                        .antennaCalibrations = bfr5.getAntennaCalibrations(numberOfFrequencyChannels, 
-                                preChannelizerRate),
-                        .beamCoordinates = bfr5.getBeamCoordinates(),
+                        .beamformerNumberOfAntennas = reader.getNumberOfAntennas(),
+                        .beamformerNumberOfFrequencyChannels = reader.getNumberOfFrequencyChannels(),
+                        .beamformerNumberOfTimeSamples = reader.getNumberOfTimeSamples(),
+                        .beamformerNumberOfPolarizations = reader.getNumberOfPolarizations(),
+                        .beamformerNumberOfBeams = reader.getNumberOfBeams(),
+                        .beamformerIncoherentBeam = false,
 
                         .outputMemWidth = 8192,
                         .outputMemPad = 0,
 
                         .castBlockSize = 32,
                         .channelizerBlockSize = numberOfTimeSamples,
-                        .phasorsBlockSize = 32,
+                        .phasorBlockSize = 32,
                         .beamformerBlockSize = numberOfTimeSamples
                     };
                     runner = Runner<CLIPipeline>::New(numberOfWorkers, config);
@@ -215,13 +307,13 @@ int main(int argc, char **argv) {
     U64 buffer_idx = 0;
     U64 job_idx = 0;
 
-    while(guppi.canRead()) {
+    while(reader.canRead()) {
         if (runner->enqueue(
         [&](auto& worker){
             worker.run(
-                guppi.getBlockEpochSeconds(guppi.getNumberOfTimeSamples()/2),
+                reader.getGuppi().getBlockEpochSeconds(reader.getGuppi().getNumberOfTimeSamples() / 2),
                 0.0,
-                guppi.getOutput(),
+                reader.getGuppi().getOutput(),
                 *output_buffers[buffer_idx]
             );
             return job_idx;

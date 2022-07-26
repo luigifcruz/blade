@@ -47,13 +47,18 @@ Reader<OT>::Reader(const Config& config, const Input& input)
           config(config),
           input(input) {
     BL_INFO("===== GUPPI Reader Module Configuration");
+
+    if (config.filepath.length() == 0) {
+        BL_FATAL("Input file ({}) is invalid.", config.filepath);
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
     
-    if (guppiraw_iterate_open_with_user_metadata(&this->gr_iterate, config.filepath.c_str(), sizeof(guppiraw_block_meta_t), guppiraw_parse_block_meta)) {
+    if (guppiraw_iterate_open_with_user_metadata(&gr_iterate, config.filepath.c_str(), sizeof(guppiraw_block_meta_t), guppiraw_parse_block_meta)) {
         BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
     }
 
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
-        getBlockMeta(&gr_iterate)->piperblk = this->getTotalNumberOfTimeSamples();
+        getBlockMeta(&gr_iterate)->piperblk = this->getBlockNumberOfTimeSamples();
     }
 
     if (this->getNumberOfAntennas() == 0) {
@@ -65,7 +70,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     if (this->getNumberOfTimeSamples() == 0) {
-        this->config.stepNumberOfTimeSamples = this->getTotalNumberOfTimeSamples();
+        this->config.stepNumberOfTimeSamples = this->getBlockNumberOfTimeSamples();
     }
 
     BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
@@ -80,23 +85,29 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_INFO("Step Number of Frequency Channels: {}", this->getNumberOfFrequencyChannels());
     BL_INFO("Step Number of Time Samples: {}", this->getNumberOfTimeSamples());
     BL_INFO("Step Number of Polarizations: {}", this->getNumberOfPolarizations());
+    BL_INFO("Block Number of Time Samples: {}", this->getBlockNumberOfTimeSamples());
 }
 
 template<typename OT>
 const F64 Reader<OT>::getBlockEpochSeconds(U64 block_time_offset) {
     return calc_epoch_seconds_from_guppi_param(
-        1.0 / this->getBandwidthOfChannel(),
-        this->getTotalNumberOfTimeSamples(),
+        1.0 / this->getChannelBandwidth(),
+        this->getBlockNumberOfTimeSamples(),
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
         getBlockMeta(&gr_iterate)->pktidx + 
-            (this->lastread_block_index + block_time_offset) * this->getTotalNumberOfTimeSamples()
+            (this->lastread_block_index + block_time_offset) * this->getBlockNumberOfTimeSamples()
     );
 }
 
 template<typename OT>
-const F64 Reader<OT>::getBandwidthOfChannel() {
+const F64 Reader<OT>::getChannelBandwidth() {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getTotalBandwidth() {
+    return getChannelBandwidth() * getNumberOfFrequencyChannels();
 }
 
 template<typename OT>
@@ -105,7 +116,7 @@ const U64 Reader<OT>::getChannelStartIndex() {
 }
 
 template<typename OT>
-const F64 Reader<OT>::getBandwidthCenter() {
+const F64 Reader<OT>::getObservationFrequency() {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
 }
 

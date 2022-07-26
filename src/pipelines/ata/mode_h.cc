@@ -6,15 +6,15 @@ template<typename OT>
 ModeH<OT>::ModeH(const Config& config) : config(config) {
     BL_DEBUG("Initializing ATA Pipeline Mode H.");
 
-    BL_DEBUG("Instantiating channelizer with rate {}.", config.numberOfTimeSamples *  
+    BL_DEBUG("Instantiating channelizer with rate {}.", config.channelizerNumberOfTimeSamples *  
                                                         config.accumulateRate);
     this->connect(channelizer, {
-        .numberOfBeams = config.numberOfBeams,
+        .numberOfBeams = config.channelizerNumberOfBeams,
         .numberOfAntennas = 1,
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels,
-        .numberOfTimeSamples = config.numberOfTimeSamples * config.accumulateRate,
-        .numberOfPolarizations = config.numberOfPolarizations,
-        .rate = config.numberOfTimeSamples * config.accumulateRate,
+        .numberOfFrequencyChannels = config.channelizerNumberOfFrequencyChannels,
+        .numberOfTimeSamples = config.channelizerNumberOfTimeSamples * config.accumulateRate,
+        .numberOfPolarizations = config.channelizerNumberOfPolarizations,
+        .rate = config.channelizerNumberOfTimeSamples * config.accumulateRate,
         .blockSize = config.channelizerBlockSize,
     }, {
         .buf = input,
@@ -22,15 +22,15 @@ ModeH<OT>::ModeH(const Config& config) : config(config) {
 
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
-        .numberOfBeams = config.numberOfBeams, 
-        .numberOfFrequencyChannels = config.numberOfFrequencyChannels * 
-                                     config.numberOfTimeSamples * 
+        .numberOfBeams = config.channelizerNumberOfBeams, 
+        .numberOfFrequencyChannels = config.channelizerNumberOfFrequencyChannels * 
+                                     config.channelizerNumberOfTimeSamples * 
                                      config.accumulateRate,
         .numberOfTimeSamples = 1,
-        .numberOfPolarizations = config.numberOfPolarizations,
+        .numberOfPolarizations = config.channelizerNumberOfPolarizations,
 
         .integrationSize = 1,
-        .numberOfOutputPolarizations = config.numberOfOutputPolarizations,
+        .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
         .blockSize = config.detectorBlockSize,
     }, {

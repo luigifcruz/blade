@@ -50,6 +50,11 @@ $ cd blade
 $ CC=gcc-10 CXX=g++-10 meson build
 ```
 
+### Rules
+
+- All frequencies are in Hertz.
+- All angles are in radians.
+
 ### Implementation Notes
 
 - This code is following the [Google C++ Code Style Guide](https://google.github.io/styleguide/cppguide.html).

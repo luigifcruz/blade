@@ -24,35 +24,27 @@ bool blade_use_device(int device_id) {
 bool blade_ata_a_initialize(U64 numberOfWorkers) {
     if (runner) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");
-        throw Result::ASSERTION_ERROR;
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     TestPipeline::Config config = {
-        .numberOfAntennas = BLADE_ATA_MODE_A_INPUT_NANT,
-        .numberOfFrequencyChannels = BLADE_ATA_MODE_A_ANT_NCHAN,
-        .numberOfTimeSamples = BLADE_ATA_MODE_A_NTIME,
-        .numberOfPolarizations = BLADE_ATA_MODE_A_NPOL,
+        .preBeamformerChannelizerRate = BLADE_ATA_MODE_A_CHANNELIZER_RATE,
 
-        .preChannelizerRate = BLADE_ATA_MODE_A_CHANNELIZER_RATE,
-
-        .beamformerBeams = BLADE_ATA_MODE_A_OUTPUT_NBEAM,
-        .enableIncoherentBeam = BLADE_ATA_MODE_A_ENABLE_INCOHERENT_BEAM,
-
-        .rfFrequencyHz = 6500.125*1e6,
-        .channelBandwidthHz = 0.5e6,
-        .totalBandwidthHz = 1.024e9,
-        .frequencyStartIndex = 352,
-        .referenceAntennaIndex = 0,
-        .arrayReferencePosition = {
+        .phasorObservationFrequencyHz = 6500.125*1e6,
+        .phasorChannelBandwidthHz = 0.5e6,
+        .phasorTotalBandwidthHz = 1.024e9,
+        .phasorFrequencyStartIndex = 352,
+        .phasorReferenceAntennaIndex = 0,
+        .phasorArrayReferencePosition = {
             .LON = BL_DEG_TO_RAD(-121.470733), 
             .LAT = BL_DEG_TO_RAD(40.815987),
             .ALT = 1020.86,
         },
-        .boresightCoordinate = {
+        .phasorBoresightCoordinate = {
             .RA = 0.64169,
             .DEC = 1.079896295,
         },
-        .antennaPositions = {
+        .phasorAntennaPositions = {
             {-2524041.5388905862, -4123587.965024342, 4147646.4222955606},    // 1c 
             {-2524068.187873109, -4123558.735413135, 4147656.21282186},       // 1e 
             {-2524087.2078100787, -4123532.397416349, 4147670.9866770394},    // 1g 
@@ -74,29 +66,36 @@ bool blade_ata_a_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114}         // 5b
         },
-        .antennaCalibrations = {},
-        .beamCoordinates = {
+        .phasorAntennaCalibrations = {},
+        .phasorBeamCoordinates = {
             {0.64169, 1.079896295},
         },
 
-        .integrationSize = 16,
-        .numberOfOutputPolarizations = 4,
+        .beamformerNumberOfAntennas = BLADE_ATA_MODE_A_INPUT_NANT,
+        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_A_ANT_NCHAN,
+        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_A_NTIME,
+        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_A_NPOL,
+        .beamformerNumberOfBeams = BLADE_ATA_MODE_A_OUTPUT_NBEAM,
+        .beamformerIncoherentBeam = BLADE_ATA_MODE_A_ENABLE_INCOHERENT_BEAM,
+
+        .detectorIntegrationSize = 16,
+        .detectorNumberOfOutputPolarizations = 4,
 
         .outputMemWidth = BLADE_ATA_MODE_A_OUTPUT_MEMCPY2D_WIDTH,
         .outputMemPad = BLADE_ATA_MODE_A_OUTPUT_MEMCPY2D_PAD,
 
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
-        .phasorsBlockSize = 512,
+        .phasorBlockSize = 512,
         .beamformerBlockSize = 512,
         .detectorBlockSize = 512,
     };
 
-    config.antennaCalibrations.resize(
-        config.numberOfAntennas *
-        config.numberOfFrequencyChannels *
-        config.preChannelizerRate *
-        config.numberOfPolarizations);
+    config.phasorAntennaCalibrations.resize(
+        config.beamformerNumberOfAntennas *
+        config.beamformerNumberOfFrequencyChannels *
+        config.preBeamformerChannelizerRate *
+        config.beamformerNumberOfPolarizations);
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, config);
 
@@ -106,7 +105,7 @@ bool blade_ata_a_initialize(U64 numberOfWorkers) {
 void blade_ata_a_terminate() {
     if (!runner) {
         BL_FATAL("Can't terminate because Blade Runner isn't initialized.");
-        throw Result::ASSERTION_ERROR;
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
     runner.reset();
 }

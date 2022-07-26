@@ -45,36 +45,29 @@ bool blade_use_device(int device_id) {
 bool blade_ata_h_initialize(U64 numberOfWorkers) {
     if (State.RunnersInstances.B || State.RunnersInstances.H) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");
-        throw Result::ASSERTION_ERROR;
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     State.AccumulatorCounter = 0;
 
     State.RunnersConfig.B = {
-        .numberOfAntennas = BLADE_ATA_MODE_H_INPUT_NANT,
-        .numberOfFrequencyChannels = BLADE_ATA_MODE_H_ANT_NCHAN,
-        .numberOfTimeSamples = BLADE_ATA_MODE_H_NTIME,
-        .numberOfPolarizations = BLADE_ATA_MODE_H_NPOL,
+        .preBeamformerChannelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
 
-        .preChannelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
-
-        .beamformerBeams = BLADE_ATA_MODE_H_OUTPUT_NBEAM,
-
-        .rfFrequencyHz = 6500.125*1e6,
-        .channelBandwidthHz = 0.5e6,
-        .totalBandwidthHz = 1.024e9,
-        .frequencyStartIndex = 352,
-        .referenceAntennaIndex = 0,
-        .arrayReferencePosition = {
+        .phasorObservationFrequencyHz = 6500.125*1e6,
+        .phasorChannelBandwidthHz = 0.5e6,
+        .phasorTotalBandwidthHz = 1.024e9,
+        .phasorFrequencyStartIndex = 352,
+        .phasorReferenceAntennaIndex = 0,
+        .phasorArrayReferencePosition = {
             .LON = BL_DEG_TO_RAD(-121.470733), 
             .LAT = BL_DEG_TO_RAD(40.815987),
             .ALT = 1020.86,
         },
-        .boresightCoordinate = {
+        .phasorBoresightCoordinate = {
             .RA = 0.64169,
             .DEC = 1.079896295,
         },
-        .antennaPositions = {
+        .phasorAntennaPositions = {
             {-2524041.5388905862, -4123587.965024342, 4147646.4222955606},    // 1c 
             {-2524068.187873109, -4123558.735413135, 4147656.21282186},       // 1e 
             {-2524087.2078100787, -4123532.397416349, 4147670.9866770394},    // 1g 
@@ -104,36 +97,42 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114}         // 5b
         },
-        .antennaCalibrations = {},
-        .beamCoordinates = {
+        .phasorAntennaCalibrations = {},
+        .phasorBeamCoordinates = {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
 
+        .beamformerNumberOfAntennas = BLADE_ATA_MODE_H_INPUT_NANT,
+        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_H_ANT_NCHAN,
+        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_H_NTIME,
+        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_H_NPOL,
+        .beamformerNumberOfBeams = BLADE_ATA_MODE_H_OUTPUT_NBEAM,
+
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
-        .phasorsBlockSize = 512,
+        .phasorBlockSize = 512,
         .beamformerBlockSize = 512,
     };
 
-    State.RunnersConfig.B.antennaCalibrations.resize(
-        State.RunnersConfig.B.numberOfAntennas *
-        State.RunnersConfig.B.numberOfFrequencyChannels *
-        State.RunnersConfig.B.preChannelizerRate *
-        State.RunnersConfig.B.numberOfPolarizations
+    State.RunnersConfig.B.phasorAntennaCalibrations.resize(
+        State.RunnersConfig.B.beamformerNumberOfAntennas *
+        State.RunnersConfig.B.beamformerNumberOfFrequencyChannels *
+        State.RunnersConfig.B.preBeamformerChannelizerRate *
+        State.RunnersConfig.B.beamformerNumberOfPolarizations
     );
 
     State.RunnersConfig.H = {
-        .numberOfBeams = State.RunnersConfig.B.beamformerBeams,
-        .numberOfFrequencyChannels = State.RunnersConfig.B.numberOfFrequencyChannels * 
-                                     State.RunnersConfig.B.preChannelizerRate,
-        .numberOfTimeSamples = State.RunnersConfig.B.numberOfTimeSamples / 
-                               State.RunnersConfig.B.preChannelizerRate,
-        .numberOfPolarizations = State.RunnersConfig.B.numberOfPolarizations,
-
         .accumulateRate = BLADE_ATA_MODE_H_ACCUMULATE_RATE, 
 
-        .numberOfOutputPolarizations = 1,
+        .channelizerNumberOfBeams = State.RunnersConfig.B.beamformerNumberOfBeams,
+        .channelizerNumberOfFrequencyChannels = State.RunnersConfig.B.beamformerNumberOfFrequencyChannels * 
+                                                State.RunnersConfig.B.preBeamformerChannelizerRate,
+        .channelizerNumberOfTimeSamples = State.RunnersConfig.B.beamformerNumberOfTimeSamples / 
+                                          State.RunnersConfig.B.preBeamformerChannelizerRate,
+        .channelizerNumberOfPolarizations = State.RunnersConfig.B.beamformerNumberOfPolarizations,
+
+        .detectorNumberOfOutputPolarizations = 1,
 
         .channelizerBlockSize = 512,
         .detectorBlockSize = 512,
@@ -155,7 +154,7 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
 void blade_ata_h_terminate() {
     if (!State.RunnersInstances.B || !State.RunnersInstances.H) {
         BL_FATAL("Can't terminate because Blade Runner isn't initialized.");
-        throw Result::ASSERTION_ERROR;
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     State.RunnersInstances.B.reset();

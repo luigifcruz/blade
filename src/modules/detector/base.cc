@@ -15,22 +15,22 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the integration size ({}).", config.numberOfTimeSamples,
                 config.integrationSize);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if (config.numberOfPolarizations != 2) {
         BL_FATAL("Number of polarizations ({}) should be two (2).", config.numberOfPolarizations);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if (config.numberOfBeams <= 0) {
         BL_FATAL("Number of beams ({}) should be more than zero.", config.numberOfBeams);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if (config.integrationSize <= 0) {
         BL_WARN("Integration size ({}) should be more than zero.", config.integrationSize);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     grid = dim3((((getInputSize() / config.numberOfPolarizations) + block.x - 1) / block.x));
@@ -42,7 +42,7 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         default:
             BL_FATAL("Number of output polarizations ({}) not supported.", 
                 config.numberOfOutputPolarizations);
-            throw Result::ERROR;
+            BL_CHECK_THROW(Result::ERROR);
     }
 
     kernel =

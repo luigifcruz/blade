@@ -52,7 +52,7 @@ if __name__ == "__main__":
         number_of_frequency_channels = 192,
         number_of_polarizations = 2,
         
-        rf_frequency_hz = 6500.125*1e6,
+        observation_frequency_hz = 6500.125*1e6,
         channel_bandwidth_hz = 0.5e6,
         total_bandwidth_hz = 1.024e9,
         frequency_start_index = 352,

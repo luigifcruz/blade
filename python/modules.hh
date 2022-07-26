@@ -77,7 +77,7 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),
                                      py::arg("number_of_polarizations"),
-                                     py::arg("rf_frequency_hz"),
+                                     py::arg("observation_frequency_hz"),
                                      py::arg("channel_bandwidth_hz"),
                                      py::arg("total_bandwidth_hz"),
                                      py::arg("frequency_start_index"),
