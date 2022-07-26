@@ -65,11 +65,11 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    constexpr const std::vector<XYZ> getAntennaPositions() const {
+    const std::vector<XYZ> getAntennaPositions() const {
         return this->antennaPositions;
     }
 
-    constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
+    const std::vector<RA_DEC> getBeamCoordinates() const {
         return this->beamCoordinates;
     }
 
