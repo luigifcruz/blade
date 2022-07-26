@@ -91,6 +91,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_INFO("Step Number of Frequency Channels: {}", this->getStepNumberOfFrequencyChannels());
     BL_INFO("Step Number of Time Samples: {}", this->getStepNumberOfTimeSamples());
     BL_INFO("Step Number of Polarizations: {}", this->getStepNumberOfPolarizations());
+    BL_INFO("Block Number of Time Samples: {}", this->getBlockNumberOfTimeSamples());
 }
 
 template<typename OT>
