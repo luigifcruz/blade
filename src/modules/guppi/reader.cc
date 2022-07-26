@@ -89,8 +89,8 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 }
 
 template<typename OT>
-const F64 Reader<OT>::getBlockEpochSeconds(U64 block_time_offset) {
-    return calc_epoch_seconds_from_guppi_param(
+const F64 Reader<OT>::getBlockEpochSeconds() {
+    return guppiraw_calc_unix_date(
         1.0 / this->getChannelBandwidth(),
         this->getBlockNumberOfTimeSamples(),
         getBlockMeta(&gr_iterate)->piperblk,
