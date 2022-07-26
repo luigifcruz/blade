@@ -10,7 +10,8 @@ endforeach
 
 if all_deps_found
     src_lst += files([
-        'base.cc',
+        'reader.cc',
+        'writer.cc',
     ])
 
     jit_lst += files([

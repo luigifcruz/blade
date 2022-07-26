@@ -89,7 +89,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 }
 
 template<typename OT>
-const F64 Reader<OT>::getBlockJulianDate(const U64& blockTimeOffset) {
+const F64 Reader<OT>::getBlockEpochSeconds(U64 block_time_offset) {
     return calc_epoch_seconds_from_guppi_param(
         1.0 / this->getChannelBandwidth(),
         this->getBlockNumberOfTimeSamples(),

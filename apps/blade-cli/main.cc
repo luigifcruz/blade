@@ -72,6 +72,13 @@ inline const Result CollectUserInput(int argc, char **argv, CliConfig& config) {
             ->capture_default_str()
             ->run_callback_for_default();
 
+    // Read output GUPPI RAW filepath.
+        app
+        .add_option("-o,--output,output", config.outputGuppiFile, "Output GUPPI RAW filepath")
+            ->required()
+            ->capture_default_str()
+            ->run_callback_for_default();
+
     // Read number of workers.
     app
         .add_option("-N,--number-of-workers", config.numberOfWorkers, "Number of workers")
