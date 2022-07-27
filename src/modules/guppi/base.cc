@@ -96,8 +96,7 @@ const F64 Reader<OT>::getBlockJulianDate(const U64& blockTimeOffset) {
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
         getBlockMeta(&gr_iterate)->pktidx + 
-            (this->lastread_block_index + blockTimeOffset) * this->getBlockNumberOfTimeSamples()
-    );
+            (this->lastread_block_index + blockTimeOffset) * this->getBlockNumberOfTimeSamples());
 }
 
 template<typename OT>
@@ -132,8 +131,7 @@ Result Reader<OT>::preprocess(const cudaStream_t& stream) {
         this->getNumberOfTimeSamples(),
         this->getNumberOfFrequencyChannels(),
         this->getNumberOfAntennas(),
-        this->output.buf.data()
-    );
+        this->output.buf.data());
 
     if (bytes_read <= 0) {
         BL_FATAL("File reader couldn't read bytes.");

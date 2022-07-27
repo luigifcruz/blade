@@ -104,5 +104,4 @@ inline const Result SetupAta(const CliConfig& config,
     return Result::ERROR;
 }
 
-
 #endif
