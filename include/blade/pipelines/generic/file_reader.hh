@@ -72,7 +72,7 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
-    constexpr const std::vector<CF64> getAntennaCalibrations(const U64& preBeamformerChannelizerRate) {
+    constexpr const std::vector<CF64> getAntennaCalibrations(const U64& preBeamformerChannelizerRate) const {
         return bfr5->getAntennaCalibrations(guppi->getNumberOfFrequencyChannels(), preBeamformerChannelizerRate);
     }
 

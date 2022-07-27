@@ -1,204 +1,127 @@
+#include <chrono>
 #include <CLI/CLI.hpp>
-#include <iostream>
-#include <string>
 
-#include "blade/base.hh"
-#include "blade/logger.hh"
-#include "blade/runner.hh"
-#include "blade/pipelines/ata/mode_b.hh"
+#include "types.hh"
+#include "telescopes/ata.hh"
 #include "blade/pipelines/generic/file_reader.hh"
 
-using namespace Blade;
+template<typename IT, typename OT>
+inline const Result SetupTelescope(const CliConfig& config) {
+    auto reader = Pipelines::Generic::FileReader<IT>({
+        .inputGuppiFile = config.inputGuppiFile,
+        .inputBfr5File = config.inputBfr5File,
+        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples * 
+                                   config.preBeamformerChannelizerRate,
+        .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+    });
 
-typedef enum {
-    ATA,
-    VLA,
-    MEERKAT,
-} TelescopeId;
+    switch (config.telescope) {
+        case TelescopeId::ATA:
+            return SetupAta<IT, OT>(config, reader);
+        default:
+            BL_FATAL("Telescope not implemented yet.");
+    }
 
-typedef enum {
-    MODE_B,
-    MODE_A,
-} ModeId;
+    return Result::ERROR;
+}
 
-typedef struct {
-    ModeId mode;
-    TelescopeId telescope;
-    std::string inputGuppiFile;
-    std::string inputBfr5File;
-    U64 preBeamformerChannelizerRate;
-    U64 stepNumberOfTimeSamples;
-    U64 stepNumberOfFrequencyChannels;
-} CliConfig;
+template<typename IT, typename OT>
+inline const Result SetupProcessingPipeline(const CliConfig& config) {
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
 
-using CLIPipeline = Blade::Pipelines::ATA::ModeB<CF32>;
-static std::unique_ptr<Runner<CLIPipeline>> runner;
+    auto t1 = high_resolution_clock::now();
 
-int main(int argc, char **argv) {
+    BL_CHECK((SetupTelescope<IT, OT>(config)));
 
-    CliConfig cliConfig;
+    auto t2 = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t2 - t1).count();
+    BL_INFO("Processing finished in {} milliseconds!", duration);
 
-    CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) Command Line Tool");
+    return Result::SUCCESS;
+}
+
+inline const Result CollectUserInput(int argc, char **argv, CliConfig& config) {
+    CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) - Command Line Tool");
 
     // Read target telescope. 
-
-    std::map<std::string, TelescopeId> telescopeMap = {
-        {"ATA",     TelescopeId::ATA}, 
-        {"VLA",     TelescopeId::VLA},
-        {"MEERKAT", TelescopeId::MEERKAT}
-    };
-
     app
-        .add_option("-t,--telescope", cliConfig.telescope, "Telescope ID (ATA, VLA, MEETKAT)")
+        .add_option("-t,--telescope", config.telescope, "Telescope ID (ATA, VLA, MEETKAT)")
             ->required()
-            ->transform(CLI::CheckedTransformer(telescopeMap, CLI::ignore_case));
+            ->transform(CLI::CheckedTransformer(TelescopeMap, CLI::ignore_case));
 
     // Read target mode. 
 
-    std::map<std::string, ModeId> modeMap = {
-        {"MODE_B",     ModeId::MODE_B}, 
-        {"MODE_A",     ModeId::MODE_A},
-        {"B",          ModeId::MODE_B}, 
-        {"A",          ModeId::MODE_A},
-    };
-
     app
-        .add_option("-m,--mode", cliConfig.mode, "Mode ID (MODE_B, MODE_A)")
+        .add_option("-m,--mode", config.mode, "Mode ID (MODE_B, MODE_A)")
             ->required()
-            ->transform(CLI::CheckedTransformer(modeMap, CLI::ignore_case));
+            ->transform(CLI::CheckedTransformer(ModeMap, CLI::ignore_case));
 
     // Read input GUPPI RAW file.
-
     app
-        .add_option("-i,--input,input", cliConfig.inputGuppiFile, "Input GUPPI RAW filepath")
+        .add_option("-i,--input,input", config.inputGuppiFile, "Input GUPPI RAW filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
 
     // Read input BFR5 file.
-
     app
-        .add_option("-r,--recipe,recipe", cliConfig.inputBfr5File, "Input BFR5 filepath")
+        .add_option("-r,--recipe,recipe", config.inputBfr5File, "Input BFR5 filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();
 
-    // Read target pre-beamformer channelizer rate.
-
+    // Read number of workers.
     app
-        .add_option("-c,--pre-beamformer-channelizer-rate", cliConfig.preBeamformerChannelizerRate, 
+        .add_option("-N,--number-of-workers", config.numberOfWorkers, "Number of workers")
+            ->default_val(2);
+
+    // Read target pre-beamformer channelizer rate.
+    app
+        .add_option("-c,--pre-beamformer-channelizer-rate", config.preBeamformerChannelizerRate, 
                 "Pre-beamformer channelizer rate (FFT-size)")
             ->default_val(1024);
 
     // Read target step number of time samples.
-
     app
-        .add_option("-T,--step-number-of-time-samples", cliConfig.stepNumberOfTimeSamples, 
+        .add_option("-T,--step-number-of-time-samples", config.stepNumberOfTimeSamples, 
                 "Step number of time samples")
             ->default_val(32);
 
     // Read target step number of frequency channels.
-
     app
-        .add_option("-C,--step-number-of-frequency-channels", cliConfig.stepNumberOfFrequencyChannels,
+        .add_option("-C,--step-number-of-frequency-channels", config.stepNumberOfFrequencyChannels,
                 "Step number of frequency channels")
             ->default_val(32);
 
-    // Parse arguments.
-
-    CLI11_PARSE(app, argc, argv);
+    try {
+        app.parse(argc, argv);
+    } catch(const CLI::ParseError &e) {
+        std::cout << e.what() << std::endl;
+        return Result::ERROR;
+    }
 
     // Print argument configurations.
-    
-    BL_INFO("Input GUPPI RAW File Path: {}", cliConfig.inputGuppiFile);
-    BL_INFO("Input BFR5 File Path: {}", cliConfig.inputBfr5File);
-    BL_INFO("Telescope: {}", cliConfig.telescope);
-    BL_INFO("Mode: {}", cliConfig.mode);
-    BL_INFO("Pre-beamformer channelizer rate: {}", cliConfig.preBeamformerChannelizerRate);
+    BL_INFO("Telescope: {}", config.telescope);
+    BL_INFO("Mode: {}", config.mode);
 
-    auto reader = Pipelines::Generic::FileReader<CI8>({
-        .inputGuppiFile = cliConfig.inputGuppiFile,
-        .inputBfr5File = cliConfig.inputBfr5File,
-        .stepNumberOfTimeSamples = cliConfig.stepNumberOfTimeSamples * 
-                                   cliConfig.preBeamformerChannelizerRate,
-        .stepNumberOfFrequencyChannels = cliConfig.stepNumberOfFrequencyChannels,
-    });
+    return Result::SUCCESS;
+}
 
-    const int numberOfWorkers = 1;
-    switch (cliConfig.telescope) {
-        case TelescopeId::ATA:
-            switch (cliConfig.mode) {
-                case ModeId::MODE_A:
-                    BL_ERROR("Unsupported mode for ATA selected. WIP.");
-                    break;
-                case ModeId::MODE_B:
-                    CLIPipeline::Config config = {
-                        .preBeamformerChannelizerRate = cliConfig.preBeamformerChannelizerRate,
+inline const Result StartCli(int argc, char **argv) {
+    CliConfig config;
 
-                        .phasorObservationFrequencyHz = reader.getObservationFrequency(),
-                        .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
-                        .phasorTotalBandwidthHz = reader.getTotalBandwidth(),
-                        .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
-                        .phasorReferenceAntennaIndex = 0,
-                        .phasorArrayReferencePosition = reader.getReferencePosition(),
-                        .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
-                        .phasorAntennaPositions = reader.getAntennaPositions(),
-                        .phasorAntennaCalibrations = reader.getAntennaCalibrations(cliConfig.preBeamformerChannelizerRate),
-                        .phasorBeamCoordinates = reader.getBeamCoordinates(),
+    BL_CHECK(CollectUserInput(argc, argv, config));
+    BL_CHECK((SetupProcessingPipeline<CI8, CF32>(config)));
 
-                        .beamformerNumberOfAntennas = reader.getNumberOfAntennas(),
-                        .beamformerNumberOfFrequencyChannels = reader.getNumberOfFrequencyChannels(),
-                        .beamformerNumberOfTimeSamples = reader.getNumberOfTimeSamples(),
-                        .beamformerNumberOfPolarizations = reader.getNumberOfPolarizations(),
-                        .beamformerNumberOfBeams = reader.getNumberOfBeams(),
-                        .beamformerIncoherentBeam = false,
+    return Result::SUCCESS;
+}
 
-                        .outputMemWidth = 8192,
-                        .outputMemPad = 0,
-
-                        .castBlockSize = 32,
-                        .channelizerBlockSize = cliConfig.stepNumberOfTimeSamples,
-                        .phasorBlockSize = 32,
-                        .beamformerBlockSize = cliConfig.stepNumberOfTimeSamples
-                    };
-                    runner = Runner<CLIPipeline>::New(numberOfWorkers, config);
-                    break;
-            }
-            break;
-        default:
-            BL_ERROR("Unsupported telescope selected. WIP");
-            return 1;
+int main(int argc, char **argv) {
+    if (StartCli(argc, argv) != Result::SUCCESS) {
+        return 1;
     }
-
-    Vector<Device::CPU, CF32>* output_buffers[numberOfWorkers];
-    for (int i = 0; i < numberOfWorkers; i++) {
-        output_buffers[i] = new Vector<Device::CPU, CF32>(runner->getWorker().getOutputSize());
-        BL_INFO("Allocated Runner output buffer {}: {} ({} bytes)", 
-                i, output_buffers[i]->size(), output_buffers[i]->size_bytes());
-    }
-
-    U64 buffer_idx = 0;
-    U64 job_idx = 0;
-
-    while (reader.run() == Result::SUCCESS) {
-        const auto& res = runner->enqueue([&](auto& worker){
-            worker.run(reader.getOutputJulianDate(), 0.0, 
-                    reader.getOutput(), *output_buffers[buffer_idx]);
-            return job_idx;
-        });
-
-        if (res) {
-            buffer_idx = (buffer_idx + 1) % numberOfWorkers;
-        }
-
-        if (runner->dequeue(nullptr)) {
-            job_idx++;
-        }
-    }
-
-    BL_INFO("Processing finished!");
-
-    runner.reset();
 
     return 0;
 }
