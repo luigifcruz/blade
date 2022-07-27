@@ -36,7 +36,7 @@ class BLADE_API Reader : public Module {
 
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const bool canRead() const {
+    constexpr const bool keepRunning() const {
         return !this->flag_error &&
             guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getNumberOfTimeSamples();
     }
@@ -122,10 +122,10 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time;
     }
 
-    constexpr const F64 getBlockEpochSeconds() {
-        return this->getBlockEpochSeconds(0);
+    constexpr const F64 getBlockJulianDate() {
+        return this->getBlockJulianDate(0);
     }
-    const F64 getBlockEpochSeconds(U64 block_time_offset);
+    const F64 getBlockJulianDate(const U64& blockTimeOffset);
 
     Result preprocess(const cudaStream_t& stream = 0) final;
 

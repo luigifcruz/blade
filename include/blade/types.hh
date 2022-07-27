@@ -15,6 +15,7 @@ enum class Result : uint8_t {
     ERROR = 1,
     CUDA_ERROR,
     ASSERTION_ERROR,
+    EXHAUSTED,
 };
 
 struct XYZ {

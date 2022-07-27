@@ -58,8 +58,7 @@ $ CC=gcc-10 CXX=g++-10 meson build
 ### Implementation Notes
 
 - This code is following the [Google C++ Code Style Guide](https://google.github.io/styleguide/cppguide.html).
-    - The default line length is 88.
-    - Using namespaces is allowed in tests.
+    - The default line length is 88. This can be overridden if necessary. Please, be sensible.
 - The CUDA C++ Standard Library is being ignored for now because of performance inconsistencies.
 - The library is implemented using bleeding-edge features like CUDA 11.4 and C++20.
 

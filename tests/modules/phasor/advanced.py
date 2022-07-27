@@ -11,23 +11,23 @@ import astropy.units as u
 
 class Test(bl.Pipeline):
     phasor: bl.Phasor
-    frame_julian_date = bl.vector.cpu.f64(1)
-    frame_dut1 = bl.vector.cpu.f64(1)
+    block_julian_date = bl.vector.cpu.f64(1)
+    block_dut1 = bl.vector.cpu.f64(1)
 
     def __init__(self, phasor_config: bl.Phasor.Config):
         bl.Pipeline.__init__(self)
         _config = phasor_config
-        _input = bl.Phasor.Input(self.frame_julian_date, self.frame_dut1)
+        _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
         self.phasor = self.connect(_config, _input)
 
     def phasors_size(self):
         return self.phasor.phasors_size()
 
-    def run(self, frame_julian_date: float,
-                  frame_dut1: float,
+    def run(self, block_julian_date: float,
+                  block_dut1: float,
                   phasors: bl.vector.cpu.cf32):
-        self.frame_julian_date[0] = frame_julian_date
-        self.frame_dut1[0] = frame_dut1
+        self.block_julian_date[0] = block_julian_date
+        self.block_dut1[0] = block_dut1
         self.compute()
         self.copy(phasors, self.phasor.phasors())
         self.synchronize()

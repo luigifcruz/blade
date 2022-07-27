@@ -1,7 +1,6 @@
 deps = [
     'BLADE_LOADER_CLI11',
-    'BLADE_MODULE_GUPPIRAW',
-    'BLADE_MODULE_BFR5',
+    'BLADE_PIPELINE_GENERIC_FILE_READER'
 ]
 
 all_deps_found = true

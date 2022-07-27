@@ -18,6 +18,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'GUPPI RAW': all_deps_found}
+sum_lst += {'GUPPI': all_deps_found}
 
-cfg_lst.set('BLADE_MODULE_GUPPIRAW', all_deps_found)
+cfg_lst.set('BLADE_MODULE_GUPPI', all_deps_found)

@@ -3,7 +3,7 @@
 namespace Blade::Pipelines::ATA {
 
 template<typename OT>
-ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), frameDut1(1) {
+ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blockDut1(1) {
     BL_DEBUG("Initializing ATA Pipeline Mode B.");
 
     if ((config.outputMemPad % sizeof(OT)) != 0) {
@@ -60,8 +60,8 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 
         .blockSize = config.phasorBlockSize,
     }, {
-        .frameJulianDate = this->frameJulianDate,
-        .frameDut1 = this->frameDut1,
+        .blockJulianDate = this->blockJulianDate,
+        .blockDut1 = this->blockDut1,
     });
 
     BL_DEBUG("Instantiating beamformer module.");
@@ -93,16 +93,16 @@ ModeB<OT>::ModeB(const Config& config) : config(config), frameJulianDate(1), fra
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const F64& frameJulianDate,
-                      const F64& frameDut1,
+Result ModeB<OT>::run(const F64& blockJulianDate,
+                      const F64& blockDut1,
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
-    this->frameJulianDate[0] = frameJulianDate;
-    this->frameDut1[0] = frameDut1;
+    this->blockJulianDate[0] = blockJulianDate;
+    this->blockDut1[0] = blockDut1;
 
     if (this->getStepCount() == 0) {
-        BL_DEBUG("Frame Julian Date: {}", frameJulianDate);
-        BL_DEBUG("Frame DUT1: {}", frameDut1);
+        BL_DEBUG("Block Julian Date: {}", blockJulianDate);
+        BL_DEBUG("Block DUT1: {}", blockDut1);
     }
 
     BL_CHECK(this->copy(inputCast->getInput(), input));
@@ -122,18 +122,18 @@ Result ModeB<OT>::run(const F64& frameJulianDate,
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const F64& frameJulianDate,
-                      const F64& frameDut1,
+Result ModeB<OT>::run(const F64& blockJulianDate,
+                      const F64& blockDut1,
                       const Vector<Device::CPU, CI8>& input, 
                       const U64& outputBlockIndex,
                       const U64& outputNumberOfBlocks,
                             Vector<Device::CUDA, OT>& output) {
-    this->frameJulianDate[0] = frameJulianDate;
-    this->frameDut1[0] = frameDut1;
+    this->blockJulianDate[0] = blockJulianDate;
+    this->blockDut1[0] = blockDut1;
 
     if (this->getStepCount() == 0) {
-        BL_DEBUG("Frame Julian Date: {}", frameJulianDate);
-        BL_DEBUG("Frame DUT1: {}", frameDut1);
+        BL_DEBUG("Block Julian Date: {}", blockJulianDate);
+        BL_DEBUG("Block DUT1: {}", blockDut1);
     }
 
     BL_CHECK(this->copy(inputCast->getInput(), input));

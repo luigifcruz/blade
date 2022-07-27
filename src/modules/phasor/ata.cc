@@ -91,8 +91,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT,
-        this->input.frameJulianDate[0],
-        this->input.frameDut1[0],
+        this->input.blockJulianDate[0],
+        this->input.blockDut1[0],
         &boresight_ha_dec.HA,
         &boresight_ha_dec.DEC);
 
@@ -124,8 +124,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT, 
         this->config.arrayReferencePosition.ALT,
-        this->input.frameJulianDate[0],
-        this->input.frameDut1[0],
+        this->input.blockJulianDate[0],
+        this->input.blockDut1[0],
         &astrom);
 
     for (U64 b = 0; b < this->config.numberOfBeams; b++) {

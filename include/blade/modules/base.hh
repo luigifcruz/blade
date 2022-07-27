@@ -15,7 +15,7 @@
 #include "blade/modules/detector.hh"
 #endif
 
-#ifdef BLADE_MODULE_GUPPIRAW
+#ifdef BLADE_MODULE_GUPPI
 #include "blade/modules/guppi/base.hh"
 #endif
 
