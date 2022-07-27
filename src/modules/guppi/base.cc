@@ -122,6 +122,23 @@ const F64 Reader<OT>::getObservationFrequency() {
 
 template<typename OT>
 Result Reader<OT>::preprocess(const cudaStream_t& stream) {
+    this->lastread_block_index++;
+    this->lastread_aspect_index = gr_iterate.aspect_index;
+    this->lastread_channel_index = gr_iterate.chan_index;
+    this->lastread_time_index = gr_iterate.time_index;
+
+    const I64 bytes_read = guppiraw_iterate_read(
+        &this->gr_iterate,
+        this->getNumberOfTimeSamples(),
+        this->getNumberOfFrequencyChannels(),
+        this->getNumberOfAntennas(),
+        this->output.buf.data()
+    );
+
+    if (bytes_read <= 0) {
+        BL_FATAL("File reader couldn't read bytes.");
+        return Result::ERROR;
+    }
 
     return Result::SUCCESS;
 }

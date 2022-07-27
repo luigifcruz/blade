@@ -37,29 +37,10 @@ class BLADE_API Reader : public Module {
     explicit Reader(const Config& config, const Input& input);
 
     constexpr const bool keepRunning() const {
-        return !this->flag_error &&
-            guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getNumberOfTimeSamples();
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getNumberOfTimeSamples();
     }
 
     constexpr const Vector<Device::CPU, OT>& getOutput() {
-        this->lastread_block_index++;
-        this->lastread_aspect_index = gr_iterate.aspect_index;
-        this->lastread_channel_index = gr_iterate.chan_index;
-        this->lastread_time_index = gr_iterate.time_index;
-
-        const I64 bytes_read = guppiraw_iterate_read(
-            &this->gr_iterate,
-            this->getNumberOfTimeSamples(),
-            this->getNumberOfFrequencyChannels(),
-            this->getNumberOfAntennas(),
-            this->output.buf.data()
-        );
-
-        if (bytes_read <= 0) {
-            BL_ERROR("Guppi::Reader encountered error: {}.", bytes_read);
-            this->flag_error = true; // << HAS TO GO 
-        }
-
         return this->output.buf;
     }
 
@@ -133,8 +114,6 @@ class BLADE_API Reader : public Module {
     Config config;
     const Input input;
     Output output;
-
-    bool flag_error = false; // << HAS TO GO
 
     I64 lastread_block_index = -1;
     U64 lastread_aspect_index;
