@@ -38,10 +38,6 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    if (config.stepNumberOfFrequencyChannels != guppi->getTotalNumberOfFrequencyChannels()) {
-        BL_WARN("Sub-band processing of the frequency channels ({}/{}) is not perfect yet.",
-            config.stepNumberOfFrequencyChannels, guppi->getTotalNumberOfFrequencyChannels());
-    }
 }
 
 template<typename OT>
