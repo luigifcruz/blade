@@ -66,6 +66,11 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         .numberOfPolarizations = reader.getNumberOfPolarizations(),
     });
 
+    guppi_writer.headerPut("OBSFREQ", reader.getObservationFrequency());
+    guppi_writer.headerPut("OBSBW", reader.getChannelBandwidth()*guppi_writer.getTotalNumberOfFrequencyChannels()*guppi_writer.getNumberOfAspects());
+    guppi_writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate/reader.getChannelBandwidth());
+    guppi_writer.headerPut("PKTIDX", 0);
+
     Vector<Device::CPU, CF32>* writer_batch_buffers[cliConfig.numberOfWorkers];
     for (U64 i = 0; i < cliConfig.numberOfWorkers; i++) {
         writer_batch_buffers[i] = new Vector<Device::CPU, CF32>(guppi_writer.getInputBatchSize());
@@ -97,11 +102,12 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
                 writer_batch_buffers[batch_idx % cliConfig.numberOfWorkers]->data(),
                 writer_batch_buffers[batch_idx % cliConfig.numberOfWorkers]->size_bytes()
             );
+            // write if that's the last batch-input for the batch
             if(
-                batch_idx % guppi_writer.getNumberOfFrequencyChannelBatches()
-                == guppi_writer.getNumberOfFrequencyChannelBatches() - 1
+                (batch_idx + 1) % guppi_writer.getNumberOfFrequencyChannelBatches() == 0
             ) {
                 guppi_writer.write();
+                guppi_writer.headerPut("PKTIDX", guppi_writer.getNumberOfTimeSamples() * ((batch_idx+1) / guppi_writer.getNumberOfFrequencyChannelBatches()));
             }
         }
     }
