@@ -68,6 +68,7 @@ class BLADE_API Reader : public Module {
     const F64 getChannelBandwidth();
     const U64 getChannelStartIndex();
     const F64 getObservationFrequency();
+    const F64 getObservationDut1();
 
     constexpr const U64 getTotalNumberOfAntennas() const {
         return this->getDatashape()->n_aspect;

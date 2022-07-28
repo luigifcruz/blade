@@ -12,28 +12,32 @@ typedef struct {
     U64 synctime;
     U64 piperblk;
     U64 pktidx;
+    F64 dut1;
 } guppiraw_block_meta_t;
 
-const U64 KEY_SCHAN_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
-const U64 KEY_CHAN_BW_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
-const U64 KEY_OBSFREQ_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
-const U64 KEY_SYNCTIME_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
-const U64 KEY_PIPERBLK_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
-const U64 KEY_PKTIDX_UINT64 = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
+const U64 KEY_UINT64_SCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
+const U64 KEY_UINT64_CHAN_BW = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
+const U64 KEY_UINT64_OBSFREQ = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
+const U64 KEY_UINT64_SYNCTIME = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
+const U64 KEY_UINT64_PIPERBLK = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
+const U64 KEY_UINT64_PKTIDX = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
+const U64 KEY_UINT64_DUT1 = GUPPI_RAW_KEY_UINT64_ID_LE('D','U','T','1',' ',' ',' ',' ');
 
 void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
-    if        (((U64*)entry)[0] == KEY_SCHAN_UINT64) {
+    if        (((U64*)entry)[0] == KEY_UINT64_SCHAN) {
         hgeti4(entry, "SCHAN", &((guppiraw_block_meta_t*)block_meta)->chan_start);
-    } else if (((U64*)entry)[0] == KEY_CHAN_BW_UINT64) {
+    } else if (((U64*)entry)[0] == KEY_UINT64_CHAN_BW) {
         hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
-    } else if (((U64*)entry)[0] == KEY_OBSFREQ_UINT64) {
+    } else if (((U64*)entry)[0] == KEY_UINT64_OBSFREQ) {
         hgetr8(entry, "OBSFREQ", &((guppiraw_block_meta_t*)block_meta)->obs_freq_mhz);
-    } else if (((U64*)entry)[0] == KEY_SYNCTIME_UINT64) {
+    } else if (((U64*)entry)[0] == KEY_UINT64_SYNCTIME) {
         hgetu8(entry, "SYNCTIME", &((guppiraw_block_meta_t*)block_meta)->synctime);
-    } else if (((U64*)entry)[0] == KEY_PIPERBLK_UINT64) {
+    } else if (((U64*)entry)[0] == KEY_UINT64_PIPERBLK) {
         hgetu8(entry, "PIPERBLK", &((guppiraw_block_meta_t*)block_meta)->piperblk);
-    } else if (((U64*)entry)[0] == KEY_PKTIDX_UINT64) {
+    } else if (((U64*)entry)[0] == KEY_UINT64_PKTIDX) {
         hgetu8(entry, "PKTIDX", &((guppiraw_block_meta_t*)block_meta)->pktidx);
+    } else if (((U64*)entry)[0] == KEY_UINT64_DUT1) {
+        hgetr8(entry, "DUT1", &((guppiraw_block_meta_t*)block_meta)->dut1);
     } 
 }
 
@@ -120,6 +124,11 @@ const U64 Reader<OT>::getChannelStartIndex() {
 template<typename OT>
 const F64 Reader<OT>::getObservationFrequency() {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getObservationDut1() {
+    return getBlockMeta(&gr_iterate)->dut1;
 }
 
 template<typename OT>

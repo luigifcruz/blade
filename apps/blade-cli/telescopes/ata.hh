@@ -83,7 +83,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
 
     while (reader.run() == Result::SUCCESS) {
         const auto& res = runner->enqueue([&](auto& worker){
-            worker.run(reader.getOutputEpochSeconds(), 0.0, 
+            worker.run(reader.getOutputEpochSeconds(), reader.getObservationDut1(), 
                     reader.getOutput(), *writer_batch_buffers[buffer_idx]);
             return job_idx;
         });
