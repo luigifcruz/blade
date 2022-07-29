@@ -36,6 +36,7 @@ typedef struct {
     TelescopeId telescope;
     std::string inputGuppiFile;
     std::string inputBfr5File;
+    std::string outputGuppiFile;
     U64 numberOfWorkers;
     U64 preBeamformerChannelizerRate;
     U64 stepNumberOfTimeSamples;

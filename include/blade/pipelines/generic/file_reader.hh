@@ -48,6 +48,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getObservationFrequency();
     }
 
+    constexpr const F64 getObservationDut1() const {
+        return guppi->getObservationDut1();
+    }
+
     constexpr const F64 getChannelBandwidth() const {
         return guppi->getChannelBandwidth();
     }
@@ -90,8 +94,8 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getOutput();
     }
 
-    const F64 getOutputJulianDate() {
-        return guppi->getBlockJulianDate(getNumberOfTimeSamples() / 2); 
+    constexpr const F64 getOutputEpochSeconds() {
+        return guppi->getBlockEpochSeconds(); 
     }
 
  private:

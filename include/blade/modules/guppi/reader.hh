@@ -48,10 +48,27 @@ class BLADE_API Reader : public Module {
         return this->config;
     }
 
+    constexpr const U64 getLastReadBlockIndex() const {
+        return this->lastread_block_index;
+    }
+
+    constexpr const U64 getLastReadAspectIndex() const {
+        return this->lastread_aspect_index;
+    }
+
+    constexpr const U64 getLastReadChannelIndex() const {
+        return this->lastread_channel_index;
+    }
+
+    constexpr const U64 getLastReadTimeIndex() const {
+        return this->lastread_time_index;
+    }
+
     const F64 getTotalBandwidth();
     const F64 getChannelBandwidth();
     const U64 getChannelStartIndex();
     const F64 getObservationFrequency();
+    const F64 getObservationDut1();
 
     constexpr const U64 getTotalNumberOfAntennas() const {
         return this->getDatashape()->n_aspect;
@@ -103,10 +120,7 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time;
     }
 
-    constexpr const F64 getBlockJulianDate() {
-        return this->getBlockJulianDate(0);
-    }
-    const F64 getBlockJulianDate(const U64& blockTimeOffset);
+    const F64 getBlockEpochSeconds();
 
     Result preprocess(const cudaStream_t& stream = 0) final;
 
