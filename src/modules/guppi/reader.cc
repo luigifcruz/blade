@@ -101,7 +101,7 @@ const F64 Reader<OT>::getBlockEpochSeconds() {
         getBlockMeta(&gr_iterate)->synctime,
         getBlockMeta(&gr_iterate)->pktidx + 
             (
-                this->lastread_block_index + 0.5*getBlockMeta(&gr_iterate)->piperblk
+                this->lastread_block_index + (0.5 * getBlockMeta(&gr_iterate)->piperblk)
             ) * this->getBlockNumberOfTimeSamples()
     );
 }

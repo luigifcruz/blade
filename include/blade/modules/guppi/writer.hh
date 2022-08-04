@@ -17,16 +17,16 @@ template<typename IT>
 class BLADE_API Writer : public Module {
  public:
     struct Config {
-        std::string filepathStem;
-
+        std::string filepath;
         bool directio;
 
-        U64 numberOfAntennas;
         U64 numberOfBeams;
+        U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
-        U64 totalNumberOfFrequencyChannels;
         U64 numberOfTimeSamples;
         U64 numberOfPolarizations;
+
+        U64 totalNumberOfFrequencyChannels;
 
         U64 blockSize = 512;
     };
@@ -40,12 +40,8 @@ class BLADE_API Writer : public Module {
 
     explicit Writer(const Config& config);
 
-    constexpr const U64 write() const {
-        return guppiraw_write_block_batched(this->file_descriptor, &this->gr_header, this->input.buf.data(), 1, this->getNumberOfFrequencyChannelBatches());
-    }
-
     constexpr const U64 getInputBatchOffset(U64 channel_batch_index) {
-        return channel_batch_index * this->getInputBatchSize();
+        return channel_batch_index * this->getInputSize();
     }
 
     constexpr Vector<Device::CPU, IT>& getInput() {
@@ -76,56 +72,67 @@ class BLADE_API Writer : public Module {
         return this->config;
     }
 
-    constexpr const U64 getNumberOfAspects() const {
-        return (this->config.numberOfBeams > 0 ? this->config.numberOfBeams : this->config.numberOfAntennas);
+    constexpr const U64 getNumberOfBeams() const {
+        return this->config.numberOfBeams;
+    }
+
+    constexpr const U64 getNumberOfAntennas() const {
+        return this->config.numberOfAntennas;
     }
 
     constexpr const U64 getNumberOfFrequencyChannels() const {
         return this->config.numberOfFrequencyChannels;
     }
 
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return this->config.totalNumberOfFrequencyChannels;
-    }
-
-    constexpr const U64 getNumberOfFrequencyChannelBatches() const {
-        return this->getTotalNumberOfFrequencyChannels() / this->getNumberOfFrequencyChannels();
+    constexpr const U64 getNumberOfTimeSamples() const {
+        return this->config.numberOfTimeSamples;
     }
 
     constexpr const U64 getNumberOfPolarizations() const {
         return this->config.numberOfPolarizations;
     }
 
-    constexpr const U64 getNumberOfTimeSamples() const {
-        return this->config.numberOfTimeSamples;
-    }
-
     constexpr const U64 getInputSize() const {
-        return this->getNumberOfAspects() *
-               this->getTotalNumberOfFrequencyChannels() *
-               this->getNumberOfTimeSamples() * 
-               this->getNumberOfPolarizations();
-    }
-
-    constexpr const U64 getInputBatchSize() const {
         return this->getNumberOfAspects() *
                this->getNumberOfFrequencyChannels() *
                this->getNumberOfTimeSamples() * 
                this->getNumberOfPolarizations();
     }
 
+    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
+        return this->config.totalNumberOfFrequencyChannels;
+    }
+
+    constexpr const U64 getTotalInputSize() const {
+        return this->getNumberOfAspects() *
+               this->getTotalNumberOfFrequencyChannels() *
+               this->getNumberOfTimeSamples() * 
+               this->getNumberOfPolarizations();
+    }
+
+    constexpr const U64 getNumberOfBatches() const {
+        return this->getTotalNumberOfFrequencyChannels() / this->getNumberOfFrequencyChannels();
+    }
+
+    Result preprocess(const cudaStream_t& stream = 0) final;
+
  private:
     Config config;
     Input input;
     Output output;
 
-    int file_descriptor = 0;
-    std::string filepath;
     U64 file_id = 0;
+    I32 file_descriptor = 0;
     U64 fileblock_index = 0;
+    Vector<Device::CPU, IT> writeBuffer;
 
     guppiraw_header_t gr_header = {0};
 
+    // TODO: Behavior unclear. Zeroed numberOfBeams is undefined. Do we need this?
+    constexpr const U64 getNumberOfAspects() const {
+        return this->config.numberOfBeams > 0 ? 
+            this->config.numberOfBeams : this->config.numberOfAntennas;
+    }
 };
 
 }  // namespace Blade::Modules
