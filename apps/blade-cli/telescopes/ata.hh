@@ -95,7 +95,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
 
         if (runner->dequeue(&batch_idx)) {
             batch_offset = guppi_writer.getInputBatchOffset(
-                batch_idx % guppi_writer.getNumberOfBatches()
+                batch_idx % guppi_writer.getNumberOfSteps()
             );
             memcpy(
                 guppi_writer.getInput().data() + batch_offset,
@@ -104,10 +104,10 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
             );
             // write if that's the last batch-input for the batch
             if(
-                (batch_idx + 1) % guppi_writer.getNumberOfBatches() == 0
+                (batch_idx + 1) % guppi_writer.getNumberOfSteps() == 0
             ) {
                 guppi_writer.preprocess();
-                guppi_writer.headerPut("PKTIDX", guppi_writer.getNumberOfTimeSamples() * ((batch_idx+1) / guppi_writer.getNumberOfBatches()));
+                guppi_writer.headerPut("PKTIDX", guppi_writer.getNumberOfTimeSamples() * ((batch_idx+1) / guppi_writer.getNumberOfSteps()));
             }
         }
     }

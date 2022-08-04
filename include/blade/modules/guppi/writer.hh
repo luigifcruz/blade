@@ -110,7 +110,7 @@ class BLADE_API Writer : public Module {
                this->getNumberOfPolarizations();
     }
 
-    constexpr const U64 getNumberOfBatches() const {
+    constexpr const U64 getNumberOfSteps() const {
         return this->getTotalNumberOfFrequencyChannels() / this->getNumberOfFrequencyChannels();
     }
 
