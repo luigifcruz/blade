@@ -227,7 +227,6 @@ bool blade_ata_h_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
     });
 }
 
-
 bool blade_ata_h_dequeue_h(U64* id) {
     assert(State.RunnersInstances.H);
     return State.RunnersInstances.H->dequeue(id);
