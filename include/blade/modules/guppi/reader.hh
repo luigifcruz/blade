@@ -31,17 +31,27 @@ class BLADE_API Reader : public Module {
     };
 
     struct Output {
-        Vector<Device::CPU, OT> buf;
+        Vector<Device::CPU, OT> stepBuffer;
+        Vector<Device::CPU, F64> stepJulianDate;
+        Vector<Device::CPU, F64> stepDut1;
     };
 
     explicit Reader(const Config& config, const Input& input);
 
     constexpr const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getNumberOfTimeSamples();
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getStepNumberOfTimeSamples();
     }
 
-    constexpr const Vector<Device::CPU, OT>& getOutput() {
-        return this->output.buf;
+    constexpr const Vector<Device::CPU, OT>& getStepOutputBuffer() {
+        return this->output.stepBuffer;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+        return this->output.stepJulianDate;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() {
+        return this->output.stepDut1;
     }
 
     constexpr const Config& getConfig() const {
@@ -68,7 +78,6 @@ class BLADE_API Reader : public Module {
     const F64 getChannelBandwidth();
     const U64 getChannelStartIndex();
     const F64 getObservationFrequency();
-    const F64 getObservationDut1();
 
     constexpr const U64 getTotalNumberOfAntennas() const {
         return this->getDatashape()->n_aspect;
@@ -86,41 +95,39 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time * this->gr_iterate.n_block;
     }
 
-    constexpr const U64 getTotalOutputSize() const {
+    constexpr const U64 getTotalOutputBufferSize() const {
         return this->getTotalNumberOfAntennas() *
                this->getTotalNumberOfFrequencyChannels() *
                this->getTotalNumberOfTimeSamples() * 
                this->getTotalNumberOfPolarizations();
     }
 
-    constexpr const U64 getNumberOfAntennas() const {
+    constexpr const U64 getStepNumberOfAntennas() const {
         return this->config.stepNumberOfAntennas;
     }
 
-    constexpr const U64 getNumberOfFrequencyChannels() const {
+    constexpr const U64 getStepNumberOfFrequencyChannels() const {
         return this->config.stepNumberOfFrequencyChannels;
     }
 
-    constexpr const U64 getNumberOfPolarizations() const {
+    constexpr const U64 getStepNumberOfPolarizations() const {
         return this->getTotalNumberOfPolarizations();
     }
 
-    constexpr const U64 getNumberOfTimeSamples() const {
+    constexpr const U64 getStepNumberOfTimeSamples() const {
         return this->config.stepNumberOfTimeSamples;
     }
 
-    constexpr const U64 getOutputSize() const {
-        return this->getNumberOfAntennas() *
-               this->getNumberOfFrequencyChannels() *
-               this->getNumberOfTimeSamples() * 
-               this->getNumberOfPolarizations();
+    constexpr const U64 getStepOutputBufferSize() const {
+        return this->getStepNumberOfAntennas() *
+               this->getStepNumberOfFrequencyChannels() *
+               this->getStepNumberOfTimeSamples() * 
+               this->getStepNumberOfPolarizations();
     }
 
     constexpr const U64 getBlockNumberOfTimeSamples() {
         return this->getDatashape()->n_time;
     }
-
-    const F64 getBlockEpochSeconds();
 
     Result preprocess(const cudaStream_t& stream = 0) final;
 

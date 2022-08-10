@@ -37,7 +37,6 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
                 guppi->getTotalNumberOfPolarizations(), bfr5->getTotalNumberOfPolarizations());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
-
 }
 
 template<typename OT>
@@ -54,4 +53,4 @@ Result FileReader<OT>::run() {
 
 template class BLADE_API FileReader<CI8>;
 
-}  // namespace Blade::Pipelines::ATA
+}  // namespace Blade::Pipelines::Generic

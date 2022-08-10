@@ -101,8 +101,8 @@ ModeA<OT>::ModeA(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeA<OT>::run(const F64& blockJulianDate,
-                      const F64& blockDut1,
+Result ModeA<OT>::run(const F64& blockJulianDate,  // TODO: Change this to Memory::Vector
+                      const F64& blockDut1,        // TODO: Change this to Memory::Vector
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
     this->blockJulianDate[0] = blockJulianDate;

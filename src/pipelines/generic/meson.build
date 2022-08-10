@@ -17,6 +17,7 @@ endforeach
 if all_deps_found
     src_lst += files([
         'file_reader.cc',
+        'file_writer.cc',
     ])
 endif
 

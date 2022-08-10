@@ -4,7 +4,7 @@
 #include "types.hh"
 
 #include "blade/runner.hh"
-#include "blade/modules/guppi/writer.hh"
+#include "blade/pipelines/generic/file_writer.hh"
 
 #ifdef BLADE_PIPELINE_ATA_MODE_A
 #include "blade/pipelines/ata/mode_a.hh"
@@ -37,11 +37,11 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         .phasorAntennaCalibrations = reader.getAntennaCalibrations(cliConfig.preBeamformerChannelizerRate),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
-        .beamformerNumberOfAntennas = reader.getNumberOfAntennas(),
-        .beamformerNumberOfFrequencyChannels = reader.getNumberOfFrequencyChannels(),
-        .beamformerNumberOfTimeSamples = reader.getNumberOfTimeSamples(),
-        .beamformerNumberOfPolarizations = reader.getNumberOfPolarizations(),
-        .beamformerNumberOfBeams = reader.getNumberOfBeams(),
+        .beamformerNumberOfAntennas = reader.getStepNumberOfAntennas(),
+        .beamformerNumberOfFrequencyChannels = reader.getStepNumberOfFrequencyChannels(),
+        .beamformerNumberOfTimeSamples = reader.getStepNumberOfTimeSamples(),
+        .beamformerNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
+        .beamformerNumberOfBeams = reader.getStepNumberOfBeams(),
         .beamformerIncoherentBeam = false,
 
         .outputMemWidth = 8192,
@@ -55,36 +55,44 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
 
     auto runner = Runner<Pipeline>::New(cliConfig.numberOfWorkers, config);
 
-    auto guppi_writer = Blade::Modules::Guppi::Writer<CF32>({
-        .filepath = cliConfig.outputGuppiFile,
+    auto writer = Pipelines::Generic::FileWriter<OT>({
+        .outputGuppiFile = cliConfig.outputGuppiFile,
         .directio = true,
-        .numberOfBeams = reader.getNumberOfBeams(),
-        .numberOfAntennas = reader.getNumberOfAntennas(),
-        .numberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getNumberOfFrequencyChannels(),
-        .numberOfTimeSamples = cliConfig.stepNumberOfTimeSamples, // post channelizer time (fine-time)
-        .numberOfPolarizations = reader.getNumberOfPolarizations(),
-        .totalNumberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getGuppi().getTotalNumberOfFrequencyChannels(),
+
+        .stepNumberOfBeams = reader.getStepNumberOfBeams(),
+        .stepNumberOfAntennas = reader.getStepNumberOfAntennas(),
+        .stepNumberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getStepNumberOfFrequencyChannels(),
+        .stepNumberOfTimeSamples = cliConfig.stepNumberOfTimeSamples,
+        .stepNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
+
+        .totalNumberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getTotalNumberOfFrequencyChannels(),
     });
 
-    guppi_writer.headerPut("OBSFREQ", reader.getObservationFrequency());
-    guppi_writer.headerPut("OBSBW", reader.getChannelBandwidth() * guppi_writer.getTotalNumberOfFrequencyChannels() * guppi_writer.getNumberOfAntennas() * guppi_writer.getNumberOfBeams());
-    guppi_writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate / reader.getChannelBandwidth());
-    guppi_writer.headerPut("PKTIDX", 0);
+    writer.headerPut("OBSFREQ", reader.getObservationFrequency());
+    writer.headerPut("OBSBW", reader.getChannelBandwidth() * 
+                                    writer.getTotalNumberOfFrequencyChannels() * 
+                                    writer.getStepNumberOfAntennas() * 
+                                    writer.getStepNumberOfBeams());
+    writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate / reader.getChannelBandwidth());
+    writer.headerPut("PKTIDX", 0);
 
+    // TODO: Replace this with direct copy to next worker's input buffer.
     Vector<Device::CPU, CF32>* writer_batch_buffers[cliConfig.numberOfWorkers];
     for (U64 i = 0; i < cliConfig.numberOfWorkers; i++) {
-        writer_batch_buffers[i] = new Vector<Device::CPU, CF32>(guppi_writer.getInputSize());
+        writer_batch_buffers[i] = new Vector<Device::CPU, CF32>(writer.getStepInputBufferSize());
         BL_INFO("Allocated output buffer #{}: {} ({} bytes)", 
                 i, writer_batch_buffers[i]->size(), writer_batch_buffers[i]->size_bytes());
     }
 
     U64 buffer_idx = 0, job_idx = 0;
-    U64 batch_idx, batch_offset;
+    U64 batch_idx;
 
     while (reader.run() == Result::SUCCESS) {
         const auto& res = runner->enqueue([&](auto& worker){
-            worker.run(reader.getOutputEpochSeconds(), reader.getObservationDut1(), 
-                    reader.getOutput(), *writer_batch_buffers[buffer_idx]);
+            worker.run(reader.getStepOutputJulianDate()[0],
+                       reader.getStepOutputDut1()[0], 
+                       reader.getStepOutputBuffer(), 
+                       *writer_batch_buffers[buffer_idx]);
             return job_idx;
         });
 
@@ -94,21 +102,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         }
 
         if (runner->dequeue(&batch_idx)) {
-            batch_offset = guppi_writer.getInputBatchOffset(
-                batch_idx % guppi_writer.getNumberOfSteps()
-            );
-            memcpy(
-                guppi_writer.getInput().data() + batch_offset,
-                writer_batch_buffers[batch_idx % cliConfig.numberOfWorkers]->data(),
-                writer_batch_buffers[batch_idx % cliConfig.numberOfWorkers]->size_bytes()
-            );
-            // write if that's the last batch-input for the batch
-            if(
-                (batch_idx + 1) % guppi_writer.getNumberOfSteps() == 0
-            ) {
-                guppi_writer.preprocess();
-                guppi_writer.headerPut("PKTIDX", guppi_writer.getNumberOfTimeSamples() * ((batch_idx+1) / guppi_writer.getNumberOfSteps()));
-            }
+            // TODO: Implement this. LOL.
         }
     }
 

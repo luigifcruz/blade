@@ -24,32 +24,68 @@ class BLADE_API FileReader : public Pipeline {
 
     explicit FileReader(const Config& config);
 
-    constexpr const U64 getNumberOfBeams() const {
+    constexpr const U64 getStepNumberOfBeams() const {
         return bfr5->getTotalNumberOfBeams();
     }
 
-    constexpr const U64 getNumberOfAntennas() const {
-        return guppi->getNumberOfAntennas();
+    constexpr const U64 getStepNumberOfAntennas() const {
+        return guppi->getStepNumberOfAntennas();
     }
 
-    constexpr const U64 getNumberOfFrequencyChannels() const {
-        return guppi->getNumberOfFrequencyChannels();
+    constexpr const U64 getStepNumberOfFrequencyChannels() const {
+        return guppi->getStepNumberOfFrequencyChannels();
     }
 
-    constexpr const U64 getNumberOfTimeSamples() const {
-        return guppi->getNumberOfTimeSamples();
+    constexpr const U64 getStepNumberOfTimeSamples() const {
+        return guppi->getStepNumberOfTimeSamples();
     }
 
-    constexpr const U64 getNumberOfPolarizations() const {
-        return guppi->getNumberOfPolarizations();
+    constexpr const U64 getStepNumberOfPolarizations() const {
+        return guppi->getStepNumberOfPolarizations();
+    }
+
+    const Vector<Device::CPU, OT>& getStepOutputBuffer() {
+        return guppi->getStepOutputBuffer();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+        return guppi->getStepOutputJulianDate();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+        return guppi->getStepOutputDut1();
+    }
+
+    constexpr const U64 getStepOutputBufferSize() const {
+        return guppi->getStepOutputBufferSize();
+    }
+
+    constexpr const U64 getTotalNumberOfBeams() const {
+        return bfr5->getTotalNumberOfBeams();
+    }
+
+    constexpr const U64 getTotalNumberOfAntennas() const {
+        return guppi->getTotalNumberOfAntennas();
+    }
+
+    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
+        return guppi->getTotalNumberOfFrequencyChannels();
+    }
+
+    constexpr const U64 getTotalNumberOfTimeSamples() const {
+        return guppi->getTotalNumberOfTimeSamples();
+    }
+
+    constexpr const U64 getTotalNumberOfPolarizations() const {
+        return guppi->getTotalNumberOfPolarizations();
+    }
+
+    constexpr const U64 getTotalOutputBufferSize() const {
+        return guppi->getTotalOutputBufferSize();
     }
 
     constexpr const F64 getObservationFrequency() const {
         return guppi->getObservationFrequency();
-    }
-
-    constexpr const F64 getObservationDut1() const {
-        return guppi->getObservationDut1();
     }
 
     constexpr const F64 getChannelBandwidth() const {
@@ -77,26 +113,14 @@ class BLADE_API FileReader : public Pipeline {
     }
 
     constexpr const std::vector<CF64> getAntennaCalibrations(const U64& preBeamformerChannelizerRate) const {
-        return bfr5->getAntennaCalibrations(guppi->getNumberOfFrequencyChannels(), preBeamformerChannelizerRate);
+        return bfr5->getAntennaCalibrations(guppi->getStepNumberOfFrequencyChannels(), preBeamformerChannelizerRate);
     }
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
     }
 
-    constexpr Modules::Guppi::Reader<OT>& getGuppi() {
-        return *guppi;
-    }
-
     Result run();
-
-    const Vector<Device::CPU, OT>& getOutput() {
-        return guppi->getOutput();
-    }
-
-    constexpr const F64 getOutputEpochSeconds() {
-        return guppi->getBlockEpochSeconds(); 
-    }
 
  private:
     const Config config;

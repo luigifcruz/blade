@@ -65,19 +65,21 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         getBlockMeta(&gr_iterate)->piperblk = this->getBlockNumberOfTimeSamples();
     }
 
-    if (this->getNumberOfAntennas() == 0) {
+    if (this->getStepNumberOfAntennas() == 0) {
         this->config.stepNumberOfAntennas = this->getTotalNumberOfAntennas();
     }
 
-    if (this->getNumberOfFrequencyChannels() == 0) {
+    if (this->getStepNumberOfFrequencyChannels() == 0) {
         this->config.stepNumberOfFrequencyChannels = this->getTotalNumberOfFrequencyChannels();
     }
 
-    if (this->getNumberOfTimeSamples() == 0) {
+    if (this->getStepNumberOfTimeSamples() == 0) {
         this->config.stepNumberOfTimeSamples = this->getBlockNumberOfTimeSamples();
     }
 
-    BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
+    BL_CHECK_THROW(InitOutput(output.stepDut1, 1));
+    BL_CHECK_THROW(InitOutput(output.stepJulianDate, 1));
+    BL_CHECK_THROW(InitOutput(output.stepBuffer, getStepOutputBufferSize()));
 
     BL_INFO("Input File Path: {}", config.filepath);
     BL_INFO("Sample Size: {} bits", this->getDatashape()->n_bit);
@@ -85,25 +87,11 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_INFO("Total Number of Frequency Channels: {}", this->getTotalNumberOfFrequencyChannels());
     BL_INFO("Total Number of Time Samples: {}", this->getTotalNumberOfTimeSamples());
     BL_INFO("Total Number of Polarizations: {}", this->getTotalNumberOfPolarizations());
-    BL_INFO("Step Number of Antennas: {}", this->getNumberOfAntennas());
-    BL_INFO("Step Number of Frequency Channels: {}", this->getNumberOfFrequencyChannels());
-    BL_INFO("Step Number of Time Samples: {}", this->getNumberOfTimeSamples());
-    BL_INFO("Step Number of Polarizations: {}", this->getNumberOfPolarizations());
+    BL_INFO("Step Number of Antennas: {}", this->getStepNumberOfAntennas());
+    BL_INFO("Step Number of Frequency Channels: {}", this->getStepNumberOfFrequencyChannels());
+    BL_INFO("Step Number of Time Samples: {}", this->getStepNumberOfTimeSamples());
+    BL_INFO("Step Number of Polarizations: {}", this->getStepNumberOfPolarizations());
     BL_INFO("Block Number of Time Samples: {}", this->getBlockNumberOfTimeSamples());
-}
-
-template<typename OT>
-const F64 Reader<OT>::getBlockEpochSeconds() {
-    return guppiraw_calc_unix_date(
-        1.0 / this->getChannelBandwidth(),
-        this->getBlockNumberOfTimeSamples(),
-        getBlockMeta(&gr_iterate)->piperblk,
-        getBlockMeta(&gr_iterate)->synctime,
-        getBlockMeta(&gr_iterate)->pktidx + 
-            (
-                this->lastread_block_index + (0.5 * getBlockMeta(&gr_iterate)->piperblk)
-            ) * this->getBlockNumberOfTimeSamples()
-    );
 }
 
 template<typename OT>
@@ -113,7 +101,7 @@ const F64 Reader<OT>::getChannelBandwidth() {
 
 template<typename OT>
 const F64 Reader<OT>::getTotalBandwidth() {
-    return getChannelBandwidth() * getNumberOfFrequencyChannels();
+    return getChannelBandwidth() * getStepNumberOfFrequencyChannels();
 }
 
 template<typename OT>
@@ -127,11 +115,6 @@ const F64 Reader<OT>::getObservationFrequency() {
 }
 
 template<typename OT>
-const F64 Reader<OT>::getObservationDut1() {
-    return getBlockMeta(&gr_iterate)->dut1;
-}
-
-template<typename OT>
 Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     this->lastread_block_index++;
     this->lastread_aspect_index = gr_iterate.aspect_index;
@@ -140,10 +123,24 @@ Result Reader<OT>::preprocess(const cudaStream_t& stream) {
 
     const I64 bytes_read = guppiraw_iterate_read(
         &this->gr_iterate,
-        this->getNumberOfTimeSamples(),
-        this->getNumberOfFrequencyChannels(),
-        this->getNumberOfAntennas(),
-        this->output.buf.data());
+        this->getStepNumberOfTimeSamples(),
+        this->getStepNumberOfFrequencyChannels(),
+        this->getStepNumberOfAntennas(),
+        this->output.stepBuffer.data());
+
+    // TODO: UNIX Date? Isn't this supposed to be Julian Date?
+    this->output.stepJulianDate[0] = 
+        guppiraw_calc_unix_date(
+            1.0 / this->getChannelBandwidth(),
+            this->getBlockNumberOfTimeSamples(),
+            getBlockMeta(&gr_iterate)->piperblk,
+            getBlockMeta(&gr_iterate)->synctime,
+            getBlockMeta(&gr_iterate)->pktidx + 
+                (
+                    this->lastread_block_index + (0.5 * getBlockMeta(&gr_iterate)->piperblk)
+                ) * this->getBlockNumberOfTimeSamples());
+
+    this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
 
     if (bytes_read <= 0) {
         BL_FATAL("File reader couldn't read bytes.");

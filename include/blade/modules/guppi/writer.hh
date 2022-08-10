@@ -20,11 +20,11 @@ class BLADE_API Writer : public Module {
         std::string filepath;
         bool directio;
 
-        U64 numberOfBeams;
-        U64 numberOfAntennas;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations;
+        U64 stepNumberOfBeams;
+        U64 stepNumberOfAntennas;
+        U64 stepNumberOfFrequencyChannels;
+        U64 stepNumberOfTimeSamples;
+        U64 stepNumberOfPolarizations;
 
         U64 totalNumberOfFrequencyChannels;
 
@@ -32,20 +32,16 @@ class BLADE_API Writer : public Module {
     };
 
     struct Input {
-        Vector<Device::CPU, IT> buf;
+        const Vector<Device::CPU, IT>& totalBuffer;
     };
 
     struct Output {
     };
 
-    explicit Writer(const Config& config);
+    explicit Writer(const Config& config, const Input& input);
 
-    constexpr const U64 getInputBatchOffset(U64 channel_batch_index) {
-        return channel_batch_index * this->getInputSize();
-    }
-
-    constexpr Vector<Device::CPU, IT>& getInput() {
-        return this->input.buf;
+    constexpr Vector<Device::CPU, IT>& getTotalInputBuffer() {
+        return const_cast<Vector<Device::CPU, IT>&>(this->input.totalBuffer);
     }
 
     constexpr void headerPut(std::string key, std::string value) {
@@ -72,46 +68,62 @@ class BLADE_API Writer : public Module {
         return this->config;
     }
 
-    constexpr const U64 getNumberOfBeams() const {
-        return this->config.numberOfBeams;
+    constexpr const U64 getStepNumberOfBeams() const {
+        return this->config.stepNumberOfBeams;
     }
 
-    constexpr const U64 getNumberOfAntennas() const {
-        return this->config.numberOfAntennas;
+    constexpr const U64 getStepNumberOfAntennas() const {
+        return this->config.stepNumberOfAntennas;
     }
 
-    constexpr const U64 getNumberOfFrequencyChannels() const {
-        return this->config.numberOfFrequencyChannels;
+    constexpr const U64 getStepNumberOfFrequencyChannels() const {
+        return this->config.stepNumberOfFrequencyChannels;
     }
 
-    constexpr const U64 getNumberOfTimeSamples() const {
-        return this->config.numberOfTimeSamples;
+    constexpr const U64 getStepNumberOfTimeSamples() const {
+        return this->config.stepNumberOfTimeSamples;
     }
 
-    constexpr const U64 getNumberOfPolarizations() const {
-        return this->config.numberOfPolarizations;
+    constexpr const U64 getStepNumberOfPolarizations() const {
+        return this->config.stepNumberOfPolarizations;
     }
 
-    constexpr const U64 getInputSize() const {
+    constexpr const U64 getStepInputBufferSize() const {
         return this->getNumberOfAspects() *
-               this->getNumberOfFrequencyChannels() *
-               this->getNumberOfTimeSamples() * 
-               this->getNumberOfPolarizations();
+               this->getStepNumberOfFrequencyChannels() *
+               this->getStepNumberOfTimeSamples() * 
+               this->getStepNumberOfPolarizations();
+    }
+
+    constexpr const U64 getTotalNumberOfBeams() const {
+        return this->getStepNumberOfBeams();
+    }
+
+    constexpr const U64 getTotalNumberOfAntennas() const {
+        return this->getStepNumberOfAntennas();
     }
 
     constexpr const U64 getTotalNumberOfFrequencyChannels() const {
         return this->config.totalNumberOfFrequencyChannels;
     }
 
-    constexpr const U64 getTotalInputSize() const {
+    constexpr const U64 getTotalNumberOfTimeSamples() const {
+        return this->getStepNumberOfTimeSamples();
+    }
+
+    constexpr const U64 getTotalNumberOfPolarizations() const {
+        return this->getStepNumberOfPolarizations();
+    }
+
+    constexpr const U64 getTotalInputBufferSize() const {
         return this->getNumberOfAspects() *
                this->getTotalNumberOfFrequencyChannels() *
-               this->getNumberOfTimeSamples() * 
-               this->getNumberOfPolarizations();
+               this->getTotalNumberOfTimeSamples() * 
+               this->getTotalNumberOfPolarizations();
     }
 
     constexpr const U64 getNumberOfSteps() const {
-        return this->getTotalNumberOfFrequencyChannels() / this->getNumberOfFrequencyChannels();
+        return this->getTotalNumberOfFrequencyChannels() / this->getStepNumberOfFrequencyChannels();
     }
 
     Result preprocess(const cudaStream_t& stream = 0) final;
@@ -121,17 +133,16 @@ class BLADE_API Writer : public Module {
     Input input;
     Output output;
 
-    U64 file_id = 0;
-    I32 file_descriptor = 0;
-    U64 fileblock_index = 0;
-    Vector<Device::CPU, IT> writeBuffer;
+    U64 fileId;
+    U64 writeCounter;
+    I32 fileDescriptor;
 
     guppiraw_header_t gr_header = {0};
 
     // TODO: Behavior unclear. Zeroed numberOfBeams is undefined. Do we need this?
     constexpr const U64 getNumberOfAspects() const {
-        return this->config.numberOfBeams > 0 ? 
-            this->config.numberOfBeams : this->config.numberOfAntennas;
+        return this->config.stepNumberOfBeams > 0 ? 
+            this->config.stepNumberOfBeams : this->config.stepNumberOfAntennas;
     }
 };
 
