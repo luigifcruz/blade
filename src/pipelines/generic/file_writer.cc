@@ -27,6 +27,8 @@ FileWriter<IT>::FileWriter(const Config& config) : config(config) {
 
 template<typename IT>
 Result FileWriter<IT>::run() {
+    BL_CHECK(this->compute());
+    BL_CHECK(this->synchronize());
 
     return Result::SUCCESS;
 }
