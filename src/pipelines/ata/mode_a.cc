@@ -101,18 +101,17 @@ ModeA<OT>::ModeA(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeA<OT>::run(const F64& blockJulianDate,  // TODO: Change this to Memory::Vector
-                      const F64& blockDut1,        // TODO: Change this to Memory::Vector
+Result ModeA<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
+                      const Vector<Device::CPU, F64>& blockDut1,
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
-    this->blockJulianDate[0] = blockJulianDate;
-    this->blockDut1[0] = blockDut1;
-
-    if (this->getStepCount() == 0) {
-        BL_DEBUG("Block Julian Date: {}", blockJulianDate);
-        BL_DEBUG("Block DUT1: {}", blockDut1);
+    if (this->getCurrentComputeStep() == 0) {
+        BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", blockDut1[0]);
     }
 
+    BL_CHECK(this->copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(this->copy(this->blockDut1, blockDut1));
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy(output, this->getOutput()));

@@ -16,6 +16,9 @@ enum class Result : uint8_t {
     CUDA_ERROR,
     ASSERTION_ERROR,
     EXHAUSTED,
+    BUFFER_FULL,
+    BUFFER_INCOMPLETE,
+    BUFFER_EMPTY,
 };
 
 struct XYZ {

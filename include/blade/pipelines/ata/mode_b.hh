@@ -10,6 +10,7 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
+#include "blade/pipelines/ata/mode_h.hh"
 
 namespace Blade::Pipelines::ATA {
 
@@ -57,17 +58,15 @@ class BLADE_API ModeB : public Pipeline {
             config.outputMemWidth) * outputMemPitch) / sizeof(OT);
     }
 
-    Result run(const F64& blockJulianDate,
-               const F64& blockDut1,
+    Result run(const Vector<Device::CPU, F64>& blockJulianDate,
+               const Vector<Device::CPU, F64>& blockDut1,
                const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
-    Result run(const F64& blockJulianDate,
-               const F64& blockDut1,
+    Result run(const Vector<Device::CPU, F64>& blockJulianDate,
+               const Vector<Device::CPU, F64>& blockDut1,
                const Vector<Device::CPU, CI8>& input,
-               const U64& outputBlockIndex,
-               const U64& outputNumberOfBlocks,
-                     Vector<Device::CUDA, OT>& output);
+                     Pipelines::ATA::ModeH<OT, F32>& nextPipeline);
 
  private:
     const Config config;
@@ -86,10 +85,8 @@ class BLADE_API ModeB : public Pipeline {
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
         if constexpr (!std::is_same<OT, CF32>::value) {
-            // output is casted output
             return outputCast->getOutput();
         } else {
-            // output is un-casted beamformer output (CF32)
             return beamformer->getOutput();
         }
     }

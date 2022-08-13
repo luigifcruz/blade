@@ -17,7 +17,7 @@ static Result Copy(Vector<Device::CPU, T>& dst,
 
     memcpy(dst.data(), src.data(), src.size_bytes());
 
-    return Memory::Copy(dst, src);
+    return Result::SUCCESS;
 }
 
 }  // namespace Blade::Memory

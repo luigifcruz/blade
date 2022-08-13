@@ -16,6 +16,8 @@ using namespace Blade::Pipelines::ATA;
 using TestPipeline = ModeA<F32>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
+static Vector<Device::CPU, F64> dummyJulianDate(1);
+static Vector<Device::CPU, F64> dummyDut1(1);
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
@@ -26,6 +28,9 @@ bool blade_ata_a_initialize(U64 numberOfWorkers) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
+
+    dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
+    dummyDut1[0] = 0.0;
 
     TestPipeline::Config config = {
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_A_CHANNELIZER_RATE,
@@ -130,7 +135,7 @@ bool blade_ata_a_enqueue(void* input_ptr, void* output_ptr, U64 id) {
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
         auto output = Vector<Device::CPU, F32>(output_ptr, worker.getOutputSize());
 
-        worker.run((1649366473.0/ 86400) + 2440587.5, 0.0, input, output);
+        BL_CHECK_THROW(worker.run(dummyJulianDate, dummyDut1, input, output));
 
         return id;
     });

@@ -9,6 +9,7 @@
 #include "blade/module.hh"
 #include "blade/pipeline.hh"
 #include "blade/macros.hh"
+#include "blade/accumulator.hh"
 
 namespace Blade {
 
@@ -65,7 +66,7 @@ Version {} | Build Type: {}
         return jobs.size() != workers.size();
     }
     
-    constexpr const T& getNextWorker() const {
+    constexpr T& getNextWorker() {
         return *workers[head];
     }
 
@@ -85,6 +86,13 @@ Version {} | Build Type: {}
     }
 
     bool enqueue(const std::function<const U64(T&)>& jobFunc) {
+        // If worker has accumulator, check if it's complete.
+        if constexpr (std::is_base_of<Accumulator, T>::value) {
+            if (!getNextWorker().accumulationComplete()) {
+                return false;
+            }
+        }
+
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;

@@ -93,18 +93,17 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const F64& blockJulianDate, // TODO: Change this to Memory::Vector
-                      const F64& blockDut1,       // TODO: Change this to Memory::Vector
+Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
+                      const Vector<Device::CPU, F64>& blockDut1,
                       const Vector<Device::CPU, CI8>& input,
                             Vector<Device::CPU, OT>& output) {
-    this->blockJulianDate[0] = blockJulianDate;
-    this->blockDut1[0] = blockDut1;
-
-    if (this->getStepCount() == 0) {
-        BL_DEBUG("Block Julian Date: {}", blockJulianDate);
-        BL_DEBUG("Block DUT1: {}", blockDut1);
+    if (this->getCurrentComputeStep() == 0) {
+        BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", blockDut1[0]);
     }
 
+    BL_CHECK(this->copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(this->copy(this->blockDut1, blockDut1));
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
     BL_CHECK(this->copy2D(
@@ -122,38 +121,20 @@ Result ModeB<OT>::run(const F64& blockJulianDate, // TODO: Change this to Memory
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const F64& blockJulianDate,  // TODO: Change this to Memory::Vector
-                      const F64& blockDut1,        // TODO: Change this to Memory::Vector
+Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
+                      const Vector<Device::CPU, F64>& blockDut1,
                       const Vector<Device::CPU, CI8>& input, 
-                      const U64& outputBlockIndex,
-                      const U64& outputNumberOfBlocks,
-                            Vector<Device::CUDA, OT>& output) {
-    this->blockJulianDate[0] = blockJulianDate;
-    this->blockDut1[0] = blockDut1;
-
-    if (this->getStepCount() == 0) {
-        BL_DEBUG("Block Julian Date: {}", blockJulianDate);
-        BL_DEBUG("Block DUT1: {}", blockDut1);
+                            Pipelines::ATA::ModeH<OT, F32>& nextPipeline) {
+    if (this->getCurrentComputeStep() == 0) {
+        BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", blockDut1[0]);
     }
 
+    BL_CHECK(this->copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(this->copy(this->blockDut1, blockDut1));
     BL_CHECK(this->copy(inputCast->getInput(), input));
     BL_CHECK(this->compute());
-
-    const auto& width = (beamformer->getOutputSize() / config.beamformerNumberOfBeams / 
-            (config.beamformerNumberOfFrequencyChannels * config.preBeamformerChannelizerRate)) * sizeof(OT);
-    const auto& height = config.beamformerNumberOfBeams * 
-            (config.beamformerNumberOfFrequencyChannels * config.preBeamformerChannelizerRate);
-
-    BL_CHECK(this->copy2D(
-        output,
-        width * outputNumberOfBlocks,
-        0,
-        this->getOutput(),
-        width,
-        0,
-        width,
-        height
-    )); 
+    BL_CHECK(nextPipeline.accumulate(this->getOutput(), this->getCudaStream()));
 
     return Result::SUCCESS;
 }

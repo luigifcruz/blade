@@ -5,14 +5,16 @@
 #include <deque>
 
 #include "blade/pipeline.hh"
+#include "blade/accumulator.hh"
 
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/detector.hh"
+#include "blade/modules/cast.hh"
 
 namespace Blade::Pipelines::ATA {
 
-template<typename OT = F32>
-class BLADE_API ModeH : public Pipeline {
+template<typename IT = CF32, typename OT = F32>
+class BLADE_API ModeH : public Pipeline, public Accumulator {
  public:
     struct Config {
         U64 accumulateRate;
@@ -24,6 +26,7 @@ class BLADE_API ModeH : public Pipeline {
 
         U64 detectorNumberOfOutputPolarizations;
 
+        U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };
@@ -38,22 +41,30 @@ class BLADE_API ModeH : public Pipeline {
         return detector->getOutputSize();
     }
 
-    constexpr Vector<Device::CUDA, CF32>& getInput() const {
-        return channelizer->getInput();
-    }
+    Result accumulate(const Vector<Device::CUDA, IT>& data,
+                      const cudaStream_t& stream);
 
     Result run(Vector<Device::CPU, OT>& output);
 
  private:
     const Config config;
 
-    Vector<Device::CUDA, CF32> input;
+    Vector<Device::CUDA, IT> input;
 
+    std::shared_ptr<Modules::Cast<CF16, CF32>> cast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
         return detector->getOutput();
+    }
+
+    constexpr const Vector<Device::CUDA, CF32>& getChannelizerInput() {
+        if constexpr (!std::is_same<IT, CF32>::value) {
+            return cast->getOutput();
+        } else {
+            return input;
+        }
     }
 };
 

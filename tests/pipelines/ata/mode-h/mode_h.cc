@@ -15,7 +15,7 @@ using namespace Blade;
 using namespace Blade::Pipelines::ATA;
 
 using TestPipelineB = ModeB<CF32>;
-using TestPipelineH = ModeH<F32>;
+using TestPipelineH = ModeH<CF32, F32>;
 
 static struct {
     struct {
@@ -27,16 +27,10 @@ static struct {
         std::unique_ptr<Runner<TestPipelineB>> B; 
         std::unique_ptr<Runner<TestPipelineH>> H; 
     } RunnersInstances;
-
-    U64 AccumulatorCounter;
-    constexpr const U64& IncrementAccumulatorCounter() {
-        AccumulatorCounter = (AccumulatorCounter + 1) % 
-            BLADE_ATA_MODE_H_ACCUMULATE_RATE;
-        return AccumulatorCounter;
-    }
-
-    std::map<U64, U64> Broker; 
 } State;
+
+static Vector<Device::CPU, F64> dummyJulianDate(1);
+static Vector<Device::CPU, F64> dummyDut1(1);
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
@@ -48,7 +42,8 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    State.AccumulatorCounter = 0;
+    dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
+    dummyDut1[0] = 0.0;
 
     State.RunnersConfig.B = {
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
@@ -138,15 +133,13 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
         .detectorBlockSize = 512,
     };
 
-    State.RunnersInstances.B = Runner<TestPipelineB>::New(
-        numberOfWorkers, 
-        State.RunnersConfig.B
-    );
+    State.RunnersInstances.B = 
+        Runner<TestPipelineB>::New(numberOfWorkers, 
+                                   State.RunnersConfig.B);
 
-    State.RunnersInstances.H = Runner<TestPipelineH>::New(
-        numberOfWorkers, 
-        State.RunnersConfig.H
-    );
+    State.RunnersInstances.H = 
+        Runner<TestPipelineH>::New(numberOfWorkers, 
+                                   State.RunnersConfig.H);
 
     return true;
 }
@@ -185,21 +178,9 @@ bool blade_ata_h_enqueue_b(void* input_ptr, const U64 b_id) {
 
     return State.RunnersInstances.B->enqueue([&](auto& worker){
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
+        auto& next = State.RunnersInstances.H->getNextWorker();
 
-        auto& output = State.RunnersInstances.H->getNextWorker().getInput(); 
-
-        worker.run(
-            (1649366473.0/ 86400) + 2440587.5,
-            0.0, 
-            input, 
-            State.AccumulatorCounter, 
-            BLADE_ATA_MODE_H_ACCUMULATE_RATE, 
-            output
-        );
-
-        State.Broker[b_id] = State.AccumulatorCounter;
-
-        State.IncrementAccumulatorCounter();
+        BL_CHECK_THROW(worker.run(dummyJulianDate, dummyDut1, input, next));
 
         return b_id;
     });
@@ -214,14 +195,10 @@ bool blade_ata_h_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
     assert(State.RunnersInstances.B);
     assert(State.RunnersInstances.H);
 
-    if (State.Broker[b_id] != (BLADE_ATA_MODE_H_ACCUMULATE_RATE - 1)) {
-        return false;
-    }
-
     return State.RunnersInstances.H->enqueue([&](auto& worker){
         auto output = Vector<Device::CPU, F32>(output_ptr, worker.getOutputSize());
 
-        worker.run(output);
+        BL_CHECK_THROW(worker.run(output));
 
         return h_id;
     });

@@ -89,10 +89,11 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
 
     while (reader.run() == Result::SUCCESS) {
         const auto& res = runner->enqueue([&](auto& worker){
-            worker.run(reader.getStepOutputJulianDate()[0],
-                       reader.getStepOutputDut1()[0], 
-                       reader.getStepOutputBuffer(), 
-                       *writer_batch_buffers[buffer_idx]);
+            BL_CHECK_THROW(
+                worker.run(reader.getStepOutputJulianDate(),
+                           reader.getStepOutputDut1(), 
+                           reader.getStepOutputBuffer(), 
+                           *writer_batch_buffers[buffer_idx]));
             return job_idx;
         });
 

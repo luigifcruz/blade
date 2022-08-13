@@ -136,8 +136,12 @@ class BLADE_API Pipeline {
             src_pad, width, height, this->stream);
     }
 
-    constexpr const U64& getStepCount() const {
+    constexpr const U64& getCurrentComputeStep() const {
         return stepCount;
+    }
+
+    constexpr const cudaStream_t& getCudaStream() const {
+        return stream;
     }
 
  private:
