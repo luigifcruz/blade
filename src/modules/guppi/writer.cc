@@ -49,7 +49,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
 }
 
 template<typename IT>
-Result Writer<IT>::preprocess(const cudaStream_t& stream) {
+const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
     const auto& bytesWritten = 
         guppiraw_write_block_batched(
             this->fileDescriptor, 

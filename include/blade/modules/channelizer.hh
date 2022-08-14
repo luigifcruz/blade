@@ -53,7 +53,7 @@ class BLADE_API Channelizer : public Module {
                config.numberOfBeams;
     }
 
-    Result process(const cudaStream_t& stream = 0) final;
+    const Result process(const cudaStream_t& stream = 0) final;
 
  private:
     const Config config;

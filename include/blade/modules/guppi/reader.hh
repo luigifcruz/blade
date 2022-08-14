@@ -129,7 +129,7 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time;
     }
 
-    Result preprocess(const cudaStream_t& stream = 0) final;
+    const Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
     Config config;

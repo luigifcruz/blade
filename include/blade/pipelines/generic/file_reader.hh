@@ -120,7 +120,7 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getBeamCoordinates();
     }
 
-    Result run();
+    const Result run();
 
  private:
     const Config config;

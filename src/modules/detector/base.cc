@@ -64,7 +64,7 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 }
 
 template<typename IT, typename OT>
-Result Detector<IT, OT>::process(const cudaStream_t& stream) {
+const Result Detector<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
         ->configure(grid, block, 0, stream)

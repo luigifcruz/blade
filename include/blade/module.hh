@@ -21,11 +21,11 @@ class Module {
                     const jitify2::PreprocessedProgram& kernel);
     virtual ~Module() = default;
 
-    virtual constexpr Result preprocess(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result  preprocess(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result process(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result process(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 
@@ -35,7 +35,7 @@ class Module {
     dim3 grid, block;
 
     template<typename T>
-    static Result InitInput(const T& buffer, std::size_t size) {
+    static const Result InitInput(const T& buffer, std::size_t size) {
         if (buffer.empty()) {
             BL_DEBUG("Input is empty, allocating {} elements", size);
             return const_cast<T&>(buffer).resize(size);
@@ -51,7 +51,7 @@ class Module {
     }
 
     template<typename T>
-    static Result InitOutput(T& buffer, std::size_t size) {
+    static const Result InitOutput(T& buffer, std::size_t size) {
         if (!buffer.empty()) {
             BL_FATAL("The output buffer should be empty on initialization.");
             return Result::ERROR;

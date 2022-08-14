@@ -7,8 +7,8 @@
 namespace Blade::Memory {
 
 template<typename T>
-static Result PageLock(const Vector<Device::CPU, T>& vec,
-                        const bool& readOnly = false) {
+static const Result PageLock(const Vector<Device::CPU, T>& vec,
+                             const bool& readOnly = false) {
     cudaPointerAttributes attr;
     BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, vec.data()), [&]{
         BL_FATAL("Failed to get pointer attributes: {}", err);

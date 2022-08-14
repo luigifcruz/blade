@@ -59,7 +59,7 @@ class BLADE_API Generic : public Module {
     virtual constexpr U64 getDelaysSize() const = 0;
     virtual constexpr U64 getCalibrationsSize() const = 0;
 
-    virtual Result preprocess(const cudaStream_t& stream = 0) = 0;
+    virtual const Result preprocess(const cudaStream_t& stream = 0) = 0;
 
  protected:
     const Config config;

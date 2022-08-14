@@ -57,16 +57,16 @@ class BLADE_API ModeB : public Pipeline {
             config.outputMemWidth) * outputMemPitch) / sizeof(OT);
     }
 
-    Result run(const Vector<Device::CPU, F64>& blockJulianDate,
-               const Vector<Device::CPU, F64>& blockDut1,
-               const Vector<Device::CPU, CI8>& input,
-                     Vector<Device::CPU, OT>& output);
+    const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
+                     const Vector<Device::CPU, F64>& blockDut1,
+                     const Vector<Device::CPU, CI8>& input,
+                            Vector<Device::CPU, OT>& output);
 
     template<class NextPipeline>
-    Result run(const Vector<Device::CPU, F64>& blockJulianDate,
-               const Vector<Device::CPU, F64>& blockDut1,
-               const Vector<Device::CPU, CI8>& input,
-                     NextPipeline& nextPipeline) {
+    const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
+                     const Vector<Device::CPU, F64>& blockDut1,
+                     const Vector<Device::CPU, CI8>& input,
+                            NextPipeline& nextPipeline) {
         // Print debug messages, copy input variables, and compute.
         BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
 
@@ -91,9 +91,9 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
 
-    Result underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
-                         const Vector<Device::CPU, F64>& blockDut1,
-                         const Vector<Device::CPU, CI8>& input);
+    const Result underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
+                               const Vector<Device::CPU, F64>& blockDut1,
+                               const Vector<Device::CPU, CI8>& input);
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
         if constexpr (!std::is_same<OT, CF32>::value) {

@@ -36,7 +36,7 @@ class BLADE_API Cast : public Module {
         return this->config;
     }
 
-    Result process(const cudaStream_t& stream = 0) final;
+    const Result process(const cudaStream_t& stream = 0) final;
 
  private:
     const Config config;

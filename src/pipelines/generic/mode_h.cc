@@ -51,8 +51,8 @@ ModeH<IT, OT>::ModeH(const Config& config)
 }
 
 template<typename IT, typename OT>
-Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
-                                 const cudaStream_t& stream) {
+const Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
+                                       const cudaStream_t& stream) {
     if (this->accumulationComplete()) {
         BL_FATAL("Can't accumulate block because buffer is full.");
         return Result::BUFFER_FULL;
@@ -80,7 +80,7 @@ Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
 }
 
 template<typename IT, typename OT>
-Result ModeH<IT, OT>::run(Vector<Device::CPU, OT>& output) {
+const Result ModeH<IT, OT>::run(Vector<Device::CPU, OT>& output) {
     if (!this->accumulationComplete()) {
         BL_FATAL("Can't run compute because acumulator buffer is incomplete ({}/{}).", 
             this->getCurrentAccumulatorStep(), this->getAccumulatorNumberOfSteps());

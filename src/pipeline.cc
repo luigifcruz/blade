@@ -17,7 +17,7 @@ Pipeline::~Pipeline() {
     cudaStreamDestroy(this->stream);
 }
 
-Result Pipeline::synchronize() {
+const Result Pipeline::synchronize() {
     BL_CUDA_CHECK(cudaStreamSynchronize(this->stream), [&]{
         BL_FATAL("Failed to synchronize stream: {}", err);
     });
@@ -28,7 +28,7 @@ bool Pipeline::isSynchronized() {
     return cudaStreamQuery(this->stream) == cudaSuccess;
 }
 
-Result Pipeline::compute() {
+const Result Pipeline::compute() {
     for (auto& module : this->modules) {
         BL_CHECK(module->preprocess());
     }

@@ -24,7 +24,7 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
 }
 
 template<typename IT, typename OT>
-Result Cast<IT, OT>::process(const cudaStream_t& stream) {
+const Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
         ->configure(grid, block, 0, stream)

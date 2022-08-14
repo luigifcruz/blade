@@ -12,8 +12,8 @@ class Test : public Pipeline {
         this->connect(cast, {inputSize, 512}, {input});
     }
 
-    Result run(const Vector<Device::CPU, IT>& input,
-                     Vector<Device::CPU, OT>& output) {
+    const Result run(const Vector<Device::CPU, IT>& input,
+                           Vector<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(cast->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, cast->getOutput()));

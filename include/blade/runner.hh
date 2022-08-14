@@ -70,8 +70,8 @@ Version {} | Build Type: {}
         return *workers[head];
     }
 
-    Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
-                             const bool block = false) {
+    const Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
+                                   const bool block = false) {
         for (auto& worker : workers) {
              BL_CHECK(modifier(*worker));
         }

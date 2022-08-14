@@ -16,8 +16,8 @@ class Test : public Pipeline {
         return channelizer->getBufferSize();
     }
 
-    Result run(const Vector<Device::CPU, IT>& input,
-                     Vector<Device::CPU, OT>& output) {
+    const Result run(const Vector<Device::CPU, IT>& input,
+                           Vector<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(channelizer->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, channelizer->getOutput()));

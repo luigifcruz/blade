@@ -40,7 +40,7 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
 }
 
 template<typename OT>
-Result FileReader<OT>::run() {
+const Result FileReader<OT>::run() {
     if (!guppi->keepRunning()) {
         return Result::EXHAUSTED;
     }

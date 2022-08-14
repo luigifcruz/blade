@@ -29,7 +29,7 @@ class BLADE_API ATA : public Generic<OT> {
                this->config.numberOfPolarizations;
     }
 
-    Result preprocess(const cudaStream_t& stream = 0) final;
+    const Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
     std::vector<XYZ> antennasXyz;

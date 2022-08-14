@@ -26,7 +26,7 @@ class BLADE_API Vector<Device::CPU, T> : public VectorImpl<T> {
     }
 
     // TODO: Implement resize.
-    Result resize(const U64& size) override {
+    const Result resize(const U64& size) override {
         if (!this->container.empty() && !this->managed) {
             return Result::ERROR;
         }

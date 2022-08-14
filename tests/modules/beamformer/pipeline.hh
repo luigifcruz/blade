@@ -24,10 +24,10 @@ class Test : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    Result run(const Vector<Device::CPU, IT>& input,
-               const Vector<Device::CPU, IT>& phasors,
-                     Vector<Device::CPU, OT>& output,
-               const bool synchronize = false) {
+    const Result run(const Vector<Device::CPU, IT>& input,
+                     const Vector<Device::CPU, IT>& phasors,
+                           Vector<Device::CPU, OT>& output,
+                     const bool synchronize = false) {
         BL_CHECK(this->copy(beamformer->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, beamformer->getOutput()));

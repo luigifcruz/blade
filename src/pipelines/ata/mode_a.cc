@@ -101,10 +101,10 @@ ModeA<OT>::ModeA(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeA<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
-                      const Vector<Device::CPU, F64>& blockDut1,
-                      const Vector<Device::CPU, CI8>& input,
-                            Vector<Device::CPU, OT>& output) {
+const Result ModeA<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, CI8>& input,
+                                    Vector<Device::CPU, OT>& output) {
     if (this->getCurrentComputeStep() == 0) {
         BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
         BL_DEBUG("Block DUT1: {}", blockDut1[0]);

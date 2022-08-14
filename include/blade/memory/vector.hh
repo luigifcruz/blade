@@ -58,7 +58,7 @@ class VectorImpl {
         return container;
     }
 
-    Result link(const VectorImpl<T>& src) {
+    const Result link(const VectorImpl<T>& src) {
         if (src.empty()) {
             BL_FATAL("Source can't be empty while linking.");
             return Result::ERROR;
@@ -70,7 +70,7 @@ class VectorImpl {
         return Result::SUCCESS;
     }
 
-    virtual Result resize(const U64& size) = 0;
+    virtual const Result resize(const U64& size) = 0;
 
  protected:
     std::span<T> container;

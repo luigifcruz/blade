@@ -115,7 +115,7 @@ const F64 Reader<OT>::getObservationFrequency() {
 }
 
 template<typename OT>
-Result Reader<OT>::preprocess(const cudaStream_t& stream) {
+const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     this->lastread_block_index++;
     this->lastread_aspect_index = gr_iterate.aspect_index;
     this->lastread_channel_index = gr_iterate.chan_index;

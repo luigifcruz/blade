@@ -106,7 +106,7 @@ class BLADE_API FileWriter : public Pipeline {
         return this->config;
     }
 
-    Result run();
+    const Result run();
 
  private:
     const Config config;

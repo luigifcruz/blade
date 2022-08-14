@@ -61,10 +61,10 @@ class BLADE_API ModeA : public Pipeline {
         return detector->getOutputSize();
     }
 
-    Result run(const Vector<Device::CPU, F64>& blockJulianDate,
-               const Vector<Device::CPU, F64>& blockDut1,
-               const Vector<Device::CPU, CI8>& input,
-                     Vector<Device::CPU, OT>& output);
+    const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
+                     const Vector<Device::CPU, F64>& blockDut1,
+                     const Vector<Device::CPU, CI8>& input,
+                           Vector<Device::CPU, OT>& output);
 
  private:
     const Config config;

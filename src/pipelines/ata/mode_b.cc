@@ -93,9 +93,9 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeB<OT>::underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
-                                const Vector<Device::CPU, F64>& blockDut1,
-                                const Vector<Device::CPU, CI8>& input) { 
+const Result ModeB<OT>::underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
+                                      const Vector<Device::CPU, F64>& blockDut1,
+                                      const Vector<Device::CPU, CI8>& input) { 
     // Print dynamic arguments on first run.
     if (this->getCurrentComputeStep() == 0) {
         BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
@@ -114,10 +114,10 @@ Result ModeB<OT>::underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
-                      const Vector<Device::CPU, F64>& blockDut1,
-                      const Vector<Device::CPU, CI8>& input,
-                            Vector<Device::CPU, OT>& output) {
+const Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, CI8>& input,
+                                    Vector<Device::CPU, OT>& output) {
     // Print debug messages, copy input variables, and compute.
     BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
 

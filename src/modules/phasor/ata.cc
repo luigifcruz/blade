@@ -81,7 +81,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 }
 
 template<typename OT>
-Result ATA<OT>::preprocess(const cudaStream_t& stream) {
+const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     HA_DEC boresight_ha_dec = {0.0, 0.0};
 
     //  Convert Boresight RA & Declination to Hour Angle & Declination.

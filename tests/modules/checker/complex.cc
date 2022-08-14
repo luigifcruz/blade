@@ -2,7 +2,7 @@
 
 using namespace Blade;
 
-Result Init(U64 testSize = 8192) {
+const Result Init(U64 testSize = 8192) {
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;
     static CF32* output_ptr;

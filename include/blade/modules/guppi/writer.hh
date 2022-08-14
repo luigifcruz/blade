@@ -126,7 +126,7 @@ class BLADE_API Writer : public Module {
         return this->getTotalNumberOfFrequencyChannels() / this->getStepNumberOfFrequencyChannels();
     }
 
-    Result preprocess(const cudaStream_t& stream = 0) final;
+    const Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
     Config config;

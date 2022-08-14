@@ -151,7 +151,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
 }
 
 template<typename IT, typename OT>
-Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
+const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     if (config.rate == 1) {
         return Result::SUCCESS;
     } 

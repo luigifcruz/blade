@@ -41,10 +41,10 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
         return detector->getOutputSize();
     }
 
-    Result accumulate(const Vector<Device::CUDA, IT>& data,
-                      const cudaStream_t& stream);
+    const Result accumulate(const Vector<Device::CUDA, IT>& data,
+                            const cudaStream_t& stream);
 
-    Result run(Vector<Device::CPU, OT>& output);
+    const Result run(Vector<Device::CPU, OT>& output);
 
  private:
     const Config config;
