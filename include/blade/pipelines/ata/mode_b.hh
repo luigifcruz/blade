@@ -63,10 +63,19 @@ class BLADE_API ModeB : public Pipeline {
                const Vector<Device::CPU, CI8>& input,
                      Vector<Device::CPU, OT>& output);
 
+    template<class NextPipeline>
     Result run(const Vector<Device::CPU, F64>& blockJulianDate,
                const Vector<Device::CPU, F64>& blockDut1,
                const Vector<Device::CPU, CI8>& input,
-                     Pipelines::ATA::ModeH<OT, F32>& nextPipeline);
+                     NextPipeline& nextPipeline) {
+        // Print debug messages, copy input variables, and compute.
+        BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
+
+        // Call next pipeline accumulate function.
+        BL_CHECK(nextPipeline.accumulate(this->getOutput(), this->getCudaStream()));
+
+        return Result::SUCCESS;
+    }
 
  private:
     const Config config;
@@ -82,6 +91,10 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
+
+    Result underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
+                         const Vector<Device::CPU, F64>& blockDut1,
+                         const Vector<Device::CPU, CI8>& input);
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
         if constexpr (!std::is_same<OT, CF32>::value) {

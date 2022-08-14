@@ -93,29 +93,22 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
-                      const Vector<Device::CPU, F64>& blockDut1,
-                      const Vector<Device::CPU, CI8>& input,
-                            Vector<Device::CPU, OT>& output) {
+Result ModeB<OT>::underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
+                                const Vector<Device::CPU, F64>& blockDut1,
+                                const Vector<Device::CPU, CI8>& input) { 
+    // Print dynamic arguments on first run.
     if (this->getCurrentComputeStep() == 0) {
         BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
         BL_DEBUG("Block DUT1: {}", blockDut1[0]);
     }
 
+    // Copy input to static buffers.
     BL_CHECK(this->copy(this->blockJulianDate, blockJulianDate));
     BL_CHECK(this->copy(this->blockDut1, blockDut1));
     BL_CHECK(this->copy(inputCast->getInput(), input));
+
+    // Trigger pipeline modules compute.
     BL_CHECK(this->compute());
-    BL_CHECK(this->copy2D(
-        output,
-        outputMemPitch,         // dpitch
-        0,
-        this->getOutput(),      // src
-        config.outputMemWidth,  // spitch
-        0,
-        config.outputMemWidth,  // width
-        (beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth
-    ));
 
     return Result::SUCCESS;
 }
@@ -123,18 +116,22 @@ Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
 template<typename OT>
 Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
                       const Vector<Device::CPU, F64>& blockDut1,
-                      const Vector<Device::CPU, CI8>& input, 
-                            Pipelines::ATA::ModeH<OT, F32>& nextPipeline) {
-    if (this->getCurrentComputeStep() == 0) {
-        BL_DEBUG("Block Julian Date: {}", blockJulianDate[0]);
-        BL_DEBUG("Block DUT1: {}", blockDut1[0]);
-    }
+                      const Vector<Device::CPU, CI8>& input,
+                            Vector<Device::CPU, OT>& output) {
+    // Print debug messages, copy input variables, and compute.
+    BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
 
-    BL_CHECK(this->copy(this->blockJulianDate, blockJulianDate));
-    BL_CHECK(this->copy(this->blockDut1, blockDut1));
-    BL_CHECK(this->copy(inputCast->getInput(), input));
-    BL_CHECK(this->compute());
-    BL_CHECK(nextPipeline.accumulate(this->getOutput(), this->getCudaStream()));
+    // Handle the output accordingly.
+    BL_CHECK(
+        this->copy2D(
+            output,
+            outputMemPitch,
+            0,
+            this->getOutput(),
+            config.outputMemWidth,
+            0,
+            config.outputMemWidth,
+            (beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth));
 
     return Result::SUCCESS;
 }
