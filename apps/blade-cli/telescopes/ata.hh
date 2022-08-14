@@ -14,10 +14,6 @@
 #include "blade/pipelines/ata/mode_b.hh"
 #endif
 
-#ifdef BLADE_PIPELINE_ATA_MODE_H
-#include "blade/pipelines/ata/mode_h.hh"
-#endif
-
 template<typename IT, typename OT>
 inline const Result SetupAtaModeB(const CliConfig& cliConfig, 
                                   Pipelines::Generic::FileReader<IT>& reader) {
@@ -116,13 +112,13 @@ template<typename IT, typename OT>
 inline const Result SetupAta(const CliConfig& config,
                              Pipelines::Generic::FileReader<IT>& reader) {
     switch (config.mode) {
-#ifdef BLADE_PIPELINE_ATA_MODE_A
+#if defined(BLADE_PIPELINE_ATA_MODE_A)
 #endif
-#ifdef BLADE_PIPELINE_ATA_MODE_B
+#if defined(BLADE_PIPELINE_ATA_MODE_B)
         case ModeId::MODE_B:
             return SetupAtaModeB<IT, OT>(config, reader);
 #endif
-#ifdef BLADE_PIPELINE_ATA_MODE_H
+#if defined(BLADE_PIPELINE_ATA_MODE_B) && defined(BLADE_PIPELINE_GENERIC_MODE_H)
 #endif
         default:
             BL_FATAL("This ATA mode is not implemented yet.");

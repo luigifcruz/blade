@@ -8,11 +8,7 @@
 #endif
 
 #ifdef BLADE_PIPELINES_ATA_MODE_B
-#include "blade/pipelines/ata/mode_B.hh"
-#endif
-
-#ifdef BLADE_PIPELINES_ATA_MODE_H
-#include "blade/pipelines/ata/mode_h.hh"
+#include "blade/pipelines/ata/mode_b.hh"
 #endif
 
 #endif

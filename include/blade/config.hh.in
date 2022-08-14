@@ -21,11 +21,11 @@
 // ATA Pipelines
 #mesondefine BLADE_PIPELINE_ATA_MODE_A
 #mesondefine BLADE_PIPELINE_ATA_MODE_B
-#mesondefine BLADE_PIPELINE_ATA_MODE_H
 
 // Generic Pipelines
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_WRITER
+#mesondefine BLADE_PIPELINE_GENERIC_MODE_H
 
 // Dependency Loaders
 #mesondefine BLADE_LOADER_RADIOINTERFEROMETRY

@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_ATA_MODE_H_HH
-#define BLADE_PIPELINES_ATA_MODE_H_HH
+#ifndef BLADE_PIPELINES_GENERIC_MODE_H_HH
+#define BLADE_PIPELINES_GENERIC_MODE_H_HH
 
 #include <memory>
 #include <deque>
@@ -11,9 +11,9 @@
 #include "blade/modules/detector.hh"
 #include "blade/modules/cast.hh"
 
-namespace Blade::Pipelines::ATA {
+namespace Blade::Pipelines::Generic {
 
-template<typename IT = CF32, typename OT = F32>
+template<typename IT, typename OT>
 class BLADE_API ModeH : public Pipeline, public Accumulator {
  public:
     struct Config {
@@ -68,6 +68,6 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
     }
 };
 
-}  // namespace Blade::Pipelines::ATA
+}  // namespace Blade::Pipelines::Generic
 
 #endif

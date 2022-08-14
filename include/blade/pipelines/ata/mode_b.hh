@@ -10,7 +10,6 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
-#include "blade/pipelines/ata/mode_h.hh"
 
 namespace Blade::Pipelines::ATA {
 

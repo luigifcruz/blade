@@ -1,12 +1,12 @@
-#include "blade/pipelines/ata/mode_h.hh"
+#include "blade/pipelines/generic/mode_h.hh"
 
-namespace Blade::Pipelines::ATA {
+namespace Blade::Pipelines::Generic {
 
 template<typename IT, typename OT>
 ModeH<IT, OT>::ModeH(const Config& config)
      : Accumulator(config.accumulateRate),
        config(config) {
-    BL_DEBUG("Initializing ATA Pipeline Mode H.");
+    BL_DEBUG("Initializing Pipeline Mode H.");
 
     if constexpr (!std::is_same<IT, CF32>::value) {
         BL_DEBUG("Instantiating input cast from CF16 to CF32.");
@@ -98,4 +98,4 @@ Result ModeH<IT, OT>::run(Vector<Device::CPU, OT>& output) {
 template class BLADE_API ModeH<CF16, F32>;
 template class BLADE_API ModeH<CF32, F32>;
 
-}  // namespace Blade::Pipelines::ATA
+}  // namespace Blade::Pipelines::Generic

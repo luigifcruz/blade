@@ -5,14 +5,15 @@
 #include "blade/logger.hh"
 #include "blade/runner.hh"
 #include "blade/pipelines/ata/mode_b.hh"
-#include "blade/pipelines/ata/mode_h.hh"
+#include "blade/pipelines/generic/mode_h.hh"
 
 extern "C" {
-#include "mode_h.h"
+#include "mode_bh.h"
 }
 
 using namespace Blade;
 using namespace Blade::Pipelines::ATA;
+using namespace Blade::Pipelines::Generic;
 
 using TestPipelineB = ModeB<CF32>;
 using TestPipelineH = ModeH<CF32, F32>;
@@ -36,7 +37,7 @@ bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
 }
 
-bool blade_ata_h_initialize(U64 numberOfWorkers) {
+bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     if (State.RunnersInstances.B || State.RunnersInstances.H) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -46,7 +47,7 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
     dummyDut1[0] = 0.0;
 
     State.RunnersConfig.B = {
-        .preBeamformerChannelizerRate = BLADE_ATA_MODE_H_CHANNELIZER_RATE,
+        .preBeamformerChannelizerRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
 
         .phasorObservationFrequencyHz = 6500.125*1e6,
         .phasorChannelBandwidthHz = 0.5e6,
@@ -98,11 +99,11 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
         },
 
-        .beamformerNumberOfAntennas = BLADE_ATA_MODE_H_INPUT_NANT,
-        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_H_ANT_NCHAN,
-        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_H_NTIME,
-        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_H_NPOL,
-        .beamformerNumberOfBeams = BLADE_ATA_MODE_H_OUTPUT_NBEAM,
+        .beamformerNumberOfAntennas = BLADE_ATA_MODE_BH_INPUT_NANT,
+        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_BH_ANT_NCHAN,
+        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_BH_NTIME,
+        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_BH_NPOL,
+        .beamformerNumberOfBeams = BLADE_ATA_MODE_BH_OUTPUT_NBEAM,
 
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
@@ -118,7 +119,7 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
     );
 
     State.RunnersConfig.H = {
-        .accumulateRate = BLADE_ATA_MODE_H_ACCUMULATE_RATE, 
+        .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
 
         .channelizerNumberOfBeams = State.RunnersConfig.B.beamformerNumberOfBeams,
         .channelizerNumberOfFrequencyChannels = State.RunnersConfig.B.beamformerNumberOfFrequencyChannels * 
@@ -144,7 +145,7 @@ bool blade_ata_h_initialize(U64 numberOfWorkers) {
     return true;
 }
 
-void blade_ata_h_terminate() {
+void blade_ata_bh_terminate() {
     if (!State.RunnersInstances.B || !State.RunnersInstances.H) {
         BL_FATAL("Can't terminate because Blade Runner isn't initialized.");
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -154,12 +155,12 @@ void blade_ata_h_terminate() {
     State.RunnersInstances.H.reset();
 }
 
-U64 blade_ata_h_get_input_size() {
+U64 blade_ata_bh_get_input_size() {
     assert(State.RunnersInstances.B);
     return State.RunnersInstances.B->getWorker().getInputSize();
 }
 
-U64 blade_ata_h_get_output_size() {
+U64 blade_ata_bh_get_output_size() {
     assert(State.RunnersInstances.H);
     return State.RunnersInstances.H->getWorker().getOutputSize();
 }
@@ -168,7 +169,7 @@ bool blade_pin_memory(void* buffer, U64 size) {
     return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
 }
 
-bool blade_ata_h_enqueue_b(void* input_ptr, const U64 b_id) {
+bool blade_ata_bh_enqueue_b(void* input_ptr, const U64 b_id) {
     assert(State.RunnersInstances.B);
     assert(State.RunnersInstances.H);
 
@@ -186,12 +187,12 @@ bool blade_ata_h_enqueue_b(void* input_ptr, const U64 b_id) {
     });
 }
 
-bool blade_ata_h_dequeue_b(U64* b_id) {
+bool blade_ata_bh_dequeue_b(U64* b_id) {
     assert(State.RunnersInstances.B);
     return State.RunnersInstances.B->dequeue(b_id);
 }
 
-bool blade_ata_h_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
+bool blade_ata_bh_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
     assert(State.RunnersInstances.B);
     assert(State.RunnersInstances.H);
 
@@ -204,7 +205,7 @@ bool blade_ata_h_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
     });
 }
 
-bool blade_ata_h_dequeue_h(U64* id) {
+bool blade_ata_bh_dequeue_h(U64* id) {
     assert(State.RunnersInstances.H);
     return State.RunnersInstances.H->dequeue(id);
 }
