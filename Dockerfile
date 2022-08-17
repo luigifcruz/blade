@@ -9,7 +9,7 @@ RUN apt-get update --fix-missing
 COPY . /blade
 WORKDIR /blade
 
-RUN apt-get install -y g++-10 libfmt-dev pybind11-dev libspdlog-dev python3-pip cmake ccache liberfa-dev git libbenchmark-dev
+RUN apt-get install -y g++-10 libfmt-dev pybind11-dev libspdlog-dev python3-pip cmake ccache liberfa-dev git libbenchmark-dev libhdf5-dev
 RUN python3 -m pip install meson ninja numpy astropy pandas
 
 ENV CC=gcc-10
