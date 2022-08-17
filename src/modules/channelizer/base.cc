@@ -21,7 +21,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if ((config.rate % 2) != 0) {
+    if (((config.rate % 2) != 0) && (config.rate != 1)) {
         BL_FATAL("The channelizer rate ({}) should be divisable by 2.", config.rate);
         throw Result::ERROR;
     }
