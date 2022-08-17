@@ -78,11 +78,27 @@ __global__ void fft_4pnt(const cuFloatComplex* input, cuFloatComplex* output) {
             const float b1 = r1 + r4;
             const float b4 = r2 + r3;
 
-            output[io + j + ch_index[0]] = make_cuFloatComplex(a1, a2);
-            output[io + j + ch_index[1]] = make_cuFloatComplex(b1, b2);
-            output[io + j + ch_index[2]] = make_cuFloatComplex(a3, a4);
-            output[io + j + ch_index[3]] = make_cuFloatComplex(b3, b4);
+            output[io + j + ch_index[2]] = make_cuFloatComplex(a1, a2);
+            output[io + j + ch_index[3]] = make_cuFloatComplex(b1, b2);
+            output[io + j + ch_index[0]] = make_cuFloatComplex(a3, a4);
+            output[io + j + ch_index[1]] = make_cuFloatComplex(b3, b4);
         }
+    }
+}
+
+template<uint64_t N, uint64_t NPOLS>
+__global__ void shifter(const cuFloatComplex* in, cuFloatComplex* out) {
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid < N) {
+        cuFloatComplex tmp = in[tid];
+
+        if (((tid / NPOLS) % 2) != 0){
+            tmp.x = -tmp.x;
+            tmp.y = -tmp.y;
+        }
+
+        out[tid] = tmp;
     }
 }
 

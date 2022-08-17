@@ -92,7 +92,7 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
                     arr_fft = np.zeros_like(pl_arr, dtype=np.complex64).reshape(nspecs, channelizer_rate)
 
                     for ispec in range(nspecs):
-                        arr_fft[ispec] = np.fft.fft(pl_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate])
+                        arr_fft[ispec] = np.fft.fftshift(np.fft.fft(pl_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate]))
 
                     for i in range(channelizer_rate):
                         output[ibeam, iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
