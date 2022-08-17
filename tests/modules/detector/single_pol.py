@@ -79,10 +79,10 @@ if __name__ == "__main__":
                 x = bl_input[ibeam, ichan, isamp*TFACT:isamp*TFACT+TFACT, 0] #just to make code more visible
                 y = bl_input[ibeam, ichan, isamp*TFACT:isamp*TFACT+TFACT, 1] #just to make code more visible
 
-                auto_x = x*np.conj(x) # or: x.real*x.real + x.imag*x.imag... this will definitely be a real value, no .imag part
-                auto_y = y*np.conj(y) # or: y.real*y.real + y.imag*y.imag... this will definitely be a real value, no .imag part
+                auto_x = x.real * x.real + x.imag * x.imag
+                auto_y = y.real * y.real + y.imag * y.imag
 
-                py_output[ibeam, ichan, isamp, 0] = np.sum(auto_x.real) + np.sum(auto_y.real)
+                py_output[ibeam, ichan, isamp, 0] = np.sum(auto_x) + np.sum(auto_y)
     print(f"Detection with Python took {time.time()-start:.2f} s.")
 
     #

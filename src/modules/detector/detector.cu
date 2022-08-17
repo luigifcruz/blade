@@ -42,13 +42,10 @@ __global__ void detector_1pol(const cuFloatComplex* input, float* output) {
 
     if (tid < N) {
         const float4 sample = reinterpret_cast<const float4*>(input)[tid];
-        
-        cuFloatComplex sample_X = make_cuFloatComplex(sample.x, sample.y);
-        cuFloatComplex sample_Y = make_cuFloatComplex(sample.z, sample.w);
 
-        cuFloatComplex X = cuCmulf(sample_X, cuConjf(sample_X));
-        cuFloatComplex Y = cuCmulf(sample_Y, cuConjf(sample_Y));
+        const float X = sample.x * sample.x + sample.y * sample.y;
+        const float Y = sample.z * sample.z + sample.w * sample.w;
 
-        atomicAdd(output + (tid / INTG), X.x + Y.x);
+        atomicAdd(output + (tid / INTG), X + Y);
     }
 }
