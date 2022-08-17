@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
     clock_t begin = clock();
 
-    while (i < 8) {
+    while (i < 16) {
         if (blade_ata_h_enqueue_b(input_buffers[h], h)) {
             h = (h + 1) % number_of_workers;
         }
