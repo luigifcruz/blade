@@ -29,12 +29,11 @@ if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(python_path))
 
-        test(
-            'blade-channelize-weird-python',
-            find_program('python', 'python3'),
-            args: [files('advanced.py'), '2', '10', '20', '30', '4', '5'],
-            is_parallel: false,
-            timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path))
-    endif
+  test(
+    'blade-channelize-weird-python',
+    find_program('python', 'python3'),
+    args: [files('advanced.py'), '2', '10', '20', '30', '4', '6'],
+    is_parallel: false,
+    timeout: 0,
+    env: 'PYTHONPATH=@0@'.format(python_path))
 endif
