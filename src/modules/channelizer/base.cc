@@ -26,6 +26,11 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
+    if (((config.rate % 2) != 0) && (config.rate != 1)) {
+        BL_FATAL("The channelizer rate ({}) should be divisable by 2.", config.rate);
+        throw Result::ERROR;
+    }
+
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);

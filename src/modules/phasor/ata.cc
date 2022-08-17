@@ -93,6 +93,13 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.ALT,
         this->input.blockJulianDate[0],
         this->input.blockDut1[0],
+        &astrom);
+
+    //  Convert Boresight RA & Declination to Hour Angle & Declination.
+    calc_ha_dec_rad_with_independent_astrom(
+        this->config.boresightCoordinate.RA,
+        this->config.boresightCoordinate.DEC,
+        &astrom, 
         &boresight_ha_dec.HA,
         &boresight_ha_dec.DEC);
 
@@ -108,11 +115,8 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         boresight_ha_dec.HA,
         boresight_ha_dec.DEC,
         this->config.arrayReferencePosition.LON,
-        this->config.arrayReferencePosition.LAT, 
-        this->config.arrayReferencePosition.ALT,
-        this->input.blockJulianDate[0],
-        this->input.blockDut1[0],
-        &astrom);
+        boresightDelay.data()
+    );
 
     for (U64 b = 0; b < this->config.numberOfBeams; b++) {
         //  Copy Reference Position (XYZ) to Source Position (UVW).
