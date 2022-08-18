@@ -8,7 +8,7 @@
 #include "blade/module.hh"
 
 extern "C" {
-#include "guppiraw.h"
+#include "guppirawc99.h"
 }
 
 namespace Blade::Modules::Guppi {
