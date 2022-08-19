@@ -96,11 +96,6 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
         .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_BH_NTIME,
         .beamformerNumberOfPolarizations = BLADE_ATA_MODE_BH_NPOL,
         .beamformerNumberOfBeams = BLADE_ATA_MODE_BH_OUTPUT_NBEAM,
-
-        .castBlockSize = 512,
-        .channelizerBlockSize = 512,
-        .phasorBlockSize = 512,
-        .beamformerBlockSize = 512,
     };
 
     State.RunnersConfig.B.phasorAntennaCalibrations.resize(
@@ -121,9 +116,6 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
         .channelizerNumberOfPolarizations = State.RunnersConfig.B.beamformerNumberOfPolarizations,
 
         .detectorNumberOfOutputPolarizations = 1,
-
-        .channelizerBlockSize = 512,
-        .detectorBlockSize = 512,
     };
 
     State.RunnersInstances.B = 

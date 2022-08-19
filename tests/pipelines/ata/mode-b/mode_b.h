@@ -1,12 +1,12 @@
-#ifndef MODEB_H
-#define MODEB_H
+#ifndef MODE_B_H
+#define MODE_B_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define BLADE_ATA_MODE_B_CHANNELIZER_RATE 4 // [1, 4]; <= 1 mitigates the channelization
+#define BLADE_ATA_MODE_B_CHANNELIZER_RATE 4 
 
 #define BLADE_ATA_MODE_B_INPUT_NANT 20
 #define BLADE_ATA_MODE_B_INPUT_NCOMPLEX_BYTES 2
@@ -17,15 +17,27 @@
 #define BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM true
 
 #define BLADE_ATA_MODE_B_OUTPUT_NBEAM 8
-#define BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES 4
+#define BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES 8
 
-#define BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD 0 // zero makes memcpy2D effectively 1D
+#define BLADE_ATA_MODE_B_DETECTOR_ENABLED true
+#define BLADE_ATA_MODE_B_DETECTOR_INTEGRATION 1
+#define BLADE_ATA_MODE_B_DETECTOR_POLS 1
+
+#define BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD 0 
 #define BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH 8192
 
 #if BLADE_ATA_MODE_B_OUTPUT_NCOMPLEX_BYTES == 8
-	#define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T CF32
+    #if BLADE_ATA_MODE_B_DETECTOR_ENABLED 
+        #define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T F32
+    #else
+        #define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T CF32
+    #endif
 #else
-	#define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T CF16
+    #if BLADE_ATA_MODE_B_DETECTOR_ENABLED 
+        #define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T F16
+    #else
+        #define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T CF16
+    #endif
 #endif
 
 bool blade_use_device(int device_id);

@@ -90,13 +90,12 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .beamformerNumberOfBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
         .beamformerIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
+        .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,
+        .detectorIntegrationSize = BLADE_ATA_MODE_B_DETECTOR_INTEGRATION,
+        .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
+
         .outputMemWidth = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH,
         .outputMemPad = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD,
-
-        .castBlockSize = 512,
-        .channelizerBlockSize = 512,
-        .phasorBlockSize = 512,
-        .beamformerBlockSize = 512,
     };
 
     config.phasorAntennaCalibrations.resize(

@@ -49,6 +49,9 @@ typedef std::complex<U16> CU16;
 typedef std::complex<U32> CU32;
 typedef std::complex<U64> CU64;
 
+template<typename T>
+const std::string TypeID();
+
 }  // namespace Blade
 
 #endif

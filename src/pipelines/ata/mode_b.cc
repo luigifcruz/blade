@@ -11,8 +11,6 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    outputMemPitch = config.outputMemPad + config.outputMemWidth;
-
     BL_DEBUG("Instantiating input cast from I8 to CF32.");
     this->connect(inputCast, {
         .inputSize = config.beamformerNumberOfAntennas *
@@ -74,21 +72,51 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
                                config.preBeamformerChannelizerRate,
         .numberOfPolarizations = config.beamformerNumberOfPolarizations,
         .enableIncoherentBeam = config.beamformerIncoherentBeam,
-        .enableIncoherentBeamSqrt = false,
+        .enableIncoherentBeamSqrt = (config.detectorEnable) ? true : false,
         .blockSize = config.beamformerBlockSize,
     }, {
         .buf = channelizer->getOutput(),
         .phasors = phasor->getPhasors(),
     });
 
-    if constexpr (!std::is_same<OT, CF32>::value) {
-        BL_DEBUG("Instantiating output cast from CF32 to {}.", typeid(OT).name());
-        this->connect(outputCast, {
-            .inputSize = beamformer->getOutputSize(),
-            .blockSize = config.castBlockSize,
+    if (config.detectorEnable) {
+        BL_DEBUG("Instantiating detector module.");
+        this->connect(detector, {
+            .numberOfBeams = config.beamformerNumberOfBeams + 
+                             (config.beamformerIncoherentBeam ? 1 : 0), 
+            .numberOfFrequencyChannels = config.beamformerNumberOfFrequencyChannels * 
+                                         config.preBeamformerChannelizerRate,
+            .numberOfTimeSamples = config.beamformerNumberOfTimeSamples / 
+                                   config.preBeamformerChannelizerRate,
+            .numberOfPolarizations = config.beamformerNumberOfPolarizations,
+
+            .integrationSize = config.detectorIntegrationSize,
+            .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
+
+            .blockSize = config.detectorBlockSize,
         }, {
             .buf = beamformer->getOutput(),
         });
+
+        if constexpr (!std::is_same<OT, F32>::value) {
+            BL_DEBUG("Instantiating output cast from F32 to {}.", TypeID<OT>());
+            this->connect(outputCast, {
+                .inputSize = detector->getOutputSize(),
+                .blockSize = config.castBlockSize,
+            }, {
+                .buf = detector->getOutput(),
+            });
+        }
+    } else {
+        if constexpr (!std::is_same<OT, CF32>::value) {
+            BL_DEBUG("Instantiating output cast from CF32 to {}.", TypeID<OT>());
+            this->connect(complexOutputCast, {
+                .inputSize = beamformer->getOutputSize(),
+                .blockSize = config.castBlockSize,
+            }, {
+                .buf = beamformer->getOutput(),
+            });
+        }
     }
 }
 
@@ -122,21 +150,27 @@ const Result ModeB<OT>::run(const Vector<Device::CPU, F64>& blockJulianDate,
     BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
 
     // Handle the output accordingly.
-    BL_CHECK(
-        this->copy2D(
-            output,
-            outputMemPitch,
-            0,
-            this->getOutput(),
-            config.outputMemWidth,
-            0,
-            config.outputMemWidth,
-            (beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth));
+    if (config.detectorEnable) {
+        BL_CHECK(this->copy(output, this->getOutput()));
+    } else {
+        BL_CHECK(
+            this->copy2D(
+                output,
+                config.outputMemPad + config.outputMemWidth,
+                0,
+                this->getOutput(),
+                config.outputMemWidth,
+                0,
+                config.outputMemWidth,
+                (beamformer->getOutputSize() * sizeof(OT)) / config.outputMemWidth));
+    }
 
     return Result::SUCCESS;
 }
 
-template class BLADE_API ModeB<CF16>;
 template class BLADE_API ModeB<CF32>;
+template class BLADE_API ModeB<CF16>;
+template class BLADE_API ModeB<F32>;
+template class BLADE_API ModeB<F16>;
 
 }  // namespace Blade::Pipelines::ATA

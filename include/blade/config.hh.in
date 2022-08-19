@@ -19,7 +19,6 @@
 #mesondefine BLADE_MODULE_VLA_BEAMFORMER
 
 // ATA Pipelines
-#mesondefine BLADE_PIPELINE_ATA_MODE_A
 #mesondefine BLADE_PIPELINE_ATA_MODE_B
 
 // Generic Pipelines

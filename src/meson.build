@@ -7,3 +7,4 @@ src_lst += files([
 subdir('utils')
 subdir('modules')
 subdir('pipelines')
+subdir('memory')

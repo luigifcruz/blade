@@ -38,8 +38,23 @@ const Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     return Result::SUCCESS;
 }
 
-template class BLADE_API Cast<CF16, CF32>;
-template class BLADE_API Cast<CF32, CF16>;
 template class BLADE_API Cast<CI8, CF32>;
+template class BLADE_API Cast<CI8, CF16>;
+
+template class BLADE_API Cast<CF16, F16>;
+template class BLADE_API Cast<CF16, F32>;
+template class BLADE_API Cast<CF16, CF32>;
+
+template class BLADE_API Cast<CF32, F16>;
+template class BLADE_API Cast<CF32, F32>;
+template class BLADE_API Cast<CF32, CF16>;
+
+template class BLADE_API Cast<F16, F32>;
+template class BLADE_API Cast<F16, CF32>;
+template class BLADE_API Cast<F16, CF16>;
+
+template class BLADE_API Cast<F32, F16>;
+template class BLADE_API Cast<F32, CF32>;
+template class BLADE_API Cast<F32, CF16>;
 
 }  // namespace Blade::Modules

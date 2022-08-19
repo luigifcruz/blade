@@ -10,10 +10,11 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
+#include "blade/modules/detector.hh"
 
 namespace Blade::Pipelines::ATA {
 
-template<typename OT = CF16>
+template<typename OT>
 class BLADE_API ModeB : public Pipeline {
  public:
     struct Config {
@@ -37,6 +38,10 @@ class BLADE_API ModeB : public Pipeline {
         U64 beamformerNumberOfBeams;
         BOOL beamformerIncoherentBeam = false;
 
+        BOOL detectorEnable = false;
+        U64 detectorIntegrationSize;
+        U64 detectorNumberOfOutputPolarizations;
+
         U64 outputMemWidth;
         U64 outputMemPad;
 
@@ -44,6 +49,7 @@ class BLADE_API ModeB : public Pipeline {
         U64 channelizerBlockSize = 512;
         U64 phasorBlockSize = 512;
         U64 beamformerBlockSize = 512;
+        U64 detectorBlockSize = 512;
     };
 
     explicit ModeB(const Config& config);
@@ -53,8 +59,14 @@ class BLADE_API ModeB : public Pipeline {
     }
 
     constexpr const U64 getOutputSize() const {
-        return (((beamformer->getOutputSize() * sizeof(OT)) / 
-            config.outputMemWidth) * outputMemPitch) / sizeof(OT);
+        if (config.detectorEnable) {
+            return detector->getOutputSize();
+        } else {
+            // TODO: I really hate this. Can it be simplified?
+            return (((beamformer->getOutputSize() * sizeof(OT)) / 
+                config.outputMemWidth) * (config.outputMemPad + 
+                config.outputMemWidth)) / sizeof(OT);
+        }
     }
 
     const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
@@ -79,8 +91,6 @@ class BLADE_API ModeB : public Pipeline {
  private:
     const Config config;
 
-    U64 outputMemPitch;
-
     Vector<Device::CUDA, CI8> input;
     Vector<Device::CPU, F64> blockJulianDate;
     Vector<Device::CPU, F64> blockDut1;
@@ -89,17 +99,30 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
-    std::shared_ptr<Modules::Cast<CF32, OT>> outputCast;
+    std::shared_ptr<Modules::Detector<CF32, F32>> detector;
+
+    // Output Cast for path without Detector (CF32).
+    std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
+    // Output Cast for path with Detector (F32).
+    std::shared_ptr<Modules::Cast<F32, OT>> outputCast;
 
     const Result underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
                                const Vector<Device::CPU, F64>& blockDut1,
                                const Vector<Device::CPU, CI8>& input);
 
     constexpr const Vector<Device::CUDA, OT>& getOutput() {
-        if constexpr (!std::is_same<OT, CF32>::value) {
-            return outputCast->getOutput();
+        if (config.detectorEnable) {
+            if constexpr (!std::is_same<OT, F32>::value) {
+                return outputCast->getOutput();
+            } else {
+                return detector->getOutput();
+            }
         } else {
-            return beamformer->getOutput();
+            if constexpr (!std::is_same<OT, CF32>::value) {
+                return complexOutputCast->getOutput();
+            } else {
+                return beamformer->getOutput();
+            }
         }
     }
 };
