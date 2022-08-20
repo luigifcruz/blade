@@ -129,6 +129,8 @@ class BLADE_API Reader : public Module {
         return this->getDatashape()->n_time;
     }
 
+    // TODO: Add getNumberOfSteps() method.
+
     const Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:

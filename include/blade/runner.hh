@@ -65,6 +65,10 @@ Version {} | Build Type: {}
     constexpr const bool slotAvailable() const {
         return jobs.size() != workers.size();
     }
+
+    constexpr const bool empty() const {
+        return jobs.size() == 0;
+    }
     
     constexpr T& getNextWorker() {
         return *workers[head];

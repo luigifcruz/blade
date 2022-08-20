@@ -5,6 +5,7 @@
 
 #include "blade/runner.hh"
 #include "blade/pipelines/generic/file_writer.hh"
+#include "blade/utils/progressbar.hh"
 
 #ifdef BLADE_PIPELINE_ATA_MODE_A
 #include "blade/pipelines/ata/mode_a.hh"
@@ -72,36 +73,41 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
     writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 
-    // TODO: Replace this with direct copy to next worker's input buffer.
-    Vector<Device::CPU, CF32>* writer_batch_buffers[cliConfig.numberOfWorkers];
-    for (U64 i = 0; i < cliConfig.numberOfWorkers; i++) {
-        writer_batch_buffers[i] = new Vector<Device::CPU, CF32>(writer.getStepInputBufferSize());
-        BL_INFO("Allocated output buffer #{}: {} ({} bytes)", 
-                i, writer_batch_buffers[i]->size(), writer_batch_buffers[i]->size_bytes());
-    }
+    BL_INFO("{} {} {}", reader.getStepOutputBufferSize(), reader.getTotalOutputBufferSize(), reader.getTotalOutputBufferSize() / reader.getStepOutputBufferSize());
 
-    U64 buffer_idx = 0, job_idx = 0;
-    U64 batch_idx;
+    U64 counter = 0;
+    while (true) {
+        if (reader.run() == Result::SUCCESS) {
+            const auto& res = runner->enqueue([&](auto& worker){
+                BL_CHECK_THROW(
+                    worker.run(reader.getStepOutputJulianDate(),
+                               reader.getStepOutputDut1(), 
+                               reader.getStepOutputBuffer(), 
+                               writer));
+                return 0;
+            });
 
-    while (reader.run() == Result::SUCCESS) {
-        const auto& res = runner->enqueue([&](auto& worker){
-            BL_CHECK_THROW(
-                worker.run(reader.getStepOutputJulianDate(),
-                           reader.getStepOutputDut1(), 
-                           reader.getStepOutputBuffer(), 
-                           *writer_batch_buffers[buffer_idx]));
-            return job_idx;
-        });
-
-        if (res) {
-            job_idx++;
-            buffer_idx = job_idx % cliConfig.numberOfWorkers;
+            if (!res) {
+                BL_FATAL("Runner I/O error.");
+                BL_CHECK_THROW(Result::ERROR);
+            }
+        } else {
+            if (runner->empty()) {
+                break;
+            }
         }
 
-        if (runner->dequeue(&batch_idx)) {
-            // TODO: Implement this. LOL.
+        // TODO: This is not working. I need to know the reader number of steps.
+
+        if (runner->dequeue(nullptr)) {
+            counter++;
+            if (writer.accumulationComplete()) {
+                BL_CHECK_THROW(writer.run());
+            }
         }
     }
+
+    BL_INFO("{} {}", counter, writer.getNumberOfSteps())
 
     runner.reset();
 
@@ -112,8 +118,6 @@ template<typename IT, typename OT>
 inline const Result SetupAta(const CliConfig& config,
                              Pipelines::Generic::FileReader<IT>& reader) {
     switch (config.mode) {
-#if defined(BLADE_PIPELINE_ATA_MODE_A)
-#endif
 #if defined(BLADE_PIPELINE_ATA_MODE_B)
         case ModeId::MODE_B:
             return SetupAtaModeB<IT, OT>(config, reader);

@@ -5,13 +5,14 @@
 #include <deque>
 
 #include "blade/pipeline.hh"
+#include "blade/accumulator.hh"
 
 #include "blade/modules/guppi/writer.hh"
 
 namespace Blade::Pipelines::Generic {
 
-template<typename IT = CF32>
-class BLADE_API FileWriter : public Pipeline {
+template<typename IT>
+class BLADE_API FileWriter : public Pipeline, public Accumulator {
  public:
     struct Config {
         std::string outputGuppiFile;
@@ -105,6 +106,9 @@ class BLADE_API FileWriter : public Pipeline {
     constexpr const Config& getConfig() const {
         return this->config;
     }
+
+    const Result accumulate(const Vector<Device::CUDA, IT>& data,
+                            const cudaStream_t& stream);
 
     const Result run();
 
