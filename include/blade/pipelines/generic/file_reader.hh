@@ -130,10 +130,6 @@ class BLADE_API FileReader : public Pipeline {
 
     const Result run();
 
-    constexpr const F64 getOutputEpochSeconds() {
-        return guppi->getBlockEpochSeconds(); 
-    }
-
  private:
     const Config config;
 
