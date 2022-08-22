@@ -124,10 +124,6 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getBeamCoordinates();
     }
 
-    constexpr Modules::Guppi::Reader<OT>& getGuppi() {
-        return *guppi;
-    }
-
     const Result run();
 
  private:
