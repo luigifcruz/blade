@@ -107,7 +107,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         }
     }
 
-    BL_INFO("{} {}", counter, writer.getNumberOfSteps())
+    BL_INFO("{} {} {}", counter, writer.getNumberOfSteps(), reader.getNumberOfSteps())
 
     runner.reset();
 

@@ -39,7 +39,7 @@ class BLADE_API Reader : public Module {
     explicit Reader(const Config& config, const Input& input);
 
     constexpr const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) > this->getStepNumberOfTimeSamples();
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->getStepNumberOfTimeSamples();
     }
 
     constexpr const Vector<Device::CPU, OT>& getStepOutputBuffer() {
@@ -125,11 +125,9 @@ class BLADE_API Reader : public Module {
                this->getStepNumberOfPolarizations();
     }
 
-    constexpr const U64 getBlockNumberOfTimeSamples() {
-        return this->getDatashape()->n_time;
+    constexpr const U64 getNumberOfSteps() {
+        return this->getTotalOutputBufferSize() / this->getStepOutputBufferSize();
     }
-
-    // TODO: Add getNumberOfSteps() method.
 
     const Result preprocess(const cudaStream_t& stream = 0) final;
 

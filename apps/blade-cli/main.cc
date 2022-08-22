@@ -105,7 +105,7 @@ inline const Result CollectUserInput(int argc, char **argv, CliConfig& config) {
     try {
         app.parse(argc, argv);
     } catch(const CLI::ParseError &e) {
-        std::cout << e.what() << std::endl;
+        app.exit(e);
         return Result::ERROR;
     }
 

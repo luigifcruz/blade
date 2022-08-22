@@ -17,7 +17,7 @@ const U64 Accumulator::getCurrentAccumulatorStep() const {
 }
 
 const bool Accumulator::accumulationComplete() const {
-    return (stepCounter + 1) == numberOfSteps;
+    return stepCounter == numberOfSteps;
 }
 
 const U64 Accumulator::incrementAccumulatorStep() {

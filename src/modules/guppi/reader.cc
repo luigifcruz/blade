@@ -62,7 +62,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
-        getBlockMeta(&gr_iterate)->piperblk = this->getBlockNumberOfTimeSamples();
+        getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
 
     if (this->getStepNumberOfAntennas() == 0) {
@@ -74,7 +74,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     if (this->getStepNumberOfTimeSamples() == 0) {
-        this->config.stepNumberOfTimeSamples = this->getBlockNumberOfTimeSamples();
+        this->config.stepNumberOfTimeSamples = this->getDatashape()->n_time;
     }
 
     BL_CHECK_THROW(InitOutput(output.stepDut1, 1));
@@ -91,7 +91,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_INFO("Step Number of Frequency Channels: {}", this->getStepNumberOfFrequencyChannels());
     BL_INFO("Step Number of Time Samples: {}", this->getStepNumberOfTimeSamples());
     BL_INFO("Step Number of Polarizations: {}", this->getStepNumberOfPolarizations());
-    BL_INFO("Block Number of Time Samples: {}", this->getBlockNumberOfTimeSamples());
 }
 
 template<typename OT>
@@ -121,26 +120,30 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     this->lastread_channel_index = gr_iterate.chan_index;
     this->lastread_time_index = gr_iterate.time_index;
 
-    const I64 bytes_read = guppiraw_iterate_read(
-        &this->gr_iterate,
-        this->getStepNumberOfTimeSamples(),
-        this->getStepNumberOfFrequencyChannels(),
-        this->getStepNumberOfAntennas(),
-        this->output.stepBuffer.data());
-
-    // TODO: UNIX Date? Isn't this supposed to be Julian Date?
-    this->output.stepJulianDate[0] = 
+    // Query internal library Julian Date. 
+    const auto unixDate =
         guppiraw_calc_unix_date(
             1.0 / this->getChannelBandwidth(),
-            this->getBlockNumberOfTimeSamples(),
+            this->getDatashape()->n_time,
             getBlockMeta(&gr_iterate)->piperblk,
             getBlockMeta(&gr_iterate)->synctime,
-            getBlockMeta(&gr_iterate)->pktidx + 
-                (
-                    this->lastread_block_index + (0.5 * getBlockMeta(&gr_iterate)->piperblk)
-                ) * this->getBlockNumberOfTimeSamples());
+            (getBlockMeta(&gr_iterate)->pktidx + 
+             (this->lastread_block_index + 
+              (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
+              this->getDatashape()->n_time));
 
+    this->output.stepJulianDate[0] = calc_julian_date_from_unix(unixDate);
+
+    // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
+
+    // Run library internal read method.
+    const I64 bytes_read = 
+        guppiraw_iterate_read(&this->gr_iterate,
+                              this->getStepNumberOfTimeSamples(),
+                              this->getStepNumberOfFrequencyChannels(),
+                              this->getStepNumberOfAntennas(),
+                              this->output.stepBuffer.data());
 
     if (bytes_read <= 0) {
         BL_FATAL("File reader couldn't read bytes.");

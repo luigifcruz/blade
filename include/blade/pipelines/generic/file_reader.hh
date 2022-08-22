@@ -100,6 +100,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getChannelStartIndex();
     }
 
+    constexpr const U64 getNumberOfSteps() const {
+        return guppi->getNumberOfSteps();
+    }
+
     constexpr const LLA getReferencePosition() const {
         return bfr5->getReferencePosition();
     }
