@@ -21,19 +21,19 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
     // Checking file and recipe bounds.
 
     if (guppi->getTotalNumberOfAntennas() != bfr5->getTotalNumberOfAntennas()) {
-        BL_FATAL("Number of antennas from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+        BL_FATAL("Number of antennas from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
                 guppi->getTotalNumberOfAntennas(), bfr5->getTotalNumberOfAntennas());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     if (guppi->getTotalNumberOfFrequencyChannels() != bfr5->getTotalNumberOfFrequencyChannels()) {
-        BL_FATAL("Number of frequency channels from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+        BL_FATAL("Number of frequency channels from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
                 guppi->getTotalNumberOfFrequencyChannels(), bfr5->getTotalNumberOfFrequencyChannels());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
     if (guppi->getTotalNumberOfPolarizations() != bfr5->getTotalNumberOfPolarizations()) {
-        BL_FATAL("Number of polarizations from BFR5 ({}) and GUPPI RAW ({}) files mismatch.", 
+        BL_FATAL("Number of polarizations from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
                 guppi->getTotalNumberOfPolarizations(), bfr5->getTotalNumberOfPolarizations());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
