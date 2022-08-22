@@ -128,11 +128,7 @@ class BLADE_API FileReader : public Pipeline {
         return *guppi;
     }
 
-    Result run();
-
-    const Vector<Device::CPU, OT>& getOutput() {
-        return guppi->getOutput();
-    }
+    const Result run();
 
     constexpr const F64 getOutputEpochSeconds() {
         return guppi->getBlockEpochSeconds(); 
