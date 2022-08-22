@@ -21,14 +21,14 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->gr_header.metadata.datashape.n_beam = this->getStepNumberOfBeams();
-    this->gr_header.metadata.datashape.n_ant = this->getStepNumberOfAntennas();
+    this->gr_header.metadata.datashape.n_aspect = this->getStepNumberOfBeams() > 0 ? this->getStepNumberOfBeams() : this->getStepNumberOfAntennas();
     this->gr_header.metadata.datashape.n_aspectchan = this->getTotalNumberOfFrequencyChannels();
     this->gr_header.metadata.datashape.n_time = this->getStepNumberOfTimeSamples();
     this->gr_header.metadata.datashape.n_pol = this->getStepNumberOfPolarizations();
     this->gr_header.metadata.datashape.n_bit = sizeof(IT) * 8 / 2;
     this->gr_header.metadata.directio = this->config.directio ? 1 : 0;
     guppiraw_header_put_metadata(&this->gr_header);
+    this->headerPut("NBEAM", this->getStepNumberOfBeams());
     this->headerPut("DATATYPE", "FLOAT");
 
     BL_INFO("Output File Path: {}", config.filepath);
