@@ -61,6 +61,10 @@ const Result Pipeline::compute() {
                 BL_FATAL("Failed to instantiate CUDA Graph: {}", err);
             });
 
+            BL_CUDA_CHECK(cudaGraphLaunch(this->instance, this->stream), [&]{
+                BL_FATAL("Failed launch CUDA graph: {}", err);
+            });
+
             this->state = State::GRAPH;
             break;
         case State::IDLE:
