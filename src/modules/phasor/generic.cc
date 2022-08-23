@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::PHASOR"
+
 #include <algorithm>
 
 #include "blade/modules/phasor/generic.hh"
@@ -11,8 +13,6 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, phasor_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Phasor Module Configuration");
-
     if (config.numberOfBeams != config.beamCoordinates.size()) {
         BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
                  " beams coordinates ({}).", config.numberOfBeams,
@@ -63,6 +63,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
                 min_cal, max_cal, min_value, max_value); 
     }
 
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);

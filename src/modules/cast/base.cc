@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::CAST"
+
 #include <type_traits>
 #include <typeindex>
 
@@ -12,15 +14,16 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
         : Module(config.blockSize, cast_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Cast Module Configuration");
-    BL_INFO("Input Size: {}", config.inputSize);
-
     auto size = config.inputSize * CudaTypeSize<IT>();
     kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
     grid = dim3((size + block.x - 1) / block.x);
 
     BL_CHECK_THROW(InitInput(input.buf, config.inputSize));
     BL_CHECK_THROW(InitOutput(output.buf, config.inputSize));
+
+    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
+    BL_INFO("Input Size: {}", config.inputSize);
 }
 
 template<typename IT, typename OT>

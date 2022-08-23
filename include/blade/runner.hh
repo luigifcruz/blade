@@ -26,17 +26,7 @@ class BLADE_API Runner {
                     const typename T::Config& config,
                     const BOOL& printET = true) {
         if (printET) {
-            BL_INFO(R"(
-
-Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
-Version {} | Build Type: {}
-                   .-.
-    .-""`""-.    |(0 0)
- _/`oOoOoOoOo`\_ \ \-/
-'.-=-=-=-=-=-=-.' \/ \
-  `-=.=-.-=.=-'    \ /\
-     ^  ^  ^       _H_ \ art by jgs
-            )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+            BL_LOG_PRINT_ET();
         }
 
         BL_INFO("Instantiating new runner.");

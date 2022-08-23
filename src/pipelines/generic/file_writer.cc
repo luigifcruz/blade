@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "P::FILE_WRITER"
+
 #include "blade/pipelines/generic/file_writer.hh"
 
 namespace Blade::Pipelines::Generic {

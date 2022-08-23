@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::BEAMFORMER::MEERKAT"
+
 #include "blade/modules/beamformer/meerkat.hh"
 
 namespace Blade::Modules::Beamformer {

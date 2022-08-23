@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "PIPELINE"
+
 #include "blade/pipeline.hh"
 
 namespace Blade {

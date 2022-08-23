@@ -1,5 +1,6 @@
-#include "blade/modules/channelizer.hh"
+#define BL_LOG_DOMAIN "M::CHANNELIZER"
 
+#include "blade/modules/channelizer.hh"
 
 #include "channelizer.jit.hh"
 
@@ -12,8 +13,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
           input(input),
           pre_block(config.blockSize),
           post_block(config.blockSize) {
-    BL_INFO("===== Channelizer Module Configuration");
-
     if ((config.numberOfTimeSamples % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the channelizer rate ({}).", config.numberOfTimeSamples,
@@ -31,6 +30,8 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
+    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);

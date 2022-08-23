@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::DETECTOR"
+
 #include "blade/modules/detector.hh"
 
 #include "detector.jit.hh"
@@ -9,8 +11,6 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         : Module(config.blockSize, detector_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Detector Module Configuration");
-
     if ((config.numberOfTimeSamples % config.integrationSize) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                 "by the integration size ({}).", config.numberOfTimeSamples,
@@ -52,6 +52,8 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
                          config.numberOfFrequencyChannels,
                          config.integrationSize); 
 
+    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
     BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);

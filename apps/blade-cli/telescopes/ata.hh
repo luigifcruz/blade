@@ -7,10 +7,6 @@
 #include "blade/pipelines/generic/file_writer.hh"
 #include "blade/utils/progressbar.hh"
 
-#ifdef BLADE_PIPELINE_ATA_MODE_A
-#include "blade/pipelines/ata/mode_a.hh"
-#endif
-
 #ifdef BLADE_PIPELINE_ATA_MODE_B
 #include "blade/pipelines/ata/mode_b.hh"
 #endif
@@ -50,7 +46,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         .beamformerBlockSize = cliConfig.stepNumberOfTimeSamples
     };
 
-    auto runner = Runner<Pipeline>::New(cliConfig.numberOfWorkers, config);
+    auto runner = Runner<Pipeline>::New(cliConfig.numberOfWorkers, config, false);
 
     auto writer = Pipelines::Generic::FileWriter<OT>({
         .outputGuppiFile = cliConfig.outputGuppiFile,
@@ -73,11 +69,14 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
     writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 
-    BL_INFO("{} {} {}", reader.getStepOutputBufferSize(), reader.getTotalOutputBufferSize(), reader.getTotalOutputBufferSize() / reader.getStepOutputBufferSize());
-
     U64 counter = 0;
     while (true) {
         if (reader.run() == Result::SUCCESS) {
+            if (!runner->slotAvailable()) {
+                BL_FATAL("Error");
+                exit(0);
+            }
+
             const auto& res = runner->enqueue([&](auto& worker){
                 BL_CHECK_THROW(
                     worker.run(reader.getStepOutputJulianDate(),

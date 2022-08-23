@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::BEAMFORMER::ATA"
+
 #include "blade/modules/beamformer/ata.hh"
 
 namespace Blade::Modules::Beamformer {

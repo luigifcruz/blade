@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "P::MODE_H"
+
 #include "blade/pipelines/generic/mode_h.hh"
 
 namespace Blade::Pipelines::Generic {
@@ -9,7 +11,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
     BL_DEBUG("Initializing Pipeline Mode H.");
 
     if constexpr (!std::is_same<IT, CF32>::value) {
-        BL_DEBUG("Instantiating input cast from CF16 to CF32.");
+        BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
         this->connect(cast, {
             .inputSize = this->getInputSize(),
             .blockSize = config.castBlockSize,

@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "P::FILE_READER"
+
 #include "blade/pipelines/generic/file_reader.hh"
 
 namespace Blade::Pipelines::Generic {

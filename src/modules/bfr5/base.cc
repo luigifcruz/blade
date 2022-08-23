@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::BFR5"
+
 #include "blade/modules/bfr5/reader.hh"
 
 #include "bfr5.jit.hh"
@@ -8,8 +10,6 @@ Reader::Reader(const Config& config, const Input& input)
         : Module(config.blockSize, bfr5_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== BFR5 Reader Module Configuration");
-
     if (!std::filesystem::exists(config.filepath)) {
         BL_FATAL("Input file ({}) doesn't not exist.", config.filepath);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);

@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::PHASOR::ATA"
+
 #include "blade/modules/phasor/ata.hh"
 
 extern "C" {

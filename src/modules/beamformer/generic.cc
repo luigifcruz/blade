@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::BEAMFORMER"
+
 #include "blade/modules/beamformer/generic.hh"
 
 #include "beamformer.jit.hh"
@@ -9,14 +11,14 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, beamformer_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Beamformer Module Configuration");
-
     if ((config.numberOfTimeSamples % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by "
                 "the block size ({}).", config.numberOfTimeSamples, config.blockSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
     BL_INFO("Number of Beams: {}", config.numberOfBeams);
     BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
     BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);

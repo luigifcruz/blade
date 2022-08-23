@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "ACCUMULATOR"
+
 #include "blade/accumulator.hh"
 
 namespace Blade {

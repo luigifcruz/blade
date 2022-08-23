@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::GUPPI::READER"
+
 #include "blade/modules/guppi/reader.hh"
 
 #include "guppi.jit.hh"
@@ -50,8 +52,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         : Module(config.blockSize, guppi_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== GUPPI Reader Module Configuration");
-
     if (config.filepath.length() == 0) {
         BL_FATAL("Input file ({}) is invalid.", config.filepath);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
@@ -61,6 +61,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
     }
 
+    // TODO: This crashes on potato (not file found, segfault).
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
@@ -81,6 +82,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_CHECK_THROW(InitOutput(output.stepJulianDate, 1));
     BL_CHECK_THROW(InitOutput(output.stepBuffer, getStepOutputBufferSize()));
 
+    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
     BL_INFO("Input File Path: {}", config.filepath);
     BL_INFO("Sample Size: {} bits", this->getDatashape()->n_bit);
     BL_INFO("Total Number of Antennas: {}", this->getTotalNumberOfAntennas());

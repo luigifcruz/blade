@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::GUPPI::WRITER"
+
 #include "blade/modules/guppi/writer.hh"
 
 #include "guppi.jit.hh"
@@ -12,8 +14,6 @@ Writer<IT>::Writer(const Config& config, const Input& input)
           fileId(0),
           writeCounter(0),
           fileDescriptor(0) {
-    BL_INFO("===== GUPPI Writer Module Configuration");
-
     auto filepath = fmt::format("{}.{:04}.raw", this->config.filepath, this->fileId % 10000);
     this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT | (this->config.directio ? O_DIRECT : 0), 0644);
     if (this->fileDescriptor < 1) {
@@ -31,6 +31,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
     this->headerPut("NBEAM", this->getStepNumberOfBeams());
     this->headerPut("DATATYPE", "FLOAT");
 
+    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
     BL_INFO("Output File Path: {}", config.filepath);
     BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO")
     BL_INFO("Number of Steps: {}", this->getNumberOfSteps());

@@ -32,6 +32,10 @@ class BLADE_API Cast : public Module {
         return this->output.buf;
     }
 
+    constexpr const U64 getOutputSize() const {
+        return this->config.inputSize;
+    }
+
     constexpr const Config& getConfig() const {
         return this->config;
     }

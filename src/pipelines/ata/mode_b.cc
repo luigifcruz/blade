@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "P::ATA::MODE_B"
+
 #include "blade/pipelines/ata/mode_b.hh"
 
 namespace Blade::Pipelines::ATA {
@@ -99,7 +101,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
         });
 
         if constexpr (!std::is_same<OT, F32>::value) {
-            BL_DEBUG("Instantiating output cast from F32 to {}.", TypeID<OT>());
+            BL_DEBUG("Instantiating output cast from F32 to {}.", TypeInfo<OT>::name);
             this->connect(outputCast, {
                 .inputSize = detector->getOutputSize(),
                 .blockSize = config.castBlockSize,
@@ -109,7 +111,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
         }
     } else {
         if constexpr (!std::is_same<OT, CF32>::value) {
-            BL_DEBUG("Instantiating output cast from CF32 to {}.", TypeID<OT>());
+            BL_DEBUG("Instantiating output cast from CF32 to {}.", TypeInfo<OT>::name);
             this->connect(complexOutputCast, {
                 .inputSize = beamformer->getOutputSize(),
                 .blockSize = config.castBlockSize,

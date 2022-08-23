@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "CLI"
+
 #include <chrono>
 #include <CLI/CLI.hpp>
 
@@ -108,6 +110,9 @@ inline const Result CollectUserInput(int argc, char **argv, CliConfig& config) {
         app.exit(e);
         return Result::ERROR;
     }
+
+    // Print our beloved E.T.
+    BL_LOG_PRINT_ET();
 
     // Print argument configurations.
     BL_INFO("Telescope: {}", config.telescope);
