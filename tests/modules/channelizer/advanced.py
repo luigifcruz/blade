@@ -55,12 +55,26 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     input = _c.reshape((
             number_of_beams,
-            number_of_antennas, 
             number_of_frequency_channels,
             number_of_time_samples,
             number_of_polarizations,
         ))
-    output = np.zeros_like(input, dtype=np.complex64)
+
+    # Compute the FFT sizes.
+    nspecs = number_of_time_samples // channelizer_rate
+    number_of_new_time_samples = nspecs
+    number_of_new_frequency_channels = number_of_frequency_channels * channelizer_rate
+
+    # Define output buffer.
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _c = np.array(_a + _b * 1j).astype(np.complex64)
+    output = _c.reshape((
+            number_of_beams,
+            number_of_new_frequency_channels,
+            number_of_new_time_samples,
+            number_of_polarizations,
+        ))
 
     # Import test data from Python to Blade.
     bl_input = bl.vector.cpu.cf32(mod.buffer_size())
@@ -79,23 +93,18 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
     for ibeam in range(number_of_beams):
         beam = input[ibeam]
 
-        for iant in range(number_of_antennas):
-            ant = beam[iant]
+        for ichan in range(number_of_frequency_channels):
+            time_pol = beam[ichan]
 
-            for ichan in range(number_of_frequency_channels):
-                ch_ant = ant[ichan]
+            for ipol in range(number_of_polarizations):
+                time_arr = time_pol[:, ipol]
 
-                for ipol in range(number_of_polarizations):
-                    pl_arr = ch_ant[:, ipol]
-
-                    nspecs = pl_arr.size // channelizer_rate
-                    arr_fft = np.zeros_like(pl_arr, dtype=np.complex64).reshape(nspecs, channelizer_rate)
-
-                    for ispec in range(nspecs):
-                        arr_fft[ispec] = np.fft.fftshift(np.fft.fft(pl_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate]))
-
-                    for i in range(channelizer_rate):
-                        output[ibeam, iant, ichan, (i*nspecs):((i+1)*nspecs), ipol] = arr_fft[:,i]
+                for ispec in range(nspecs):
+                    output[ibeam,
+                            ichan*channelizer_rate :
+                            (ichan+1)*channelizer_rate,
+                            ispec, ipol] =\
+                            np.fft.fftshift(np.fft.fft(time_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate]))
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
