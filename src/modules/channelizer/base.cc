@@ -39,6 +39,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
     BL_INFO("Input Number of Time Samples: {}", config.numberOfTimeSamples);
     BL_INFO("Output Number of Frequency Channels: {}", config.numberOfFrequencyChannels * config.rate);
     BL_INFO("Output Number of Time Samples: {}", config.numberOfTimeSamples / config.rate);
+    BL_INFO("FFT Size: {}", config.rate);
 
     if (config.rate == 1) {
         BL_INFO("FFT Backend: Bypass");
