@@ -24,15 +24,7 @@ if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
         test(
             'blade-channelize-std-beams-python',
             find_program('python', 'python3'),
-            args: [files('advanced.py'), '2', '20', '96', '35000', '2', '4'],
-            is_parallel: false,
-            timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path))
-
-        test(
-            'blade-channelize-weird-python',
-            find_program('python', 'python3'),
-            args: [files('advanced.py'), '2', '10', '20', '30', '4', '6'],
+            args: [files('advanced.py'), '1', '20', '96', '35000', '2', '4'],
             is_parallel: false,
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(python_path))

@@ -54,7 +54,7 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
     _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     input = _c.reshape((
-            number_of_beams,
+            number_of_beams * number_of_antennas,
             number_of_frequency_channels,
             number_of_time_samples,
             number_of_polarizations,
@@ -70,7 +70,7 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
     _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
     _c = np.array(_a + _b * 1j).astype(np.complex64)
     output = _c.reshape((
-            number_of_beams,
+            number_of_beams * number_of_antennas,
             number_of_new_frequency_channels,
             number_of_new_time_samples,
             number_of_polarizations,
@@ -90,7 +90,7 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
 
     # Channelize with Numpy.
     start = time.time()
-    for ibeam in range(number_of_beams):
+    for ibeam in range(number_of_beams * number_of_antennas):
         beam = input[ibeam]
 
         for ichan in range(number_of_frequency_channels):
