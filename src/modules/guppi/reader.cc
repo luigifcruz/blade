@@ -56,9 +56,16 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_FATAL("Input file ({}) is invalid.", config.filepath);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
-    
-    if (guppiraw_iterate_open_with_user_metadata(&gr_iterate, config.filepath.c_str(), sizeof(guppiraw_block_meta_t), guppiraw_parse_block_meta)) {
-        BL_FATAL("Errored opening stem: {}.{:04d}.raw\n", this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
+
+    const auto res = 
+        guppiraw_iterate_open_with_user_metadata(&gr_iterate, 
+                                                 config.filepath.c_str(), 
+                                                 sizeof(guppiraw_block_meta_t),
+                                                 guppiraw_parse_block_meta);
+
+    if (res) {
+        BL_FATAL("Errored opening stem ({}): {}.{:04d}.raw\n", res, 
+                this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
