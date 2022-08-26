@@ -28,34 +28,50 @@
 #define BL_LOG_DOMAIN_STR ""
 #endif
 
-#if !defined(BL_TRACE) || !defined(NDEBUG)
+#ifndef BL_TRACE
+#ifndef NDEBUG
 #define BL_TRACE(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_TRACE << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::white), __VA_ARGS__) << std::endl;
+#else
+#define BL_TRACE(...)
+#endif
 #endif
 
-#if !defined(BL_DEBUG) || defined(NDEBUG)
+#ifndef BL_DEBUG
+#ifndef NDEBUG
 #define BL_DEBUG(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_DEBUG << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
         fmt::format(fg(fmt::color::orange), __VA_ARGS__) << std::endl;
+#else
+#define BL_DEBUG(...)
+#endif
 #endif
 
-#if !defined(BL_WARN) || defined(NDEBUG)
+#ifndef BL_WARN
 #define BL_WARN(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_WARN << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
         fmt::format(fg(fmt::color::yellow), __VA_ARGS__) << std::endl;
+#else
+#define BL_WARN(...)
 #endif
 
-#if !defined(BL_INFO) || defined(NDEBUG)
+#ifndef BL_INFO
 #define BL_INFO(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_INFO << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
         fmt::format(fg(fmt::color::cyan), __VA_ARGS__) << std::endl;
+#else
+#define BL_INFO(...)
 #endif
 
-#if !defined(BL_ERROR) || defined(NDEBUG)
+#ifndef BL_ERROR
 #define BL_ERROR(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_ERROR << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::red), __VA_ARGS__) << std::endl;
+#else
+#define BL_ERROR(...)
 #endif
 
-#if !defined(BL_FATAL) || defined(NDEBUG)
+#ifndef BL_FATAL
 #define BL_FATAL(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_FATAL << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::magenta), __VA_ARGS__) << std::endl;
+#else
+#define BL_FATAL(...)
 #endif
 
 inline void BL_LOG_PRINT_ET() {

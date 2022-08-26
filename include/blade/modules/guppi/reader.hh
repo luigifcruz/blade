@@ -38,10 +38,6 @@ class BLADE_API Reader : public Module {
 
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->getStepNumberOfTimeSamples();
-    }
-
     constexpr const Vector<Device::CPU, OT>& getStepOutputBuffer() {
         return this->output.stepBuffer;
     }
@@ -142,6 +138,11 @@ class BLADE_API Reader : public Module {
     U64 lastread_time_index;
 
     guppiraw_iterate_info_t gr_iterate = {0};
+
+    constexpr const bool keepRunning() const {
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >=
+            this->getStepNumberOfTimeSamples();
+    }
 
     constexpr const guppiraw_datashape_t* getDatashape() const {
         return guppiraw_iterate_datashape(&this->gr_iterate);

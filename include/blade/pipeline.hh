@@ -144,6 +144,8 @@ class BLADE_API Pipeline {
         return stream;
     }
 
+    friend class Plan;
+
  private:
     enum State : uint8_t {
         IDLE,

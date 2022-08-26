@@ -4,6 +4,7 @@
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
+#include "blade/plan.hh"
 #include "blade/pipelines/ata/mode_b.hh"
 
 extern "C" {
@@ -93,9 +94,6 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,
         .detectorIntegrationSize = BLADE_ATA_MODE_B_DETECTOR_INTEGRATION,
         .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
-
-        .outputMemWidth = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_WIDTH,
-        .outputMemPad = BLADE_ATA_MODE_B_OUTPUT_MEMCPY2D_PAD,
     };
 
     config.phasorAntennaCalibrations.resize(
@@ -133,12 +131,21 @@ bool blade_pin_memory(void* buffer, U64 size) {
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
     assert(runner);
-    return runner->enqueue([&](auto& worker){
+
+    return runner->enqueue([&](auto& worker) {
+        // Convert C pointers to Blade::Vector.
         auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
         auto output = Vector<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>
             (output_ptr, worker.getOutputSize());
 
-        BL_CHECK_THROW(worker.run(dummyJulianDate, dummyDut1, input, output));
+        // Transfer input data from CPU memory to the worker.
+        Plan::TransferIn(worker, dummyJulianDate, dummyDut1, input);
+
+        // Compute block.
+        Plan::Compute(worker);
+
+        // Transfer output data from the worker to the CPU memory.
+        Plan::TransferOut(output, worker.getOutput(), worker);
 
         return id;
     });

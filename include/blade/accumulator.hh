@@ -13,19 +13,21 @@ namespace Blade {
 
 class BLADE_API Accumulator {
  public:
-    const bool accumulationComplete() const;
+   const bool accumulationComplete() const;
 
  protected:
-    explicit Accumulator(const U64& numberOfSteps); 
+   explicit Accumulator(const U64& numberOfSteps); 
 
-    const U64 getAccumulatorNumberOfSteps() const;
-    const U64 getCurrentAccumulatorStep() const;
-    const U64 incrementAccumulatorStep();
-    const U64 resetAccumulatorSteps();
+   const U64 getAccumulatorNumberOfSteps() const;
+   const U64 getCurrentAccumulatorStep() const;
+   const U64 incrementAccumulatorStep();
+   const U64 resetAccumulatorSteps();
 
  private:
-    const U64 numberOfSteps;
-    U64 stepCounter;
+   const U64 numberOfSteps;
+   U64 stepCounter;
+
+   friend class Plan;
 };
 
 }  // namespace Blade

@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    size_t number_of_workers = 1;
+    size_t number_of_workers = 2;
     blade_ata_b_initialize(number_of_workers);
 
     void** input_buffers = (void**)malloc(number_of_workers * sizeof(void*));

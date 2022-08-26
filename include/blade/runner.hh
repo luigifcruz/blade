@@ -42,9 +42,7 @@ class BLADE_API Runner {
         }
     }
 
-    virtual ~Runner() = default;
-
-    constexpr const T& getWorker(const U64& index = 0) const {
+    constexpr T& getWorker(const U64& index = 0) const {
         return *workers[index];
     }
 
@@ -80,23 +78,50 @@ class BLADE_API Runner {
     }
 
     bool enqueue(const std::function<const U64(T&)>& jobFunc) {
-        // If worker has accumulator, check if it's complete.
-        if constexpr (std::is_base_of<Accumulator, T>::value) {
-            if (!getNextWorker().accumulationComplete()) {
-                return false;
-            }
-        }
-
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
         }
 
-        jobs.push_back({
-            .id = jobFunc(*workers[head]),
-            .worker = workers[head],
-        });
+        try {
+            jobs.push_back({
+                .id = jobFunc(*workers[head]),
+                .worker = workers[head],
+            });
+        } catch (const Result& err) {
+            // Print user friendly error and issue fatal error.
+            if (err == Result::PLAN_ERROR_ACCUMULATION_COMPLETE) {
+                BL_FATAL("Can't accumulate block because buffer is full.");
+                BL_CHECK_THROW(err);
+            }
 
+            if (err == Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED) {
+                BL_FATAL("Can't transfer data because destination is not synchronized.");
+                BL_CHECK_THROW(err);
+            }
+
+            if (err == Result::PLAN_ERROR_NO_ACCUMULATOR) {
+                BL_FATAL("This mode doesn't support accumulation.");
+                BL_CHECK_THROW(err);
+            }
+
+            if (err == Result::PLAN_ERROR_NO_SLOT) {
+                BL_FATAL("No slot available after compute. Data has nowhere to go.")
+                BL_CHECK_THROW(err);
+            }
+
+            // Ignore if throw was a skip operation.
+            if (err == Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE || 
+                err == Result::PLAN_SKIP_NO_DEQUEUE || 
+                err == Result::PLAN_SKIP_NO_SLOT) {
+                return false;
+            }
+
+            // Fatal error otherwise.
+            BL_CHECK_THROW(err);
+        }
+
+        // Bump job queue head index.
         head = (head + 1) % workers.size();
 
         return true;

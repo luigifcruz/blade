@@ -55,11 +55,6 @@ ModeH<IT, OT>::ModeH(const Config& config)
 template<typename IT, typename OT>
 const Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
-    if (this->accumulationComplete()) {
-        BL_FATAL("Can't accumulate block because buffer is full.");
-        return Result::BUFFER_FULL;
-    }
-
     // TODO: Check if this copy parameters are correct.
     const auto& width = (data.size() / config.channelizerNumberOfBeams / config.channelizerNumberOfFrequencyChannels) * sizeof(IT);
     const auto& height = config.channelizerNumberOfBeams * config.channelizerNumberOfFrequencyChannels;
@@ -75,24 +70,6 @@ const Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
             width,
             height, 
             stream));
-
-    this->incrementAccumulatorStep();
-
-    return Result::SUCCESS;
-}
-
-template<typename IT, typename OT>
-const Result ModeH<IT, OT>::run(Vector<Device::CPU, OT>& output) {
-    if (!this->accumulationComplete()) {
-        BL_FATAL("Can't run compute because acumulator buffer is incomplete ({}/{}).", 
-            this->getCurrentAccumulatorStep(), this->getAccumulatorNumberOfSteps());
-        return Result::BUFFER_INCOMPLETE;
-    }
-
-    BL_CHECK(this->compute());
-    BL_CHECK(this->copy(output, this->getOutput()));
-
-    this->resetAccumulatorSteps();
 
     return Result::SUCCESS;
 }

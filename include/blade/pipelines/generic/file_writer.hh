@@ -110,8 +110,6 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
     const Result accumulate(const Vector<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
-    const Result run();
-
  private:
     const Config config;
 

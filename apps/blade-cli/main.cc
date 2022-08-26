@@ -9,13 +9,23 @@
 
 template<typename IT, typename OT>
 inline const Result SetupTelescope(const CliConfig& config) {
-    auto reader = Pipelines::Generic::FileReader<IT>({
+    // Define some types.
+
+    using Reader = Pipelines::Generic::FileReader<IT>;
+
+    // Instantiate compute pipeline and runner.
+
+    typename Reader::Config readerConfig = {
         .inputGuppiFile = config.inputGuppiFile,
         .inputBfr5File = config.inputBfr5File,
         .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples * 
                                    config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
-    });
+    };
+
+    auto reader = Runner<Reader>::New(1, readerConfig, false);
+
+    // Setup telescope.
 
     switch (config.telescope) {
         case TelescopeId::ATA:

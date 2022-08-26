@@ -44,18 +44,6 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getStepNumberOfPolarizations();
     }
 
-    const Vector<Device::CPU, OT>& getStepOutputBuffer() {
-        return guppi->getStepOutputBuffer();
-    }
-
-    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
-        return guppi->getStepOutputJulianDate();
-    }
-
-    const Vector<Device::CPU, F64>& getStepOutputDut1() {
-        return guppi->getStepOutputDut1();
-    }
-
     constexpr const U64 getStepOutputBufferSize() const {
         return guppi->getStepOutputBufferSize();
     }
@@ -78,10 +66,6 @@ class BLADE_API FileReader : public Pipeline {
 
     constexpr const U64 getTotalNumberOfPolarizations() const {
         return guppi->getTotalNumberOfPolarizations();
-    }
-
-    constexpr const U64 getTotalOutputBufferSize() const {
-        return guppi->getTotalOutputBufferSize();
     }
 
     constexpr const F64 getObservationFrequency() const {
@@ -124,7 +108,21 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getBeamCoordinates();
     }
 
-    const Result run();
+    constexpr const U64 getTotalOutputBufferSize() const {
+        return guppi->getTotalOutputBufferSize();
+    }
+
+    const Vector<Device::CPU, OT>& getStepOutputBuffer() {
+        return guppi->getStepOutputBuffer();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+        return guppi->getStepOutputJulianDate();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+        return guppi->getStepOutputDut1();
+    }
 
  private:
     const Config config;

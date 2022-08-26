@@ -41,18 +41,6 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
     }
 }
 
-template<typename OT>
-const Result FileReader<OT>::run() {
-    if (!guppi->keepRunning()) {
-        return Result::EXHAUSTED;
-    }
-
-    BL_CHECK(this->compute());
-    BL_CHECK(this->synchronize());
-
-    return Result::SUCCESS;
-}
-
 template class BLADE_API FileReader<CI8>;
 
 }  // namespace Blade::Pipelines::Generic

@@ -42,9 +42,6 @@ class BLADE_API ModeB : public Pipeline {
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;
 
-        U64 outputMemWidth;
-        U64 outputMemPad;
-
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
         U64 phasorBlockSize = 512;
@@ -58,34 +55,33 @@ class BLADE_API ModeB : public Pipeline {
         return channelizer->getBufferSize();
     }
 
+    const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, CI8>& input,
+                            const cudaStream_t& stream);
+
     constexpr const U64 getOutputSize() const {
         if (config.detectorEnable) {
             return detector->getOutputSize();
         } else {
-            // TODO: I really hate this. Can it be simplified?
-            return (((beamformer->getOutputSize() * sizeof(OT)) / 
-                config.outputMemWidth) * (config.outputMemPad + 
-                config.outputMemWidth)) / sizeof(OT);
+            return beamformer->getOutputSize();
         }
     }
 
-    const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
-                     const Vector<Device::CPU, F64>& blockDut1,
-                     const Vector<Device::CPU, CI8>& input,
-                            Vector<Device::CPU, OT>& output);
-
-    template<class NextPipeline>
-    const Result run(const Vector<Device::CPU, F64>& blockJulianDate,
-                     const Vector<Device::CPU, F64>& blockDut1,
-                     const Vector<Device::CPU, CI8>& input,
-                            NextPipeline& nextPipeline) {
-        // Print debug messages, copy input variables, and compute.
-        BL_CHECK(this->underlyingRun(blockJulianDate, blockDut1, input));
-
-        // Call next pipeline accumulate function.
-        BL_CHECK(nextPipeline.accumulate(this->getOutput(), this->getCudaStream()));
-
-        return Result::SUCCESS;
+    constexpr const Vector<Device::CUDA, OT>& getOutput() {
+        if (config.detectorEnable) {
+            if constexpr (!std::is_same<OT, F32>::value) {
+                return outputCast->getOutput();
+            } else {
+                return detector->getOutput();
+            }
+        } else {
+            if constexpr (!std::is_same<OT, CF32>::value) {
+                return complexOutputCast->getOutput();
+            } else {
+                return beamformer->getOutput();
+            }
+        }
     }
 
  private:
@@ -105,26 +101,6 @@ class BLADE_API ModeB : public Pipeline {
     std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
     // Output Cast for path with Detector (F32).
     std::shared_ptr<Modules::Cast<F32, OT>> outputCast;
-
-    const Result underlyingRun(const Vector<Device::CPU, F64>& blockJulianDate,
-                               const Vector<Device::CPU, F64>& blockDut1,
-                               const Vector<Device::CPU, CI8>& input);
-
-    constexpr const Vector<Device::CUDA, OT>& getOutput() {
-        if (config.detectorEnable) {
-            if constexpr (!std::is_same<OT, F32>::value) {
-                return outputCast->getOutput();
-            } else {
-                return detector->getOutput();
-            }
-        } else {
-            if constexpr (!std::is_same<OT, CF32>::value) {
-                return complexOutputCast->getOutput();
-            } else {
-                return beamformer->getOutput();
-            }
-        }
-    }
 };
 
 }  // namespace Blade::Pipelines::ATA
