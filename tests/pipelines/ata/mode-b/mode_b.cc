@@ -84,11 +84,11 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
         },
 
-        .beamformerNumberOfAntennas = BLADE_ATA_MODE_B_INPUT_NANT,
-        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_B_ANT_NCHAN,
+        .beamformerNumberOfAntennas = BLADE_ATA_MODE_B_NANT,
+        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_B_NCHAN,
         .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_B_NTIME,
         .beamformerNumberOfPolarizations = BLADE_ATA_MODE_B_NPOL,
-        .beamformerNumberOfBeams = BLADE_ATA_MODE_B_OUTPUT_NBEAM,
+        .beamformerNumberOfBeams = BLADE_ATA_MODE_B_NBEAM,
         .beamformerIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
         .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,

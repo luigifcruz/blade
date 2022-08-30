@@ -11,13 +11,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    size_t number_of_workers = 2;
-    blade_ata_b_initialize(number_of_workers);
+    blade_ata_b_initialize(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS);
 
-    void** input_buffers = (void**)malloc(number_of_workers * sizeof(void*));
-    void** output_buffers = (void**)malloc(number_of_workers * sizeof(void*));
+    void** input_buffers = (void**)malloc(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS * sizeof(void*));
+    void** output_buffers = (void**)malloc(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS * sizeof(void*));
 
-    for (int i = 0; i < number_of_workers; i++) {
+    for (int i = 0; i < BLADE_ATA_MODE_B_NUMBER_OF_WORKERS; i++) {
         size_t input_byte_size = blade_ata_b_get_input_size() * sizeof(int8_t) * 2;
         input_buffers[i] = (void*)malloc(input_byte_size);
         blade_pin_memory(input_buffers[i], input_byte_size);
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
 
     while (i < 510) {
         if (blade_ata_b_enqueue(input_buffers[h], output_buffers[h], i)) {
-            h = (h + 1) % number_of_workers;
+            h = (h + 1) % BLADE_ATA_MODE_B_NUMBER_OF_WORKERS;
         }
 
         size_t id;
@@ -51,7 +50,7 @@ int main(int argc, char **argv) {
 
     blade_ata_b_terminate();
 
-    for (int i = 0; i < number_of_workers; i++) {
+    for (int i = 0; i < BLADE_ATA_MODE_B_NUMBER_OF_WORKERS; i++) {
         free(input_buffers[i]);
         free(output_buffers[i]);
     }
