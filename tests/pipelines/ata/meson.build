@@ -1,2 +1,2 @@
 subdir('mode-b')
-# subdir('mode-bh')
+subdir('mode-bh')

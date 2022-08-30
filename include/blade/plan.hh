@@ -137,6 +137,11 @@ class BLADE_API Plan {
         destinationPipeline.incrementAccumulatorStep();
     } 
 
+    // Skip lets the user skip a cycle programmatically.
+    static void Skip() {
+        BL_CHECK_THROW(Result::PLAN_SKIP_USER_INITIATED);
+    }
+
  private:
     Plan();
 };

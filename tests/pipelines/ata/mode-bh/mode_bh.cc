@@ -1,6 +1,7 @@
 #include <memory>
 #include <cassert>
 
+#include "blade/plan.hh"
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
@@ -19,6 +20,11 @@ using TestPipelineB = ModeB<CF32>;
 using TestPipelineH = ModeH<CF32, F32>;
 
 static struct {
+    U64 StepCount = 0;
+    void* UserData = nullptr;
+    std::unordered_map<U64, void*> InputPointerMap;
+    std::unordered_map<U64, void*> OutputPointerMap;
+
     struct {
         TestPipelineB::Config B;
         TestPipelineH::Config H;
@@ -28,10 +34,21 @@ static struct {
         std::unique_ptr<Runner<TestPipelineB>> B; 
         std::unique_ptr<Runner<TestPipelineH>> H; 
     } RunnersInstances;
+
+    struct {
+        blade_input_buffer_fetch_cb* InputBufferFetch;
+        blade_input_buffer_ready_cb* InputBufferReady;
+        blade_output_buffer_fetch_cb* OutputBufferFetch;
+        blade_output_buffer_ready_cb* OutputBufferReady;
+    } Callbacks;
 } State;
 
 static Vector<Device::CPU, F64> dummyJulianDate(1);
 static Vector<Device::CPU, F64> dummyDut1(1);
+
+bool blade_pin_memory(void* buffer, U64 size) {
+    return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+}
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
@@ -91,11 +108,11 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
         },
 
-        .beamformerNumberOfAntennas = BLADE_ATA_MODE_BH_INPUT_NANT,
-        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_BH_ANT_NCHAN,
+        .beamformerNumberOfAntennas = BLADE_ATA_MODE_BH_NANT,
+        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_BH_NCHAN,
         .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_BH_NTIME,
         .beamformerNumberOfPolarizations = BLADE_ATA_MODE_BH_NPOL,
-        .beamformerNumberOfBeams = BLADE_ATA_MODE_BH_OUTPUT_NBEAM,
+        .beamformerNumberOfBeams = BLADE_ATA_MODE_BH_NBEAM,
     };
 
     State.RunnersConfig.B.phasorAntennaCalibrations.resize(
@@ -126,6 +143,9 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
         Runner<TestPipelineH>::New(numberOfWorkers, 
                                    State.RunnersConfig.H);
 
+    State.InputPointerMap.reserve(numberOfWorkers);
+    State.OutputPointerMap.reserve(numberOfWorkers);
+
     return true;
 }
 
@@ -149,47 +169,107 @@ U64 blade_ata_bh_get_output_size() {
     return State.RunnersInstances.H->getWorker().getOutputSize();
 }
 
-bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+void blade_ata_bh_register_user_data(void* user_data) {
+    State.UserData = user_data;
 }
 
-bool blade_ata_bh_enqueue_b(void* input_ptr, const U64 b_id) {
+void blade_ata_bh_register_input_buffer_fetch_cb(blade_input_buffer_fetch_cb* f) {
+    State.Callbacks.InputBufferFetch = f;
+}
+
+void blade_ata_bh_register_input_buffer_ready_cb(blade_input_buffer_ready_cb* f) {
+    State.Callbacks.InputBufferReady = f;
+}
+
+void blade_ata_bh_register_output_buffer_fetch_cb(blade_output_buffer_fetch_cb* f) {
+    State.Callbacks.OutputBufferFetch = f;
+}
+
+void blade_ata_bh_register_output_buffer_ready_cb(blade_output_buffer_ready_cb* f) {
+    State.Callbacks.OutputBufferReady = f;
+}
+
+bool blade_ata_bh_compute_step() {
     assert(State.RunnersInstances.B);
     assert(State.RunnersInstances.H);
 
-    if (!State.RunnersInstances.H->slotAvailable()) {
-        return false;
+    U64 callbackStep = 0;
+    void* externalBuffer = nullptr;
+
+    auto& ModeB = State.RunnersInstances.B; 
+    auto& ModeH = State.RunnersInstances.H; 
+
+    ModeB->enqueue([&](auto& worker) {
+        // Check if next runner has free slot.
+        Plan::Available(ModeB);
+
+        // Calls client callback to request empty input buffer.
+        if (!State.Callbacks.InputBufferFetch(State.UserData, &externalBuffer)) {
+            Plan::Skip();
+        }
+
+        // Keeps track of pointer for "ready" callback.
+        State.InputPointerMap.insert({State.StepCount, externalBuffer});
+
+        // Create Memory::Vector from RAW pointer.
+        auto input = Vector<Device::CPU, CI8>(externalBuffer, worker.getInputSize());
+
+        // Transfer input memory to the pipeline.
+        Plan::TransferIn(worker, 
+                         dummyJulianDate,
+                         dummyDut1,
+                         input);
+
+        // Compute input data.
+        Plan::Compute(worker);
+
+        // Concatenate output data inside next pipeline input buffer.
+        Plan::Accumulate(ModeH, ModeB, worker.getOutput());
+
+        // Return job identity and increment counter.
+        return State.StepCount++; 
+    });
+
+    ModeH->enqueue([&](auto& worker) {
+        // Try dequeue job from last runner. If unlucky, return.
+        Plan::Dequeue(ModeB, &callbackStep);
+
+        // If dequeue successfull, recycle input buffer.
+        const auto& recycleBuffer = State.InputPointerMap[callbackStep];
+        State.Callbacks.InputBufferReady(State.UserData, recycleBuffer);
+        State.InputPointerMap.erase(callbackStep);
+
+        // Compute input data.
+        Plan::Compute(worker);
+
+        // Calls client callback to request empty output buffer.
+        if (!State.Callbacks.OutputBufferFetch(State.UserData, &externalBuffer)) {
+            Plan::Skip();
+        }
+
+        // Keeps track of pointer for "ready" callback.
+        State.OutputPointerMap.insert({callbackStep, externalBuffer});
+
+        // Create Memory::Vector from RAW pointer.
+        auto output = Vector<Device::CPU, F32>(externalBuffer, worker.getOutputSize());
+
+        // Copy worker output to external output buffer.
+        Plan::TransferOut(output, worker.getOutput(), worker);
+
+        // Return job identity.
+        return callbackStep;
+    });
+
+    // Dequeue last runner job and recycle output buffer.
+    if (ModeH->dequeue(&callbackStep)) {
+        const auto& recycleBuffer = State.OutputPointerMap[callbackStep];
+        State.Callbacks.OutputBufferReady(State.UserData, recycleBuffer);
+        State.OutputPointerMap.erase(callbackStep);
     }
 
-    return State.RunnersInstances.B->enqueue([&](auto& worker){
-        auto input = Vector<Device::CPU, CI8>(input_ptr, worker.getInputSize());
-        auto& next = State.RunnersInstances.H->getNextWorker();
+    // Prevent memory clobber inside spin-loop.
+    Plan::Loop();
 
-        BL_CHECK_THROW(worker.run(dummyJulianDate, dummyDut1, input, next));
-
-        return b_id;
-    });
-}
-
-bool blade_ata_bh_dequeue_b(U64* b_id) {
-    assert(State.RunnersInstances.B);
-    return State.RunnersInstances.B->dequeue(b_id);
-}
-
-bool blade_ata_bh_enqueue_h(const U64 b_id, void* output_ptr, const U64 h_id) {
-    assert(State.RunnersInstances.B);
-    assert(State.RunnersInstances.H);
-
-    return State.RunnersInstances.H->enqueue([&](auto& worker){
-        auto output = Vector<Device::CPU, F32>(output_ptr, worker.getOutputSize());
-
-        BL_CHECK_THROW(worker.run(output));
-
-        return h_id;
-    });
-}
-
-bool blade_ata_bh_dequeue_h(U64* id) {
-    assert(State.RunnersInstances.H);
-    return State.RunnersInstances.H->dequeue(id);
+    // Return if pipeline is computing something.
+    return !(ModeB->empty() && ModeH->empty());
 }

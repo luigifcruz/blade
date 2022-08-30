@@ -112,6 +112,7 @@ class BLADE_API Runner {
 
             // Ignore if throw was a skip operation.
             if (err == Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE || 
+                err == Result::PLAN_SKIP_USER_INITIATED ||
                 err == Result::PLAN_SKIP_NO_DEQUEUE || 
                 err == Result::PLAN_SKIP_NO_SLOT) {
                 return false;
