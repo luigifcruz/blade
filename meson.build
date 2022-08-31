@@ -44,7 +44,6 @@ lib_blade_dep = declare_dependency(
 subdir('python')
 subdir('tests')
 subdir('docs')
-subdir('apps')
 
 summary({'cpp_std': get_option('cpp_std'),
             'prefix': get_option('prefix'),
@@ -57,3 +56,5 @@ pkg.generate(
     lib_blade,
     libraries: dep_lst,
 )
+
+subdir('apps')

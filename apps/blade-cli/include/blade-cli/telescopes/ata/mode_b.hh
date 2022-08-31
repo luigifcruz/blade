@@ -1,35 +1,43 @@
-#ifndef BLADE_CLI_TELESCOPES_ATA
-#define BLADE_CLI_TELESCOPES_ATA
+#ifndef BLADE_CLI_TELESCOPES_ATA_MODE_B_HH
+#define BLADE_CLI_TELESCOPES_ATA_MODE_B_HH
 
-#include "types.hh"
+#include "blade-cli/types.hh"
 
 #include "blade/plan.hh"
 #include "blade/runner.hh"
-#include "blade/pipelines/generic/file_writer.hh"
 #include "blade/utils/indicators.hh"
-
-#ifdef BLADE_PIPELINE_ATA_MODE_B
 #include "blade/pipelines/ata/mode_b.hh"
-#endif
+#include "blade/pipelines/generic/file_reader.hh"
+#include "blade/pipelines/generic/file_writer.hh"
 
 using namespace indicators;
 
-template<typename IT, typename OT>
-inline const Result SetupAtaModeB(const CliConfig& cliConfig, 
-                                  auto& readerRunner) {
-    // Define some types.
+namespace Blade::CLI::Telescopes::ATA {
 
+template<typename IT, typename OT>
+inline const Result ModeB(const Config& config) {
+    // Define some types.
+    using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::ATA::ModeB<OT>;
     using Writer = Pipelines::Generic::FileWriter<OT>;
 
-    // Get reader pipeline from runner to make things tidier.
+    // Instantiate reader pipeline and runner.
 
+    typename Reader::Config readerConfig = {
+        .inputGuppiFile = config.inputGuppiFile,
+        .inputBfr5File = config.inputBfr5File,
+        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples * 
+                                   config.preBeamformerChannelizerRate,
+        .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+    };
+
+    auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
     // Instantiate compute pipeline and runner.
 
     typename Compute::Config computeConfig = {
-        .preBeamformerChannelizerRate = cliConfig.preBeamformerChannelizerRate,
+        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
@@ -39,7 +47,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCalibrations = reader.getAntennaCalibrations(cliConfig.preBeamformerChannelizerRate),
+        .phasorAntennaCalibrations = reader.getAntennaCalibrations(config.preBeamformerChannelizerRate),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
         .beamformerNumberOfAntennas = reader.getStepNumberOfAntennas(),
@@ -49,27 +57,28 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
         .beamformerNumberOfBeams = reader.getStepNumberOfBeams(),
         .beamformerIncoherentBeam = false,
 
+        // TODO: Review this calculation.
         .castBlockSize = 32,
-        .channelizerBlockSize = cliConfig.stepNumberOfTimeSamples,
+        .channelizerBlockSize = config.stepNumberOfTimeSamples,
         .phasorBlockSize = 32,
-        .beamformerBlockSize = cliConfig.stepNumberOfTimeSamples
+        .beamformerBlockSize = config.stepNumberOfTimeSamples
     };
 
-    auto computeRunner = Runner<Compute>::New(cliConfig.numberOfWorkers, computeConfig, false);
+    auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 
     // Instantiate writer pipeline and runner.
 
     typename Writer::Config writerConfig = {
-        .outputGuppiFile = cliConfig.outputGuppiFile,
+        .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
 
         .stepNumberOfBeams = reader.getStepNumberOfBeams(),
         .stepNumberOfAntennas = reader.getStepNumberOfAntennas(),
-        .stepNumberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getStepNumberOfFrequencyChannels(),
-        .stepNumberOfTimeSamples = cliConfig.stepNumberOfTimeSamples,
+        .stepNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getStepNumberOfFrequencyChannels(),
+        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples,
         .stepNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
 
-        .totalNumberOfFrequencyChannels = cliConfig.preBeamformerChannelizerRate * reader.getTotalNumberOfFrequencyChannels(),
+        .totalNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getTotalNumberOfFrequencyChannels(),
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
@@ -82,7 +91,7 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
                               writer.getTotalNumberOfFrequencyChannels() * 
                               writer.getStepNumberOfAntennas() * 
                               writer.getStepNumberOfBeams());
-    writer.headerPut("TBIN", cliConfig.preBeamformerChannelizerRate / reader.getChannelBandwidth());
+    writer.headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 
     indicators::ProgressBar bar{
@@ -169,21 +178,6 @@ inline const Result SetupAtaModeB(const CliConfig& cliConfig,
     return Result::SUCCESS;
 }
 
-template<typename IT, typename OT>
-inline const Result SetupAta(const CliConfig& config,
-                             auto& readerRunner) {
-    switch (config.mode) {
-#if defined(BLADE_PIPELINE_ATA_MODE_B)
-        case ModeId::MODE_B:
-            return SetupAtaModeB<IT, OT>(config, readerRunner);
-#endif
-#if defined(BLADE_PIPELINE_ATA_MODE_B) && defined(BLADE_PIPELINE_GENERIC_MODE_H)
-#endif
-        default:
-            BL_FATAL("This ATA mode is not implemented yet.");
-    }
-
-    return Result::ERROR;
-}
+}  // namespace Blade::CLI::Telescopes::ATA
 
 #endif
