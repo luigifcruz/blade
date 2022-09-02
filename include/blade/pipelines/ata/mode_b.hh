@@ -14,6 +14,8 @@
 
 namespace Blade::Pipelines::ATA {
 
+// TODO: Add input types.
+
 template<typename OT>
 class BLADE_API ModeB : public Pipeline {
  public:

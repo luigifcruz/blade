@@ -38,6 +38,11 @@ class BLADE_API Plan {
         return true;
     }
 
+    // Skip lets the user skip a cycle programmatically.
+    static void Skip() {
+        BL_CHECK_THROW(Result::PLAN_SKIP_USER_INITIATED);
+    }
+
     // Compute is used to trigger the compute step of a pipeline.
     template<class T>
     static void Compute(T& pipeline) {
@@ -136,11 +141,6 @@ class BLADE_API Plan {
         // Increment pipeline accumulator.
         destinationPipeline.incrementAccumulatorStep();
     } 
-
-    // Skip lets the user skip a cycle programmatically.
-    static void Skip() {
-        BL_CHECK_THROW(Result::PLAN_SKIP_USER_INITIATED);
-    }
 
  private:
     Plan();
