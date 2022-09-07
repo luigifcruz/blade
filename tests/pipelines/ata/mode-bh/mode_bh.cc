@@ -43,11 +43,11 @@ static struct {
     } Callbacks;
 } State;
 
-static Vector<Device::CPU, F64> dummyJulianDate(1);
-static Vector<Device::CPU, F64> dummyDut1(1);
+static ArrayTensor<Device::CPU, F64> dummyJulianDate(1);
+static ArrayTensor<Device::CPU, F64> dummyDut1(1);
 
 bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(Vector<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+    return Memory::PageLock(ArrayTensor<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
 }
 
 bool blade_use_device(int device_id) {
@@ -212,7 +212,7 @@ bool blade_ata_bh_compute_step() {
         State.InputPointerMap.insert({State.StepCount, externalBuffer});
 
         // Create Memory::Vector from RAW pointer.
-        auto input = Vector<Device::CPU, CI8>(externalBuffer, worker.getInputSize());
+        auto input = ArrayTensor<Device::CPU, CI8>(externalBuffer, worker.getInputSize());
 
         // Transfer input memory to the pipeline.
         Plan::TransferIn(worker, 
@@ -251,7 +251,7 @@ bool blade_ata_bh_compute_step() {
         State.OutputPointerMap.insert({callbackStep, externalBuffer});
 
         // Create Memory::Vector from RAW pointer.
-        auto output = Vector<Device::CPU, F32>(externalBuffer, worker.getOutputSize());
+        auto output = ArrayTensor<Device::CPU, F32>(externalBuffer, worker.getOutputSize());
 
         // Copy worker output to external output buffer.
         Plan::TransferOut(output, worker.getOutput(), worker);

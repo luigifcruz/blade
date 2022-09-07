@@ -53,7 +53,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
 }
 
 template<typename IT, typename OT>
-const Result ModeH<IT, OT>::accumulate(const Vector<Device::CUDA, IT>& data,
+const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
     // TODO: Check if this copy parameters are correct.
     const auto& width = (data.size() / config.channelizerNumberOfBeams / config.channelizerNumberOfFrequencyChannels) * sizeof(IT);

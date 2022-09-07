@@ -18,12 +18,10 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
     kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
     grid = dim3((size + block.x - 1) / block.x);
 
-    BL_CHECK_THROW(InitInput(input.buf, config.inputSize));
-    BL_CHECK_THROW(InitOutput(output.buf, config.inputSize));
+    BL_CHECK_THROW(output.buf.resize(getInput()));
 
-    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
-    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
-    BL_INFO("Input Size: {}", config.inputSize);
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInput(), getInput());
 }
 
 template<typename IT, typename OT>

@@ -112,15 +112,15 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getTotalOutputBufferSize();
     }
 
-    const Vector<Device::CPU, OT>& getStepOutputBuffer() {
+    const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
         return guppi->getStepOutputBuffer();
     }
 
-    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+    const ArrayTensor<Device::CPU, F64>& getStepOutputJulianDate() {
         return guppi->getStepOutputJulianDate();
     }
 
-    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+    const ArrayTensor<Device::CPU, F64>& getStepOutputDut1() {
         return guppi->getStepOutputDut1();
     }
 

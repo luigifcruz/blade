@@ -9,7 +9,7 @@ namespace py = pybind11;
 
 template<Device D, typename T>
 inline void init_vector(const py::module& m, const char* type) {
-    using Class = Vector<D, T>;
+    using Class = ArrayTensor<D, T>;
 
     py::class_<Class, std::shared_ptr<Class>>(m, type, py::buffer_protocol())
         .def(py::init<>())

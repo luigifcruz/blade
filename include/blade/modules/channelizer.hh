@@ -13,44 +13,31 @@ template<typename IT, typename OT>
 class BLADE_API Channelizer : public Module {
  public:
     struct Config {
-        U64 numberOfBeams;
-        U64 numberOfAntennas;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations; 
-
         U64 rate = 4;
+
         U64 blockSize = 512;
     };
 
     struct Input {
-        const Vector<Device::CUDA, IT>& buf;
+        const ArrayTensor<Device::CUDA, IT>& buf;
     };
 
     struct Output {
-        Vector<Device::CUDA, OT> buf;
+        ArrayTensor<Device::CUDA, OT> buf;
     };
 
     explicit Channelizer(const Config& config, const Input& input);
 
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInput() const {
+        return this->input.buf;
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
         return this->output.buf;
     }
 
     constexpr const Config& getConfig() const {
         return this->config;
-    }
-
-    constexpr const U64 getBufferSize() const {
-        return config.numberOfPolarizations * 
-               config.numberOfTimeSamples *
-               config.numberOfAntennas * 
-               config.numberOfFrequencyChannels * 
-               config.numberOfBeams;
     }
 
     const Result process(const cudaStream_t& stream = 0) final;
@@ -66,11 +53,20 @@ class BLADE_API Channelizer : public Module {
     std::string post_kernel;
     dim3 post_grid, post_block;
 
-    Vector<Device::CUDA, OT> buffer;
-    Vector<Device::CPU | Device::CUDA, U64> indices;
+    ArrayTensor<Device::CUDA, OT> buffer;
+    ArrayTensor<Device::CPU | Device::CUDA, U64> indices;
 
     cufftHandle plan;
     std::string kernel_key;
+
+    constexpr const ArrayTensorDimensions getOutputDims() const {
+        return {
+            getInput().numberOfAspects(),
+            getInput().numberOfFrequencyChannels() * config.rate,
+            getInput().numberOfTimeSamples() / config.rate,
+            getInput().numberOfPolarizations(),
+        };
+    }
 };
 
 }  // namespace Blade::Modules

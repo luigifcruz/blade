@@ -12,8 +12,8 @@ class Test : public Pipeline {
         this->connect(cast, {inputSize, 512}, {input});
     }
 
-    const Result run(const Vector<Device::CPU, IT>& input,
-                           Vector<Device::CPU, OT>& output) {
+    const Result run(const ArrayTensor<Device::CPU, IT>& input,
+                           ArrayTensor<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(cast->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, cast->getOutput()));
@@ -23,7 +23,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Vector<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Cast<IT, OT>> cast;
 };
 
@@ -31,9 +31,9 @@ template<typename IT, typename OT>
 int complex_test(const U64 testSize) {
     auto mod = Test<std::complex<IT>, std::complex<OT>>{testSize};
 
-    Vector<Device::CPU, std::complex<IT>> input(testSize);
-    Vector<Device::CPU, std::complex<OT>> output(testSize);
-    Vector<Device::CPU, std::complex<OT>> result(testSize);
+    ArrayTensor<Device::CPU, std::complex<IT>> input(testSize);
+    ArrayTensor<Device::CPU, std::complex<OT>> output(testSize);
+    ArrayTensor<Device::CPU, std::complex<OT>> result(testSize);
 
     for (U64 i = 0; i < testSize; i++) {
         input[i] = {

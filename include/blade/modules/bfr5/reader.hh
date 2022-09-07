@@ -30,24 +30,14 @@ class BLADE_API Reader : public Module {
 
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const U64 getTotalNumberOfAntennas() const {
-        return this->bfr5.dim_info.nants;
-    }
-
-    constexpr const U64 getTotalNumberOfBeams() const {
-        return this->bfr5.dim_info.nbeams;
-    }
-
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return this->bfr5.dim_info.nchan;
-    }
-
-    constexpr const U64 getTotalNumberOfPolarizations() const {
-        return this->bfr5.dim_info.npol;
-    }
-
-    constexpr const U64 getTotalNumberOfTimeSamples() const {
-        return this->bfr5.dim_info.ntimes;
+    constexpr const ArrayTensorDimensions getDataDims() const {
+        return {
+            ((this->bfr5.dim_info.nants + 1)
+                * (this->bfr5.dim_info.nbeams + 1)) - 1,
+            this->bfr5.dim_info.nchan,
+            this->bfr5.dim_info.ntimes,
+            this->bfr5.dim_info.npol,
+        };
     }
 
     constexpr const LLA getReferencePosition() const {

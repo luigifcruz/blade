@@ -12,11 +12,6 @@ template<typename IT, typename OT>
 class BLADE_API Detector : public Module {
  public:
     struct Config {
-        U64 numberOfBeams;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations;
-        
         U64 integrationSize;
         U64 numberOfOutputPolarizations = 4;
 
@@ -24,39 +19,25 @@ class BLADE_API Detector : public Module {
     };
 
     struct Input {
-        const Vector<Device::CUDA, IT>& buf;
+        const ArrayTensor<Device::CUDA, IT>& buf;
     };
 
     struct Output {
-        Vector<Device::CUDA, OT> buf;
+        ArrayTensor<Device::CUDA, OT> buf;
     };
 
     explicit Detector(const Config& config, const Input& input);
 
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInput() const {
+        return this->input.buf;
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
         return this->output.buf;
     }
 
     constexpr const Config& getConfig() const {
         return this->config;
-    }
-
-    constexpr const U64 getInputSize() const {
-        return config.numberOfPolarizations * 
-               config.numberOfTimeSamples *
-               config.numberOfFrequencyChannels * 
-               config.numberOfBeams;
-    }
-
-    constexpr const U64 getOutputSize() const {
-        return config.numberOfOutputPolarizations *
-               (config.numberOfTimeSamples / config.integrationSize) *
-               config.numberOfFrequencyChannels * 
-               config.numberOfBeams;
     }
 
     const Result process(const cudaStream_t& stream = 0) final;
@@ -65,6 +46,15 @@ class BLADE_API Detector : public Module {
     const Config config;
     const Input input;
     Output output;
+
+    const ArrayTensorDimensions getOutputDims() const {
+        return {
+            getInput().numberOfAspects(),
+            getInput().numberOfFrequencyChannels(),
+            getInput().numberOfTimeSamples() / config.integrationSize,
+            config.numberOfOutputPolarizations,
+        }; 
+    }
 };
 
 }  // namespace Blade::Modules

@@ -15,9 +15,9 @@ int main() {
         .blockSize = 512,
     });
 
-    Vector<Device::CPU, CF32> input(mod.getInputSize());
-    Vector<Device::CPU, CF32> phasors(mod.getPhasorsSize());
-    Vector<Device::CPU, CF32> output(mod.getOutputSize());
+    ArrayTensor<Device::CPU, CF32> input(mod.getInputSize());
+    ArrayTensor<Device::CPU, CF32> phasors(mod.getPhasorsSize());
+    ArrayTensor<Device::CPU, CF32> output(mod.getOutputSize());
 
     for (int i = 0; i < 24; i++) {
         if (mod.run(input, phasors, output, true) != Result::SUCCESS) {

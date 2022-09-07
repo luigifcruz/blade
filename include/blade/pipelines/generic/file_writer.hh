@@ -107,13 +107,13 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
         return this->config;
     }
 
-    const Result accumulate(const Vector<Device::CUDA, IT>& data,
+    const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
  private:
     const Config config;
 
-    Vector<Device::CPU, IT> writerBuffer;
+    ArrayTensor<Device::CPU, IT> writerBuffer;
 
     std::shared_ptr<Modules::Guppi::Writer<IT>> guppi;
 };

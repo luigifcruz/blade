@@ -63,11 +63,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
                 min_cal, max_cal, min_value, max_value); 
     }
 
-    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
-    BL_INFO("Number of Beams: {}", config.numberOfBeams);
-    BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
-    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
     BL_INFO("Observation Frequency (Hz): {}", config.observationFrequencyHz);
     BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
     BL_INFO("Total Bandwidth (Hz): {}", config.totalBandwidthHz);

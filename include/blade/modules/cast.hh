@@ -11,29 +11,26 @@ class BLADE_API Cast : public Module {
  public:
     struct Config {
         U64 inputSize;
+
         U64 blockSize = 512;
     };
 
     struct Input {
-        const Vector<Device::CUDA, IT>& buf;
+        const ArrayTensor<Device::CUDA, IT>& buf;
     };
 
     struct Output {
-        Vector<Device::CUDA, OT> buf;
+        ArrayTensor<Device::CUDA, OT> buf;
     };
 
     explicit Cast(const Config& config, const Input& input);
 
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInput() const {
+        return this->input.buf;
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
         return this->output.buf;
-    }
-
-    constexpr const U64 getOutputSize() const {
-        return this->config.inputSize;
     }
 
     constexpr const Config& getConfig() const {
@@ -46,6 +43,10 @@ class BLADE_API Cast : public Module {
     const Config config;
     const Input input;
     Output output;
+
+    constexpr const ArrayTensorDimensions getOutputDims() const {
+        return getInput();
+    }
 };
 
 }  // namespace Blade::Modules

@@ -76,7 +76,7 @@ class BLADE_API Plan {
 
     // TransferOut(3) is used to transfer output data from one pipeline to a vector.
     template<Device SD, typename ST, Device DD, typename DT>
-    static void TransferOut(Vector<SD, ST>& dst, const Vector<DD, DT>& src, auto& pipeline) {
+    static void TransferOut(ArrayTensor<SD, ST>& dst, const ArrayTensor<DD, DT>& src, auto& pipeline) {
         // Transfer data to the vector.
         BL_CHECK_THROW(Memory::Copy(dst, src, pipeline.getCudaStream()));
     }

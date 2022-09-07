@@ -31,33 +31,37 @@ class BLADE_API Generic : public Module {
     };
 
     struct Input {
-        const Vector<Device::CPU, F64>& blockJulianDate;
-        const Vector<Device::CPU, F64>& blockDut1;
+        const ArrayTensor<Device::CPU, F64>& blockJulianDate;
+        const ArrayTensor<Device::CPU, F64>& blockDut1;
     };
 
     struct Output {
-        Vector<Device::CPU, F64> delays;
-        Vector<Device::CPU | Device::CUDA, OT> phasors;
+        DelayTensor<Device::CPU, F64> delays;
+        PhasorTensor<Device::CPU | Device::CUDA, OT> phasors;
     };
 
     explicit Generic(const Config& config, const Input& input);
     virtual ~Generic() = default;
 
-    constexpr Vector<Device::CPU, F64>& getDelays() {
+    constexpr const ArrayTensor<Device::CPU, F64>& getInputJulianDate() const {
+        return this->input.blockJulianDate;
+    }
+
+    constexpr const ArrayTensor<Device::CPU, F64>& getInputDut1() const {
+        return this->input.blockDut1;
+    }
+
+    constexpr const DelayTensor<Device::CPU, F64>& getOutputDelays() const {
         return this->output.delays;
     } 
 
-    constexpr Vector<Device::CPU | Device::CUDA, OT>& getPhasors() {
+    constexpr const PhasorTensor<Device::CPU | Device::CUDA, OT>& getOutputPhasors() const {
         return this->output.phasors;
     } 
 
-    constexpr Config getConfig() const {
+    constexpr const Config getConfig() const {
         return config;
     }
-
-    virtual constexpr U64 getPhasorsSize() const = 0;
-    virtual constexpr U64 getDelaysSize() const = 0;
-    virtual constexpr U64 getCalibrationsSize() const = 0;
 
     virtual const Result preprocess(const cudaStream_t& stream = 0) = 0;
 
@@ -65,6 +69,10 @@ class BLADE_API Generic : public Module {
     const Config config;
     const Input input;
     Output output;
+
+    virtual constexpr const DelayTensorDimensions getOutputDelaysDims() const = 0;
+    virtual constexpr const PhasorTensorDimensions getOutputPhasorsDims() const = 0;
+    virtual constexpr const ArrayTensorDimensions getConfigCalibrationDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Phasor

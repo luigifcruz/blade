@@ -9,24 +9,22 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
                          const typename Generic<IT, OT>::Input& input)
         : Generic<IT, OT>(config, input) {
     this->grid = dim3(
-        config.numberOfFrequencyChannels,
-        config.numberOfTimeSamples / config.blockSize);
+        this->getInputBuffer().numberOfFrequencyChannels(),
+        this->getInputBuffer().numberOfTimeSamples()/ config.blockSize);
 
     this->kernel = 
         Template("MeerKAT")
             .instantiate(
-                config.numberOfBeams,
-                config.numberOfAntennas,
-                config.numberOfFrequencyChannels,
-                config.numberOfTimeSamples,
-                config.numberOfPolarizations,
+                this->getInputPhasors().numberOfBeams(),
+                this->getInputPhasors().numberOfAntennas(),
+                this->getInputBuffer().numberOfFrequencyChannels(),
+                this->getInputBuffer().numberOfTimeSamples(),
+                this->getInputBuffer().numberOfPolarizations(),
                 config.blockSize,
                 config.enableIncoherentBeam,
                 config.enableIncoherentBeamSqrt);
 
-    BL_CHECK_THROW(this->InitInput(this->input.buf, getInputSize()));
-    BL_CHECK_THROW(this->InitInput(this->input.phasors, getPhasorsSize()));
-    BL_CHECK_THROW(this->InitOutput(this->output.buf, getOutputSize()));
+    BL_CHECK_THROW(this->output.buf.resize(getOutputDims()));
 }
 
 template class BLADE_API MeerKAT<CF32, CF32>;

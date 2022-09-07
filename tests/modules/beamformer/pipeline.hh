@@ -24,9 +24,9 @@ class Test : public Pipeline {
         return beamformer->getOutputSize();
     }
 
-    const Result run(const Vector<Device::CPU, IT>& input,
-                     const Vector<Device::CPU, IT>& phasors,
-                           Vector<Device::CPU, OT>& output,
+    const Result run(const ArrayTensor<Device::CPU, IT>& input,
+                     const ArrayTensor<Device::CPU, IT>& phasors,
+                           ArrayTensor<Device::CPU, OT>& output,
                      const bool synchronize = false) {
         BL_CHECK(this->copy(beamformer->getInput(), input));
         BL_CHECK(this->compute());
@@ -40,7 +40,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Vector<Device::CUDA, IT> input;
-    Vector<Device::CUDA, IT> phasors;
+    ArrayTensor<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> phasors;
     std::shared_ptr<Modules::Beamformer::ATA<IT, OT>> beamformer;
 };

@@ -33,9 +33,9 @@ inline void init_ata_beamformer(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(beamformer, "Input")
-        .def(py::init<const Vector<Device::CUDA, CF32>&,
-                      const Vector<Device::CUDA, CF32>&>(), py::arg("buf"),
-                                                            py::arg("phasors"));
+        .def(py::init<const ArrayTensor<Device::CUDA, CF32>&,
+                      const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"),
+                                                                 py::arg("phasors"));
 
     beamformer
         .def(py::init<const Class::Config&,
@@ -90,9 +90,9 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(phasor, "Input")
-        .def(py::init<const Vector<Device::CPU, F64>&,
-                      const Vector<Device::CPU, F64>&>(), py::arg("block_julian_date"),
-                                                          py::arg("block_dut1"));
+        .def(py::init<const ArrayTensor<Device::CPU, F64>&,
+                      const ArrayTensor<Device::CPU, F64>&>(), py::arg("block_julian_date"),
+                                                               py::arg("block_dut1"));
 
     phasor
         .def(py::init<const Class::Config&,
@@ -130,7 +130,7 @@ inline void init_channelizer(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(channelizer, "Input")
-        .def(py::init<const Vector<Device::CUDA, CF32>&>(), py::arg("buf"));
+        .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
 
     channelizer
         .def(py::init<const Class::Config&,
@@ -166,7 +166,7 @@ inline void init_detector(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(detector, "Input")
-        .def(py::init<const Vector<Device::CUDA, CF32>&>(), py::arg("buf"));
+        .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
         
     detector
         .def(py::init<const Class::Config&,

@@ -11,29 +11,28 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         : Module(config.blockSize, detector_kernel),
           config(config),
           input(input) {
-    if ((config.numberOfTimeSamples % config.integrationSize) != 0) {
-        BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the integration size ({}).", config.numberOfTimeSamples,
-                config.integrationSize);
-        BL_CHECK_THROW(Result::ERROR);
-    }
-
-    if (config.numberOfPolarizations != 2) {
-        BL_FATAL("Number of polarizations ({}) should be two (2).", config.numberOfPolarizations);
-        BL_CHECK_THROW(Result::ERROR);
-    }
-
-    if (config.numberOfBeams <= 0) {
-        BL_FATAL("Number of beams ({}) should be more than zero.", config.numberOfBeams);
-        BL_CHECK_THROW(Result::ERROR);
-    }
-
     if (config.integrationSize <= 0) {
         BL_WARN("Integration size ({}) should be more than zero.", config.integrationSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    grid = dim3((((getInputSize() / config.numberOfPolarizations) + block.x - 1) / block.x));
+    if ((getInput().numberOfTimeSamples() % config.integrationSize) != 0) {
+        BL_FATAL("The number of time samples ({}) should be divisable "
+                "by the integration size ({}).", getInput().numberOfTimeSamples(), config.integrationSize);
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (getInput().numberOfPolarizations() != 2) {
+        BL_FATAL("Number of polarizations ({}) should be two (2).", getInput().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (getInput().numberOfAspects() <= 0) {
+        BL_FATAL("Number of aspects ({}) should be more than zero.", getInput().numberOfAspects());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    grid = dim3((((getInput().size() / getInput().numberOfPolarizations()) + block.x - 1) / block.x));
 
     std::string kernel_key;
     switch (config.numberOfOutputPolarizations) {
@@ -47,22 +46,17 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 
     kernel =
         Template(kernel_key)
-            .instantiate(getInputSize() / 
-                         config.numberOfPolarizations,
-                         config.numberOfFrequencyChannels,
+            .instantiate(getInput().size() / 
+                         getInput().numberOfPolarizations(),
+                         getInput().numberOfFrequencyChannels(),
                          config.integrationSize); 
 
-    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
-    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
-    BL_INFO("Number of Beams: {}", config.numberOfBeams);
-    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);
-    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    BL_CHECK_THROW(output.buf.resize(getOutputDims()));
+
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInput(), getOutput());
     BL_INFO("Integration Size: {}", config.integrationSize);
     BL_INFO("Number of Output Polarizations: {}", config.numberOfOutputPolarizations);
-
-    BL_CHECK_THROW(InitInput(input.buf, getInputSize()));
-    BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
 }
 
 template<typename IT, typename OT>

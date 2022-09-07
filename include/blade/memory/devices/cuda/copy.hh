@@ -6,14 +6,20 @@
 
 namespace Blade::Memory {
 
-template<typename T>
-static const Result Copy(VectorImpl<T>& dst,
-                         const VectorImpl<T>& src,
+template<typename T, typename Dims>
+static const Result Copy(VectorImpl<T, Dims>& dst,
+                         const VectorImpl<T, Dims>& src,
                          const cudaMemcpyKind& kind,
                          const cudaStream_t& stream = 0) {
     if (dst.size() != src.size()) {
         BL_FATAL("Size mismatch between source and destination ({}, {}).",
                 src.size(), dst.size());
+    }
+
+    // TODO: Check if this works as intended.
+    if (dst.dimensions() != src.dimensions()) {
+        BL_FATAL("Dimensions mismatch between source ({}) and destination ({}).",
+                src, dst);
     }
 
     BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),
@@ -25,67 +31,67 @@ static const Result Copy(VectorImpl<T>& dst,
     return Result::SUCCESS;
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA, T>& dst,
-                         const Vector<Device::CUDA, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA, T, Dims>& dst,
+                         const Vector<Device::CUDA, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA, T>& dst,
-                         const Vector<Device::CPU, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA, T, Dims>& dst,
+                         const Vector<Device::CPU, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyHostToDevice, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CPU, T>& dst,
-                         const Vector<Device::CUDA, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
+                         const Vector<Device::CUDA, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyDeviceToHost, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CPU, T>& dst,
-                         const Vector<Device::CUDA | Device::CPU, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
+                         const Vector<Device::CUDA | Device::CPU, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA, T>& dst,
-                         const Vector<Device::CUDA | Device::CPU, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA, T, Dims>& dst,
+                         const Vector<Device::CUDA | Device::CPU, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
-                         const Vector<Device::CUDA, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA | Device::CPU, T, Dims>& dst,
+                         const Vector<Device::CUDA, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
-                         const Vector<Device::CPU, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA | Device::CPU, T, Dims>& dst,
+                         const Vector<Device::CPU, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
 }
 
-template<typename T>
-static const Result Copy(Vector<Device::CUDA | Device::CPU, T>& dst,
-                         const Vector<Device::CUDA | Device::CPU, T>& src,
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CUDA | Device::CPU, T, Dims>& dst,
+                         const Vector<Device::CUDA | Device::CPU, T, Dims>& src,
                          const cudaStream_t& stream = 0) {
     return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
 }
 
-template<typename DT, typename ST>
-static const Result Copy2D(VectorImpl<DT>& dst,
+template<typename DT, typename ST, typename Dims>
+static const Result Copy2D(VectorImpl<DT, Dims>& dst,
                            const U64& dst_pitch,
                            const U64& dst_pad, 
-                           const VectorImpl<ST>& src,
+                           const VectorImpl<ST, Dims>& src,
                            const U64& src_pitch,
                            const U64& src_pad,
                            const U64& width,
@@ -159,11 +165,11 @@ static const Result Copy2D(VectorImpl<DT>& dst,
     return Result::SUCCESS;
 }
 
-template<typename DT, typename ST>
-static const Result Copy2D(Vector<Device::CUDA, DT>& dst,
+template<typename DT, typename ST, typename Dims>
+static const Result Copy2D(Vector<Device::CUDA, DT, Dims>& dst,
                            const U64& dst_pitch,
                            const U64& dst_pad, 
-                           const Vector<Device::CUDA, ST>& src,
+                           const Vector<Device::CUDA, ST, Dims>& src,
                            const U64& src_pitch,
                            const U64& src_pad,
                            const U64& width,
@@ -173,11 +179,11 @@ static const Result Copy2D(Vector<Device::CUDA, DT>& dst,
         width, height, cudaMemcpyDeviceToHost, stream);
 }
 
-template<typename DT, typename ST>
-static const Result Copy2D(Vector<Device::CUDA, DT>& dst,
+template<typename DT, typename ST, typename Dims>
+static const Result Copy2D(Vector<Device::CUDA, DT, Dims>& dst,
                            const U64& dst_pitch,
                            const U64& dst_pad, 
-                           const Vector<Device::CPU, ST>& src,
+                           const Vector<Device::CPU, ST, Dims>& src,
                            const U64& src_pitch,
                            const U64& src_pad,
                            const U64& width,
@@ -187,11 +193,11 @@ static const Result Copy2D(Vector<Device::CUDA, DT>& dst,
         width, height, cudaMemcpyDeviceToHost, stream);
 }
 
-template<typename DT, typename ST>
-static const Result Copy2D(Vector<Device::CPU, DT>& dst,
+template<typename DT, typename ST, typename Dims>
+static const Result Copy2D(Vector<Device::CPU, DT, Dims>& dst,
                            const U64& dst_pitch,
                            const U64& dst_pad, 
-                           const Vector<Device::CUDA, ST>& src,
+                           const Vector<Device::CUDA, ST, Dims>& src,
                            const U64& src_pitch,
                            const U64& src_pad,
                            const U64& width,

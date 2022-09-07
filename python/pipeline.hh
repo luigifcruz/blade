@@ -27,48 +27,48 @@ inline void init_pipeline_connect(auto& m) {
 
 template<typename T>
 inline void init_pipeline_copy(auto& m) {
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CPU, T>& dst,
-                                       const Vector<Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CPU, T>& dst,
-                                       const Vector<Device::CUDA, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CUDA, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CPU, T>& dst,
-                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CUDA | Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
-                                       const Vector<Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA, T>& dst,
+                                       const ArrayTensor<Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
-                                       const Vector<Device::CUDA, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA, T>& dst,
+                                       const ArrayTensor<Device::CUDA, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA, T>& dst,
-                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA, T>& dst,
+                                       const ArrayTensor<Device::CUDA | Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
-                                       const Vector<Device::CUDA, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA | Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CUDA, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
-                                       const Vector<Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA | Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 
-    m.def("copy", [](PipelinePub& obj, Vector<Device::CUDA | Device::CPU, T>& dst,
-                                       const Vector<Device::CUDA | Device::CPU, T>& src){
+    m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA | Device::CPU, T>& dst,
+                                       const ArrayTensor<Device::CUDA | Device::CPU, T>& src){
         return obj.copy(dst, src);
     }, py::arg("dst"), py::arg("src"));
 }

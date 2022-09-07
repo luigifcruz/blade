@@ -8,26 +8,77 @@
 
 #include "blade_config.hh"
 
+#include "blade/memory/base.hh"
+
 namespace Blade {
 
-enum class Result : uint8_t {
-    SUCCESS = 0,
-    ERROR = 1,
-    CUDA_ERROR,
-    ASSERTION_ERROR,
-    EXHAUSTED,
-    BUFFER_FULL,
-    BUFFER_INCOMPLETE,
-    BUFFER_EMPTY,
-    PLAN_SKIP_NO_SLOT,
-    PLAN_SKIP_ACCUMULATION_INCOMPLETE,
-    PLAN_SKIP_NO_DEQUEUE,
-    PLAN_SKIP_USER_INITIATED,
-    PLAN_ERROR_NO_SLOT,
-    PLAN_ERROR_NO_ACCUMULATOR,
-    PLAN_ERROR_ACCUMULATION_COMPLETE,
-    PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED,
+class ArrayTensorDimensions : public Dimensions {
+ public:
+    using Dimensions::Dimensions;
+
+    constexpr const U64& numberOfAspects() const {
+        return (*this)[0];
+    }
+
+    constexpr const U64& numberOfFrequencyChannels() const {
+        return (*this)[1];
+    }
+
+    constexpr const U64& numberOfTimeSamples() const {
+        return (*this)[2];
+    }
+
+    constexpr const U64& numberOfPolarizations() const {
+        return (*this)[3];
+    }
 };
+
+template<Device I, typename T>
+using ArrayTensor = Vector<I, T, ArrayTensorDimensions>;
+
+class PhasorTensorDimensions : public Dimensions {
+ public:
+    using Dimensions::Dimensions;
+
+    constexpr const U64& numberOfBeams() const {
+        return (*this)[0];
+    }
+
+    constexpr const U64& numberOfAntennas() const {
+        return (*this)[1];
+    }
+
+    constexpr const U64& numberOfFrequencyChannels() const {
+        return (*this)[2];
+    }
+
+    constexpr const U64& numberOfTimeSamples() const {
+        return (*this)[3];
+    }
+
+    constexpr const U64& numberOfPolarizations() const {
+        return (*this)[4];
+    }
+};
+
+template<Device I, typename T>
+using PhasorTensor = Vector<I, T, PhasorTensorDimensions>;
+
+class DelayTensorDimensions : public Dimensions {
+ public:
+    using Dimensions::Dimensions;
+
+    constexpr const U64& numberOfBeams() const {
+        return (*this)[0];
+    }
+
+    constexpr const U64& numberOfAntennas() const {
+        return (*this)[1];
+    }
+};
+
+template<Device I, typename T>
+using DelayTensor = Vector<I, T, DelayTensorDimensions>;
 
 struct XYZ {
     double X;

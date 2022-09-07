@@ -11,28 +11,15 @@ class BLADE_API ATA : public Generic<IT, OT> {
     explicit ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input);
 
-    constexpr U64 getInputSize() const {
-       return this->config.numberOfAntennas *
-              this->config.numberOfFrequencyChannels *
-              this->config.numberOfTimeSamples * 
-              this->config.numberOfPolarizations;
-    }
-
-    constexpr U64 getOutputSize() const {
-        return (
-                    this->config.numberOfBeams +
-                    (this->config.enableIncoherentBeam ? 1 : 0)
-               ) *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfTimeSamples *
-               this->config.numberOfPolarizations;
-    }
-
-    constexpr U64 getPhasorsSize() const {
-        return this->config.numberOfBeams *
-               this->config.numberOfAntennas *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfPolarizations;
+ private:
+    const ArrayTensorDimensions getOutputDims() const {
+        return {
+            this->getInputBuffer().numberOfAspects() 
+                + U64(this->config.enableIncoherentBeam ? 1 : 0),
+            this->getInputBuffer().numberOfFrequencyChannels(),
+            this->getInputBuffer().numberOfTimeSamples(),
+            this->getInputBuffer().numberOfPolarizations(),
+        };
     }
 };
 

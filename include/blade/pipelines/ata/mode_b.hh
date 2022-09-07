@@ -57,9 +57,9 @@ class BLADE_API ModeB : public Pipeline {
         return channelizer->getBufferSize();
     }
 
-    const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
-                            const Vector<Device::CPU, F64>& blockDut1,
-                            const Vector<Device::CPU, CI8>& input,
+    const Result transferIn(const ArrayTensor<Device::CPU, F64>& blockJulianDate,
+                            const ArrayTensor<Device::CPU, F64>& blockDut1,
+                            const ArrayTensor<Device::CPU, CI8>& input,
                             const cudaStream_t& stream);
 
     constexpr const U64 getOutputSize() const {
@@ -70,7 +70,7 @@ class BLADE_API ModeB : public Pipeline {
         }
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() {
         if (config.detectorEnable) {
             if constexpr (!std::is_same<OT, F32>::value) {
                 return outputCast->getOutput();
@@ -89,9 +89,9 @@ class BLADE_API ModeB : public Pipeline {
  private:
     const Config config;
 
-    Vector<Device::CUDA, CI8> input;
-    Vector<Device::CPU, F64> blockJulianDate;
-    Vector<Device::CPU, F64> blockDut1;
+    ArrayTensor<Device::CUDA, CI8> input;
+    ArrayTensor<Device::CPU, F64> blockJulianDate;
+    ArrayTensor<Device::CPU, F64> blockDut1;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;

@@ -15,17 +15,17 @@ const Result Init(U64 testSize = 8192) {
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
-    Vector<Device::CPU, I8> input{input_ptr, testSize};
-    Vector<Device::CPU, I8> output{output_ptr, testSize};
+    ArrayTensor<Device::CPU, I8> input{input_ptr, testSize};
+    ArrayTensor<Device::CPU, I8> output{output_ptr, testSize};
 
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
 
-    for (auto& element : input.getUnderlying()) {
+    for (auto& element : input.span()) {
         element = std::rand();
     }
 
-    for (auto& element : output.getUnderlying()) {
+    for (auto& element : output.span()) {
         element = 60;
     }
 

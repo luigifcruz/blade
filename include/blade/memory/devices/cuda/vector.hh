@@ -8,13 +8,13 @@
 
 namespace Blade {
 
-template<typename T>
-class BLADE_API Vector<Device::CUDA, T> : public VectorImpl<T> {
+template<typename T, typename Dims>
+class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
  public:
-    using VectorImpl<T>::VectorImpl;
+    using VectorImpl<T, Dims>::VectorImpl;
 
-    explicit Vector(const U64& size) {
-        BL_CHECK_THROW(this->resize(size));
+    explicit Vector(const Dims& dims) {
+        BL_CHECK_THROW(this->resize(dims));
     }
 
     ~Vector() {
@@ -27,33 +27,41 @@ class BLADE_API Vector<Device::CUDA, T> : public VectorImpl<T> {
         }
     }
 
-    // TODO: Implement resize.
-    const Result resize(const U64& size) override {
-        if (!this->container.empty() && !this->managed) {
+    const Result resize(const Dims& dims) final {
+        // TODO: Implement resize.
+        if (!this->container.empty()) { 
             return Result::ERROR;
         }
 
-        T* ptr;
-        auto size_bytes = size * sizeof(T);
+        if (!this->managed) {
+            return Result::ERROR;
+        }
 
+        // Calculate byte size.
+        auto size_bytes = dims.size() * sizeof(T);
+
+        // Allocate memory with CUDA.
+        T* ptr;
         BL_CUDA_CHECK(cudaMalloc(&ptr, size_bytes), [&]{
             BL_FATAL("Failed to allocate CUDA memory: {}", err);
         });
 
-        this->container = std::span<T>(ptr, size);
+        // Register metadata.
+        this->container = std::span<T>(ptr, dims.size());
+        static_cast<Dims&>(*this) = dims;
         this->managed = true;
 
         return Result::SUCCESS;
     }
 };
 
-template<typename T>
-class BLADE_API Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
+template<typename T, typename Dims>
+class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
  public:
-    using VectorImpl<T>::VectorImpl;
+    using VectorImpl<T, Dims>::VectorImpl;
 
-    explicit Vector(const U64& size) {
-        BL_CHECK_THROW(this->resize(size));
+    explicit Vector(const Dims& dims) {
+        BL_CHECK_THROW(this->resize(dims));
     }
 
     ~Vector() {
@@ -66,49 +74,58 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T> : public VectorImpl<T> {
         }
     }
 
-    // TODO: Implement resize.
-    const Result resize(const U64& size) override {
-        if (!this->container.empty() && !this->managed) {
+    const Result resize(const Dims& dims) final {
+        // TODO: Implement resize.
+        if (!this->container.empty()) { 
             return Result::ERROR;
         }
 
-        T* ptr;
-        auto size_bytes = size * sizeof(T);
+        if (!this->managed) {
+            return Result::ERROR;
+        }
 
+        // Calculate byte size.
+        auto size_bytes = dims.size() * sizeof(T);
+
+        // Allocate memory with CUDA.
+        T* ptr;
         BL_CUDA_CHECK(cudaMallocManaged(&ptr, size_bytes), [&]{
             BL_FATAL("Failed to allocate CUDA memory: {}", err);
         });
 
-        this->container = std::span<T>(ptr, size);
+        // Register metadata.
+        this->container = std::span<T>(ptr, dims.size());
+        static_cast<Dims&>(*this) = dims;
         this->managed = true;
 
+        // Delete unused vector.
         this->cpuVector.release();
         this->cudaVector.release();
 
         return Result::SUCCESS;
     }
 
-    operator Vector<Device::CPU, T>&() {
+    operator Vector<Device::CPU, T, Dims>&() {
         if (!this->cpuVector) {
             this->cpuVector = std::make_unique
-                    <Vector<Device::CPU, T>>(this->container);
+                    <Vector<Device::CPU, T, Dims>>(this->container);
         }
 
         return *this->cpuVector;
     }
 
-    operator Vector<Device::CUDA, T>&() {
+    operator Vector<Device::CUDA, T, Dims>&() {
         if (!this->cudaVector) {
             this->cudaVector = std::make_unique
-                    <Vector<Device::CUDA, T>>(this->container);
+                    <Vector<Device::CUDA, T, Dims>>(this->container);
         }
 
         return *this->cudaVector;
     }
 
  protected:
-    std::unique_ptr<Vector<Device::CPU, T>> cpuVector;
-    std::unique_ptr<Vector<Device::CUDA, T>> cudaVector;
+    std::unique_ptr<Vector<Device::CPU, T, Dims>> cpuVector;
+    std::unique_ptr<Vector<Device::CUDA, T, Dims>> cudaVector;
 };
 
 }  // namespace Blade

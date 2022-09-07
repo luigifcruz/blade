@@ -12,12 +12,12 @@ class Test : public Pipeline {
         this->connect(channelizer, config, {input});
     }
 
-    constexpr const U64 getInputSize() const {
-        return channelizer->getBufferSize();
+    constexpr const U64 getInputDims() const {
+        return channelizer->getInput();
     }
 
-    const Result run(const Vector<Device::CPU, IT>& input,
-                           Vector<Device::CPU, OT>& output) {
+    const Result run(const ArrayTensor<Device::CPU, IT>& input,
+                           ArrayTensor<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(channelizer->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, channelizer->getOutput()));
@@ -27,7 +27,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Vector<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Channelizer<IT, OT>> channelizer;
 };
 
@@ -44,8 +44,8 @@ int main() {
         .blockSize = 512,
     });
 
-    Vector<Device::CPU, CF32> input(mod.getInputSize());
-    Vector<Device::CPU, CF32> output(mod.getInputSize());
+    ArrayTensor<Device::CPU, CF32> input(mod.getInputSize());
+    ArrayTensor<Device::CPU, CF32> output(mod.getInputSize());
 
     for (int i = 0; i < 24; i++) {
         if (mod.run(input, output) != Result::SUCCESS) {

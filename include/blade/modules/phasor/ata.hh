@@ -11,25 +11,32 @@ class BLADE_API ATA : public Generic<OT> {
     explicit ATA(const typename Generic<OT>::Config& config,
                  const typename Generic<OT>::Input& input);
 
-    constexpr U64 getPhasorsSize() const {
-        return this->config.numberOfBeams * 
-               this->config.numberOfAntennas *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfPolarizations;
-    }
-
-    constexpr U64 getDelaysSize() const {
-        return this->config.numberOfAntennas * 
-               this->config.numberOfBeams;
-    }
-
-    constexpr U64 getCalibrationsSize() const {
-        return this->config.numberOfAntennas *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfPolarizations;
-    }
-
     const Result preprocess(const cudaStream_t& stream = 0) final;
+
+ protected:
+    constexpr const PhasorTensorDimensions getOutputPhasorsDims() const {
+        return {
+            this->config.numberOfBeams,
+            this->config.numberOfAntennas,
+            this->config.numberOfFrequencyChannels,
+            this->config.numberOfPolarizations,
+        };
+    }
+
+    constexpr const DelayTensorDimensions getOutputDelaysDims() const {
+        return {
+            this->config.numberOfBeams,
+            this->config.numberOfAntennas,
+        };
+    }
+
+    constexpr const ArrayTensorDimensions getConfigCalibrationDims() const {
+        return {
+            this->config.numberOfAntennas,
+            this->config.numberOfFrequencyChannels,
+            this->config.numberOfPolarizations,
+        };
+    }
 
  private:
     std::vector<XYZ> antennasXyz;

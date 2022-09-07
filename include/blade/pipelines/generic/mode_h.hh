@@ -37,27 +37,27 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
         return channelizer->getBufferSize();
     }
 
-    const Result accumulate(const Vector<Device::CUDA, IT>& data,
+    const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
     constexpr const U64 getOutputSize() const {
         return detector->getOutputSize();
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() {
         return detector->getOutput();
     }
 
  private:
     const Config config;
 
-    Vector<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> input;
 
     std::shared_ptr<Modules::Cast<CF16, CF32>> cast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
 
-    constexpr const Vector<Device::CUDA, CF32>& getChannelizerInput() {
+    constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
         if constexpr (!std::is_same<IT, CF32>::value) {
             return cast->getOutput();
         } else {

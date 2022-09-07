@@ -31,7 +31,7 @@ FileWriter<IT>::FileWriter(const Config& config)
 }
 
 template<typename IT>
-const Result FileWriter<IT>::accumulate(const Vector<Device::CUDA, IT>& data,
+const Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                         const cudaStream_t& stream) {
     if (guppi->getStepInputBufferSize() != data.size()) {
         BL_FATAL("Accumulate input size ({}) mismatches writer step input buffer size ({}).",
@@ -40,7 +40,7 @@ const Result FileWriter<IT>::accumulate(const Vector<Device::CUDA, IT>& data,
     }
 
     const auto offset = this->getCurrentAccumulatorStep() * guppi->getStepInputBufferSize();
-    auto input = Vector<Device::CPU, IT>(writerBuffer.data() + offset, data.size());
+    auto input = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, data.size());
     BL_CHECK(Memory::Copy(input, data, stream));
 
     return Result::SUCCESS;

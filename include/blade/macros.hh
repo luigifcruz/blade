@@ -1,9 +1,31 @@
 #ifndef BLADE_MACROS_HH
 #define BLADE_MACROS_HH
 
+#include <stdint.h>
 #include <math.h>
 
-#include "blade/types.hh"
+namespace Blade {
+
+enum class Result : uint8_t {
+    SUCCESS = 0,
+    ERROR = 1,
+    CUDA_ERROR,
+    ASSERTION_ERROR,
+    EXHAUSTED,
+    BUFFER_FULL,
+    BUFFER_INCOMPLETE,
+    BUFFER_EMPTY,
+    PLAN_SKIP_NO_SLOT,
+    PLAN_SKIP_ACCUMULATION_INCOMPLETE,
+    PLAN_SKIP_NO_DEQUEUE,
+    PLAN_SKIP_USER_INITIATED,
+    PLAN_ERROR_NO_SLOT,
+    PLAN_ERROR_NO_ACCUMULATOR,
+    PLAN_ERROR_ACCUMULATION_COMPLETE,
+    PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED,
+};
+
+}  // namespace Blade 
 
 #ifndef BL_PHYSICAL_CONSTANT_C
 #define BL_PHYSICAL_CONSTANT_C (double)299792458.0 // Speed of Light (m/s)

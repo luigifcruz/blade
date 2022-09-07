@@ -118,9 +118,9 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate(1), blo
 }
 
 template<typename OT>
-const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
-                                   const Vector<Device::CPU, F64>& blockDut1,
-                                   const Vector<Device::CPU, CI8>& input,
+const Result ModeB<OT>::transferIn(const ArrayTensor<Device::CPU, F64>& blockJulianDate,
+                                   const ArrayTensor<Device::CPU, F64>& blockDut1,
+                                   const ArrayTensor<Device::CPU, CI8>& input,
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
     BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));

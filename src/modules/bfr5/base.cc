@@ -29,9 +29,9 @@ Reader::Reader(const Config& config, const Input& input)
 
     // Calculate antenna positions
 
-    antennaPositions.resize(getTotalNumberOfAntennas());
+    antennaPositions.resize(getDataDims().numberOfAspects());
 
-    const U64 antennaPositionsByteSize = getTotalNumberOfAntennas() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getDataDims().numberOfAspects() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
@@ -57,11 +57,7 @@ Reader::Reader(const Config& config, const Input& input)
     }
 
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Total Number of Beams: {}", getTotalNumberOfBeams());
-    BL_INFO("Total Number of Antennas: {}", getTotalNumberOfAntennas());
-    BL_INFO("Total Number of Frequency Channels: {}", getTotalNumberOfFrequencyChannels());
-    BL_INFO("Total Number of Time Samples: {}", getTotalNumberOfTimeSamples());
-    BL_INFO("Total Number of Polarizations: {}", getTotalNumberOfPolarizations());
+    BL_INFO("Data Dimensions {A, F, T, P}: {} -> {}", getDataDims());
 
     BFR5close(&this->bfr5);
 }
@@ -71,21 +67,21 @@ const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFreque
     std::vector<CF64> antennaCalibrations;
 
     antennaCalibrations.resize(
-            getTotalNumberOfAntennas() *
+            getDataDims().numberOfAspects() *
             numberOfFrequencyChannels * channelizerRate * 
-            getTotalNumberOfPolarizations());
+            getDataDims().numberOfPolarizations());
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = getTotalNumberOfAntennas() * calAntStride;
-    const size_t calChnStride = getTotalNumberOfPolarizations() * calPolStride;
+    const size_t calPolStride = getDataDims().numberOfAspects() * calAntStride;
+    const size_t calChnStride = getDataDims().numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = getTotalNumberOfPolarizations() * weightsPolStride;
+    const size_t weightsChnStride = getDataDims().numberOfPolarizations() * weightsPolStride;
     const size_t weightsAntStride = numberOfFrequencyChannels * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getTotalNumberOfAntennas(); antIdx++) {
+    for (U64 antIdx = 0; antIdx < getDataDims().numberOfAspects(); antIdx++) {
         for (U64 chnIdx = 0; chnIdx < numberOfFrequencyChannels; chnIdx++) {
-            for (U64 polIdx = 0; polIdx < getTotalNumberOfPolarizations(); polIdx++) {
+            for (U64 polIdx = 0; polIdx < getDataDims().numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 

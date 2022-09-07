@@ -54,10 +54,9 @@ template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
-    if (this->getCalibrationsSize() != config.antennaCalibrations.size()) {
-        BL_FATAL("Number of antenna calibrations ({}) doesn't match with" 
-                 " the expected size ({}).", config.antennaCalibrations.size(),
-                 this->getCalibrationsSize());
+    if (this->getConfigCalibrationDims().size() != config.antennaCalibrations.size()) {
+        BL_FATAL("Number of antenna calibrations ({}) doesn't match with the expected size ({}).", 
+                config.antennaCalibrations.size(), this->getConfigCalibrationDims());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -78,8 +77,11 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT);
 
-    BL_CHECK_THROW(this->InitOutput(this->output.delays, getDelaysSize()));
-    BL_CHECK_THROW(this->InitOutput(this->output.phasors, getPhasorsSize()));
+    BL_CHECK_THROW(this->output.phasors.resize(getOutputPhasorsDims()));
+    BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
+
+    BL_INFO("Phasors Dimensions {A, B, F, P}: {} -> {}", "N/A", this->getOutputPhasors());
+    BL_INFO("Delays Dimensions {A, B}: {} -> {}", "N/A", this->getOutputDelays());
 }
 
 template<typename OT>
