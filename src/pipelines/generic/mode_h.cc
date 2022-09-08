@@ -55,15 +55,14 @@ ModeH<IT, OT>::ModeH(const Config& config)
 template<typename IT, typename OT>
 const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
-    // TODO: Check if this copy parameters are correct.
-    const auto& width = (data.size() / config.channelizerNumberOfBeams / config.channelizerNumberOfFrequencyChannels) * sizeof(IT);
+    const auto& width = (config.channelizerNumberOfTimeSamples / config.channelizerNumberOfPolarizations) * sizeof(IT);
     const auto& height = config.channelizerNumberOfBeams * config.channelizerNumberOfFrequencyChannels;
 
     BL_CHECK(
         Memory::Copy2D(
             this->input,
             width * this->getAccumulatorNumberOfSteps(),
-            0,
+            width * this->getCurrentAccumulatorStep(),
             data,
             width,
             0,
