@@ -216,6 +216,19 @@ struct BLADE_API TypeInfo<CU64> {
     inline static const std::string name = "CU64";
 };
 
+class Dimensions : public std::vector<U64> {
+ public:
+    using std::vector<U64>::vector;
+
+    const U64 size() const {
+        U64 size = 1;
+        for (const auto& n : *this) {
+            size *= n;
+        }
+        return size; 
+    }
+};
+
 }  // namespace Blade
 
 #endif

@@ -8,29 +8,60 @@ template<typename IT, typename OT>
 ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input)
         : Generic<IT, OT>(config, input) {
-    if (this->getInputPhasors().numberOfBeams() > config.blockSize) {
+    // Check configuration values.
+    if (this->getInputPhasors().dims().numberOfBeams() > config.blockSize) {
         BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
-                config.blockSize, this->getInputPhasors().numberOfBeams());
+                config.blockSize, this->getInputPhasors().dims().numberOfBeams());
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    if (this->getInputPhasors().dims().numberOfFrequencyChannels() > 
+        this->getInputBuffer().dims().numberOfFrequencyChannels()) {
+        BL_FATAL("Number of frequency channels mismatch between phasors ({}) and buffer ({}).",
+                this->getInputPhasors().dims().numberOfFrequencyChannels(),
+                this->getInputBuffer().dims().numberOfFrequencyChannels());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (this->getInputPhasors().dims().numberOfPolarizations() > 
+        this->getInputBuffer().dims().numberOfPolarizations()) {
+        BL_FATAL("Number of polarizations mismatch between phasors ({}) and buffer ({}).",
+                this->getInputPhasors().dims().numberOfPolarizations(),
+                this->getInputBuffer().dims().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (this->getInputPhasors().dims().numberOfAntennas() > 
+        this->getInputBuffer().dims().numberOfAspects()) {
+        BL_FATAL("Number of antennas mismatch between phasors ({}) and buffer ({}).",
+                this->getInputPhasors().dims().numberOfAntennas(),
+                this->getInputBuffer().dims().numberOfAspects());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    // Configure kernels.
     this->grid = dim3(
-        this->getInputBuffer().numberOfFrequencyChannels(),
-        this->getInputBuffer().numberOfTimeSamples() / config.blockSize);
+        this->getInputBuffer().dims().numberOfFrequencyChannels(),
+        this->getInputBuffer().dims().numberOfTimeSamples() / config.blockSize);
 
     this->kernel = 
         Template("ATA")
             .instantiate(
-                this->getInputPhasors().numberOfBeams(),
-                this->getInputPhasors().numberOfAntennas(),
-                this->getInputBuffer().numberOfFrequencyChannels(),
-                this->getInputBuffer().numberOfTimeSamples(),
-                this->getInputBuffer().numberOfPolarizations(),
+                this->getInputPhasors().dims().numberOfBeams(),
+                this->getInputPhasors().dims().numberOfAntennas(),
+                this->getInputBuffer().dims().numberOfFrequencyChannels(),
+                this->getInputBuffer().dims().numberOfTimeSamples(),
+                this->getInputBuffer().dims().numberOfPolarizations(),
                 config.blockSize,
                 config.enableIncoherentBeam,
                 config.enableIncoherentBeamSqrt);
 
-    BL_CHECK_THROW(this->output.buf.resize(getOutputDims()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(this->output.buf.resize(getOutputBufferDims()));
+
+    // Print configuration values.
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->getInputBuffer().dims(), 
+                                                 this->getOutputBuffer().dims());
 }
 
 template class BLADE_API ATA<CF32, CF32>;

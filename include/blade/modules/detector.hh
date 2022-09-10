@@ -11,6 +11,8 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 class BLADE_API Detector : public Module {
  public:
+    // Configuration
+
     struct Config {
         U64 integrationSize;
         U64 numberOfOutputPolarizations = 4;
@@ -18,41 +20,50 @@ class BLADE_API Detector : public Module {
         U64 blockSize = 512;
     };
 
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
+    // Input
+
     struct Input {
         const ArrayTensor<Device::CUDA, IT>& buf;
     };
+
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return this->input.buf;
+    }
+
+    // Output
 
     struct Output {
         ArrayTensor<Device::CUDA, OT> buf;
     };
 
-    explicit Detector(const Config& config, const Input& input);
-
-    constexpr const ArrayTensor<Device::CUDA, IT>& getInput() const {
-        return this->input.buf;
-    }
-
-    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
         return this->output.buf;
     }
 
-    constexpr const Config& getConfig() const {
-        return this->config;
-    }
+    // Constructor & Processing
 
+    explicit Detector(const Config& config, const Input& input);
     const Result process(const cudaStream_t& stream = 0) final;
 
  private:
+    // Variables 
+
     const Config config;
     const Input input;
     Output output;
 
-    const ArrayTensorDimensions getOutputDims() const {
+    // Expected Dimensions
+
+    const ArrayTensorDimensions getOutputBufferDims() const {
         return {
-            getInput().numberOfAspects(),
-            getInput().numberOfFrequencyChannels(),
-            getInput().numberOfTimeSamples() / config.integrationSize,
-            config.numberOfOutputPolarizations,
+            .A = getInputBuffer().dims().numberOfAspects(),
+            .F = getInputBuffer().dims().numberOfFrequencyChannels(),
+            .T = getInputBuffer().dims().numberOfTimeSamples() / config.integrationSize,
+            .P = config.numberOfOutputPolarizations,
         }; 
     }
 };

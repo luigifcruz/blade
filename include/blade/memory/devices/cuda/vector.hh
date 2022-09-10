@@ -13,7 +13,7 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
  public:
     using VectorImpl<T, Dims>::VectorImpl;
 
-    explicit Vector(const Dims& dims) {
+    explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
     }
 
@@ -29,11 +29,13 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
 
     const Result resize(const Dims& dims) final {
         // TODO: Implement resize.
-        if (!this->container.empty()) { 
+        if (!this->container.empty()) {
+            BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
         }
 
         if (!this->managed) {
+            BL_FATAL("Can't resize non-managed vector.");
             return Result::ERROR;
         }
 
@@ -48,7 +50,7 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
 
         // Register metadata.
         this->container = std::span<T>(ptr, dims.size());
-        static_cast<Dims&>(*this) = dims;
+        this->dimensions = dims;
         this->managed = true;
 
         return Result::SUCCESS;
@@ -60,7 +62,7 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
  public:
     using VectorImpl<T, Dims>::VectorImpl;
 
-    explicit Vector(const Dims& dims) {
+    explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
     }
 
@@ -76,11 +78,13 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
 
     const Result resize(const Dims& dims) final {
         // TODO: Implement resize.
-        if (!this->container.empty()) { 
+        if (!this->container.empty()) {
+            BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
         }
 
         if (!this->managed) {
+            BL_FATAL("Can't resize non-managed vector.");
             return Result::ERROR;
         }
 
@@ -95,7 +99,7 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
 
         // Register metadata.
         this->container = std::span<T>(ptr, dims.size());
-        static_cast<Dims&>(*this) = dims;
+        this->dimensions = dims;
         this->managed = true;
 
         // Delete unused vector.

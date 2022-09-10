@@ -15,9 +15,9 @@ static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
         return Result::ASSERTION_ERROR;
     }
 
-    if (dst.dimensions() != src.dimensions()) {
+    if (dst.dims() != src.dims()) {
         BL_FATAL("Dimensions mismatch between source ({}) and destination ({}).",
-                src, dst);
+                src.dims(), dst.dims());
     }
 
     memcpy(dst.data(), src.data(), src.size_bytes());

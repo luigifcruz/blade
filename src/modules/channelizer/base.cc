@@ -13,9 +13,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
           input(input),
           pre_block(config.blockSize),
           post_block(config.blockSize) {
-    if ((getInput().numberOfTimeSamples() % config.rate) != 0) {
+    // Check configuration values.
+    if ((getInputBuffer().dims().numberOfTimeSamples() % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the channelizer rate ({}).", getInput().numberOfTimeSamples(),
+                "by the channelizer rate ({}).", getInputBuffer().dims().numberOfTimeSamples(),
                 config.rate);
         BL_CHECK_THROW(Result::ERROR);
     }
@@ -30,12 +31,15 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    BL_CHECK_THROW(output.buf.resize(getOutputDims()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
 
+    // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInput(), getOutput());
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("FFT Size: {}", config.rate);
 
+    // Configure FFT chain.
     if (config.rate == 1) {
         BL_INFO("FFT Backend: Bypass");
         BL_CHECK_THROW(output.buf.link(input.buf));
@@ -57,19 +61,19 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         int n[] = { static_cast<int>(config.rate) }; 
 
         // Distance between successive input element and output element.
-        int istride = getInput().numberOfPolarizations();
-        int ostride = getInput().numberOfPolarizations();
+        int istride = getInputBuffer().dims().numberOfPolarizations();
+        int ostride = getInputBuffer().dims().numberOfPolarizations();
 
         // Distance between input batches and output batches.
-        int idist = (config.rate * getInput().numberOfPolarizations());
-        int odist = (config.rate * getInput().numberOfPolarizations());
+        int idist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
+        int odist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
 
         // Input size with pitch, this is ignored for 1D tansformations.
         int inembed[] = { 0 }; 
         int onembed[] = { 0 };
 
         // Number of batched FFTs.
-        int batch = (getInput().size() / getInput().numberOfPolarizations()) / config.rate; 
+        int batch = (getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) / config.rate; 
 
         // Create cuFFT plan.
         cufftPlanMany(&plan, rank, n, 
@@ -78,12 +82,12 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                       CUFFT_C2C, batch);
 
         // Perform FFT shift before cuFFT.
-        pre_kernel = Template("shifter").instantiate(getInput().size(), getInput().numberOfPolarizations());
-        pre_grid = dim3((getInput().size() + pre_block.x - 1) / pre_block.x);
+        pre_kernel = Template("shifter").instantiate(getInputBuffer().size(), getInputBuffer().dims().numberOfPolarizations());
+        pre_grid = dim3((getInputBuffer().size() + pre_block.x - 1) / pre_block.x);
 
-        if (config.rate != getInput().numberOfTimeSamples()) {
-            BL_CHECK_THROW(buffer.resize({getInput().size()}));
-            BL_CHECK_THROW(indices.resize({getInput().size()}));
+        if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
+            BL_CHECK_THROW(buffer.resize(getInputBuffer().dims()));
+            BL_CHECK_THROW(indices.resize(getInputBuffer().dims()));
 
             // Generate post-FFT indices.
             // This really should be calculated on the GPU, 
@@ -91,10 +95,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
             // won't be used much. Please rewrite this if
             // used regurlarly.
             U64 i = 0;
-            U64 numberOfAspects = getInput().numberOfAspects();
-            U64 numberOfFrequencyChannels = getInput().numberOfFrequencyChannels();
-            U64 numberOfTimeSamples = getInput().numberOfTimeSamples();
-            U64 numberOfPolarizations = getInput().numberOfPolarizations();
+            U64 numberOfAspects = getInputBuffer().dims().numberOfAspects();
+            U64 numberOfFrequencyChannels = getInputBuffer().dims().numberOfFrequencyChannels();
+            U64 numberOfTimeSamples = getInputBuffer().dims().numberOfTimeSamples();
+            U64 numberOfPolarizations = getInputBuffer().dims().numberOfPolarizations();
 
             for (U64 a = 0; a < numberOfAspects; a++) {
                 const U64 a_off = a * 
@@ -121,8 +125,8 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                 }
             }
 
-            post_kernel = Template("shuffler").instantiate(getInput().size());
-            post_grid = dim3((getInput().size() + post_block.x - 1) / post_block.x);
+            post_kernel = Template("shuffler").instantiate(getInputBuffer().size());
+            post_grid = dim3((getInputBuffer().size() + post_block.x - 1) / post_block.x);
         }
     } else {
         BL_INFO("FFT Backend: Internal");
@@ -130,19 +134,19 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         grid = 
             (
                 (
-                    getInput().size() / 
+                    getInputBuffer().size() / 
                     config.rate /
-                    getInput().numberOfPolarizations()
+                    getInputBuffer().dims().numberOfPolarizations()
                 ) + block.x - 1
             ) / block.x;
 
         kernel =
             Template(kernel_key)
-                .instantiate(getInput().size(),
+                .instantiate(getInputBuffer().size(),
                              config.rate,
-                             getInput().numberOfPolarizations(),
-                             getInput().numberOfTimeSamples(),
-                             getInput().numberOfFrequencyChannels());
+                             getInputBuffer().dims().numberOfPolarizations(),
+                             getInputBuffer().dims().numberOfTimeSamples(),
+                             getInputBuffer().dims().numberOfFrequencyChannels());
     }
 }
 
@@ -160,18 +164,18 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
             ->configure(pre_grid, pre_block, 0, stream)
             ->launch(input.buf.data(), output.buf.data());
 
-        for (U64 pol = 0; pol < getInput().numberOfPolarizations(); pol++) {
+        for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
             cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
             cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
 
-            if (config.rate == getInput().numberOfTimeSamples()) {
+            if (config.rate == getInputBuffer().dims().numberOfTimeSamples()) {
                 output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
             }
 
             cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
         }
 
-        if (config.rate != getInput().numberOfTimeSamples()) {
+        if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
             cache
                 .get_kernel(post_kernel)
                     ->configure(post_grid, post_block, 0, stream)

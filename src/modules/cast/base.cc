@@ -14,14 +14,18 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
         : Module(config.blockSize, cast_kernel),
           config(config),
           input(input) {
-    auto size = config.inputSize * CudaTypeSize<IT>();
+    // Check configuration values.
+    auto size = getInputBuffer().size() * CudaTypeSize<IT>();
     kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
     grid = dim3((size + block.x - 1) / block.x);
 
-    BL_CHECK_THROW(output.buf.resize(getInput()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
 
+    // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInput(), getInput());
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), 
+                                                 getOutputBuffer().dims());
 }
 
 template<typename IT, typename OT>

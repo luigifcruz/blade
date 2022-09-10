@@ -48,14 +48,14 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
         .blockSize = config.detectorBlockSize,
     }, {
-        .buf = channelizer->getOutput(),
+        .buf = channelizer->getOutputBuffer(),
     });
 }
 
 template<typename IT, typename OT>
 const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
-    const auto& width = (config.channelizerNumberOfTimeSamples / config.channelizerNumberOfPolarizations) * sizeof(IT);
+    const auto& width = (config.channelizerNumberOfTimeSamples * config.channelizerNumberOfPolarizations) * sizeof(IT);
     const auto& height = config.channelizerNumberOfBeams * config.channelizerNumberOfFrequencyChannels;
 
     BL_CHECK(

@@ -12,37 +12,46 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 class BLADE_API Channelizer : public Module {
  public:
+    // Configuration
+
     struct Config {
         U64 rate = 4;
 
         U64 blockSize = 512;
     };
 
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
+    // Input
+
     struct Input {
         const ArrayTensor<Device::CUDA, IT>& buf;
     };
+
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return this->input.buf;
+    }
+
+    // Output
 
     struct Output {
         ArrayTensor<Device::CUDA, OT> buf;
     };
 
-    explicit Channelizer(const Config& config, const Input& input);
-
-    constexpr const ArrayTensor<Device::CUDA, IT>& getInput() const {
-        return this->input.buf;
-    }
-
-    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
         return this->output.buf;
     }
 
-    constexpr const Config& getConfig() const {
-        return this->config;
-    }
+    // Constructor & Processing
 
+    explicit Channelizer(const Config& config, const Input& input);
     const Result process(const cudaStream_t& stream = 0) final;
 
  private:
+    // Variables 
+
     const Config config;
     const Input input;
     Output output;
@@ -59,12 +68,14 @@ class BLADE_API Channelizer : public Module {
     cufftHandle plan;
     std::string kernel_key;
 
-    constexpr const ArrayTensorDimensions getOutputDims() const {
+    // Expected Dimensions
+
+    const ArrayTensorDimensions getOutputBufferDims() const {
         return {
-            getInput().numberOfAspects(),
-            getInput().numberOfFrequencyChannels() * config.rate,
-            getInput().numberOfTimeSamples() / config.rate,
-            getInput().numberOfPolarizations(),
+            .A = getInputBuffer().dims().numberOfAspects(),
+            .F = getInputBuffer().dims().numberOfFrequencyChannels() * config.rate,
+            .T = getInputBuffer().dims().numberOfTimeSamples() / config.rate,
+            .P = getInputBuffer().dims().numberOfPolarizations(),
         };
     }
 };

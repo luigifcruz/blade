@@ -17,8 +17,8 @@ using namespace Blade::Pipelines::ATA;
 using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
-static ArrayTensor<Device::CPU, F64> dummyJulianDate(1);
-static ArrayTensor<Device::CPU, F64> dummyDut1(1);
+static Vector<Device::CPU, F64> dummyJulianDate({1});
+static Vector<Device::CPU, F64> dummyDut1({1});
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
@@ -34,6 +34,13 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     dummyDut1[0] = 0.0;
 
     TestPipeline::Config config = {
+        .inputDimensions = {
+            .A = BLADE_ATA_MODE_B_NANT,
+            .F = BLADE_ATA_MODE_B_NCHAN,
+            .T = BLADE_ATA_MODE_B_NTIME,
+            .P = BLADE_ATA_MODE_B_NPOL,
+        },
+
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
         .phasorObservationFrequencyHz = 6500.125*1e6,
@@ -84,11 +91,6 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
         },
 
-        .beamformerNumberOfAntennas = BLADE_ATA_MODE_B_NANT,
-        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_B_NCHAN,
-        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_B_NTIME,
-        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_B_NPOL,
-        .beamformerNumberOfBeams = BLADE_ATA_MODE_B_NBEAM,
         .beamformerIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
         .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,
@@ -97,10 +99,10 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     };
 
     config.phasorAntennaCalibrations.resize(
-        config.beamformerNumberOfAntennas *
-        config.beamformerNumberOfFrequencyChannels *
+        config.inputDimensions.numberOfAspects() *
+        config.inputDimensions.numberOfFrequencyChannels() *
         config.preBeamformerChannelizerRate *
-        config.beamformerNumberOfPolarizations);
+        config.inputDimensions.numberOfPolarizations());
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, config);
 
@@ -117,16 +119,16 @@ void blade_ata_b_terminate() {
 
 U64 blade_ata_b_get_input_size() {
     assert(runner);
-    return runner->getWorker().getInputSize();
+    return runner->getWorker().getInputBuffer().size();
 }
 
 U64 blade_ata_b_get_output_size() {
     assert(runner);
-    return runner->getWorker().getOutputSize();
+    return runner->getWorker().getOutputBuffer().size();
 }
 
 bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(ArrayTensor<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+    return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
 }
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
@@ -134,9 +136,9 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
 
     return runner->enqueue([&](auto& worker) {
         // Convert C pointers to Blade::Vector.
-        auto input = ArrayTensor<Device::CPU, CI8>(input_ptr, worker.getInputSize());
-        auto output = ArrayTensor<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>
-            (output_ptr, worker.getOutputSize());
+        auto input = ArrayTensor<Device::CPU, CI8>(input_ptr, worker.getInputBuffer().dims());
+        auto output = ArrayTensor<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>(output_ptr, 
+                worker.getOutputBuffer().dims());
 
         // Transfer input data from CPU memory to the worker.
         Plan::TransferIn(worker, dummyJulianDate, dummyDut1, input);
@@ -145,7 +147,7 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
         Plan::Compute(worker);
 
         // Transfer output data from the worker to the CPU memory.
-        Plan::TransferOut(output, worker.getOutput(), worker);
+        Plan::TransferOut(output, worker.getOutputBuffer(), worker);
 
         return id;
     });

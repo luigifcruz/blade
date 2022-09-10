@@ -54,6 +54,7 @@ template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
+    // Check configuration values.
     if (this->getConfigCalibrationDims().size() != config.antennaCalibrations.size()) {
         BL_FATAL("Number of antenna calibrations ({}) doesn't match with the expected size ({}).", 
                 config.antennaCalibrations.size(), this->getConfigCalibrationDims());
@@ -77,11 +78,13 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT);
 
+    // Allocate output buffers.
     BL_CHECK_THROW(this->output.phasors.resize(getOutputPhasorsDims()));
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
-    BL_INFO("Phasors Dimensions {A, B, F, P}: {} -> {}", "N/A", this->getOutputPhasors());
-    BL_INFO("Delays Dimensions {A, B}: {} -> {}", "N/A", this->getOutputDelays());
+    // Print configuration values.
+    BL_INFO("Phasors Dimensions [A, B, F, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
+    BL_INFO("Delays Dimensions [A, B]: {} -> {}", "N/A", this->getOutputDelays().dims());
 }
 
 template<typename OT>
@@ -122,7 +125,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         boresightDelay.data()
     );
 
-    for (U64 b = 0; b < this->config.numberOfBeams; b++) {
+    for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         //  Copy Reference Position (XYZ) to Source Position (UVW).
         for (U64 i = 0; i < antennasXyz.size(); i++) {
             sourceUvw[i] = reinterpret_cast<const UVW&>(antennasXyz[i]);
@@ -154,7 +157,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         }
     }
 
-    for (U64 b = 0; b < this->config.numberOfBeams; b++) {
+    for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         const U64 beamOffset = (b * 
                                 this->config.numberOfAntennas * 
                                 this->config.numberOfFrequencyChannels * 

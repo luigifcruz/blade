@@ -11,28 +11,30 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         : Module(config.blockSize, detector_kernel),
           config(config),
           input(input) {
+    // Check configuration values.
     if (config.integrationSize <= 0) {
         BL_WARN("Integration size ({}) should be more than zero.", config.integrationSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if ((getInput().numberOfTimeSamples() % config.integrationSize) != 0) {
+    if ((getInputBuffer().dims().numberOfTimeSamples() % config.integrationSize) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the integration size ({}).", getInput().numberOfTimeSamples(), config.integrationSize);
+                "by the integration size ({}).", getInputBuffer().dims().numberOfTimeSamples(), config.integrationSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInput().numberOfPolarizations() != 2) {
-        BL_FATAL("Number of polarizations ({}) should be two (2).", getInput().numberOfPolarizations());
+    if (getInputBuffer().dims().numberOfPolarizations() != 2) {
+        BL_FATAL("Number of polarizations ({}) should be two (2).", getInputBuffer().dims().numberOfPolarizations());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInput().numberOfAspects() <= 0) {
-        BL_FATAL("Number of aspects ({}) should be more than zero.", getInput().numberOfAspects());
+    if (getInputBuffer().dims().numberOfAspects() <= 0) {
+        BL_FATAL("Number of aspects ({}) should be more than zero.", getInputBuffer().dims().numberOfAspects());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    grid = dim3((((getInput().size() / getInput().numberOfPolarizations()) + block.x - 1) / block.x));
+    // Configure kernel instantiation.
+    grid = dim3((((getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) + block.x - 1) / block.x));
 
     std::string kernel_key;
     switch (config.numberOfOutputPolarizations) {
@@ -46,15 +48,17 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 
     kernel =
         Template(kernel_key)
-            .instantiate(getInput().size() / 
-                         getInput().numberOfPolarizations(),
-                         getInput().numberOfFrequencyChannels(),
+            .instantiate(getInputBuffer().size() / 
+                         getInputBuffer().dims().numberOfPolarizations(),
+                         getInputBuffer().dims().numberOfFrequencyChannels(),
                          config.integrationSize); 
 
-    BL_CHECK_THROW(output.buf.resize(getOutputDims()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
 
+    // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInput(), getOutput());
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("Integration Size: {}", config.integrationSize);
     BL_INFO("Number of Output Polarizations: {}", config.numberOfOutputPolarizations);
 }

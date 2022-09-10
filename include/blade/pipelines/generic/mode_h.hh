@@ -40,12 +40,8 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
     const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
-    constexpr const U64 getOutputSize() const {
-        return detector->getOutputSize();
-    }
-
-    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() {
-        return detector->getOutput();
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
+        return detector->getOutputBuffer();
     }
 
  private:
@@ -59,7 +55,7 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
 
     constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
         if constexpr (!std::is_same<IT, CF32>::value) {
-            return cast->getOutput();
+            return cast->getOutputBuffer();
         } else {
             return input;
         }

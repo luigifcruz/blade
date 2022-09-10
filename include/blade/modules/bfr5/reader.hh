@@ -16,32 +16,42 @@ namespace Blade::Modules::Bfr5 {
 
 class BLADE_API Reader : public Module {
  public:
+    // Configuration
+
     struct Config {
         std::string filepath;
 
         U64 blockSize = 512;
     };
 
+    // Input
+
     struct Input {
     };
+
+    // Output
 
     struct Output {
     };
 
+    // Constructor & Processing
+
     explicit Reader(const Config& config, const Input& input);
 
-    constexpr const ArrayTensorDimensions getDataDims() const {
+    // Miscellaneous
+
+    const ArrayTensorDimensions getTotalDims() const {
         return {
-            ((this->bfr5.dim_info.nants + 1)
-                * (this->bfr5.dim_info.nbeams + 1)) - 1,
-            this->bfr5.dim_info.nchan,
-            this->bfr5.dim_info.ntimes,
-            this->bfr5.dim_info.npol,
+            .A = ((this->bfr5.dim_info.nants + 1)
+                    * (this->bfr5.dim_info.nbeams + 1)) - 1,
+            .F = this->bfr5.dim_info.nchan,
+            .T = this->bfr5.dim_info.ntimes,
+            .P = this->bfr5.dim_info.npol,
         };
     }
 
     constexpr const LLA getReferencePosition() const {
-        return LLA {
+        return {
             this->bfr5.tel_info.latitude,
             this->bfr5.tel_info.longitude,
             this->bfr5.tel_info.altitude
@@ -49,7 +59,7 @@ class BLADE_API Reader : public Module {
     }
 
     constexpr const RA_DEC getBoresightCoordinate() const {
-        return RA_DEC {
+        return {
             this->bfr5.obs_info.phase_center_ra,
             this->bfr5.obs_info.phase_center_dec
         };
@@ -67,6 +77,8 @@ class BLADE_API Reader : public Module {
                                                    const U64& channelizerRate = 1);
 
  private:
+    // Variables
+
     Config config;
     const Input input;
     Output output;

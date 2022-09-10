@@ -20,7 +20,7 @@ class BLADE_API Pipeline {
     bool isSynchronized();
 
  protected:
-    template<typename T, typename Dims>
+    template<typename T>
     void connect(std::shared_ptr<T>& module,
                  const typename T::Config& config,
                  const typename T::Input& input) {

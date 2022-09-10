@@ -43,7 +43,7 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
     } 
 }
 
-inline guppiraw_block_meta_t* getBlockMeta(guppiraw_iterate_info_t* gr_iterate_ptr) {
+inline guppiraw_block_meta_t* getBlockMeta(const guppiraw_iterate_info_t* gr_iterate_ptr) {
     return ((guppiraw_block_meta_t*) guppiraw_iterate_metadata(gr_iterate_ptr)->user_data);
 }
 
@@ -52,11 +52,13 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         : Module(config.blockSize, guppi_kernel),
           config(config),
           input(input) {
+    // Check configuration.
     if (config.filepath.length() == 0) {
         BL_FATAL("Input file ({}) is invalid.", config.filepath);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
+    // Open GUPPI file and configure step size.
     const auto res = 
         guppiraw_iterate_open_with_user_metadata(&gr_iterate, 
                                                  config.filepath.c_str(), 
@@ -74,52 +76,47 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
 
-    if (this->getStepNumberOfAntennas() == 0) {
-        this->config.stepNumberOfAntennas = this->getTotalNumberOfAntennas();
+    if (this->config.stepNumberOfAspects == 0) {
+        this->config.stepNumberOfAspects = getTotalOutputBufferDims().numberOfAspects();
     }
 
-    if (this->getStepNumberOfFrequencyChannels() == 0) {
-        this->config.stepNumberOfFrequencyChannels = this->getTotalNumberOfFrequencyChannels();
+    if (this->config.stepNumberOfFrequencyChannels == 0) {
+        this->config.stepNumberOfFrequencyChannels = getTotalOutputBufferDims().numberOfFrequencyChannels();
     }
 
-    if (this->getStepNumberOfTimeSamples() == 0) {
+    if (this->config.stepNumberOfTimeSamples == 0) {
         this->config.stepNumberOfTimeSamples = this->getDatashape()->n_time;
     }
 
-    BL_CHECK_THROW(InitOutput(output.stepDut1, 1));
-    BL_CHECK_THROW(InitOutput(output.stepJulianDate, 1));
-    BL_CHECK_THROW(InitOutput(output.stepBuffer, getStepOutputBufferSize()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.stepDut1.resize({1}));
+    BL_CHECK_THROW(output.stepJulianDate.resize({1}));
+    BL_CHECK_THROW(output.stepBuffer.resize(getStepOutputBufferDims()));
 
-    BL_INFO("Output Type: {}", TypeInfo<OT>::name);
-    BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Sample Size: {} bits", this->getDatashape()->n_bit);
-    BL_INFO("Total Number of Antennas: {}", this->getTotalNumberOfAntennas());
-    BL_INFO("Total Number of Frequency Channels: {}", this->getTotalNumberOfFrequencyChannels());
-    BL_INFO("Total Number of Time Samples: {}", this->getTotalNumberOfTimeSamples());
-    BL_INFO("Total Number of Polarizations: {}", this->getTotalNumberOfPolarizations());
-    BL_INFO("Step Number of Antennas: {}", this->getStepNumberOfAntennas());
-    BL_INFO("Step Number of Frequency Channels: {}", this->getStepNumberOfFrequencyChannels());
-    BL_INFO("Step Number of Time Samples: {}", this->getStepNumberOfTimeSamples());
-    BL_INFO("Step Number of Polarizations: {}", this->getStepNumberOfPolarizations());
+    // Print configuration information.
+    BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
+    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBuffer().dims());
+    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
+    BL_INFO("Output File Path: {}", config.filepath);
 }
 
 template<typename OT>
-const F64 Reader<OT>::getChannelBandwidth() {
+const F64 Reader<OT>::getChannelBandwidth() const {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
 }
 
 template<typename OT>
-const F64 Reader<OT>::getTotalBandwidth() {
-    return getChannelBandwidth() * getStepNumberOfFrequencyChannels();
+const F64 Reader<OT>::getTotalBandwidth() const {
+    return getChannelBandwidth() * getStepOutputBufferDims().numberOfFrequencyChannels();
 }
 
 template<typename OT>
-const U64 Reader<OT>::getChannelStartIndex() {
+const U64 Reader<OT>::getChannelStartIndex() const {
     return getBlockMeta(&gr_iterate)->chan_start;
 }
 
 template<typename OT>
-const F64 Reader<OT>::getObservationFrequency() {
+const F64 Reader<OT>::getObservationFrequency() const {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
 }
 
@@ -154,9 +151,9 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     // Run library internal read method.
     const I64 bytes_read = 
         guppiraw_iterate_read(&this->gr_iterate,
-                              this->getStepNumberOfTimeSamples(),
-                              this->getStepNumberOfFrequencyChannels(),
-                              this->getStepNumberOfAntennas(),
+                              this->getStepOutputBufferDims().numberOfTimeSamples(),
+                              this->getStepOutputBufferDims().numberOfFrequencyChannels(),
+                              this->getStepOutputBufferDims().numberOfAspects(),
                               this->output.stepBuffer.data());
 
     if (bytes_read <= 0) {

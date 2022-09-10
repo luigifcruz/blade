@@ -13,13 +13,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, phasor_kernel),
           config(config),
           input(input) {
-    if (config.numberOfBeams != config.beamCoordinates.size()) {
-        BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
-                 " beams coordinates ({}).", config.numberOfBeams,
-                 config.beamCoordinates.size());
-        BL_CHECK_THROW(Result::ERROR);
-    }
-
+    // Check configuration values.
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
                  " antenna positions ({}).", config.numberOfAntennas,
@@ -34,6 +28,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    // Check if calibration values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;
 
@@ -63,6 +58,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
                 min_cal, max_cal, min_value, max_value); 
     }
 
+    // Print generic configuration values.
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
     BL_INFO("Observation Frequency (Hz): {}", config.observationFrequencyHz);
     BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
@@ -74,13 +70,11 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         config.arrayReferencePosition.ALT);
     BL_INFO("Boresight Coordinate (RA, DEC): ({}, {})",
         config.boresightCoordinate.RA, config.boresightCoordinate.DEC);
-
     BL_INFO("ECEF Antenna Positions (X, Y, Z):");
     for (U64 i = 0; i < config.antennaPositions.size(); i++) {
         BL_INFO("    {}: ({}, {}, {})", i, config.antennaPositions[i].X, 
             config.antennaPositions[i].Y, config.antennaPositions[i].Z);
     }
-
     BL_INFO("Beam Coordinates (RA, DEC):");
     for (U64 i = 0; i < config.beamCoordinates.size(); i++) {
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 

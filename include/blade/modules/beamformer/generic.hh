@@ -11,6 +11,8 @@ namespace Blade::Modules::Beamformer {
 template<typename IT, typename OT>
 class BLADE_API Generic : public Module {
  public:
+    // Configuration
+
     struct Config {
         BOOL enableIncoherentBeam = false;
         BOOL enableIncoherentBeamSqrt = false;
@@ -18,42 +20,53 @@ class BLADE_API Generic : public Module {
         U64 blockSize = 512;
     };
 
+    constexpr Config getConfig() const {
+        return config;
+    }
+
+    // Input
+
     struct Input {
         const ArrayTensor<Device::CUDA, IT>& buf;
-        const PhasorTensor<Device::CUDA, IT>& phasors;
+        // TODO: Check why assign PhasorTensor<Device::CPU | Device::CUDA, ...> 
+        // to PhasorTensor<Device::CUDA> doesn't work.
+        const PhasorTensor<Device::CPU | Device::CUDA, IT>& phasors;
     };
-
-    struct Output {
-        ArrayTensor<Device::CUDA, OT> buf;
-    };
-
-    explicit Generic(const Config& config, const Input& input);
-    virtual ~Generic() = default;
 
     constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
         return this->input.buf;
     }
 
-    constexpr const PhasorTensor<Device::CUDA, IT>& getInputPhasors() const {
+    constexpr const PhasorTensor<Device::CPU | Device::CUDA, IT>& getInputPhasors() const {
         return this->input.phasors;
     }
 
-    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
+    // Output
+
+    struct Output {
+        ArrayTensor<Device::CUDA, OT> buf;
+    };
+
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
         return this->output.buf;
     }
 
-    constexpr Config getConfig() const {
-        return config;
-    }
+    // Constructor & Processing 
 
+    explicit Generic(const Config& config, const Input& input);
+    virtual ~Generic() = default;
     const Result process(const cudaStream_t& stream = 0) final;
 
  protected:
+    // Variables
+
     const Config config;
     const Input input;
     Output output;
 
-    virtual constexpr const ArrayTensorDimensions getOutputDims() const = 0;
+    // Expected Dimensions
+
+    virtual const ArrayTensorDimensions getOutputBufferDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Beamformer

@@ -5,49 +5,39 @@
 
 namespace Blade {
 
-class Dimensions : public std::vector<U64> {
- public:
-    using std::vector<U64>::vector;
-
-    constexpr const U64 size() const {
-        U64 size = 1;
-        for (const auto& n : *this) {
-            size *= n;
-        }
-        return size; 
-    }
+template <typename T>
+concept IsDimensions = 
+requires(T t) {
+    { t.size() } -> std::same_as<U64>;
+    { t == t } -> std::same_as<BOOL>;
 };
 
-template<Device I, typename T, typename Dims> class Vector;
+template<Device I, typename T, typename Dims = Dimensions> class Vector;
 
 template<typename T, typename Dims>
-class VectorImpl : public Dims {
+requires IsDimensions<Dims>
+class VectorImpl {
  public:
     VectorImpl()
-             : Dims({}),
+             : dimensions(),
                container(),
-               managed(false) {}
-    explicit VectorImpl(const Dims& dims)
-             : Dims(dims),
-               container(),
-               managed(true) {
-        this->resize(dims);
-    }
-    explicit VectorImpl(const std::span<T>& other)
-             : Dims({other.size()}),
+               managed(true) {}
+    explicit VectorImpl(const std::span<T>& other, const Dims& dims)
+             : dimensions(dims),
                container(other),
-               managed(false) {}
+               managed(false) {
+        BL_CHECK_THROW(dims.size() == other.size() ? Result::SUCCESS : Result::ERROR);
+    }
     explicit VectorImpl(T* ptr, const Dims& dims)
-             : Dims(dims),
-               container(ptr, size),
+             : dimensions(dims),
+               container(ptr, dims.size()),
                managed(false) {}
     explicit VectorImpl(void* ptr, const Dims& dims)
-             : Dims(dims),
-               container(static_cast<T*>(ptr), size),
+             : dimensions(dims),
+               container(static_cast<T*>(ptr), dims.size()),
                managed(false) {}
 
     VectorImpl(const VectorImpl&) = delete;
-    // TODO: Check if this works as intended.
     bool operator==(const VectorImpl&) = delete;
     VectorImpl& operator=(const VectorImpl&) = delete;
 
@@ -73,9 +63,20 @@ class VectorImpl : public Dims {
         return container[idx];
     }
 
-    // TODO: Implement iterator.
-    constexpr const std::span<T>& span() const {
-        return container;
+    constexpr auto begin() {
+        return container.begin();
+    }
+
+    constexpr auto end() {
+        return container.end();
+    }
+
+    constexpr const auto begin() const {
+        return container.begin();
+    }
+
+    constexpr const auto end() const {
+        return container.end();
     }
 
     const Result link(const VectorImpl<T, Dims>& src) {
@@ -86,22 +87,30 @@ class VectorImpl : public Dims {
 
         this->managed = false;
         this->container = src.span();
-        static_cast<Dims&>(*this) = src;
+        this->dimensions = src.dims();
 
         return Result::SUCCESS;
     }
 
     virtual const Result resize(const Dims& dims) = 0;
 
-    using Dims::Dims;
-
-    constexpr const Dims& dimensions() const noexcept {
-        return *this;
+    constexpr const Dims& dims() const {
+        return dimensions;
     }
 
  protected:
+    Dims dimensions;
     std::span<T> container;
     bool managed;
+
+    explicit VectorImpl(const Dims& dims)
+             : dimensions(dims),
+               container(),
+               managed(true) {}
+
+    constexpr const std::span<T>& span() const {
+        return container;
+    }
 };
 
 }  // namespace Blade

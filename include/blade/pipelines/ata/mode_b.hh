@@ -19,7 +19,11 @@ namespace Blade::Pipelines::ATA {
 template<typename OT>
 class BLADE_API ModeB : public Pipeline {
  public:
+    // Configuration 
+
     struct Config {
+        ArrayTensorDimensions inputDimensions;
+
         U64 preBeamformerChannelizerRate;
 
         F64 phasorObservationFrequencyHz;
@@ -33,11 +37,6 @@ class BLADE_API ModeB : public Pipeline {
         std::vector<CF64> phasorAntennaCalibrations; 
         std::vector<RA_DEC> phasorBeamCoordinates;
 
-        U64 beamformerNumberOfAntennas;
-        U64 beamformerNumberOfFrequencyChannels;
-        U64 beamformerNumberOfTimeSamples;
-        U64 beamformerNumberOfPolarizations;
-        U64 beamformerNumberOfBeams;
         BOOL beamformerIncoherentBeam = false;
 
         BOOL detectorEnable = false;
@@ -51,47 +50,45 @@ class BLADE_API ModeB : public Pipeline {
         U64 detectorBlockSize = 512;
     };
 
-    explicit ModeB(const Config& config);
+    // Input
 
-    constexpr const U64 getInputSize() const {
-        return channelizer->getBufferSize();
-    }
-
-    const Result transferIn(const ArrayTensor<Device::CPU, F64>& blockJulianDate,
-                            const ArrayTensor<Device::CPU, F64>& blockDut1,
+    const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
                             const ArrayTensor<Device::CPU, CI8>& input,
                             const cudaStream_t& stream);
 
-    constexpr const U64 getOutputSize() const {
-        if (config.detectorEnable) {
-            return detector->getOutputSize();
-        } else {
-            return beamformer->getOutputSize();
-        }
+    constexpr const ArrayTensor<Device::CUDA, CI8>& getInputBuffer() const {
+        return input;
     }
 
-    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() {
+    // Output 
+
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
         if (config.detectorEnable) {
             if constexpr (!std::is_same<OT, F32>::value) {
-                return outputCast->getOutput();
+                return outputCast->getOutputBuffer();
             } else {
-                return detector->getOutput();
+                return detector->getOutputBuffer();
             }
         } else {
             if constexpr (!std::is_same<OT, CF32>::value) {
-                return complexOutputCast->getOutput();
+                return complexOutputCast->getOutputBuffer();
             } else {
-                return beamformer->getOutput();
+                return beamformer->getOutputBuffer();
             }
         }
     }
+
+    // Constructor
+
+    explicit ModeB(const Config& config);
 
  private:
     const Config config;
 
     ArrayTensor<Device::CUDA, CI8> input;
-    ArrayTensor<Device::CPU, F64> blockJulianDate;
-    ArrayTensor<Device::CPU, F64> blockDut1;
+    Vector<Device::CPU, F64> blockJulianDate;
+    Vector<Device::CPU, F64> blockDut1;
 
     std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;

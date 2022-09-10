@@ -14,6 +14,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
           fileId(0),
           writeCounter(0),
           fileDescriptor(0) {
+    // Open output file.
     auto filepath = fmt::format("{}.{:04}.raw", this->config.filepath, this->fileId % 10000);
     this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT | (this->config.directio ? O_DIRECT : 0), 0644);
     if (this->fileDescriptor < 1) {
@@ -21,49 +22,39 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->gr_header.metadata.datashape.n_aspect = this->getStepNumberOfBeams() > 0 ? this->getStepNumberOfBeams() : this->getStepNumberOfAntennas();
-    this->gr_header.metadata.datashape.n_aspectchan = this->getTotalNumberOfFrequencyChannels();
-    this->gr_header.metadata.datashape.n_time = this->getStepNumberOfTimeSamples();
-    this->gr_header.metadata.datashape.n_pol = this->getStepNumberOfPolarizations();
+    // Add expected metadata to the header.
+    this->gr_header.metadata.datashape.n_aspect = getInputBuffer().dims().numberOfAspects();
+    this->gr_header.metadata.datashape.n_aspectchan = getInputBuffer().dims().numberOfFrequencyChannels(); // TODO: Wrong.
+    this->gr_header.metadata.datashape.n_time = getInputBuffer().dims().numberOfTimeSamples();
+    this->gr_header.metadata.datashape.n_pol = getInputBuffer().dims().numberOfPolarizations();
     this->gr_header.metadata.datashape.n_bit = sizeof(IT) * 8 / 2;
     this->gr_header.metadata.directio = this->config.directio ? 1 : 0;
     guppiraw_header_put_metadata(&this->gr_header);
-    this->headerPut("NBEAM", this->getStepNumberOfBeams());
+
+    // Add custom metadata to the header.
+    this->headerPut("NBEAM", getInputBuffer().dims().numberOfAspects());
     this->headerPut("DATATYPE", "FLOAT");
 
-    BL_INFO("Input Type: {}", TypeInfo<IT>::name);
+    // Print configuration information.
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
     BL_INFO("Output File Path: {}", config.filepath);
     BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO")
-    BL_INFO("Number of Steps: {}", this->getNumberOfSteps());
-    BL_INFO("Step Number of Beams: {}", this->getStepNumberOfBeams());
-    BL_INFO("Step Number of Antennas: {}", this->getStepNumberOfAntennas());
-    BL_INFO("Step Number of Frequency Channels: {}", this->getStepNumberOfFrequencyChannels());
-    BL_INFO("Step Number of Time Samples: {}", this->getStepNumberOfTimeSamples());
-    BL_INFO("Step Number of Polarizations: {}", this->getStepNumberOfPolarizations());
-    BL_INFO("Total Number of Beams: {}", this->getTotalNumberOfBeams());
-    BL_INFO("Total Number of Antennas: {}", this->getTotalNumberOfAntennas());
-    BL_INFO("Total Number of Frequency Channels: {}", this->getTotalNumberOfFrequencyChannels());
-    BL_INFO("Total Number of Time Samples: {}", this->getTotalNumberOfTimeSamples());
-    BL_INFO("Total Number of Polarizations: {}", this->getTotalNumberOfPolarizations());
-
-    BL_CHECK_THROW(InitInput(this->input.totalBuffer, getTotalInputBufferSize()));
 }
 
 template<typename IT>
 const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
-    const auto& bytesWritten = 
-        guppiraw_write_block_batched(
-            this->fileDescriptor, 
-            &this->gr_header, 
-            this->input.totalBuffer.data(), 
-            1, 
-            this->getNumberOfSteps());
+    // TODO: This is not batched, right?
+    const auto& bytesWritten = guppiraw_write_block(
+                                    this->fileDescriptor, 
+                                    &this->gr_header, 
+                                    this->input.buffer.data());
 
     if (bytesWritten <= 0) {
         return Result::ERROR;
     }
 
-    this->headerPut("PKTIDX", this->getStepNumberOfTimeSamples() * writeCounter++);
+    this->headerPut("PKTIDX", getInputBuffer().dims().numberOfTimeSamples() * writeCounter++);
 
     return Result::SUCCESS;
 }

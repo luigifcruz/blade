@@ -12,13 +12,13 @@ class BLADE_API MeerKAT : public Generic<IT, OT> {
                      const typename Generic<IT, OT>::Input& input);
 
  protected:
-    const ArrayTensorDimensions getOutputDims() const {
+    const ArrayTensorDimensions getOutputBufferDims() const {
         return {
-            this->getInputBuffer().numberOfAspects() 
-                + U64(this->config.enableIncoherentBeam ? 1 : 0),
-            this->getInputBuffer().numberOfFrequencyChannels(),
-            this->getInputBuffer().numberOfTimeSamples(),
-            this->getInputBuffer().numberOfPolarizations(),
+            .A = this->getInputPhasors().dims().numberOfBeams() 
+                    + U64(this->config.enableIncoherentBeam ? 1 : 0),
+            .F = this->getInputBuffer().dims().numberOfFrequencyChannels(),
+            .T = this->getInputBuffer().dims().numberOfTimeSamples(),
+            .P = this->getInputBuffer().dims().numberOfPolarizations(),
         };
     }
 };

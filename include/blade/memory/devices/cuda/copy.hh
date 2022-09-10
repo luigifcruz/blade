@@ -16,10 +16,9 @@ static const Result Copy(VectorImpl<T, Dims>& dst,
                 src.size(), dst.size());
     }
 
-    // TODO: Check if this works as intended.
-    if (dst.dimensions() != src.dimensions()) {
+    if (dst.dims() != src.dims()) {
         BL_FATAL("Dimensions mismatch between source ({}) and destination ({}).",
-                src, dst);
+                src.dims(), dst.dims());
     }
 
     BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),

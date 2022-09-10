@@ -9,8 +9,9 @@ namespace Blade::Modules::Phasor {
 template<typename OT>
 class BLADE_API Generic : public Module {
  public:
+    // Configuration
+
     struct Config {
-        U64 numberOfBeams;
         U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
         U64 numberOfPolarizations;
@@ -30,26 +31,31 @@ class BLADE_API Generic : public Module {
         U64 blockSize = 512;
     };
 
+    constexpr const Config getConfig() const {
+        return config;
+    }
+
+    // Input 
+
     struct Input {
-        const ArrayTensor<Device::CPU, F64>& blockJulianDate;
-        const ArrayTensor<Device::CPU, F64>& blockDut1;
+        const Vector<Device::CPU, F64>& blockJulianDate;
+        const Vector<Device::CPU, F64>& blockDut1;
     };
+
+    constexpr const Vector<Device::CPU, F64>& getInputJulianDate() const {
+        return this->input.blockJulianDate;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getInputDut1() const {
+        return this->input.blockDut1;
+    }
+
+    // Output
 
     struct Output {
         DelayTensor<Device::CPU, F64> delays;
         PhasorTensor<Device::CPU | Device::CUDA, OT> phasors;
     };
-
-    explicit Generic(const Config& config, const Input& input);
-    virtual ~Generic() = default;
-
-    constexpr const ArrayTensor<Device::CPU, F64>& getInputJulianDate() const {
-        return this->input.blockJulianDate;
-    }
-
-    constexpr const ArrayTensor<Device::CPU, F64>& getInputDut1() const {
-        return this->input.blockDut1;
-    }
 
     constexpr const DelayTensor<Device::CPU, F64>& getOutputDelays() const {
         return this->output.delays;
@@ -59,20 +65,24 @@ class BLADE_API Generic : public Module {
         return this->output.phasors;
     } 
 
-    constexpr const Config getConfig() const {
-        return config;
-    }
+    // Constructor & Processing
 
+    explicit Generic(const Config& config, const Input& input);
+    virtual ~Generic() = default;
     virtual const Result preprocess(const cudaStream_t& stream = 0) = 0;
 
  protected:
+    // Variables
+
     const Config config;
     const Input input;
     Output output;
 
-    virtual constexpr const DelayTensorDimensions getOutputDelaysDims() const = 0;
-    virtual constexpr const PhasorTensorDimensions getOutputPhasorsDims() const = 0;
-    virtual constexpr const ArrayTensorDimensions getConfigCalibrationDims() const = 0;
+    // Expected Dimensions
+
+    virtual const DelayTensorDimensions getOutputDelaysDims() const = 0;
+    virtual const PhasorTensorDimensions getOutputPhasorsDims() const = 0;
+    virtual const ArrayTensorDimensions getConfigCalibrationDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Phasor

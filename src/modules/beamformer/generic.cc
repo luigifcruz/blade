@@ -11,15 +11,16 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, beamformer_kernel),
           config(config),
           input(input) {
-    if ((getInputBuffer().numberOfTimeSamples() % config.blockSize) != 0) {
+    // Check configuration values.
+    if ((getInputBuffer().dims().numberOfTimeSamples() % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by the block size ({}).", 
-                getInputBuffer().numberOfTimeSamples(), config.blockSize);
+                getInputBuffer().dims().numberOfTimeSamples(), config.blockSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions {A, F, T, P}: {} -> {}", getInputBuffer(), getOutput());
-    BL_INFO("Phasor Dimensions {A, B, F, T, P}: {}", getInputPhasors());
+    BL_INFO("Phasor Dimensions [A, B, F, T, P]: {}", getInputPhasors().dims());
     BL_INFO("Enable Incoherent Beam: {}", config.enableIncoherentBeam ? "YES" : "NO");
     BL_INFO("Enable Incoherent Beam Square Root: {}", config.enableIncoherentBeamSqrt ? "YES" : "NO");
 }

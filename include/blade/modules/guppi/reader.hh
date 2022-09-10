@@ -17,117 +17,75 @@ namespace Blade::Modules::Guppi {
 template<typename OT>
 class BLADE_API Reader : public Module {
  public:
+    // Configuration 
+
     struct Config {
         std::string filepath;
-
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
-        U64 stepNumberOfAntennas;
+        U64 stepNumberOfAspects;
 
         U64 blockSize = 512;
     };
-
-    struct Input {
-    };
-
-    struct Output {
-        Vector<Device::CPU, OT> stepBuffer;
-        Vector<Device::CPU, F64> stepJulianDate;
-        Vector<Device::CPU, F64> stepDut1;
-    };
-
-    explicit Reader(const Config& config, const Input& input);
-
-    constexpr const Vector<Device::CPU, OT>& getStepOutputBuffer() {
-        return this->output.stepBuffer;
-    }
-
-    constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
-        return this->output.stepJulianDate;
-    }
-
-    constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() {
-        return this->output.stepDut1;
-    }
 
     constexpr const Config& getConfig() const {
         return this->config;
     }
 
-    constexpr const U64 getLastReadBlockIndex() const {
-        return this->lastread_block_index;
+    // Input 
+
+    struct Input {
+    };
+
+    // Output
+
+    struct Output {
+        ArrayTensor<Device::CPU, OT> stepBuffer;
+        Vector<Device::CPU, F64> stepJulianDate;
+        Vector<Device::CPU, F64> stepDut1;
+    };
+
+    constexpr const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() const {
+        return this->output.stepBuffer;
     }
 
-    constexpr const U64 getLastReadAspectIndex() const {
-        return this->lastread_aspect_index;
+    constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {
+        return this->output.stepJulianDate;
     }
 
-    constexpr const U64 getLastReadChannelIndex() const {
-        return this->lastread_channel_index;
+    constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() const {
+        return this->output.stepDut1;
     }
 
-    constexpr const U64 getLastReadTimeIndex() const {
-        return this->lastread_time_index;
+    const ArrayTensorDimensions getTotalOutputBufferDims() const {
+        return {
+            .A = this->getDatashape()->n_aspect,
+            .F = this->getDatashape()->n_aspectchan,
+            .T = this->getDatashape()->n_time * this->gr_iterate.n_block,
+            .P = this->getDatashape()->n_pol,
+        };
     }
 
-    const F64 getTotalBandwidth();
-    const F64 getChannelBandwidth();
-    const U64 getChannelStartIndex();
-    const F64 getObservationFrequency();
-
-    constexpr const U64 getTotalNumberOfAntennas() const {
-        return this->getDatashape()->n_aspect;
+    const U64 getNumberOfSteps() {
+        return this->getTotalOutputBufferDims().size() / 
+               this->getStepOutputBufferDims().size();
     }
 
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return this->getDatashape()->n_aspectchan;
-    }
+    // Constructor & Processing
 
-    constexpr const U64 getTotalNumberOfPolarizations() const {
-        return this->getDatashape()->n_pol;
-    }
-
-    constexpr const U64 getTotalNumberOfTimeSamples() const {
-        return this->getDatashape()->n_time * this->gr_iterate.n_block;
-    }
-
-    constexpr const U64 getTotalOutputBufferSize() const {
-        return this->getTotalNumberOfAntennas() *
-               this->getTotalNumberOfFrequencyChannels() *
-               this->getTotalNumberOfTimeSamples() * 
-               this->getTotalNumberOfPolarizations();
-    }
-
-    constexpr const U64 getStepNumberOfAntennas() const {
-        return this->config.stepNumberOfAntennas;
-    }
-
-    constexpr const U64 getStepNumberOfFrequencyChannels() const {
-        return this->config.stepNumberOfFrequencyChannels;
-    }
-
-    constexpr const U64 getStepNumberOfPolarizations() const {
-        return this->getTotalNumberOfPolarizations();
-    }
-
-    constexpr const U64 getStepNumberOfTimeSamples() const {
-        return this->config.stepNumberOfTimeSamples;
-    }
-
-    constexpr const U64 getStepOutputBufferSize() const {
-        return this->getStepNumberOfAntennas() *
-               this->getStepNumberOfFrequencyChannels() *
-               this->getStepNumberOfTimeSamples() * 
-               this->getStepNumberOfPolarizations();
-    }
-
-    constexpr const U64 getNumberOfSteps() {
-        return this->getTotalOutputBufferSize() / this->getStepOutputBufferSize();
-    }
-
+    explicit Reader(const Config& config, const Input& input);
     const Result preprocess(const cudaStream_t& stream = 0) final;
 
+    // Miscellaneous 
+
+    const F64 getTotalBandwidth() const;
+    const F64 getChannelBandwidth() const;
+    const U64 getChannelStartIndex() const;
+    const F64 getObservationFrequency() const;
+
  private:
+    // Variables 
+
     Config config;
     const Input input;
     Output output;
@@ -139,12 +97,25 @@ class BLADE_API Reader : public Module {
 
     guppiraw_iterate_info_t gr_iterate = {0};
 
-    constexpr const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >=
-            this->getStepNumberOfTimeSamples();
+    // Expected Dimensions
+
+    const ArrayTensorDimensions getStepOutputBufferDims() const {
+        return {
+            .A = this->config.stepNumberOfAspects,
+            .F = this->config.stepNumberOfFrequencyChannels,
+            .T = this->config.stepNumberOfTimeSamples,
+            .P = this->getDatashape()->n_pol,
+        };
     }
 
-    constexpr const guppiraw_datashape_t* getDatashape() const {
+    // Helpers
+
+    const bool keepRunning() const {
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >=
+            this->getTotalOutputBufferDims().numberOfTimeSamples();
+    }
+
+    const guppiraw_datashape_t* getDatashape() const {
         return guppiraw_iterate_datashape(&this->gr_iterate);
     }
 };
