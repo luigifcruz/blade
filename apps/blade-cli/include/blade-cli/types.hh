@@ -17,7 +17,7 @@ enum class TypeId : uint8_t {
     F64,
 };
 
-inline std::map<std::string, TypeId> TypeMap = {
+inline std::unordered_map<std::string, TypeId> TypeMap = {
     {"CI8",      TypeId::CI8}, 
     {"CF16",     TypeId::CF16}, 
     {"CF32",     TypeId::CF32}, 
@@ -35,7 +35,7 @@ enum class TelescopeId : uint8_t {
     GENERIC,
 };
 
-inline std::map<std::string, TelescopeId> TelescopeMap = {
+inline std::unordered_map<std::string, TelescopeId> TelescopeMap = {
     {"ATA",     TelescopeId::ATA}, 
     {"VLA",     TelescopeId::VLA},
     {"MEERKAT", TelescopeId::MEERKAT},
@@ -48,7 +48,7 @@ enum class ModeId : uint8_t {
     MODE_BH,
 };
 
-inline std::map<std::string, ModeId> ModeMap = {
+inline std::unordered_map<std::string, ModeId> ModeMap = {
     {"MODE_B",     ModeId::MODE_B}, 
     {"MODE_H",     ModeId::MODE_H}, 
     {"MODE_BH",    ModeId::MODE_BH}, 
