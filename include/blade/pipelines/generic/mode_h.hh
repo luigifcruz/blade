@@ -16,13 +16,12 @@ namespace Blade::Pipelines::Generic {
 template<typename IT, typename OT>
 class BLADE_API ModeH : public Pipeline, public Accumulator {
  public:
-    struct Config {
-        U64 accumulateRate;
+    // Configuration 
 
-        U64 channelizerNumberOfBeams;
-        U64 channelizerNumberOfFrequencyChannels;
-        U64 channelizerNumberOfTimeSamples;
-        U64 channelizerNumberOfPolarizations;
+    struct Config {
+        ArrayTensorDimensions inputDimensions;
+
+        U64 accumulateRate;
 
         U64 detectorNumberOfOutputPolarizations;
 
@@ -31,18 +30,24 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
         U64 detectorBlockSize = 512;
     };
 
-    explicit ModeH(const Config& config);
-
-    constexpr const U64 getInputSize() const {
-        return channelizer->getBufferSize();
-    }
+    // Input
 
     const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return input;
+    }
+
+    // Output 
+
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
         return detector->getOutputBuffer();
     }
+
+    // Constructor
+
+    explicit ModeH(const Config& config);
 
  private:
     const Config config;

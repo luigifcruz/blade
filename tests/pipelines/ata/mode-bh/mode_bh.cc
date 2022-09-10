@@ -43,11 +43,11 @@ static struct {
     } Callbacks;
 } State;
 
-static ArrayTensor<Device::CPU, F64> dummyJulianDate(1);
-static ArrayTensor<Device::CPU, F64> dummyDut1(1);
+static Vector<Device::CPU, F64> dummyJulianDate({1});
+static Vector<Device::CPU, F64> dummyDut1({1});
 
 bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(ArrayTensor<Device::CPU, I8>(buffer, size)) == Result::SUCCESS;
+    return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
 }
 
 bool blade_use_device(int device_id) {
@@ -64,6 +64,13 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     dummyDut1[0] = 0.0;
 
     State.RunnersConfig.B = {
+        .inputDimensions = {
+            .A = BLADE_ATA_MODE_BH_NANT,
+            .F = BLADE_ATA_MODE_BH_NCHAN,
+            .T = BLADE_ATA_MODE_BH_NTIME,
+            .P = BLADE_ATA_MODE_BH_NPOL,
+        },
+
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
 
         .phasorObservationFrequencyHz = 6500.125*1e6,
@@ -107,37 +114,25 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
-
-        .beamformerNumberOfAntennas = BLADE_ATA_MODE_BH_NANT,
-        .beamformerNumberOfFrequencyChannels = BLADE_ATA_MODE_BH_NCHAN,
-        .beamformerNumberOfTimeSamples = BLADE_ATA_MODE_BH_NTIME,
-        .beamformerNumberOfPolarizations = BLADE_ATA_MODE_BH_NPOL,
-        .beamformerNumberOfBeams = BLADE_ATA_MODE_BH_NBEAM,
     };
 
     State.RunnersConfig.B.phasorAntennaCalibrations.resize(
-        State.RunnersConfig.B.beamformerNumberOfAntennas *
-        State.RunnersConfig.B.beamformerNumberOfFrequencyChannels *
+        State.RunnersConfig.B.inputDimensions.numberOfAspects() *
+        State.RunnersConfig.B.inputDimensions.numberOfFrequencyChannels() *
         State.RunnersConfig.B.preBeamformerChannelizerRate *
-        State.RunnersConfig.B.beamformerNumberOfPolarizations
-    );
-
-    State.RunnersConfig.H = {
-        .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
-
-        .channelizerNumberOfBeams = State.RunnersConfig.B.beamformerNumberOfBeams,
-        .channelizerNumberOfFrequencyChannels = State.RunnersConfig.B.beamformerNumberOfFrequencyChannels * 
-                                                State.RunnersConfig.B.preBeamformerChannelizerRate,
-        .channelizerNumberOfTimeSamples = State.RunnersConfig.B.beamformerNumberOfTimeSamples / 
-                                          State.RunnersConfig.B.preBeamformerChannelizerRate,
-        .channelizerNumberOfPolarizations = State.RunnersConfig.B.beamformerNumberOfPolarizations,
-
-        .detectorNumberOfOutputPolarizations = 1,
-    };
+        State.RunnersConfig.B.inputDimensions.numberOfPolarizations());
 
     State.RunnersInstances.B = 
         Runner<TestPipelineB>::New(numberOfWorkers, 
                                    State.RunnersConfig.B);
+
+    State.RunnersConfig.H = {
+        .inputDimensions = State.RunnersInstances.B->getWorker().getOutputBuffer().dims(),
+
+        .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
+
+        .detectorNumberOfOutputPolarizations = 1,
+    };
 
     State.RunnersInstances.H = 
         Runner<TestPipelineH>::New(numberOfWorkers, 
@@ -161,12 +156,12 @@ void blade_ata_bh_terminate() {
 
 U64 blade_ata_bh_get_input_size() {
     assert(State.RunnersInstances.B);
-    return State.RunnersInstances.B->getWorker().getInputSize();
+    return State.RunnersInstances.B->getWorker().getInputBuffer().size();
 }
 
 U64 blade_ata_bh_get_output_size() {
     assert(State.RunnersInstances.H);
-    return State.RunnersInstances.H->getWorker().getOutputSize();
+    return State.RunnersInstances.H->getWorker().getOutputBuffer().size();
 }
 
 void blade_ata_bh_register_user_data(void* user_data) {
@@ -212,7 +207,7 @@ bool blade_ata_bh_compute_step() {
         State.InputPointerMap.insert({State.StepCount, externalBuffer});
 
         // Create Memory::Vector from RAW pointer.
-        auto input = ArrayTensor<Device::CPU, CI8>(externalBuffer, worker.getInputSize());
+        auto input = ArrayTensor<Device::CPU, CI8>(externalBuffer, worker.getInputBuffer().dims());
 
         // Transfer input memory to the pipeline.
         Plan::TransferIn(worker, 
@@ -224,7 +219,7 @@ bool blade_ata_bh_compute_step() {
         Plan::Compute(worker);
 
         // Concatenate output data inside next pipeline input buffer.
-        Plan::Accumulate(ModeH, ModeB, worker.getOutput());
+        Plan::Accumulate(ModeH, ModeB, worker.getOutputBuffer());
 
         // Return job identity and increment counter.
         return State.StepCount++; 
@@ -251,10 +246,10 @@ bool blade_ata_bh_compute_step() {
         State.OutputPointerMap.insert({callbackStep, externalBuffer});
 
         // Create Memory::Vector from RAW pointer.
-        auto output = ArrayTensor<Device::CPU, F32>(externalBuffer, worker.getOutputSize());
+        auto output = ArrayTensor<Device::CPU, F32>(externalBuffer, worker.getOutputBuffer().dims());
 
         // Copy worker output to external output buffer.
-        Plan::TransferOut(output, worker.getOutput(), worker);
+        Plan::TransferOut(output, worker.getOutputBuffer(), worker);
 
         // Return job identity.
         return callbackStep;

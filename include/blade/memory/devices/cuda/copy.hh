@@ -147,9 +147,9 @@ static const Result Copy2D(VectorImpl<DT, Dims>& dst,
 
     BL_CUDA_CHECK(
         cudaMemcpy2DAsync(
-            static_cast<uint8_t*>(dst.data()) + dstPad,
+            (uint8_t*)(dst.data()) + dstPad,
             dstPitch,
-            static_cast<uint8_t*>(src.data()) + srcPad,
+            (uint8_t*)(src.data()) + srcPad,
             srcPitch,
             width,
             height,

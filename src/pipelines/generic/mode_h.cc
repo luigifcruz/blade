@@ -10,25 +10,23 @@ ModeH<IT, OT>::ModeH(const Config& config)
        config(config) {
     BL_DEBUG("Initializing Pipeline Mode H.");
 
+    BL_DEBUG("Allocating pipeline buffers.");
+    auto accumulationFactor = ArrayTensorDimensions{1, 1, config.accumulateRate, 1};
+    BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
+
     if constexpr (!std::is_same<IT, CF32>::value) {
         BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
         this->connect(cast, {
-            .inputSize = this->getInputSize(),
             .blockSize = config.castBlockSize,
         }, {
             .buf = this->input,
         });
     }
 
-    BL_DEBUG("Instantiating channelizer with rate {}.", config.channelizerNumberOfTimeSamples *  
+    BL_DEBUG("Instantiating channelizer with rate {}.", config.inputDimensions.numberOfTimeSamples() *  
                                                         config.accumulateRate);
     this->connect(channelizer, {
-        .numberOfBeams = config.channelizerNumberOfBeams,
-        .numberOfAntennas = 1,
-        .numberOfFrequencyChannels = config.channelizerNumberOfFrequencyChannels,
-        .numberOfTimeSamples = config.channelizerNumberOfTimeSamples * config.accumulateRate,
-        .numberOfPolarizations = config.channelizerNumberOfPolarizations,
-        .rate = config.channelizerNumberOfTimeSamples * config.accumulateRate,
+        .rate = config.inputDimensions.numberOfTimeSamples() * config.accumulateRate,
         .blockSize = config.channelizerBlockSize,
     }, {
         .buf = this->getChannelizerInput(),
@@ -36,13 +34,6 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
-        .numberOfBeams = config.channelizerNumberOfBeams, 
-        .numberOfFrequencyChannels = config.channelizerNumberOfFrequencyChannels * 
-                                     config.channelizerNumberOfTimeSamples * 
-                                     config.accumulateRate,
-        .numberOfTimeSamples = 1,
-        .numberOfPolarizations = config.channelizerNumberOfPolarizations,
-
         .integrationSize = 1,
         .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
@@ -55,8 +46,8 @@ ModeH<IT, OT>::ModeH(const Config& config)
 template<typename IT, typename OT>
 const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
-    const auto& width = (config.channelizerNumberOfTimeSamples * config.channelizerNumberOfPolarizations) * sizeof(IT);
-    const auto& height = config.channelizerNumberOfBeams * config.channelizerNumberOfFrequencyChannels;
+    const auto& width = (config.inputDimensions.numberOfTimeSamples() * config.inputDimensions.numberOfPolarizations()) * sizeof(IT);
+    const auto& height = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
 
     BL_CHECK(
         Memory::Copy2D(

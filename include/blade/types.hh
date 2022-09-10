@@ -73,6 +73,15 @@ struct ArrayTensorDimensions {
                (other.T == this->T) &&
                (other.P == this->P);
     }
+
+    ArrayTensorDimensions operator*(const ArrayTensorDimensions& other) const {
+        return ArrayTensorDimensions {
+            other.A * this->A, 
+            other.F * this->F,
+            other.T * this->T,
+            other.P * this->P,
+        };
+    }
 };
 
 template<Device I, typename T>
@@ -117,6 +126,16 @@ struct PhasorTensorDimensions {
                (other.T == this->T) &&
                (other.P == this->P);
     }
+
+    PhasorTensorDimensions operator*(const PhasorTensorDimensions& other) const {
+        return PhasorTensorDimensions {
+            other.B * this->B, 
+            other.A * this->A, 
+            other.F * this->F,
+            other.T * this->T,
+            other.P * this->P,
+        };
+    }
 };
 
 template<Device I, typename T>
@@ -142,6 +161,13 @@ struct DelayTensorDimensions {
     const bool operator==(const DelayTensorDimensions& other) const {
         return (other.B == this->B) &&
                (other.A == this->A);
+    }
+
+    DelayTensorDimensions operator*(const DelayTensorDimensions& other) const {
+        return DelayTensorDimensions {
+            other.B * this->B, 
+            other.A * this->A, 
+        };
     }
 };
 
