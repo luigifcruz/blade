@@ -35,7 +35,7 @@ class Module {
 
     template<typename T>
     static const std::string CudaType() {
-        static std::map<std::type_index, std::string> type_map = {
+        static std::unordered_map<std::type_index, std::string> type_map = {
             {typeid(CF16),  "__half"},
             {typeid(CF32),  "float"},
             {typeid(CI8),   "char"},
@@ -58,7 +58,7 @@ class Module {
 
     template<typename T>
     static const std::size_t CudaTypeSize() {
-        static std::map<std::type_index, std::size_t> size_map = {
+        static std::unordered_map<std::type_index, std::size_t> size_map = {
             {typeid(CF16),  2},
             {typeid(CF32),  2},
             {typeid(CI8),   2},
