@@ -29,7 +29,7 @@ class BLADE_API Plan {
             auto& pipeline = runner->getNextWorker();
 
             // Check if pipeline is not full.
-            if (pipeline->accumulationComplete()) {
+            if (pipeline.accumulationComplete()) {
                 BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
             }
         }
