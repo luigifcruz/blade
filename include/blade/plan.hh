@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "blade/logger.hh"
+#include "blade/runner.hh"
 #include "blade/module.hh"
 #include "blade/pipeline.hh"
 #include "blade/macros.hh"
@@ -16,10 +17,21 @@ namespace Blade {
 class BLADE_API Plan {
 
  public:
-    static void Available(auto& runner) {
+    template<class T>
+    static void Available(const std::unique_ptr<Runner<T>>& runner) {
         // Check if runner has an available slot.
         if (!runner->slotAvailable()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+        }
+
+        // If pipeline has accumulator, check if it's complete.
+        if constexpr (std::is_base_of<Accumulator, T>::value) {
+            auto& pipeline = runner->getNextWorker();
+
+            // Check if pipeline is not full.
+            if (pipeline->accumulationComplete()) {
+                BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+            }
         }
     } 
 
