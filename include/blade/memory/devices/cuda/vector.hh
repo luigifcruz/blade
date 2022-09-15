@@ -106,24 +106,26 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
         this->cpuVector.release();
         this->cudaVector.release();
 
+        // Recreate CPU binding.
+        if (!this->cpuVector) {
+            this->cpuVector = std::make_unique
+                    <Vector<Device::CPU, T, Dims>>(this->container, this->dimensions);
+        }
+
+        // Recreate CUDA binding.
+        if (!this->cudaVector) {
+            this->cudaVector = std::make_unique
+                    <Vector<Device::CUDA, T, Dims>>(this->container, this->dimensions);
+        }
+
         return Result::SUCCESS;
     }
 
-    operator Vector<Device::CPU, T, Dims>&() {
-        if (!this->cpuVector) {
-            this->cpuVector = std::make_unique
-                    <Vector<Device::CPU, T, Dims>>(this->container);
-        }
-
+    operator Vector<Device::CPU, T, Dims>&() const {
         return *this->cpuVector;
     }
 
-    operator Vector<Device::CUDA, T, Dims>&() {
-        if (!this->cudaVector) {
-            this->cudaVector = std::make_unique
-                    <Vector<Device::CUDA, T, Dims>>(this->container);
-        }
-
+    operator Vector<Device::CUDA, T, Dims>&() const {
         return *this->cudaVector;
     }
 

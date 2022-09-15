@@ -28,16 +28,14 @@ class BLADE_API Generic : public Module {
 
     struct Input {
         const ArrayTensor<Device::CUDA, IT>& buf;
-        // TODO: Check why assign PhasorTensor<Device::CPU | Device::CUDA, ...> 
-        // to PhasorTensor<Device::CUDA> doesn't work.
-        const PhasorTensor<Device::CPU | Device::CUDA, IT>& phasors;
+        const PhasorTensor<Device::CUDA, IT>& phasors;
     };
 
     constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
         return this->input.buf;
     }
 
-    constexpr const PhasorTensor<Device::CPU | Device::CUDA, IT>& getInputPhasors() const {
+    constexpr const PhasorTensor<Device::CUDA, IT>& getInputPhasors() const {
         return this->input.phasors;
     }
 
