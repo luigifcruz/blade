@@ -24,7 +24,6 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
         U64 accumulateRate;
 
         U64 detectorNumberOfOutputPolarizations;
-        U64 detectorIntegrationSize;
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;

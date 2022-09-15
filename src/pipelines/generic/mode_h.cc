@@ -11,7 +11,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
     BL_DEBUG("Initializing Pipeline Mode H.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    auto accumulationFactor = ArrayTensorDimensions{1, 1, config.accumulateRate, 1};
+    const auto accumulationFactor = ArrayTensorDimensions{1, 1, config.accumulateRate, 1};
     BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
 
     if constexpr (!std::is_same<IT, CF32>::value) {
@@ -34,7 +34,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
-        .integrationSize = config.detectorIntegrationSize,
+        .integrationSize = 1,
         .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
         .blockSize = config.detectorBlockSize,
