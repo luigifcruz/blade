@@ -73,8 +73,6 @@ int main() {
 
     const U64 testSize = 134400000;
 
-    // TODO: Add non-complex tests.
-
     BL_INFO("Casting CI8 to CF32...");
     if (complex_test<I8, F32>(testSize) != 0) {
         return 1;
