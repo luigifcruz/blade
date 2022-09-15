@@ -196,7 +196,7 @@ bool blade_ata_bh_compute_step() {
 
     ModeB->enqueue([&](auto& worker) {
         // Check if next runner has free slot.
-        Plan::Available(ModeB);
+        Plan::Available(ModeH);
 
         // Calls client callback to request empty input buffer.
         if (!State.Callbacks.InputBufferFetch(State.UserData, &externalBuffer)) {
