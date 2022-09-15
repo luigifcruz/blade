@@ -14,12 +14,12 @@ namespace Blade {
 class BLADE_API Accumulator {
  public:
    const bool accumulationComplete() const;
+   const U64 getAccumulatorNumberOfSteps() const;
+   const U64 getCurrentAccumulatorStep() const;
 
  protected:
    explicit Accumulator(const U64& numberOfSteps); 
 
-   const U64 getAccumulatorNumberOfSteps() const;
-   const U64 getCurrentAccumulatorStep() const;
    const U64 incrementAccumulatorStep();
    const U64 resetAccumulatorSteps();
 
