@@ -5,19 +5,13 @@ import numpy as np
 
 class Test(bl.Pipeline):
     detector: bl.Detector
-    input = bl.vector.cuda.cf32()
 
-    def __init__(self, detector_config: bl.Detector.Config):
+    def __init__(self, input_dims, detector_config: bl.Detector.Config):
         bl.Pipeline.__init__(self)
+        self.input = bl.vector.cuda.cf32.ArrayTensor(input_dims)
         _config = detector_config
         _input = bl.Detector.Input(self.input)
         self.detector = self.connect(_config, _input)
-
-    def input_size(self):
-        return self.detector.input_size()
-
-    def output_size(self):
-        return self.detector.output_size()
 
     def run(self, input: bl.vector.cpu.cf32,
                   output: bl.vector.cpu.f32):
@@ -35,29 +29,27 @@ if __name__ == "__main__":
     NBEAMS = 2
     NPOLS = 2
 
+    input_dims = bl.vector.ArrayTensorDimensions(NBEAMS, NCHANS, NTIME, NPOLS)
+    output_dims = bl.vector.ArrayTensorDimensions(NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
+
     #
     # Blade Implementation
     #
 
     detector_config = bl.Detector.Config(
-        number_of_beams = NBEAMS,
-        number_of_frequency_channels = NCHANS,
-        number_of_time_samples = NTIME,
-        number_of_polarizations = NPOLS,
-
         integration_size = TFACT,
         number_of_output_polarizations = OUTPOLS,
         
         block_size = 512
     )
 
-    mod = Test(detector_config)
+    mod = Test(input_dims, detector_config)
 
-    bl_input_raw = bl.vector.cpu.cf32(mod.input_size())
-    bl_output_raw = bl.vector.cpu.f32(mod.output_size())
+    bl_input_raw = bl.vector.cpu.cf32.ArrayTensor(input_dims)
+    bl_output_raw = bl.vector.cpu.f32.ArrayTensor(output_dims)
 
-    bl_input = np.array(bl_input_raw, copy=False).reshape((NBEAMS, NCHANS, NTIME, NPOLS))
-    bl_output = np.array(bl_output_raw, copy=False).reshape((NBEAMS, NCHANS, NTIME//TFACT, OUTPOLS))
+    bl_input = np.array(bl_input_raw, copy=False).reshape(input_dims.shape)
+    bl_output = np.array(bl_output_raw, copy=False).reshape(output_dims.shape)
 
     np.copyto(bl_input, np.random.random(size=bl_input.shape) + 1j*np.random.random(size=bl_input.shape))
 

@@ -11,17 +11,17 @@ import astropy.units as u
 
 class Test(bl.Pipeline):
     phasor: bl.Phasor
-    block_julian_date = bl.vector.cpu.f64(1)
-    block_dut1 = bl.vector.cpu.f64(1)
 
     def __init__(self, phasor_config: bl.Phasor.Config):
         bl.Pipeline.__init__(self)
+        self.block_julian_date = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
+        self.block_dut1 = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
         _config = phasor_config
         _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
         self.phasor = self.connect(_config, _input)
 
-    def phasors_size(self):
-        return self.phasor.phasors_size()
+    def output_dims(self):
+        return self.phasor.phasors().dims()
 
     def run(self, block_julian_date: float,
                   block_dut1: float,
@@ -47,7 +47,6 @@ if __name__ == "__main__":
     beam2_pos_rad        = [0.65063, 1.08426835]
 
     phasor_config = bl.Phasor.Config(
-        number_of_beams = 2,
         number_of_antennas = 20,
         number_of_frequency_channels = 192,
         number_of_polarizations = 2,
@@ -100,7 +99,7 @@ if __name__ == "__main__":
 
     mod = Test(phasor_config)
 
-    bl_output = bl.vector.cpu.cf32(mod.phasors_size())
+    bl_output = bl.vector.cpu.cf32.PhasorTensor(mod.output_dims())
 
     mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, bl_output)
 

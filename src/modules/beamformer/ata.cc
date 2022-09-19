@@ -15,7 +15,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().dims().numberOfFrequencyChannels() > 
+    if (this->getInputPhasors().dims().numberOfFrequencyChannels() != 
         this->getInputBuffer().dims().numberOfFrequencyChannels()) {
         BL_FATAL("Number of frequency channels mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().dims().numberOfFrequencyChannels(),
@@ -23,7 +23,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().dims().numberOfPolarizations() > 
+    if (this->getInputPhasors().dims().numberOfPolarizations() != 
         this->getInputBuffer().dims().numberOfPolarizations()) {
         BL_FATAL("Number of polarizations mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().dims().numberOfPolarizations(),
@@ -31,7 +31,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().dims().numberOfAntennas() > 
+    if (this->getInputPhasors().dims().numberOfAntennas() != 
         this->getInputBuffer().dims().numberOfAspects()) {
         BL_FATAL("Number of antennas mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().dims().numberOfAntennas(),

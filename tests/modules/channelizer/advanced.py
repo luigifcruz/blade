@@ -5,80 +5,46 @@ import numpy as np
 
 class Test(bl.Pipeline):
     channelizer: bl.Channelizer
-    input = bl.vector.cuda.cf32()
 
-    def __init__(self,
-                 number_of_beams,
-                 number_of_antennas,
-                 number_of_frequency_channels,
-                 number_of_time_samples,
-                 number_of_polarizations,
-                 channelizer_rate):
+    def __init__(self, input_dims, rate):
         bl.Pipeline.__init__(self)
-        _config = bl.Channelizer.Config(
-            number_of_beams,
-            number_of_antennas,
-            number_of_frequency_channels,
-            number_of_time_samples,
-            number_of_polarizations,
-            channelizer_rate,
-            512
-        )
+        self.input = bl.vector.cuda.cf32.ArrayTensor(input_dims)
+        _config = bl.Channelizer.Config(rate, 512)
         _input = bl.Channelizer.Input(self.input)
         self.channelizer = self.connect(_config, _input)
 
-    def buffer_size(self):
-        return self.channelizer.buffer_size()
-
-    def run(self, input: bl.vector.cpu.cf32,
-                  output: bl.vector.cpu.cf32):
+    def run(self, input: bl.vector.cpu.cf32.ArrayTensor,
+                  output: bl.vector.cpu.cf32.ArrayTensor):
         self.copy(self.channelizer.input(), input)
         self.compute()
         self.copy(output, self.channelizer.output())
         self.synchronize()
 
-def trial(number_of_beams, number_of_antennas, number_of_frequency_channels, 
-        number_of_time_samples, number_of_polarizations, channelizer_rate):
+def trial(A, F, T, P, C):
+    input_dims = bl.vector.ArrayTensorDimensions(A, F, T, P)
+    output_dims = bl.vector.ArrayTensorDimensions(A, F * C, T // C, P)
+
     # Initialize Blade pipeline.
-    mod = Test(
-        number_of_beams,
-        number_of_antennas,
-        number_of_frequency_channels,
-        number_of_time_samples, 
-        number_of_polarizations,
-        channelizer_rate
-    )
+    mod = Test(input_dims, C)
 
     # Generate test data with Python.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), len(input_dims))
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), len(input_dims))
     _c = np.array(_a + _b * 1j).astype(np.complex64)
-    input = _c.reshape((
-            number_of_beams * number_of_antennas,
-            number_of_frequency_channels,
-            number_of_time_samples,
-            number_of_polarizations,
-        ))
+    input = _c.reshape(input_dims.shape)
 
     # Compute the FFT sizes.
-    nspecs = number_of_time_samples // channelizer_rate
-    number_of_new_time_samples = nspecs
-    number_of_new_frequency_channels = number_of_frequency_channels * channelizer_rate
+    nspecs = T // C
 
     # Define output buffer.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), mod.buffer_size())
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), len(output_dims))
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), len(output_dims))
     _c = np.array(_a + _b * 1j).astype(np.complex64)
-    output = _c.reshape((
-            number_of_beams * number_of_antennas,
-            number_of_new_frequency_channels,
-            number_of_new_time_samples,
-            number_of_polarizations,
-        ))
+    output = _c.reshape(output_dims.shape)
 
     # Import test data from Python to Blade.
-    bl_input = bl.vector.cpu.cf32(mod.buffer_size())
-    bl_output = bl.vector.cpu.cf32(mod.buffer_size())
+    bl_input = bl.vector.cpu.cf32.ArrayTensor(input_dims)
+    bl_output = bl.vector.cpu.cf32.ArrayTensor(output_dims)
 
     np.copyto(np.array(bl_input, copy=False), input.flatten())
     np.copyto(np.array(bl_output, copy=False), output.flatten())
@@ -90,21 +56,21 @@ def trial(number_of_beams, number_of_antennas, number_of_frequency_channels,
 
     # Channelize with Numpy.
     start = time.time()
-    for ibeam in range(number_of_beams * number_of_antennas):
+    for ibeam in range(A):
         beam = input[ibeam]
 
-        for ichan in range(number_of_frequency_channels):
+        for ichan in range(F):
             time_pol = beam[ichan]
 
-            for ipol in range(number_of_polarizations):
+            for ipol in range(P):
                 time_arr = time_pol[:, ipol]
 
                 for ispec in range(nspecs):
                     output[ibeam,
-                            ichan*channelizer_rate :
-                            (ichan+1)*channelizer_rate,
+                            ichan*C :
+                            (ichan+1)*C,
                             ispec, ipol] =\
-                            np.fft.fftshift(np.fft.fft(time_arr[ispec*channelizer_rate:(ispec+1)*channelizer_rate]))
+                            np.fft.fftshift(np.fft.fft(time_arr[ispec*C:(ispec+1)*C]))
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
@@ -117,5 +83,4 @@ if __name__ == "__main__":
           int(sys.argv[2]),
           int(sys.argv[3]), 
           int(sys.argv[4]), 
-          int(sys.argv[5]), 
-          int(sys.argv[6])) 
+          int(sys.argv[5]))

@@ -1,6 +1,6 @@
 if cfg_lst.get('BLADE_MODULE_ATA_BEAMFORMER', false)
     test('beamformer-ata', executable(
-        'blade-beamformer-ata', ['pipeline.hh', 'ata.cc'],
+        'blade-beamformer-ata', ['ata.cc'],
         dependencies: lib_blade_dep,
     ), is_parallel: false, timeout: 0)
 

@@ -8,19 +8,22 @@ using namespace Blade;
 template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
-    explicit Test(const typename Modules::Channelizer<IT, OT>::Config& config) {
+    typedef typename Modules::Channelizer<IT, OT>::Config Config;
+
+    explicit Test(const Config& config, const ArrayTensorDimensions& arrayDims) {
+        BL_CHECK_THROW(this->input.resize(arrayDims));
         this->connect(channelizer, config, {input});
     }
 
-    constexpr const U64 getInputDims() const {
-        return channelizer->getInput();
+    constexpr const ArrayTensorDimensions& getOutputDims() const {
+        return channelizer->getOutputBuffer().dims();
     }
 
     const Result run(const ArrayTensor<Device::CPU, IT>& input,
                            ArrayTensor<Device::CPU, OT>& output) {
-        BL_CHECK(this->copy(channelizer->getInput(), input));
+        BL_CHECK(this->copy(this->input, input));
         BL_CHECK(this->compute());
-        BL_CHECK(this->copy(output, channelizer->getOutput()));
+        BL_CHECK(this->copy(output, channelizer->getOutputBuffer()));
         BL_CHECK(this->synchronize());
 
         return Result::SUCCESS;
@@ -34,18 +37,20 @@ class Test : public Pipeline {
 int main() {
     BL_INFO("Testing advanced channelizer.");
 
+    const ArrayTensorDimensions& arrayDims = {
+        .A = 2,
+        .F = 4,
+        .T = 8,
+        .P = 2,
+    };
+
     Test<CF32, CF32> mod({
-        .numberOfBeams = 1,
-        .numberOfAntennas = 20,
-        .numberOfFrequencyChannels = 96,
-        .numberOfTimeSamples = 35000,
-        .numberOfPolarizations = 2,
         .rate = 4,
         .blockSize = 512,
-    });
+    }, arrayDims);
 
-    ArrayTensor<Device::CPU, CF32> input(mod.getInputSize());
-    ArrayTensor<Device::CPU, CF32> output(mod.getInputSize());
+    ArrayTensor<Device::CPU, CF32> input(arrayDims);
+    ArrayTensor<Device::CPU, CF32> output(mod.getOutputDims());
 
     for (int i = 0; i < 24; i++) {
         if (mod.run(input, output) != Result::SUCCESS) {
