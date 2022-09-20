@@ -16,7 +16,7 @@ class BLADE_API FileReader : public Pipeline {
  public:
     struct Config {
         std::string inputGuppiFile;
-        std::string inputBfr5File; 
+        std::string inputBfr5File;
 
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
@@ -24,10 +24,7 @@ class BLADE_API FileReader : public Pipeline {
 
     explicit FileReader(const Config& config);
 
-    constexpr const U64 getStepNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
-    }
-
+    // GUPPI RAW determined values
     constexpr const U64 getStepNumberOfAntennas() const {
         return guppi->getStepNumberOfAntennas();
     }
@@ -46,10 +43,6 @@ class BLADE_API FileReader : public Pipeline {
 
     constexpr const U64 getStepOutputBufferSize() const {
         return guppi->getStepOutputBufferSize();
-    }
-
-    constexpr const U64 getTotalNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
     }
 
     constexpr const U64 getTotalNumberOfAntennas() const {
@@ -88,6 +81,31 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
+    constexpr const U64 getTotalOutputBufferSize() const {
+        return guppi->getTotalOutputBufferSize();
+    }
+
+    const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
+        return guppi->getStepOutputBuffer();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+        return guppi->getStepOutputJulianDate();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+        return guppi->getStepOutputDut1();
+    }
+
+    // BFR5 determined values
+    constexpr const U64 getStepNumberOfBeams() const {
+        return bfr5->getTotalNumberOfBeams();
+    }
+
+    constexpr const U64 getTotalNumberOfBeams() const {
+        return bfr5->getTotalNumberOfBeams();
+    }
+
     constexpr const LLA getReferencePosition() const {
         return bfr5->getReferencePosition();
     }
@@ -106,22 +124,6 @@ class BLADE_API FileReader : public Pipeline {
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
-    }
-
-    constexpr const U64 getTotalOutputBufferSize() const {
-        return guppi->getTotalOutputBufferSize();
-    }
-
-    const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
-        return guppi->getStepOutputBuffer();
-    }
-
-    const ArrayTensor<Device::CPU, F64>& getStepOutputJulianDate() {
-        return guppi->getStepOutputJulianDate();
-    }
-
-    const ArrayTensor<Device::CPU, F64>& getStepOutputDut1() {
-        return guppi->getStepOutputDut1();
     }
 
  private:

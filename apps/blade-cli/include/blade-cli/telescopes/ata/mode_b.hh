@@ -37,6 +37,12 @@ inline const Result ModeB(const Config& config) {
     // Instantiate compute pipeline and runner.
 
     typename Compute::Config computeConfig = {
+        .inputDimensions = {
+            .A = reader.getStepNumberOfAntennas(),
+            .F = reader.getStepNumberOfFrequencyChannels(),
+            .T = reader.getStepNumberOfTimeSamples(),
+            .P = reader.getStepNumberOfPolarizations(),
+        },
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
@@ -50,19 +56,25 @@ inline const Result ModeB(const Config& config) {
         .phasorAntennaCalibrations = reader.getAntennaCalibrations(config.preBeamformerChannelizerRate),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
-        .beamformerNumberOfAntennas = reader.getStepNumberOfAntennas(),
-        .beamformerNumberOfFrequencyChannels = reader.getStepNumberOfFrequencyChannels(),
-        .beamformerNumberOfTimeSamples = reader.getStepNumberOfTimeSamples(),
-        .beamformerNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
-        .beamformerNumberOfBeams = reader.getStepNumberOfBeams(),
         .beamformerIncoherentBeam = false,
+
+        .detectorEnable = false,
+        // .detectorIntegrationSize,
+        // .detectorNumberOfOutputPolarizations,
 
         // TODO: Review this calculation.
         .castBlockSize = 32,
         .channelizerBlockSize = config.stepNumberOfTimeSamples,
         .phasorBlockSize = 32,
-        .beamformerBlockSize = config.stepNumberOfTimeSamples
+        .beamformerBlockSize = config.stepNumberOfTimeSamples,
+        .detectorBlockSize = 32,
     };
+    
+    computeConfig.phasorAntennaCalibrations.resize(
+        reader.getStepNumberOfAntennas() *
+        reader.getStepNumberOfFrequencyChannels() *
+        computeConfig.preBeamformerChannelizerRate *
+        reader.getStepNumberOfPolarizations());
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 
@@ -71,14 +83,7 @@ inline const Result ModeB(const Config& config) {
     typename Writer::Config writerConfig = {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
-
-        .stepNumberOfBeams = reader.getStepNumberOfBeams(),
-        .stepNumberOfAntennas = reader.getStepNumberOfAntennas(),
-        .stepNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getStepNumberOfFrequencyChannels(),
-        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples,
-        .stepNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
-
-        .totalNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getTotalNumberOfFrequencyChannels(),
+        .accumulateRate = reader.getTotalNumberOfFrequencyChannels() / reader.getStepNumberOfFrequencyChannels()
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
@@ -88,9 +93,7 @@ inline const Result ModeB(const Config& config) {
 
     writer.headerPut("OBSFREQ", reader.getObservationFrequency());
     writer.headerPut("OBSBW", reader.getChannelBandwidth() * 
-                              writer.getTotalNumberOfFrequencyChannels() * 
-                              writer.getStepNumberOfAntennas() * 
-                              writer.getStepNumberOfBeams());
+                              reader.getTotalNumberOfFrequencyChannels());
     writer.headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 
@@ -146,7 +149,7 @@ inline const Result ModeB(const Config& config) {
 
             // Concatenate output data inside writer pipeline.
             Plan::Accumulate(writerRunner, computeRunner,
-                             worker.getOutput());
+                             worker.getOutputBuffer());
 
             return callbackStep;
         });

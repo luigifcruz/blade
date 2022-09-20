@@ -24,7 +24,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
 
     // Add expected metadata to the header.
     this->gr_header.metadata.datashape.n_aspect = getInputBuffer().dims().numberOfAspects();
-    this->gr_header.metadata.datashape.n_aspectchan = getInputBuffer().dims().numberOfFrequencyChannels(); // TODO: Wrong.
+    this->gr_header.metadata.datashape.n_aspectchan = getInputBuffer().dims().numberOfFrequencyChannels();
     this->gr_header.metadata.datashape.n_time = getInputBuffer().dims().numberOfTimeSamples();
     this->gr_header.metadata.datashape.n_pol = getInputBuffer().dims().numberOfPolarizations();
     this->gr_header.metadata.datashape.n_bit = sizeof(IT) * 8 / 2;
@@ -39,16 +39,17 @@ Writer<IT>::Writer(const Config& config, const Input& input)
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
     BL_INFO("Output File Path: {}", config.filepath);
-    BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO")
+    BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO");
 }
 
 template<typename IT>
 const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
-    // TODO: This is not batched, right?
-    const auto& bytesWritten = guppiraw_write_block(
+    const auto& bytesWritten = guppiraw_write_block_batched(
                                     this->fileDescriptor, 
                                     &this->gr_header, 
-                                    this->input.buffer.data());
+                                    this->input.buffer.data(),
+                                    1,
+                                    this->config.inputFrequencyBatches);
 
     if (bytesWritten <= 0) {
         return Result::ERROR;

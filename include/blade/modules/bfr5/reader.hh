@@ -40,14 +40,30 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous
 
-    const ArrayTensorDimensions getTotalDims() const {
+    const PhasorTensorDimensions getTotalDims() const {
         return {
-            .A = ((this->bfr5.dim_info.nants + 1)
-                    * (this->bfr5.dim_info.nbeams + 1)) - 1,
+            .B = this->bfr5.dim_info.nbeams,
+            .A = this->bfr5.dim_info.nants,
             .F = this->bfr5.dim_info.nchan,
             .T = this->bfr5.dim_info.ntimes,
             .P = this->bfr5.dim_info.npol,
         };
+    }
+
+    constexpr const U64 getTotalNumberOfAntennas() const {
+        return this->bfr5.dim_info.nants;
+    }
+
+    constexpr const U64 getTotalNumberOfBeams() const {
+        return this->bfr5.dim_info.nbeams;
+    }
+
+    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
+        return this->bfr5.dim_info.nchan;
+    }
+
+    constexpr const U64 getTotalNumberOfPolarizations() const {
+        return this->bfr5.dim_info.npol;
     }
 
     constexpr const LLA getReferencePosition() const {

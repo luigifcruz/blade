@@ -29,9 +29,9 @@ Reader::Reader(const Config& config, const Input& input)
     }
 
     // Calculate antenna positions
-    antennaPositions.resize(getTotalDims().numberOfAspects());
+    antennaPositions.resize(getTotalDims().numberOfAntennas());
 
-    const U64 antennaPositionsByteSize = getTotalDims().numberOfAspects() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getTotalDims().numberOfAntennas() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
@@ -60,7 +60,7 @@ Reader::Reader(const Config& config, const Input& input)
 
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Data Dimensions [A, F, T, P]: {} -> {}", getTotalDims());
+    BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", getTotalDims(), "N/A");
 }
 
 const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFrequencyChannels,
@@ -68,19 +68,19 @@ const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFreque
     std::vector<CF64> antennaCalibrations;
 
     antennaCalibrations.resize(
-            getTotalDims().numberOfAspects() *
+            getTotalDims().numberOfAntennas() *
             numberOfFrequencyChannels * channelizerRate * 
             getTotalDims().numberOfPolarizations());
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = getTotalDims().numberOfAspects() * calAntStride;
+    const size_t calPolStride = getTotalDims().numberOfAntennas() * calAntStride;
     const size_t calChnStride = getTotalDims().numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
     const size_t weightsChnStride = getTotalDims().numberOfPolarizations() * weightsPolStride;
     const size_t weightsAntStride = numberOfFrequencyChannels * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getTotalDims().numberOfAspects(); antIdx++) {
+    for (U64 antIdx = 0; antIdx < getTotalDims().numberOfAntennas(); antIdx++) {
         for (U64 chnIdx = 0; chnIdx < numberOfFrequencyChannels; chnIdx++) {
             for (U64 polIdx = 0; polIdx < getTotalDims().numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {

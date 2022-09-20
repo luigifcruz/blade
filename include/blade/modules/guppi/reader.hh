@@ -76,6 +76,48 @@ class BLADE_API Reader : public Module {
     explicit Reader(const Config& config, const Input& input);
     const Result preprocess(const cudaStream_t& stream = 0) final;
 
+    // Dimension getters
+    const U64 getStepNumberOfAntennas() {
+        return this->getStepOutputBufferDims().numberOfAspects();
+    }
+
+    const U64 getStepNumberOfFrequencyChannels() {
+        return this->getStepOutputBufferDims().numberOfFrequencyChannels();
+    }
+
+    const U64 getStepNumberOfTimeSamples() {
+        return this->getStepOutputBufferDims().numberOfTimeSamples();
+    }
+
+    const U64 getStepNumberOfPolarizations() {
+        return this->getStepOutputBufferDims().numberOfPolarizations();
+    }
+
+    const U64 getStepOutputBufferSize() {
+        return this->getStepOutputBufferDims().size();
+    }
+
+    const U64 getTotalNumberOfAntennas() {
+        return this->getTotalOutputBufferDims().numberOfAspects();
+    }
+
+    const U64 getTotalNumberOfFrequencyChannels() {
+        return this->getTotalOutputBufferDims().numberOfFrequencyChannels();
+    }
+
+    const U64 getTotalNumberOfTimeSamples() {
+        return this->getTotalOutputBufferDims().numberOfTimeSamples();
+    }
+
+    const U64 getTotalNumberOfPolarizations() {
+        return this->getTotalOutputBufferDims().numberOfPolarizations();
+    }
+
+    const U64 getTotalOutputBufferSize() {
+        return this->getStepOutputBufferDims().size();
+    }
+
+
     // Miscellaneous 
 
     const F64 getTotalBandwidth() const;
