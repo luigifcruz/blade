@@ -33,22 +33,22 @@ Generic<OT>::Generic(const Config& config, const Input& input)
     const F64& min_value = max_value * -1.0;
 
     F64 max_cal = 0.0, min_cal = 0.0;
-    for (size_t i = 0; i < config.antennaCalibrations.size(); i++)
+    for (const auto& calibration : config.antennaCalibrations)
     {
-        if (config.antennaCalibrations[i].real() > max_cal) {
-            max_cal = config.antennaCalibrations[i].real();
+        if (calibration.real() > max_cal) {
+            max_cal = calibration.real();
         }
 
-        if (config.antennaCalibrations[i].imag() > max_cal) {
-            max_cal = config.antennaCalibrations[i].imag();
+        if (calibration.imag() > max_cal) {
+            max_cal = calibration.imag();
         }
 
-        if (config.antennaCalibrations[i].real() < min_cal) {
-            min_cal = config.antennaCalibrations[i].real();
+        if (calibration.real() < min_cal) {
+            min_cal = calibration.real();
         }
 
-        if (config.antennaCalibrations[i].imag() < min_cal) {
-            min_cal = config.antennaCalibrations[i].imag();
+        if (calibration.imag() < min_cal) {
+            min_cal = calibration.imag();
         }
     }
 
