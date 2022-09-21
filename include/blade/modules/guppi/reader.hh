@@ -154,7 +154,7 @@ class BLADE_API Reader : public Module {
 
     const bool keepRunning() const {
         return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >=
-            this->getTotalOutputBufferDims().numberOfTimeSamples();
+            this->getStepNumberOfTimeSamples();
     }
 
     const guppiraw_datashape_t* getDatashape() const {
