@@ -18,6 +18,7 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
         std::string outputGuppiFile;
         bool directio;
 
+        ArrayTensorDimensions inputDimensions;
         U64 accumulateRate;
 
         U64 writerBlockSize = 512;

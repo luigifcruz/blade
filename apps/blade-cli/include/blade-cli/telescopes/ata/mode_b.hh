@@ -83,6 +83,7 @@ inline const Result ModeB(const Config& config) {
     typename Writer::Config writerConfig = {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
+        .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
         .accumulateRate = reader.getTotalNumberOfFrequencyChannels() / reader.getStepNumberOfFrequencyChannels()
     };
 

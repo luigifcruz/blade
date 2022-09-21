@@ -10,6 +10,8 @@ FileWriter<IT>::FileWriter(const Config& config)
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 
+    this->writerBuffer.resize(config.inputDimensions);
+
     BL_DEBUG("Instantiating GUPPI RAW file writer.");
     this->connect(guppi, {
         .filepath = config.outputGuppiFile,
