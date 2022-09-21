@@ -25,40 +25,12 @@ class BLADE_API FileReader : public Pipeline {
     explicit FileReader(const Config& config);
 
     // GUPPI RAW determined values
-    constexpr const U64 getStepNumberOfAntennas() const {
-        return guppi->getStepNumberOfAntennas();
-    }
-
-    constexpr const U64 getStepNumberOfFrequencyChannels() const {
-        return guppi->getStepNumberOfFrequencyChannels();
-    }
-
-    constexpr const U64 getStepNumberOfTimeSamples() const {
-        return guppi->getStepNumberOfTimeSamples();
-    }
-
-    constexpr const U64 getStepNumberOfPolarizations() const {
-        return guppi->getStepNumberOfPolarizations();
+    constexpr const ArrayTensorDimensions getStepOutputDims() const {
+        return guppi->getStepOutputBufferDims();
     }
 
     constexpr const U64 getStepOutputBufferSize() const {
-        return guppi->getStepOutputBufferSize();
-    }
-
-    constexpr const U64 getTotalNumberOfAntennas() const {
-        return guppi->getTotalNumberOfAntennas();
-    }
-
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return guppi->getTotalNumberOfFrequencyChannels();
-    }
-
-    constexpr const U64 getTotalNumberOfTimeSamples() const {
-        return guppi->getTotalNumberOfTimeSamples();
-    }
-
-    constexpr const U64 getTotalNumberOfPolarizations() const {
-        return guppi->getTotalNumberOfPolarizations();
+        return guppi->getStepOutputBuffer().size();
     }
 
     constexpr const F64 getObservationFrequency() const {
@@ -81,8 +53,12 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
+    constexpr const ArrayTensorDimensions getTotalOutputDims() const {
+        return guppi->getTotalOutputBufferDims();
+    }
+
     constexpr const U64 getTotalOutputBufferSize() const {
-        return guppi->getTotalOutputBufferSize();
+        return guppi->getTotalOutputBufferDims().size();
     }
 
     const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
@@ -98,13 +74,6 @@ class BLADE_API FileReader : public Pipeline {
     }
 
     // BFR5 determined values
-    constexpr const U64 getStepNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
-    }
-
-    constexpr const U64 getTotalNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
-    }
 
     constexpr const LLA getReferencePosition() const {
         return bfr5->getReferencePosition();

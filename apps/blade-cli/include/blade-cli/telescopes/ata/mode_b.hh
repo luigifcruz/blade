@@ -34,15 +34,12 @@ inline const Result ModeB(const Config& config) {
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
+    const auto readerTotalOutputDims = reader.getTotalOutputDims();
+
     // Instantiate compute pipeline and runner.
 
     typename Compute::Config computeConfig = {
-        .inputDimensions = {
-            .A = reader.getStepNumberOfAntennas(),
-            .F = reader.getStepNumberOfFrequencyChannels(),
-            .T = reader.getStepNumberOfTimeSamples(),
-            .P = reader.getStepNumberOfPolarizations(),
-        },
+        .inputDimensions = reader.getStepOutputDims(),
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
@@ -80,7 +77,7 @@ inline const Result ModeB(const Config& config) {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-        .accumulateRate = reader.getTotalNumberOfFrequencyChannels() / reader.getStepNumberOfFrequencyChannels()
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels()
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
@@ -90,7 +87,7 @@ inline const Result ModeB(const Config& config) {
 
     writer.headerPut("OBSFREQ", reader.getObservationFrequency());
     writer.headerPut("OBSBW", reader.getChannelBandwidth() * 
-                              reader.getTotalNumberOfFrequencyChannels());
+                              readerTotalOutputDims.numberOfFrequencyChannels());
     writer.headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 

@@ -72,16 +72,18 @@ void Reader::fillAntennaCalibrations(const U64& channelizerRate,
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    const auto bfr5Dims = this->getTotalDims();
+
     const size_t calAntStride = 1;
     const size_t calPolStride = expectedDimensions.numberOfAspects() * calAntStride;
     const size_t calChnStride = expectedDimensions.numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
     const size_t weightsChnStride = expectedDimensions.numberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = getTotalNumberOfFrequencyChannels() * weightsChnStride;
+    const size_t weightsAntStride = bfr5Dims.numberOfFrequencyChannels() * weightsChnStride;
 
     for (U64 antIdx = 0; antIdx < expectedDimensions.numberOfAspects(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < getTotalNumberOfFrequencyChannels(); chnIdx++) {
+        for (U64 chnIdx = 0; chnIdx < bfr5Dims.numberOfFrequencyChannels(); chnIdx++) {
             for (U64 polIdx = 0; polIdx < expectedDimensions.numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +

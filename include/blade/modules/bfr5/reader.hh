@@ -50,22 +50,6 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    constexpr const U64 getTotalNumberOfAntennas() const {
-        return this->bfr5.dim_info.nants;
-    }
-
-    constexpr const U64 getTotalNumberOfBeams() const {
-        return this->bfr5.dim_info.nbeams;
-    }
-
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return this->bfr5.dim_info.nchan;
-    }
-
-    constexpr const U64 getTotalNumberOfPolarizations() const {
-        return this->bfr5.dim_info.npol;
-    }
-
     constexpr const LLA getReferencePosition() const {
         return {
             this->bfr5.tel_info.latitude,
@@ -90,11 +74,12 @@ class BLADE_API Reader : public Module {
     }
 
     const ArrayTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const{
+        const auto bfr5Dims = this->getTotalDims();
         return {
-            getTotalNumberOfAntennas(),
-            getTotalNumberOfFrequencyChannels() * channelizerRate,
+            bfr5Dims.numberOfAntennas(),
+            bfr5Dims.numberOfFrequencyChannels() * channelizerRate,
             1,
-            getTotalNumberOfPolarizations(),
+            bfr5Dims.numberOfPolarizations(),
         };
     }
 
