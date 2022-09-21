@@ -61,7 +61,7 @@ class BLADE_API Reader : public Module {
         return {
             .A = this->getDatashape()->n_aspect,
             .F = this->getDatashape()->n_aspectchan,
-            .T = this->getDatashape()->n_time,
+            .T = this->getDatashape()->n_time * this->gr_iterate.n_block,
             .P = this->getDatashape()->n_pol,
         };
     }
@@ -109,7 +109,7 @@ class BLADE_API Reader : public Module {
     // Helpers
 
     const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->getDatashape()->n_time;
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->config.stepNumberOfTimeSamples;
     }
 
     const guppiraw_datashape_t* getDatashape() const {
