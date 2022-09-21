@@ -83,6 +83,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
+    BL_INFO("Calibration Dimension Ratio [A, F, P]: {}", this->config.antennaCalibrations.dims());
     BL_INFO("Phasors Dimensions [B, A, F, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
 }

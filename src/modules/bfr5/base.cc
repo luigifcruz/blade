@@ -63,14 +63,19 @@ Reader::Reader(const Config& config, const Input& input)
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFrequencyChannels,
-                                                       const U64& channelizerRate) {
-    std::vector<CF64> antennaCalibrations;
-
-    antennaCalibrations.resize(
-            getTotalDims().numberOfAntennas() *
-            numberOfFrequencyChannels * channelizerRate * 
-            getTotalDims().numberOfPolarizations());
+void Reader::fillAntennaCalibrations(const U64& numberOfFrequencyChannels,
+                                     const U64& channelizerRate, 
+                                     ArrayCoefficientTensor<Device::CPU, CF64>& antennaCalibrations) {
+    if (
+        ArrayCoefficientTensorDimensions({
+            getTotalDims().numberOfAntennas(),
+            numberOfFrequencyChannels * channelizerRate,
+            getTotalDims().numberOfPolarizations(),
+        }) != antennaCalibrations.dims()
+    ) {
+        BL_FATAL("Cannot fill inappropriately sized tensor: {}", antennaCalibrations.dims());
+        BL_CHECK_THROW(Result::ERROR);
+    }
 
     const size_t calAntStride = 1;
     const size_t calPolStride = getTotalDims().numberOfAntennas() * calAntStride;
@@ -94,13 +99,11 @@ const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFreque
                                            frqIdx * weightsChnStride;
 
                     const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
-                    antennaCalibrations[outputIdx] = {coeff.re, coeff.im};
+                    antennaCalibrations.data()[outputIdx] = {coeff.re, coeff.im};
                 }
             }
         }
     }
-
-    return antennaCalibrations;
 }
 
 }  // namespace Blade::Modules::Bfr5

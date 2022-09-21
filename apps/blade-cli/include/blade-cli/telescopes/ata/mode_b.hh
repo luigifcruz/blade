@@ -53,7 +53,7 @@ inline const Result ModeB(const Config& config) {
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCalibrations = reader.getAntennaCalibrations(config.preBeamformerChannelizerRate),
+        .phasorAntennaCalibrations = {},
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
         .beamformerIncoherentBeam = false,
@@ -69,12 +69,13 @@ inline const Result ModeB(const Config& config) {
         .beamformerBlockSize = config.stepNumberOfTimeSamples,
         .detectorBlockSize = 32,
     };
-    
-    computeConfig.phasorAntennaCalibrations.resize(
-        reader.getStepNumberOfAntennas() *
-        reader.getStepNumberOfFrequencyChannels() *
-        computeConfig.preBeamformerChannelizerRate *
-        reader.getStepNumberOfPolarizations());
+
+    computeConfig.phasorAntennaCalibrations.resize(ArrayCoefficientTensorDimensions({
+        reader.getStepNumberOfAntennas(),
+        reader.getStepNumberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
+        reader.getStepNumberOfPolarizations(),
+    }));
+    reader.fillAntennaCalibrations(config.preBeamformerChannelizerRate, computeConfig.phasorAntennaCalibrations);
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 

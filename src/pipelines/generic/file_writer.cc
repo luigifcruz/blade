@@ -10,14 +10,22 @@ FileWriter<IT>::FileWriter(const Config& config)
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 
-    this->writerBuffer.resize(config.inputDimensions);
+    this->writerBuffer.resize(ArrayTensorDimensions({
+        .A = config.inputDimensions.numberOfAspects(),
+        .F = config.inputDimensions.numberOfFrequencyChannels() * config.accumulateRate,
+        .T = config.inputDimensions.numberOfTimeSamples(),
+        .P = config.inputDimensions.numberOfPolarizations(),
+    }));
+
+    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", config.inputDimensions, "N/A");
+    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->writerBuffer.dims(), "N/A");
 
     BL_DEBUG("Instantiating GUPPI RAW file writer.");
     this->connect(guppi, {
         .filepath = config.outputGuppiFile,
         .directio = config.directio,
 
-        .inputFrequencyBatches = this->getAccumulatorNumberOfSteps(),
+        .inputFrequencyBatches = config.accumulateRate,
 
         .blockSize = config.writerBlockSize,
     }, {

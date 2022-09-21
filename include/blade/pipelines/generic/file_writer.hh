@@ -47,7 +47,7 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
     }
 
     constexpr const U64 getStepInputBufferSize() const {
-        return this->writerBuffer.dims().size()/this->getAccumulatorNumberOfSteps();
+        return this->config.inputDimensions.size();
     }
 
     constexpr const U64 getTotalInputBufferSize() const {

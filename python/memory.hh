@@ -36,6 +36,7 @@ template<Device D, typename T>
 inline void init_vector_dims(py::module& m, const char* name) {
     py::module sub = m.def_submodule(name);
     init_vector<D, T, ArrayTensorDimensions>(sub, "ArrayTensor");
+    init_vector<D, T, ArrayCoefficientTensorDimensions>(sub, "ArrayCoefficientTensor");
     init_vector<D, T, PhasorTensorDimensions>(sub, "PhasorTensor");
     init_vector<D, T, Dimensions>(sub, "Vector");
 }
@@ -63,6 +64,20 @@ inline void init_memory_vector(py::module& m) {
             return std::make_tuple(obj.A, obj.F, obj.T, obj.P);
         })
         .def("__len__", [](ArrayTensorDimensions& obj){
+            return obj.size();
+        });
+
+    py::class_<ArrayCoefficientTensorDimensions>(vector, "ArrayCoefficientTensorDimensions")
+        .def(py::init<const U64&,
+                      const U64&,
+                      const U64&,
+                      const U64&>(), py::arg("A"),
+                                     py::arg("F"),
+                                     py::arg("P"))
+        .def_property_readonly("shape", [](ArrayCoefficientTensorDimensions& obj) {
+            return std::make_tuple(obj.A, obj.F, obj.P);
+        })
+        .def("__len__", [](ArrayCoefficientTensorDimensions& obj){
             return obj.size();
         });
 
