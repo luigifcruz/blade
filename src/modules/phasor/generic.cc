@@ -33,8 +33,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
     const F64& min_value = max_value * -1.0;
 
     F64 max_cal = 0.0, min_cal = 0.0;
-    for (const auto& calibration : config.antennaCalibrations)
-    {
+    for (const auto& calibration : config.antennaCalibrations) {
         if (calibration.real() > max_cal) {
             max_cal = calibration.real();
         }
