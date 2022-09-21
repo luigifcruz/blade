@@ -89,8 +89,15 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    void fillAntennaCalibrations(const U64& numberOfFrequencyChannels,
-                                const U64& channelizerRate, 
+    const ArrayCoefficientTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
+        return {
+            getTotalNumberOfAntennas(),
+            getTotalNumberOfFrequencyChannels() * channelizerRate,
+            getTotalNumberOfPolarizations(),
+        };
+    }
+
+    void fillAntennaCalibrations(const U64& channelizerRate, 
                                 ArrayCoefficientTensor<Device::CPU, CF64>& antennaCalibrations);
 
  private:

@@ -118,8 +118,12 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
+    constexpr const ArrayCoefficientTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
+        return bfr5->getAntennaCalibrationsDims(channelizerRate);
+    }
+
     constexpr void fillAntennaCalibrations(const U64& preBeamformerChannelizerRate, ArrayCoefficientTensor<Device::CPU, CF64>& antennaCalibrations) const {
-        return bfr5->fillAntennaCalibrations(guppi->getStepNumberOfFrequencyChannels(), preBeamformerChannelizerRate, antennaCalibrations);
+        return bfr5->fillAntennaCalibrations(preBeamformerChannelizerRate, antennaCalibrations);
     }
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {

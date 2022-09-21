@@ -70,11 +70,7 @@ inline const Result ModeB(const Config& config) {
         .detectorBlockSize = 32,
     };
 
-    computeConfig.phasorAntennaCalibrations.resize(ArrayCoefficientTensorDimensions({
-        reader.getStepNumberOfAntennas(),
-        reader.getStepNumberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
-        reader.getStepNumberOfPolarizations(),
-    }));
+    computeConfig.phasorAntennaCalibrations.resize(reader.getAntennaCalibrationsDims(config.preBeamformerChannelizerRate));
     reader.fillAntennaCalibrations(config.preBeamformerChannelizerRate, computeConfig.phasorAntennaCalibrations);
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);

@@ -63,31 +63,26 @@ Reader::Reader(const Config& config, const Input& input)
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-void Reader::fillAntennaCalibrations(const U64& numberOfFrequencyChannels,
-                                     const U64& channelizerRate, 
+void Reader::fillAntennaCalibrations(const U64& channelizerRate, 
                                      ArrayCoefficientTensor<Device::CPU, CF64>& antennaCalibrations) {
-    if (
-        ArrayCoefficientTensorDimensions({
-            getTotalDims().numberOfAntennas(),
-            numberOfFrequencyChannels * channelizerRate,
-            getTotalDims().numberOfPolarizations(),
-        }) != antennaCalibrations.dims()
+    const auto expectedDimensions = getAntennaCalibrationsDims(channelizerRate);
+    if (expectedDimensions != antennaCalibrations.dims()
     ) {
-        BL_FATAL("Cannot fill inappropriately sized tensor: {}", antennaCalibrations.dims());
+        BL_FATAL("Cannot fill inappropriately sized tensor: {} != {}", antennaCalibrations.dims(), expectedDimensions);
         BL_CHECK_THROW(Result::ERROR);
     }
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = getTotalDims().numberOfAntennas() * calAntStride;
-    const size_t calChnStride = getTotalDims().numberOfPolarizations() * calPolStride;
+    const size_t calPolStride = expectedDimensions.numberOfAspects() * calAntStride;
+    const size_t calChnStride = expectedDimensions.numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = getTotalDims().numberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = numberOfFrequencyChannels * weightsChnStride;
+    const size_t weightsChnStride = expectedDimensions.numberOfPolarizations() * weightsPolStride;
+    const size_t weightsAntStride = getTotalNumberOfFrequencyChannels() * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getTotalDims().numberOfAntennas(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < numberOfFrequencyChannels; chnIdx++) {
-            for (U64 polIdx = 0; polIdx < getTotalDims().numberOfPolarizations(); polIdx++) {
+    for (U64 antIdx = 0; antIdx < expectedDimensions.numberOfAspects(); antIdx++) {
+        for (U64 chnIdx = 0; chnIdx < getTotalNumberOfFrequencyChannels(); chnIdx++) {
+            for (U64 polIdx = 0; polIdx < expectedDimensions.numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 
