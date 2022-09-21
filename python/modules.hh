@@ -58,7 +58,7 @@ inline void init_ata_phasor(const py::module& m) {
                       const LLA&,
                       const RA_DEC&,
                       const std::vector<XYZ>&,
-                      const ArrayCoefficientTensorDimensions<Device::CPU, CF64>&,
+                      const ArrayTensor<Device::CPU, CF64>&,
                       const std::vector<RA_DEC>&,
                       const U64&>(), py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),

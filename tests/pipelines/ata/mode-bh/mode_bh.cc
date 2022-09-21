@@ -109,7 +109,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114},        // 5b
         },
-        .phasorAntennaCalibrations = ArrayCoefficientTensor<Device::CPU, CF64>({
+        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>({
             State.RunnersConfig.B.inputDimensions.numberOfAspects(),
             State.RunnersConfig.B.inputDimensions.numberOfFrequencyChannels() * State.RunnersConfig.B.preBeamformerChannelizerRate,
             State.RunnersConfig.B.inputDimensions.numberOfPolarizations(),

@@ -96,54 +96,6 @@ struct ArrayTensorDimensions {
 template<Device I, typename T>
 using ArrayTensor = Vector<I, T, ArrayTensorDimensions>;
 
-struct ArrayCoefficientTensorDimensions {
- public:
-    U64 A;
-    U64 F;
-    U64 P;
-
-    constexpr const U64& numberOfAspects() const {
-        return A;
-    }
-
-    constexpr const U64& numberOfFrequencyChannels() const {
-        return F;
-    }
-
-    constexpr const U64& numberOfPolarizations() const {
-        return P;
-    }
-
-    const U64 size() const {
-        return A * F * P;
-    }
-
-    const bool operator==(const ArrayCoefficientTensorDimensions& other) const {
-        return (other.A == this->A) &&
-               (other.F == this->F) &&
-               (other.P == this->P);
-    }
-
-    ArrayCoefficientTensorDimensions operator*(const ArrayCoefficientTensorDimensions& other) const {
-        return ArrayCoefficientTensorDimensions {
-            other.A * this->A, 
-            other.F * this->F,
-            other.P * this->P,
-        };
-    }
-
-    ArrayCoefficientTensorDimensions operator/(const ArrayCoefficientTensorDimensions& other) const {
-        return ArrayCoefficientTensorDimensions {
-            this->A / other.A, 
-            this->F / other.F,
-            this->P / other.P,
-        };
-    }
-};
-
-template<Device I, typename T>
-using ArrayCoefficientTensor = Vector<I, T, ArrayCoefficientTensorDimensions>;
-
 struct PhasorTensorDimensions {
  public:
     U64 B;
@@ -262,19 +214,6 @@ struct formatter<Blade::ArrayTensorDimensions> {
     template <typename FormatContext>
     auto format(const Blade::ArrayTensorDimensions& p, FormatContext& ctx) {
         return format_to(ctx.out(), "[{}, {}, {}, {}]", p.A, p.F, p.T, p.P);
-    }
-};
-
-template <>
-struct formatter<Blade::ArrayCoefficientTensorDimensions> {
-    template <typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) {
-        return ctx.begin();
-    }
-
-    template <typename FormatContext>
-    auto format(const Blade::ArrayCoefficientTensorDimensions& p, FormatContext& ctx) {
-        return format_to(ctx.out(), "[{}, {}, {}]", p.A, p.F, p.P);
     }
 };
 

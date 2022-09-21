@@ -25,7 +25,7 @@ class BLADE_API Generic : public Module {
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;
         std::vector<XYZ> antennaPositions;
-        ArrayCoefficientTensor<Device::CPU, CF64> antennaCalibrations;
+        ArrayTensor<Device::CPU, CF64> antennaCalibrations;
         std::vector<RA_DEC> beamCoordinates;
 
         U64 blockSize = 512;
