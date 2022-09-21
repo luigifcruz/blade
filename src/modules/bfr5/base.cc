@@ -60,7 +60,7 @@ Reader::Reader(const Config& config, const Input& input)
 
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", getTotalDims(), "N/A");
+    BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
 const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFrequencyChannels,

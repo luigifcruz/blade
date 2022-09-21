@@ -59,10 +59,10 @@ class BLADE_API Reader : public Module {
 
     const ArrayTensorDimensions getTotalOutputBufferDims() const {
         return {
-            .A = this->getDatashape()->n_aspect,
-            .F = this->getDatashape()->n_aspectchan,
-            .T = this->getDatashape()->n_time * this->gr_iterate.n_block,
-            .P = this->getDatashape()->n_pol,
+            .A = this->getTotalNumberOfAntennas(),
+            .F = this->getTotalNumberOfFrequencyChannels(),
+            .T = this->getTotalNumberOfTimeSamples(),
+            .P = this->getTotalNumberOfPolarizations(),
         };
     }
 
@@ -77,40 +77,40 @@ class BLADE_API Reader : public Module {
     const Result preprocess(const cudaStream_t& stream = 0) final;
 
     // Dimension getters
-    const U64 getStepNumberOfAntennas() {
-        return this->getStepOutputBufferDims().numberOfAspects();
+    const U64 getStepNumberOfAntennas() const {
+        return this->config.stepNumberOfAspects;
     }
 
-    const U64 getStepNumberOfFrequencyChannels() {
-        return this->getStepOutputBufferDims().numberOfFrequencyChannels();
+    const U64 getStepNumberOfFrequencyChannels() const {
+        return this->config.stepNumberOfFrequencyChannels;
     }
 
-    const U64 getStepNumberOfTimeSamples() {
-        return this->getStepOutputBufferDims().numberOfTimeSamples();
+    const U64 getStepNumberOfTimeSamples() const {
+        return this->config.stepNumberOfTimeSamples;
     }
 
-    const U64 getStepNumberOfPolarizations() {
-        return this->getStepOutputBufferDims().numberOfPolarizations();
+    const U64 getStepNumberOfPolarizations() const {
+        return this->getDatashape()->n_pol;
     }
 
     const U64 getStepOutputBufferSize() {
         return this->getStepOutputBufferDims().size();
     }
 
-    const U64 getTotalNumberOfAntennas() {
-        return this->getTotalOutputBufferDims().numberOfAspects();
+    const U64 getTotalNumberOfAntennas() const {
+        return this->getDatashape()->n_aspect;
     }
 
-    const U64 getTotalNumberOfFrequencyChannels() {
-        return this->getTotalOutputBufferDims().numberOfFrequencyChannels();
+    const U64 getTotalNumberOfFrequencyChannels() const {
+        return this->getDatashape()->n_aspectchan;
     }
 
-    const U64 getTotalNumberOfTimeSamples() {
-        return this->getTotalOutputBufferDims().numberOfTimeSamples();
+    const U64 getTotalNumberOfTimeSamples() const {
+        return this->getDatashape()->n_time * this->gr_iterate.n_block;
     }
 
-    const U64 getTotalNumberOfPolarizations() {
-        return this->getTotalOutputBufferDims().numberOfPolarizations();
+    const U64 getTotalNumberOfPolarizations() const {
+        return this->getDatashape()->n_pol;
     }
 
     const U64 getTotalOutputBufferSize() {
@@ -132,7 +132,7 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    I64 lastread_block_index = -1;
+    I32 lastread_block_index = -1;
     U64 lastread_aspect_index;
     U64 lastread_channel_index;
     U64 lastread_time_index;
@@ -143,10 +143,10 @@ class BLADE_API Reader : public Module {
 
     const ArrayTensorDimensions getStepOutputBufferDims() const {
         return {
-            .A = this->config.stepNumberOfAspects,
-            .F = this->config.stepNumberOfFrequencyChannels,
-            .T = this->config.stepNumberOfTimeSamples,
-            .P = this->getDatashape()->n_pol,
+            .A = this->getStepNumberOfAntennas(),
+            .F = this->getStepNumberOfFrequencyChannels(),
+            .T = this->getStepNumberOfTimeSamples(),
+            .P = this->getStepNumberOfPolarizations(),
         };
     }
 
