@@ -118,6 +118,11 @@ class BLADE_API Runner {
                 return false;
             }
 
+            // Ignore if throw originates from exhaustion.
+            if (err == Result::EXHAUSTED) {
+                return false;
+            }
+
             // Fatal error otherwise.
             BL_CHECK_THROW(err);
         }
