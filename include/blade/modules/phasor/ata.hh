@@ -45,6 +45,9 @@ class BLADE_API ATA : public Generic<OT> {
     std::vector<UVW> boresightUvw;
     std::vector<UVW> sourceUvw;
     std::vector<F64> boresightDelay;
+
+    U64 frequencyChunks;
+    U64 frequencyChunkIndex;
 };
 
 }  // namespace Blade::Modules::Phasor

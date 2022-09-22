@@ -55,11 +55,16 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    if (this->getConfigCalibrationDims() != config.antennaCalibrations.dims()) {
-        BL_FATAL("Number of antenna calibrations ({}) doesn't match with the expected size ({}).", 
+    const auto calibrationExpectationRatio = config.antennaCalibrations.dims() / this->getConfigCalibrationDims();
+    const auto calibrationExpectationFrequencyRatio = (F64) config.antennaCalibrations.dims().numberOfFrequencyChannels() / this->getConfigCalibrationDims().numberOfFrequencyChannels();
+    if (calibrationExpectationRatio.size() == 0 || calibrationExpectationRatio.size() != calibrationExpectationFrequencyRatio) {
+        BL_FATAL("Number of antenna calibrations ({}) is not the expected size ({} nor an integer multiple on the frequency axis).", 
                 config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
         BL_CHECK_THROW(Result::ERROR);
     }
+
+    this->frequencyChunks = calibrationExpectationFrequencyRatio;
+    this->frequencyChunkIndex = 0;
 
     //  Resizing array to the required length.
     antennasXyz.resize(this->config.numberOfAntennas);
@@ -85,11 +90,14 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     // Print configuration values.
     BL_INFO("Calibration Dimensions [A, F, T, P]: {}", this->config.antennaCalibrations.dims());
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
+    BL_INFO("Frequency chunks: {}", this->frequencyChunks);
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
 }
 
 template<typename OT>
 const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
+    const U64 currentFrequencyChunkOffset = this->frequencyChunkIndex * this->config.numberOfFrequencyChannels;
+
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
     eraASTROM astrom;
@@ -176,7 +184,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
                 const U64 frequencyOffset = (f * this->config.numberOfPolarizations);
 
-                const F64 freq = (f + this->config.frequencyStartIndex) * this->config.channelBandwidthHz;
+                const F64 freq = (f + this->config.frequencyStartIndex + currentFrequencyChunkOffset) * this->config.channelBandwidthHz;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 
@@ -186,11 +194,20 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                     const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
                     const U64 phasorsIndex = beamOffset + calibrationIndex;
 
+                    if(calibrationIndex >= this->config.antennaCalibrations.size()) {
+                        BL_FATAL("calibrationIndex {} >= {} this->config.antennaCalibrations.size()", calibrationIndex, this->config.antennaCalibrations.size());
+                    }
+                    if(phasorsIndex >= this->output.phasors.size()) {
+                        BL_FATAL("phasorsIndex {} >= {} this->output.phasors.size()", phasorsIndex, this->output.phasors.size());
+                    }
+
                     this->output.phasors[phasorsIndex] = phasor * this->config.antennaCalibrations[calibrationIndex];
                 }
             }
         }
     }
+
+    this->frequencyChunkIndex = (this->frequencyChunkIndex + 1) % this->frequencyChunks;
 
     return Result::SUCCESS;
 }
