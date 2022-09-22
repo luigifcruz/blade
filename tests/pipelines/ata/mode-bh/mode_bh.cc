@@ -63,7 +63,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
 
-    State.RunnersConfig.B = {
+    State.RunnersInstances.B = Runner<TestPipelineB>::New(numberOfWorkers, {
         .inputDimensions = {
             .A = BLADE_ATA_MODE_BH_NANT,
             .F = BLADE_ATA_MODE_BH_NCHAN,
@@ -109,22 +109,16 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114},        // 5b
         },
-        .phasorAntennaCalibrations = {},
+        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>({
+            State.RunnersConfig.B.inputDimensions.numberOfAspects(),
+            State.RunnersConfig.B.inputDimensions.numberOfFrequencyChannels() * State.RunnersConfig.B.preBeamformerChannelizerRate,
+            State.RunnersConfig.B.inputDimensions.numberOfPolarizations(),
+        }),
         .phasorBeamCoordinates = {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
-    };
-
-    State.RunnersConfig.B.phasorAntennaCalibrations.resize(
-        State.RunnersConfig.B.inputDimensions.numberOfAspects() *
-        State.RunnersConfig.B.inputDimensions.numberOfFrequencyChannels() *
-        State.RunnersConfig.B.preBeamformerChannelizerRate *
-        State.RunnersConfig.B.inputDimensions.numberOfPolarizations());
-
-    State.RunnersInstances.B = 
-        Runner<TestPipelineB>::New(numberOfWorkers, 
-                                   State.RunnersConfig.B);
+    });
 
     State.RunnersConfig.H = {
         .inputDimensions = State.RunnersInstances.B->getWorker().getOutputBuffer().dims(),

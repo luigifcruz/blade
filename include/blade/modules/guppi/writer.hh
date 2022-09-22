@@ -22,6 +22,8 @@ class BLADE_API Writer : public Module {
         std::string filepath;
         bool directio = true;
 
+        U64 inputFrequencyBatches;
+
         U64 blockSize = 512;
     };
 

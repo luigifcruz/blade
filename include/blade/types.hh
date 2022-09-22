@@ -82,6 +82,15 @@ struct ArrayTensorDimensions {
             other.P * this->P,
         };
     }
+
+    ArrayTensorDimensions operator/(const ArrayTensorDimensions& other) const {
+        return ArrayTensorDimensions {
+            this->A / other.A, 
+            this->F / other.F,
+            this->T / other.T,
+            this->P / other.P,
+        };
+    }
 };
 
 template<Device I, typename T>
@@ -136,6 +145,16 @@ struct PhasorTensorDimensions {
             other.P * this->P,
         };
     }
+
+    PhasorTensorDimensions operator/(const PhasorTensorDimensions& other) const {
+        return PhasorTensorDimensions {
+            this->B / other.B, 
+            this->A / other.A, 
+            this->F / other.F,
+            this->T / other.T,
+            this->P / other.P,
+        };
+    }
 };
 
 template<Device I, typename T>
@@ -167,6 +186,13 @@ struct DelayTensorDimensions {
         return DelayTensorDimensions {
             other.B * this->B, 
             other.A * this->A, 
+        };
+    }
+
+    DelayTensorDimensions operator/(const DelayTensorDimensions& other) const {
+        return DelayTensorDimensions {
+            this->B / other.B, 
+            this->A / other.A, 
         };
     }
 };

@@ -98,11 +98,12 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
     };
 
-    config.phasorAntennaCalibrations.resize(
-        config.inputDimensions.numberOfAspects() *
-        config.inputDimensions.numberOfFrequencyChannels() *
-        config.preBeamformerChannelizerRate *
-        config.inputDimensions.numberOfPolarizations());
+    config.phasorAntennaCalibrations.resize(ArrayTensorDimensions({
+        config.inputDimensions.numberOfAspects(),
+        config.inputDimensions.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
+        1,
+        config.inputDimensions.numberOfPolarizations(),
+    }));
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, config);
 

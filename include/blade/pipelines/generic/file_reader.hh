@@ -16,7 +16,7 @@ class BLADE_API FileReader : public Pipeline {
  public:
     struct Config {
         std::string inputGuppiFile;
-        std::string inputBfr5File; 
+        std::string inputBfr5File;
 
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
@@ -24,48 +24,13 @@ class BLADE_API FileReader : public Pipeline {
 
     explicit FileReader(const Config& config);
 
-    constexpr const U64 getStepNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
-    }
-
-    constexpr const U64 getStepNumberOfAntennas() const {
-        return guppi->getStepNumberOfAntennas();
-    }
-
-    constexpr const U64 getStepNumberOfFrequencyChannels() const {
-        return guppi->getStepNumberOfFrequencyChannels();
-    }
-
-    constexpr const U64 getStepNumberOfTimeSamples() const {
-        return guppi->getStepNumberOfTimeSamples();
-    }
-
-    constexpr const U64 getStepNumberOfPolarizations() const {
-        return guppi->getStepNumberOfPolarizations();
+    // GUPPI RAW determined values
+    constexpr const ArrayTensorDimensions getStepOutputDims() const {
+        return guppi->getStepOutputBufferDims();
     }
 
     constexpr const U64 getStepOutputBufferSize() const {
-        return guppi->getStepOutputBufferSize();
-    }
-
-    constexpr const U64 getTotalNumberOfBeams() const {
-        return bfr5->getTotalNumberOfBeams();
-    }
-
-    constexpr const U64 getTotalNumberOfAntennas() const {
-        return guppi->getTotalNumberOfAntennas();
-    }
-
-    constexpr const U64 getTotalNumberOfFrequencyChannels() const {
-        return guppi->getTotalNumberOfFrequencyChannels();
-    }
-
-    constexpr const U64 getTotalNumberOfTimeSamples() const {
-        return guppi->getTotalNumberOfTimeSamples();
-    }
-
-    constexpr const U64 getTotalNumberOfPolarizations() const {
-        return guppi->getTotalNumberOfPolarizations();
+        return guppi->getStepOutputBuffer().size();
     }
 
     constexpr const F64 getObservationFrequency() const {
@@ -88,6 +53,28 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
+    constexpr const ArrayTensorDimensions getTotalOutputDims() const {
+        return guppi->getTotalOutputBufferDims();
+    }
+
+    constexpr const U64 getTotalOutputBufferSize() const {
+        return guppi->getTotalOutputBufferDims().size();
+    }
+
+    const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
+        return guppi->getStepOutputBuffer();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+        return guppi->getStepOutputJulianDate();
+    }
+
+    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+        return guppi->getStepOutputDut1();
+    }
+
+    // BFR5 determined values
+
     constexpr const LLA getReferencePosition() const {
         return bfr5->getReferencePosition();
     }
@@ -100,28 +87,16 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
-    constexpr const std::vector<CF64> getAntennaCalibrations(const U64& preBeamformerChannelizerRate) const {
-        return bfr5->getAntennaCalibrations(guppi->getStepNumberOfFrequencyChannels(), preBeamformerChannelizerRate);
+    constexpr const ArrayTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
+        return bfr5->getAntennaCalibrationsDims(channelizerRate);
+    }
+
+    constexpr void fillAntennaCalibrations(const U64& preBeamformerChannelizerRate, ArrayTensor<Device::CPU, CF64>& antennaCalibrations) const {
+        return bfr5->fillAntennaCalibrations(preBeamformerChannelizerRate, antennaCalibrations);
     }
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
-    }
-
-    constexpr const U64 getTotalOutputBufferSize() const {
-        return guppi->getTotalOutputBufferSize();
-    }
-
-    const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
-        return guppi->getStepOutputBuffer();
-    }
-
-    const ArrayTensor<Device::CPU, F64>& getStepOutputJulianDate() {
-        return guppi->getStepOutputJulianDate();
-    }
-
-    const ArrayTensor<Device::CPU, F64>& getStepOutputDut1() {
-        return guppi->getStepOutputDut1();
     }
 
  private:

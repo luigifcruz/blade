@@ -40,10 +40,10 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous
 
-    const ArrayTensorDimensions getTotalDims() const {
+    const PhasorTensorDimensions getTotalDims() const {
         return {
-            .A = ((this->bfr5.dim_info.nants + 1)
-                    * (this->bfr5.dim_info.nbeams + 1)) - 1,
+            .B = this->bfr5.dim_info.nbeams,
+            .A = this->bfr5.dim_info.nants,
             .F = this->bfr5.dim_info.nchan,
             .T = this->bfr5.dim_info.ntimes,
             .P = this->bfr5.dim_info.npol,
@@ -73,8 +73,18 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    const std::vector<CF64> getAntennaCalibrations(const U64& numberOfFrequencyChannels, 
-                                                   const U64& channelizerRate = 1);
+    const ArrayTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const{
+        const auto bfr5Dims = this->getTotalDims();
+        return {
+            bfr5Dims.numberOfAntennas(),
+            bfr5Dims.numberOfFrequencyChannels() * channelizerRate,
+            1,
+            bfr5Dims.numberOfPolarizations(),
+        };
+    }
+
+    void fillAntennaCalibrations(const U64& channelizerRate, 
+                                ArrayTensor<Device::CPU, CF64>& antennaCalibrations);
 
  private:
     // Variables

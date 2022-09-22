@@ -29,9 +29,9 @@ Reader::Reader(const Config& config, const Input& input)
     }
 
     // Calculate antenna positions
-    antennaPositions.resize(getTotalDims().numberOfAspects());
+    antennaPositions.resize(getTotalDims().numberOfAntennas());
 
-    const U64 antennaPositionsByteSize = getTotalDims().numberOfAspects() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getTotalDims().numberOfAntennas() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
@@ -60,29 +60,31 @@ Reader::Reader(const Config& config, const Input& input)
 
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Data Dimensions [A, F, T, P]: {} -> {}", getTotalDims());
+    BL_INFO("Data Dimensions [B, A, F, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFrequencyChannels,
-                                                       const U64& channelizerRate) {
-    std::vector<CF64> antennaCalibrations;
+void Reader::fillAntennaCalibrations(const U64& channelizerRate, 
+                                     ArrayTensor<Device::CPU, CF64>& antennaCalibrations) {
+    const auto expectedDimensions = getAntennaCalibrationsDims(channelizerRate);
+    if (expectedDimensions != antennaCalibrations.dims()
+    ) {
+        BL_FATAL("Cannot fill inappropriately sized tensor: {} != {}", antennaCalibrations.dims(), expectedDimensions);
+        BL_CHECK_THROW(Result::ERROR);
+    }
 
-    antennaCalibrations.resize(
-            getTotalDims().numberOfAspects() *
-            numberOfFrequencyChannels * channelizerRate * 
-            getTotalDims().numberOfPolarizations());
+    const auto bfr5Dims = this->getTotalDims();
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = getTotalDims().numberOfAspects() * calAntStride;
-    const size_t calChnStride = getTotalDims().numberOfPolarizations() * calPolStride;
+    const size_t calPolStride = expectedDimensions.numberOfAspects() * calAntStride;
+    const size_t calChnStride = expectedDimensions.numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = getTotalDims().numberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = numberOfFrequencyChannels * weightsChnStride;
+    const size_t weightsChnStride = expectedDimensions.numberOfPolarizations() * weightsPolStride;
+    const size_t weightsAntStride = bfr5Dims.numberOfFrequencyChannels() * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getTotalDims().numberOfAspects(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < numberOfFrequencyChannels; chnIdx++) {
-            for (U64 polIdx = 0; polIdx < getTotalDims().numberOfPolarizations(); polIdx++) {
+    for (U64 antIdx = 0; antIdx < expectedDimensions.numberOfAspects(); antIdx++) {
+        for (U64 chnIdx = 0; chnIdx < bfr5Dims.numberOfFrequencyChannels(); chnIdx++) {
+            for (U64 polIdx = 0; polIdx < expectedDimensions.numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 
@@ -94,13 +96,11 @@ const std::vector<CF64> Reader::getAntennaCalibrations(const U64& numberOfFreque
                                            frqIdx * weightsChnStride;
 
                     const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
-                    antennaCalibrations[outputIdx] = {coeff.re, coeff.im};
+                    antennaCalibrations.data()[outputIdx] = {coeff.re, coeff.im};
                 }
             }
         }
     }
-
-    return antennaCalibrations;
 }
 
 }  // namespace Blade::Modules::Bfr5

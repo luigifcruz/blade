@@ -71,7 +71,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    // TODO: This crashes on potato (not file found, segfault).
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
@@ -97,7 +96,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
     BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBuffer().dims());
     BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
-    BL_INFO("Output File Path: {}", config.filepath);
+    BL_INFO("Input File Path: {}", config.filepath);
 }
 
 template<typename OT>
@@ -126,7 +125,7 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
         return Result::EXHAUSTED;
     }
 
-    this->lastread_block_index++;
+    this->lastread_block_index = gr_iterate.block_index;
     this->lastread_aspect_index = gr_iterate.aspect_index;
     this->lastread_channel_index = gr_iterate.chan_index;
     this->lastread_time_index = gr_iterate.time_index;

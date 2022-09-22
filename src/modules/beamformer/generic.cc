@@ -20,7 +20,7 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Phasor Dimensions [A, B, F, T, P]: {}", getInputPhasors().dims());
+    BL_INFO("Phasors Dimensions [B, A, F, T, P]: {}", getInputPhasors().dims());
     BL_INFO("Enable Incoherent Beam: {}", config.enableIncoherentBeam ? "YES" : "NO");
     BL_INFO("Enable Incoherent Beam Square Root: {}", config.enableIncoherentBeamSqrt ? "YES" : "NO");
 }

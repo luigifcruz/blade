@@ -34,9 +34,12 @@ inline const Result ModeB(const Config& config) {
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
+    const auto readerTotalOutputDims = reader.getTotalOutputDims();
+
     // Instantiate compute pipeline and runner.
 
     typename Compute::Config computeConfig = {
+        .inputDimensions = reader.getStepOutputDims(),
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
@@ -47,22 +50,24 @@ inline const Result ModeB(const Config& config) {
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCalibrations = reader.getAntennaCalibrations(config.preBeamformerChannelizerRate),
+        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(config.preBeamformerChannelizerRate)),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
-        .beamformerNumberOfAntennas = reader.getStepNumberOfAntennas(),
-        .beamformerNumberOfFrequencyChannels = reader.getStepNumberOfFrequencyChannels(),
-        .beamformerNumberOfTimeSamples = reader.getStepNumberOfTimeSamples(),
-        .beamformerNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
-        .beamformerNumberOfBeams = reader.getStepNumberOfBeams(),
         .beamformerIncoherentBeam = false,
+
+        .detectorEnable = false,
+        // .detectorIntegrationSize,
+        // .detectorNumberOfOutputPolarizations,
 
         // TODO: Review this calculation.
         .castBlockSize = 32,
         .channelizerBlockSize = config.stepNumberOfTimeSamples,
         .phasorBlockSize = 32,
-        .beamformerBlockSize = config.stepNumberOfTimeSamples
+        .beamformerBlockSize = config.stepNumberOfTimeSamples,
+        .detectorBlockSize = 32,
     };
+
+    reader.fillAntennaCalibrations(config.preBeamformerChannelizerRate, computeConfig.phasorAntennaCalibrations);
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 
@@ -71,14 +76,8 @@ inline const Result ModeB(const Config& config) {
     typename Writer::Config writerConfig = {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
-
-        .stepNumberOfBeams = reader.getStepNumberOfBeams(),
-        .stepNumberOfAntennas = reader.getStepNumberOfAntennas(),
-        .stepNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getStepNumberOfFrequencyChannels(),
-        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples,
-        .stepNumberOfPolarizations = reader.getStepNumberOfPolarizations(),
-
-        .totalNumberOfFrequencyChannels = config.preBeamformerChannelizerRate * reader.getTotalNumberOfFrequencyChannels(),
+        .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels()
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
@@ -88,9 +87,7 @@ inline const Result ModeB(const Config& config) {
 
     writer.headerPut("OBSFREQ", reader.getObservationFrequency());
     writer.headerPut("OBSBW", reader.getChannelBandwidth() * 
-                              writer.getTotalNumberOfFrequencyChannels() * 
-                              writer.getStepNumberOfAntennas() * 
-                              writer.getStepNumberOfBeams());
+                              readerTotalOutputDims.numberOfFrequencyChannels());
     writer.headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
     writer.headerPut("PKTIDX", 0);
 
@@ -146,7 +143,7 @@ inline const Result ModeB(const Config& config) {
 
             // Concatenate output data inside writer pipeline.
             Plan::Accumulate(writerRunner, computeRunner,
-                             worker.getOutput());
+                             worker.getOutputBuffer());
 
             return callbackStep;
         });

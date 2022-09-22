@@ -66,6 +66,15 @@ class BLADE_API Reader : public Module {
         };
     }
 
+    const ArrayTensorDimensions getStepOutputBufferDims() const {
+        return {
+            .A = this->config.stepNumberOfAspects,
+            .F = this->config.stepNumberOfFrequencyChannels,
+            .T = this->config.stepNumberOfTimeSamples,
+            .P = this->getDatashape()->n_pol,
+        };
+    }
+
     const U64 getNumberOfSteps() {
         return this->getTotalOutputBufferDims().size() / 
                this->getStepOutputBufferDims().size();
@@ -90,29 +99,17 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    I64 lastread_block_index = -1;
+    I32 lastread_block_index = -1;
     U64 lastread_aspect_index;
     U64 lastread_channel_index;
     U64 lastread_time_index;
 
     guppiraw_iterate_info_t gr_iterate = {0};
 
-    // Expected Dimensions
-
-    const ArrayTensorDimensions getStepOutputBufferDims() const {
-        return {
-            .A = this->config.stepNumberOfAspects,
-            .F = this->config.stepNumberOfFrequencyChannels,
-            .T = this->config.stepNumberOfTimeSamples,
-            .P = this->getDatashape()->n_pol,
-        };
-    }
-
     // Helpers
 
     const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >=
-            this->getTotalOutputBufferDims().numberOfTimeSamples();
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->config.stepNumberOfTimeSamples;
     }
 
     const guppiraw_datashape_t* getDatashape() const {

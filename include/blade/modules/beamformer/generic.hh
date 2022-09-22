@@ -20,7 +20,7 @@ class BLADE_API Generic : public Module {
         U64 blockSize = 512;
     };
 
-    constexpr Config getConfig() const {
+    constexpr const Config& getConfig() const {
         return config;
     }
 
