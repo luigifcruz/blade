@@ -8,9 +8,9 @@ __device__ cuFloatComplex detect(const cuFloatComplex a) {
 template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
          uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
          bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
-__global__ void ATA(const cuFloatComplex* input,
-                    const cuFloatComplex* phasor,
-                          cuFloatComplex* out) {
+__global__ void dotproduct_optimized(const cuFloatComplex* input,
+                                     const cuFloatComplex* phasor,
+                                         cuFloatComplex* out) {
     int bi = threadIdx.x;
     int ti = bi + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;
@@ -76,9 +76,9 @@ __global__ void ATA(const cuFloatComplex* input,
 template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
          uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
          bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
-__global__ void MeerKAT(const cuFloatComplex* input,
-                        const cuFloatComplex* phasor,
-                              cuFloatComplex* out) {
+__global__ void dotproduct(const cuFloatComplex* input,
+                           const cuFloatComplex* phasor,
+                               cuFloatComplex* out) {
     int bi = threadIdx.x;
     int ti = bi + (blockIdx.y * TBLOCK);
     int ch = blockIdx.x;
