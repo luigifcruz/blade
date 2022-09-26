@@ -7,6 +7,7 @@
 #include "blade-cli/types.hh"
 #include "blade-cli/telescopes/ata/base.hh"
 #include "blade-cli/telescopes/generic/base.hh"
+#include "blade-cli/telescopes/vla/base.hh"
 
 namespace Blade::CLI {
 

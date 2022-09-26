@@ -12,6 +12,8 @@ const Result SetupTelescope(const Config& config) {
             return Telescopes::ATA::Setup(config);
         case TelescopeId::GENERIC:
             return Telescopes::Generic::Setup(config);
+        case TelescopeId::VLA:
+            return Telescopes::VLA::Setup(config);
         default:
             BL_FATAL("Telescope not implemented yet.");
     }
