@@ -55,9 +55,9 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    if (this->getConfigCalibrationDims().size() != config.antennaCalibrations.size()) {
+    if (this->getConfigCalibrationDims() != config.antennaCalibrations.dims()) {
         BL_FATAL("Number of antenna calibrations ({}) doesn't match with the expected size ({}).", 
-                config.antennaCalibrations.size(), this->getConfigCalibrationDims());
+                config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
         BL_CHECK_THROW(Result::ERROR);
     }
 
