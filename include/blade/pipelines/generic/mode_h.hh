@@ -23,6 +23,7 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
 
         U64 accumulateRate;
 
+        BOOL detectorEnable = true;
         U64 detectorNumberOfOutputPolarizations;
 
         U64 castBlockSize = 512;
@@ -42,7 +43,19 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
     // Output 
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
-        return detector->getOutputBuffer();
+        if (config.detectorEnable) {
+            if constexpr (!std::is_same<OT, F32>::value) {
+                return outputCast->getOutputBuffer();
+            } else {
+                return detector->getOutputBuffer();
+            }
+        } else {
+            if constexpr (!std::is_same<OT, CF32>::value) {
+                return complexOutputCast->getOutputBuffer();
+            } else {
+                return channelizer->getOutputBuffer();
+            }
+        }
     }
 
     // Constructor
@@ -57,6 +70,11 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
     std::shared_ptr<Modules::Cast<CF16, CF32>> cast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
+
+    // Output Cast for path without Detector (CF32).
+    std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
+    // Output Cast for path with Detector (F32).
+    std::shared_ptr<Modules::Cast<F32, OT>> outputCast;
 
     constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
         if constexpr (!std::is_same<IT, CF32>::value) {

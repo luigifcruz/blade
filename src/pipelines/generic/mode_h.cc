@@ -32,15 +32,17 @@ ModeH<IT, OT>::ModeH(const Config& config)
         .buf = this->getChannelizerInput(),
     });
 
-    BL_DEBUG("Instantiating detector module.");
-    this->connect(detector, {
-        .integrationSize = 1,
-        .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
+    if (config.detectorEnable) {
+        BL_DEBUG("Instantiating detector module.");
+        this->connect(detector, {
+            .integrationSize = 1,
+            .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
-        .blockSize = config.detectorBlockSize,
-    }, {
-        .buf = channelizer->getOutputBuffer(),
-    });
+            .blockSize = config.detectorBlockSize,
+        }, {
+            .buf = channelizer->getOutputBuffer(),
+        });
+    }
 }
 
 template<typename IT, typename OT>
@@ -65,6 +67,8 @@ const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data
 }
 
 template class BLADE_API ModeH<CF16, F32>;
+template class BLADE_API ModeH<CF16, CF32>;
 template class BLADE_API ModeH<CF32, F32>;
+template class BLADE_API ModeH<CF32, CF32>;
 
 }  // namespace Blade::Pipelines::Generic
