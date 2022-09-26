@@ -21,6 +21,8 @@ class BLADE_API ModeB : public Pipeline {
     struct Config {
         ArrayTensorDimensions inputDimensions;
 
+        U64 preBeamformerChannelizerRate;
+
         PhasorTensor<Device::CPU, CF32> beamformerPhasors;
         U64 beamformerNumberOfBeams;
         BOOL beamformerIncoherentBeam = false;
@@ -31,7 +33,6 @@ class BLADE_API ModeB : public Pipeline {
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
-        U64 phasorBlockSize = 512;
         U64 beamformerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };
@@ -74,6 +75,7 @@ class BLADE_API ModeB : public Pipeline {
     PhasorTensor<Device::CUDA, CF32> phasors;
 
     std::shared_ptr<Modules::Cast<IT, CF32>> inputCast;
+    std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
     std::shared_ptr<Modules::Beamformer::MeerKAT<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
 
