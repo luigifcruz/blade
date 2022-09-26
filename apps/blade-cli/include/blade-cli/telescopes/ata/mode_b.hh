@@ -38,6 +38,9 @@ inline const Result ModeB(const Config& config) {
 
     // Instantiate compute pipeline and runner.
 
+    // TODO: less static hardware limit `1024`
+    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 1024 ? 1024 : config.stepNumberOfTimeSamples;
+
     typename Compute::Config computeConfig = {
         .inputDimensions = reader.getStepOutputDims(),
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
@@ -61,9 +64,9 @@ inline const Result ModeB(const Config& config) {
 
         // TODO: Review this calculation.
         .castBlockSize = 32,
-        .channelizerBlockSize = config.stepNumberOfTimeSamples,
+        .channelizerBlockSize = timeRelatedBlockSize,
         .phasorBlockSize = 32,
-        .beamformerBlockSize = config.stepNumberOfTimeSamples,
+        .beamformerBlockSize = timeRelatedBlockSize,
         .detectorBlockSize = 32,
     };
 
