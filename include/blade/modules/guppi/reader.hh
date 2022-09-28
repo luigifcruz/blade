@@ -76,8 +76,8 @@ class BLADE_API Reader : public Module {
     }
 
     const U64 getNumberOfSteps() {
-        return this->getTotalOutputBufferDims().size() / 
-               this->getStepOutputBufferDims().size();
+        return (this->getTotalOutputBufferDims() / 
+               this->getStepOutputBufferDims()).size();
     }
 
     // Constructor & Processing
