@@ -55,11 +55,18 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    const auto calibrationExpectationRatio = config.antennaCalibrations.dims() / this->getConfigCalibrationDims();
-    const auto calibrationExpectationFrequencyRatio = (F64) config.antennaCalibrations.dims().numberOfFrequencyChannels() / this->getConfigCalibrationDims().numberOfFrequencyChannels();
+    const auto calibrationUpchannelizedDims =
+        config.antennaCalibrations.dims() * ArrayTensorDimensions({
+            .A = 1,
+            .F = config.preBeamformerChannelizerRate,
+            .T = 1,
+            .P = 1,
+        });
+    const auto calibrationExpectationRatio = calibrationUpchannelizedDims / this->getConfigCalibrationDims();
+    const auto calibrationExpectationFrequencyRatio = (F64) calibrationUpchannelizedDims.numberOfFrequencyChannels() / this->getConfigCalibrationDims().numberOfFrequencyChannels();
     if (calibrationExpectationRatio.size() == 0 || calibrationExpectationRatio.size() != calibrationExpectationFrequencyRatio) {
         BL_FATAL("Number of antenna calibrations ({}) is not the expected size ({} nor an integer multiple on the frequency axis).", 
-                config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
+                calibrationUpchannelizedDims, this->getConfigCalibrationDims());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -88,7 +95,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Calibration Dimensions [A, F, T, P]: {}", this->config.antennaCalibrations.dims());
+    BL_INFO("Calibration Dimensions [A, F*{}, T, P]: {}", config.preBeamformerChannelizerRate, calibrationUpchannelizedDims);
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Frequency chunks: {}", this->frequencyChunks);
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
@@ -191,15 +198,8 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                 for (U64 p = 0; p < this->config.numberOfPolarizations; p++) {
                     const U64 polarizationOffset = p;
 
-                    const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
-                    const U64 phasorsIndex = beamOffset + calibrationIndex;
-
-                    if(calibrationIndex >= this->config.antennaCalibrations.size()) {
-                        BL_FATAL("calibrationIndex {} >= {} this->config.antennaCalibrations.size()", calibrationIndex, this->config.antennaCalibrations.size());
-                    }
-                    if(phasorsIndex >= this->output.phasors.size()) {
-                        BL_FATAL("phasorsIndex {} >= {} this->output.phasors.size()", phasorsIndex, this->output.phasors.size());
-                    }
+                    const U64 calibrationIndex = (antennaOffset + frequencyOffset)/this->config.preBeamformerChannelizerRate + polarizationOffset; 
+                    const U64 phasorsIndex = beamOffset + antennaOffset + frequencyOffset + polarizationOffset;
 
                     this->output.phasors[phasorsIndex] = phasor * this->config.antennaCalibrations[calibrationIndex];
                 }

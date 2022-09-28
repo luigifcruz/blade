@@ -43,14 +43,20 @@ inline const Result ModeB(const Config& config) {
     Vector<Device::CPU, F64> dut1({1});
     dut1[0] = 0.0;
 
-    auto phasorAntennaCoeffs = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(config.preBeamformerChannelizerRate));
-    reader.fillAntennaCalibrations(config.preBeamformerChannelizerRate, phasorAntennaCoeffs);
+    auto phasorCoeffDims = reader.getStepOutputDims() * ArrayTensorDimensions({
+        .A = 1,
+        .F = config.preBeamformerChannelizerRate,
+        .T = 0,
+        .P = 1,
+    });
+    auto phasorAntennaCoeffs = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(1));
+    reader.fillAntennaCalibrations(1, phasorAntennaCoeffs);
 
     auto phasor = Modules::Phasor::ATA<CF32>(
         {
-            .numberOfAntennas = phasorAntennaCoeffs.dims().numberOfAspects(),
-            .numberOfFrequencyChannels = phasorAntennaCoeffs.dims().numberOfFrequencyChannels(),
-            .numberOfPolarizations = phasorAntennaCoeffs.dims().numberOfPolarizations(),
+            .numberOfAntennas = phasorCoeffDims.numberOfAspects(),
+            .numberOfFrequencyChannels = phasorCoeffDims.numberOfFrequencyChannels(),
+            .numberOfPolarizations = phasorCoeffDims.numberOfPolarizations(),
 
             .observationFrequencyHz = reader.getObservationFrequency(),
             .channelBandwidthHz = reader.getChannelBandwidth(),
@@ -63,6 +69,8 @@ inline const Result ModeB(const Config& config) {
             .antennaPositions = reader.getAntennaPositions(),
             .antennaCalibrations = ArrayTensor<Device::CPU, CF64>(phasorAntennaCoeffs),
             .beamCoordinates = reader.getBeamCoordinates(),
+
+            .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
         },
         {
             .blockJulianDate = julianDate,

@@ -28,6 +28,8 @@ class BLADE_API Generic : public Module {
         ArrayTensor<Device::CPU, CF64> antennaCalibrations;
         std::vector<RA_DEC> beamCoordinates;
 
+        U64 preBeamformerChannelizerRate = 1;
+
         U64 blockSize = 512;
     };
 
@@ -77,6 +79,7 @@ class BLADE_API Generic : public Module {
     const Config config;
     const Input input;
     Output output;
+    ArrayTensor<Device::CPU, CF64> antennaCalibrations;
 
     // Expected Dimensions
 
