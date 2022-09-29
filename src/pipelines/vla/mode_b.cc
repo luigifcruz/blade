@@ -13,37 +13,47 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config) {
     BL_CHECK_THROW(this->phasors.resize(config.beamformerPhasors.dims()));
     BL_CHECK_THROW(Memory::Copy(this->phasors, config.beamformerPhasors));
 
-		if constexpr (!std::is_same<IT, CF32>::value) {
-            BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
-            this->connect(inputCast, {
-                .blockSize = config.castBlockSize,
-            }, {
-                .buf = this->input,
-            });
-
-            BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
-                config.preBeamformerChannelizerRate);
-            this->connect(channelizer, {
-                .rate = config.preBeamformerChannelizerRate,
-
-                .blockSize = config.channelizerBlockSize,
-            }, {
-                .buf = this->inputCast->getOutputBuffer(),
-            });
-		} else {
-            BL_DEBUG("No need to instantiate input cast to CF32.");
-		}
-
-        BL_DEBUG("Instantiating beamformer module.");
-        this->connect(beamformer, {
-            .enableIncoherentBeam = config.beamformerIncoherentBeam,
-            .enableIncoherentBeamSqrt = (config.detectorEnable) ? true : false,
-
-            .blockSize = config.beamformerBlockSize,
+    if constexpr (!std::is_same<IT, CF32>::value) {
+        BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
+        this->connect(inputCast, {
+            .blockSize = config.castBlockSize,
         }, {
-            .buf = channelizer->getOutputBuffer(),
-            .phasors = this->phasors,
+            .buf = this->input,
         });
+
+        BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
+            config.preBeamformerChannelizerRate);
+        this->connect(channelizer, {
+            .rate = config.preBeamformerChannelizerRate,
+
+            .blockSize = config.channelizerBlockSize,
+        }, {
+            .buf = this->inputCast->getOutputBuffer(),
+        });
+    } else {
+        BL_DEBUG("No need to instantiate input cast to CF32.");
+
+        BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
+            config.preBeamformerChannelizerRate);
+        this->connect(channelizer, {
+            .rate = config.preBeamformerChannelizerRate,
+
+            .blockSize = config.channelizerBlockSize,
+        }, {
+            .buf = this->input,
+        });
+    }
+
+    BL_DEBUG("Instantiating beamformer module.");
+    this->connect(beamformer, {
+        .enableIncoherentBeam = config.beamformerIncoherentBeam,
+        .enableIncoherentBeamSqrt = (config.detectorEnable) ? true : false,
+
+        .blockSize = config.beamformerBlockSize,
+    }, {
+        .buf = channelizer->getOutputBuffer(),
+        .phasors = this->phasors,
+    });
 
 
     if (config.detectorEnable) {
