@@ -19,7 +19,7 @@ inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::ATA::ModeB<OT>;
-    using Writer = Pipelines::Generic::FileWriter<OT>;
+    using Writer = Pipelines::Generic::FileWriter<Modules::Guppi::Writer<OT>, OT>;
 
     // Instantiate reader pipeline and runner.
 
@@ -77,10 +77,13 @@ inline const Result ModeB(const Config& config) {
     // Instantiate writer pipeline and runner.
 
     typename Writer::Config writerConfig = {
-        .outputGuppiFile = config.outputGuppiFile,
-        .directio = true,
+        .writerConfig = {
+            .filepath = config.outputGuppiFile,
+            .directio = true,
+            .inputFrequencyBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
+        },
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels()
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
@@ -88,11 +91,11 @@ inline const Result ModeB(const Config& config) {
 
     // Append information to the FileWriter's GUPPI header.
 
-    writer.headerPut("OBSFREQ", reader.getObservationFrequency());
-    writer.headerPut("OBSBW", reader.getChannelBandwidth() * 
+    writer.getWriter()->headerPut("OBSFREQ", reader.getObservationFrequency());
+    writer.getWriter()->headerPut("OBSBW", reader.getChannelBandwidth() * 
                               readerTotalOutputDims.numberOfFrequencyChannels());
-    writer.headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
-    writer.headerPut("PKTIDX", 0);
+    writer.getWriter()->headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
+    writer.getWriter()->headerPut("PKTIDX", 0);
 
     indicators::ProgressBar bar{
         option::BarWidth{100},

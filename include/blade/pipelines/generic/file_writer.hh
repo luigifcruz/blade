@@ -11,40 +11,17 @@
 
 namespace Blade::Pipelines::Generic {
 
-template<typename IT>
+template<typename WT, typename IT>
 class BLADE_API FileWriter : public Pipeline, public Accumulator {
  public:
     struct Config {
-        std::string outputGuppiFile;
-        bool directio;
+        WT::Config writerConfig;
 
         ArrayTensorDimensions inputDimensions;
-        U64 accumulateRate;
-
-        U64 writerBlockSize = 512;
+        U64 accumulateRate = 1;
     };
 
     explicit FileWriter(const Config& config);
-
-    constexpr void headerPut(std::string key, std::string value) {
-        return guppi->headerPut(key, value);
-    }
-
-    constexpr void headerPut(std::string key, F64 value) {
-        return guppi->headerPut(key, value);
-    }
-
-    constexpr void headerPut(std::string key, I64 value) {
-        return guppi->headerPut(key, value);
-    }
-
-    constexpr void headerPut(std::string key, I32 value) {
-        return guppi->headerPut(key, value);
-    }
-
-    constexpr void headerPut(std::string key, U64 value) {
-        return guppi->headerPut(key, value);
-    }
 
     constexpr const U64 getStepInputBufferSize() const {
         return this->config.inputDimensions.size();
@@ -61,12 +38,16 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
     const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
+    const std::shared_ptr<WT> getWriter() {
+        return this->writer;
+    }
+
  private:
     const Config config;
 
     ArrayTensor<Device::CPU, IT> writerBuffer;
 
-    std::shared_ptr<Modules::Guppi::Writer<IT>> guppi;
+    std::shared_ptr<WT> writer;
 };
 
 }  // namespace Blade::Pipelines::Generic

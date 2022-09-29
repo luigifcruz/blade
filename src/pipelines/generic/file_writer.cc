@@ -4,8 +4,8 @@
 
 namespace Blade::Pipelines::Generic {
 
-template<typename IT>
-FileWriter<IT>::FileWriter(const Config& config) 
+template<typename WT, typename IT>
+FileWriter<WT, IT>::FileWriter(const Config& config) 
      : Accumulator(config.accumulateRate),
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
@@ -21,20 +21,13 @@ FileWriter<IT>::FileWriter(const Config& config)
     BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->writerBuffer.dims(), "N/A");
 
     BL_DEBUG("Instantiating GUPPI RAW file writer.");
-    this->connect(guppi, {
-        .filepath = config.outputGuppiFile,
-        .directio = config.directio,
-
-        .inputFrequencyBatches = config.accumulateRate,
-
-        .blockSize = config.writerBlockSize,
-    }, {
+    this->connect(writer, config.writerConfig, {
         .buffer = writerBuffer,
     });
 }
 
-template<typename IT>
-const Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+template<typename WT, typename IT>
+const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                         const cudaStream_t& stream) {
     const auto stepInputBufferSize = this->getStepInputBufferSize();
     if (stepInputBufferSize != data.size()) {
@@ -50,7 +43,7 @@ const Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& dat
     return Result::SUCCESS;
 }
 
-template class BLADE_API FileWriter<CF16>;
-template class BLADE_API FileWriter<CF32>;
+template class BLADE_API FileWriter<Modules::Guppi::Writer<CF16>, CF16>;
+template class BLADE_API FileWriter<Modules::Guppi::Writer<CF32>, CF32>;
 
 }  // namespace Blade::Pipelines::Generic
