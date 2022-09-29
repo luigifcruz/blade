@@ -8,6 +8,7 @@
 #include "blade/accumulator.hh"
 
 #include "blade/modules/guppi/writer.hh"
+#include "blade/modules/filterbank/writer.hh"
 
 namespace Blade::Pipelines::Generic {
 

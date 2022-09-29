@@ -100,6 +100,19 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 }
 
 template<typename OT>
+F64 Reader<OT>::getUnixDateOfLastReadBlock() {
+    return guppiraw_calc_unix_date(
+        1.0 / this->getChannelBandwidth(),
+        this->getDatashape()->n_time,
+        getBlockMeta(&gr_iterate)->piperblk,
+        getBlockMeta(&gr_iterate)->synctime,
+        (getBlockMeta(&gr_iterate)->pktidx + 
+            (this->lastread_block_index + 
+            (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
+            this->getDatashape()->n_time));
+}
+
+template<typename OT>
 const F64 Reader<OT>::getChannelBandwidth() const {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
 }
@@ -131,16 +144,7 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     this->lastread_time_index = gr_iterate.time_index;
 
     // Query internal library Julian Date. 
-    const auto unixDate =
-        guppiraw_calc_unix_date(
-            1.0 / this->getChannelBandwidth(),
-            this->getDatashape()->n_time,
-            getBlockMeta(&gr_iterate)->piperblk,
-            getBlockMeta(&gr_iterate)->synctime,
-            (getBlockMeta(&gr_iterate)->pktidx + 
-             (this->lastread_block_index + 
-              (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
-              this->getDatashape()->n_time));
+    const auto unixDate = this->getUnixDateOfLastReadBlock();
 
     this->output.stepJulianDate[0] = calc_julian_date_from_unix(unixDate);
 

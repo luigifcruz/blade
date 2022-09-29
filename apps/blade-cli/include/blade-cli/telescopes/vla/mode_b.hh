@@ -9,6 +9,7 @@
 #include "blade/pipelines/vla/mode_b.hh"
 #include "blade/modules/phasor/ata.hh"
 #include "blade/pipelines/generic/file_reader.hh"
+#include "blade/pipelines/generic/file_writer.hh"
 
 using namespace indicators;
 
@@ -19,6 +20,7 @@ inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::VLA::ModeB<IT, OT>;
+    using Writer = Pipelines::Generic::FileWriter<Modules::Filterbank::Writer<OT>, OT>;
 
     // Instantiate reader pipeline and runner.
 
@@ -33,7 +35,6 @@ inline const Result ModeB(const Config& config) {
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
-    const auto readerStepOutputDims = reader.getStepOutputDims();
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
 
     // Instantiate Phasor module for once off phasor generation
@@ -107,6 +108,32 @@ inline const Result ModeB(const Config& config) {
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 
+    // Instantiate writer pipeline and runner.
+
+    typename Writer::Config writerConfig = {
+        .writerConfig = {
+            .filepath = config.outputFile,
+            
+            .machineId = 0,
+            .telescopeId = 0,
+            .baryCentric = 1,
+            .pulsarCentric = 1,
+            .sourceCoordinate = reader.getBoresightCoordinate(),
+            .azimuthStart = 0.0,
+            .zenithStart = 0.0,
+            .firstChannelCenterFrequency = 0.0,
+            .channelBandwidthHz = reader.getChannelBandwidth(),
+            .julianDateStart = reader.getJulianDateOfLastReadBlock(),
+            .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
+            .source_name = "Unknown",
+            .rawdatafile = config.inputGuppiFile,
+        },
+        .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
+    };
+
+    auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
+
     indicators::ProgressBar bar{
         option::BarWidth{100},
         option::Start{" ["},
@@ -142,6 +169,9 @@ inline const Result ModeB(const Config& config) {
         });
 
         computeRunner->enqueue([&](auto& worker) {
+            // Check if next runner has free slot.
+            Plan::Available(writerRunner);
+
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(readerRunner, &callbackStep);
 
@@ -152,12 +182,25 @@ inline const Result ModeB(const Config& config) {
             // Compute input data. 
             Plan::Compute(worker);
 
+            // Concatenate output data inside writer pipeline.
+            Plan::Accumulate(writerRunner, computeRunner,
+                             worker.getOutputBuffer());
+
             return callbackStep;
         });
 
+        writerRunner->enqueue([&](auto& worker){
+            // Try dequeue job from last runner. If unlucky, return.
+            Plan::Dequeue(computeRunner, &callbackStep);
+
+            // If accumulation complete, write data to disk.
+            Plan::Compute(worker);
+
+            return callbackStep;
+        });
 
         // Try to dequeue job from writer runner.
-        if (computeRunner->dequeue(&callbackStep)) {
+        if (writerRunner->dequeue(&callbackStep)) {
             if ((callbackStep + 1) == reader.getNumberOfSteps()) {
                 break;
             }
@@ -168,6 +211,7 @@ inline const Result ModeB(const Config& config) {
 
     readerRunner.reset();
     computeRunner.reset();
+    writerRunner.reset();
 
     return Result::SUCCESS;
 }

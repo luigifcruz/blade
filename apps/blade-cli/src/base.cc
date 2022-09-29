@@ -69,7 +69,7 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
 
     // Read output GUPPI RAW filepath.
         app
-        .add_option("-o,--output,output", config.outputGuppiFile, "Output GUPPI RAW filepath")
+        .add_option("-o,--output,output", config.outputFile, "Output filepath")
             ->required()
             ->capture_default_str()
             ->run_callback_for_default();

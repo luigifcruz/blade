@@ -65,6 +65,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getStepOutputBuffer();
     }
 
+    F64 getJulianDateOfLastReadBlock() const {
+        return guppi->getJulianDateOfLastReadBlock();
+    }
+
     const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
         return guppi->getStepOutputJulianDate();
     }

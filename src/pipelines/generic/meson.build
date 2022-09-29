@@ -30,6 +30,7 @@ cfg_lst.set('BLADE_PIPELINE_GENERIC_FILE_READER', all_deps_found)
 
 deps = [
     'BLADE_MODULE_GUPPI',
+    'BLADE_MODULE_FILTERBANK',
 ]
 
 all_deps_found = true

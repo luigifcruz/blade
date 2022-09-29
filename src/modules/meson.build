@@ -7,5 +7,6 @@ subdir('beamformer')
 subdir('channelizer')
 subdir('guppi')
 subdir('bfr5')
+subdir('filterbank')
 
 summary(sum_lst, section: 'Modules', bool_yn: true)

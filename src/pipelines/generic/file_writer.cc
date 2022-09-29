@@ -20,7 +20,7 @@ FileWriter<WT, IT>::FileWriter(const Config& config)
     BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", config.inputDimensions, "N/A");
     BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->writerBuffer.dims(), "N/A");
 
-    BL_DEBUG("Instantiating GUPPI RAW file writer.");
+    BL_DEBUG("Instantiating file writer.");
     this->connect(writer, config.writerConfig, {
         .buffer = writerBuffer,
     });
@@ -45,5 +45,9 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
 
 template class BLADE_API FileWriter<Modules::Guppi::Writer<CF16>, CF16>;
 template class BLADE_API FileWriter<Modules::Guppi::Writer<CF32>, CF32>;
+
+template class BLADE_API FileWriter<Modules::Filterbank::Writer<F16>, F16>;
+template class BLADE_API FileWriter<Modules::Filterbank::Writer<F32>, F32>;
+template class BLADE_API FileWriter<Modules::Filterbank::Writer<F64>, F64>;
 
 }  // namespace Blade::Pipelines::Generic

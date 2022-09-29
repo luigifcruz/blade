@@ -10,3 +10,6 @@
 [submodule "subprojects/bfr5c99"]
 	path = subprojects/bfr5c99
 	url = http://github.com/MydonSolutions/bfr5c99
+[submodule "subprojects/filterbankc99"]
+	path = subprojects/filterbankc99
+	url = https://github.com/MydonSolutions/filterbankc99

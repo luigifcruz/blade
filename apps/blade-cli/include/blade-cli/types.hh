@@ -62,7 +62,7 @@ typedef struct {
     TelescopeId telescope;
     std::string inputGuppiFile;
     std::string inputBfr5File;
-    std::string outputGuppiFile;
+    std::string outputFile;
     TypeId inputType;
     TypeId outputType;
     U64 numberOfWorkers;

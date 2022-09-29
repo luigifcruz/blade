@@ -7,6 +7,7 @@
 #mesondefine BLADE_MODULE_DETECTOR
 #mesondefine BLADE_MODULE_BFR5
 #mesondefine BLADE_MODULE_GUPPI
+#mesondefine BLADE_MODULE_FILTERBANK
 
 // ATA Specific Modules
 #mesondefine BLADE_MODULE_ATA_BEAMFORMER
@@ -33,4 +34,5 @@
 #mesondefine BLADE_LOADER_RADIOINTERFEROMETRY
 #mesondefine BLADE_LOADER_GUPPIRAW
 #mesondefine BLADE_LOADER_BFR5
+#mesondefine BLADE_LOADER_FILTERBANK
 #mesondefine BLADE_LOADER_CLI11

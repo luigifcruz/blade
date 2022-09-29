@@ -78,7 +78,7 @@ inline const Result ModeB(const Config& config) {
 
     typename Writer::Config writerConfig = {
         .writerConfig = {
-            .filepath = config.outputGuppiFile,
+            .filepath = config.outputFile,
             .directio = true,
             .inputFrequencyBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
         },
