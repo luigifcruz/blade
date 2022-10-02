@@ -15,7 +15,6 @@ Writer<IT>::Writer(const Config& config, const Input& input)
     const auto inputDims = this->input.buffer.dims();
     this->fileDescriptors.resize(inputDims.numberOfAspects());
 
-    // TODO negate foff and obs_bw
     this->filterbank_header = {
         .machine_id = this->config.machineId,
         .telescope_id = this->config.telescopeId,
@@ -59,19 +58,48 @@ void Writer<IT>::openFilesWriteHeaders() {
 
 template<typename IT>
 const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
-    // TODO shuffle from [batch, B, F, T, P] to [B, T, P, F]
-    // TODO reverse frequencies
 
-    const auto byteSize = this->input.buffer.size_bytes()/this->fileDescriptors.size();
+    const auto inputDims = this->input.buffer.dims();
+    const U64 numberOfTimePolarizationSamples = inputDims.numberOfTimeSamples()*inputDims.numberOfPolarizations();
+    const U64 frequencyBatchByteStride = this->input.buffer.size_bytes()/this->config.numberOfInputFrequencyChannelBatches;
+    const U64 aspectByteStride = frequencyBatchByteStride/inputDims.numberOfAspects();
+    const U64 timepolSampleByteStride = (inputDims.numberOfFrequencyChannels()/this->config.numberOfInputFrequencyChannelBatches)*sizeof(IT);
+
     U64 bytesWritten = 0;
+    const long max_iovecs = sysconf(_SC_IOV_MAX);
+    
+    struct iovec* iovecs = (struct iovec*) malloc(max_iovecs * sizeof(struct iovec));
+    int iovec_count = 0;
 
-    for (size_t i = 0; i < this->fileDescriptors.size(); i++) {
-        bytesWritten += write(
-            this->fileDescriptors[i],
-            this->input.buffer.data() + i*byteSize,
-            byteSize
-        );
+    for (size_t a = 0; a < inputDims.numberOfAspects(); a++) {
+        if (this->config.numberOfInputFrequencyChannelBatches == 1) {
+            bytesWritten += write(
+                this->fileDescriptors[a],
+                this->input.buffer.data() + a*aspectByteStride,
+                aspectByteStride
+            );
+        } else {
+            for (size_t tp = 0; tp < numberOfTimePolarizationSamples; tp++) {
+                for (size_t fb = 0; fb < this->config.numberOfInputFrequencyChannelBatches; fb++) {
+                    iovecs[iovec_count].iov_base = this->input.buffer.data() +
+                    fb * frequencyBatchByteStride +
+                    a * aspectByteStride +
+                    tp * timepolSampleByteStride;
+                    iovecs[iovec_count].iov_len = timepolSampleByteStride;
+                    iovec_count++;
+                    if(iovec_count == max_iovecs) {
+                        bytesWritten += writev(this->fileDescriptors[a], iovecs, iovec_count);
+                        iovec_count = 0;
+                    }
+                }
+            }
+            if (iovec_count > 0) {
+                bytesWritten += writev(this->fileDescriptors[a], iovecs, iovec_count);
+                iovec_count = 0;
+            }
+        }
     }
+    free(iovecs);
 
     return bytesWritten == this->input.buffer.size_bytes() ? Result::SUCCESS : Result::ERROR;
 }

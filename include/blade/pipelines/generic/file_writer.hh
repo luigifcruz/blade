@@ -19,6 +19,7 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
         WT::Config writerConfig;
 
         ArrayTensorDimensions inputDimensions;
+        BOOL transposeBTPF = false;
         U64 accumulateRate = 1;
     };
 

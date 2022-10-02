@@ -3,6 +3,9 @@
 
 #include <filesystem>
 #include <string>
+#include <fcntl.h>
+#include <sys/uio.h>
+#include <limits.h>
 
 #include "blade/base.hh"
 #include "blade/module.hh"
@@ -35,6 +38,7 @@ class BLADE_API Writer : public Module {
         std::string source_name;
         std::string rawdatafile;
 
+        U64 numberOfInputFrequencyChannelBatches = 1;
         U64 blockSize = 512;
     };
 
