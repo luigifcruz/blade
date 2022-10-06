@@ -25,7 +25,7 @@ class BLADE_API Generic : public Module {
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;
         std::vector<XYZ> antennaPositions;
-        ArrayTensor<Device::CPU, CF64> antennaCalibrations;
+        ArrayTensor<Device::CPU, CF64> antennaCoefficients;
         std::vector<RA_DEC> beamCoordinates;
 
         U64 preBeamformerChannelizerRate = 1;
@@ -79,13 +79,13 @@ class BLADE_API Generic : public Module {
     const Config config;
     const Input input;
     Output output;
-    ArrayTensor<Device::CPU, CF64> antennaCalibrations;
+    ArrayTensor<Device::CPU, CF64> antennaCoefficients;
 
     // Expected Dimensions
 
     virtual const DelayTensorDimensions getOutputDelaysDims() const = 0;
     virtual const PhasorTensorDimensions getOutputPhasorsDims() const = 0;
-    virtual const ArrayTensorDimensions getConfigCalibrationDims() const = 0;
+    virtual const ArrayTensorDimensions getConfigCoefficientDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Phasor

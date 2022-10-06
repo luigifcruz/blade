@@ -28,31 +28,31 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    // Check if calibration values are within bounds.
+    // Check if coefficient values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;
 
     F64 max_cal = 0.0, min_cal = 0.0;
-    for (const auto& calibration : config.antennaCalibrations) {
-        if (calibration.real() > max_cal) {
-            max_cal = calibration.real();
+    for (const auto& coefficient : config.antennaCoefficients) {
+        if (coefficient.real() > max_cal) {
+            max_cal = coefficient.real();
         }
 
-        if (calibration.imag() > max_cal) {
-            max_cal = calibration.imag();
+        if (coefficient.imag() > max_cal) {
+            max_cal = coefficient.imag();
         }
 
-        if (calibration.real() < min_cal) {
-            min_cal = calibration.real();
+        if (coefficient.real() < min_cal) {
+            min_cal = coefficient.real();
         }
 
-        if (calibration.imag() < min_cal) {
-            min_cal = calibration.imag();
+        if (coefficient.imag() < min_cal) {
+            min_cal = coefficient.imag();
         }
     }
 
     if ((max_value < max_cal) || ((min_value > min_cal))) {
-        BL_WARN("Overflow Possible! At least one calibration value is smaller" 
+        BL_WARN("Overflow Possible! At least one coefficient value is smaller" 
                 " or larger ({:.2f}, {:.2f}) than what CF16 can hold ({:.2f}, {:.2f})"
                 " with current configuration parameters.",
                 min_cal, max_cal, min_value, max_value); 

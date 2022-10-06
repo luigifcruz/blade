@@ -31,7 +31,7 @@ class BLADE_API ATA : public Generic<OT> {
         };
     }
 
-    const ArrayTensorDimensions getConfigCalibrationDims() const {
+    const ArrayTensorDimensions getConfigCoefficientDims() const {
         return {
             .A = this->config.numberOfAntennas,
             .F = this->config.numberOfFrequencyChannels,
@@ -46,8 +46,8 @@ class BLADE_API ATA : public Generic<OT> {
     std::vector<UVW> sourceUvw;
     std::vector<F64> boresightDelay;
 
-    U64 frequencyChunks;
-    U64 frequencyChunkIndex;
+    U64 frequencySteps;
+    U64 frequencyStepIndex;
 };
 
 }  // namespace Blade::Modules::Phasor

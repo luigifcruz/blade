@@ -63,12 +63,12 @@ Reader::Reader(const Config& config, const Input& input)
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-void Reader::fillAntennaCalibrations(const U64& channelizerRate, 
-                                     ArrayTensor<Device::CPU, CF64>& antennaCalibrations) {
-    const auto expectedDimensions = getAntennaCalibrationsDims(channelizerRate);
-    if (expectedDimensions != antennaCalibrations.dims()
+void Reader::fillAntennaCoefficients(const U64& channelizerRate, 
+                                     ArrayTensor<Device::CPU, CF64>& antennaCoefficients) {
+    const auto expectedDimensions = getAntennaCoefficientsDims(channelizerRate);
+    if (expectedDimensions != antennaCoefficients.dims()
     ) {
-        BL_FATAL("Cannot fill inappropriately sized tensor: {} != {}", antennaCalibrations.dims(), expectedDimensions);
+        BL_FATAL("Cannot fill inappropriately sized tensor: {} != {}", antennaCoefficients.dims(), expectedDimensions);
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -96,7 +96,7 @@ void Reader::fillAntennaCalibrations(const U64& channelizerRate,
                                            frqIdx * weightsChnStride;
 
                     const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
-                    antennaCalibrations.data()[outputIdx] = {coeff.re, coeff.im};
+                    antennaCoefficients.data()[outputIdx] = {coeff.re, coeff.im};
                 }
             }
         }
