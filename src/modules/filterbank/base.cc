@@ -42,6 +42,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
 
     // Print configuration buffers.
     BL_INFO("Output File Path: {}", config.filepath);
+    BL_INFO("Frequency Batches per Input: {}", config.numberOfInputFrequencyChannelBatches);
     BL_INFO("Data Dimensions [B, F, T, P]: {} -> {}", inputDims, "N/A");
 }
 
@@ -50,9 +51,14 @@ void Writer<IT>::openFilesWriteHeaders() {
     // Check configuration values.
     for (size_t i = 0; i < this->fileDescriptors.size(); i++) {
         auto filepath = fmt::format("{}-beam{:04}.fil", this->config.filepath, i % 10000);
-        this->fileDescriptors[i] = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        this->fileDescriptors[i] = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+        if (this->fileDescriptors[i] < 1) {
+            BL_FATAL("Could not open '{}': {}\n", filepath, this->fileDescriptors[i]);
+            BL_CHECK_THROW(Result::ERROR);
+        }
         this->filterbank_header.ibeam = i;
-        filterbank_fd_write_padded_header(this->fileDescriptors[i], &this->filterbank_header, 1024);
+
+        filterbank_fd_write_header(this->fileDescriptors[i], &this->filterbank_header);
     }
 }
 

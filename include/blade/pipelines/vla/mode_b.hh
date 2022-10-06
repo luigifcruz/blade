@@ -8,6 +8,7 @@
 
 #include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
+#include "blade/modules/phasor/vla.hh"
 #include "blade/modules/beamformer/meerkat.hh"
 #include "blade/modules/detector.hh"
 
@@ -23,7 +24,14 @@ class BLADE_API ModeB : public Pipeline {
 
         U64 preBeamformerChannelizerRate;
 
-        PhasorTensor<Device::CPU, CF32> beamformerPhasors;
+        F64 phasorChannelZeroFrequencyHz;
+        F64 phasorChannelBandwidthHz;
+        U64 phasorFrequencyStartIndex;
+
+        ArrayTensor<Device::CPU, CF64> phasorAntennaCoefficients;
+        PhasorTensor<Device::CPU, F64> phasorBeamAntennaDelays;
+        Vector<Device::CPU, F64> phasorDelayTimes;
+
         U64 beamformerNumberOfBeams;
         BOOL beamformerIncoherentBeam = false;
 
@@ -33,13 +41,16 @@ class BLADE_API ModeB : public Pipeline {
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
+        U64 phasorBlockSize = 512;
         U64 beamformerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };
 
     // Input
 
-    const Result transferIn(const ArrayTensor<Device::CPU, IT>& input,
+    const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const ArrayTensor<Device::CPU, IT>& input,
                             const cudaStream_t& stream);
 
     constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
@@ -72,10 +83,12 @@ class BLADE_API ModeB : public Pipeline {
     const Config config;
 
     ArrayTensor<Device::CUDA, IT> input;
-    PhasorTensor<Device::CUDA, CF32> phasors;
+    Vector<Device::CPU, F64> blockJulianDate;
+    Vector<Device::CPU, F64> blockDut1;
 
     std::shared_ptr<Modules::Cast<IT, CF32>> inputCast;
     std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
+    std::shared_ptr<Modules::Phasor::VLA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::MeerKAT<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
 

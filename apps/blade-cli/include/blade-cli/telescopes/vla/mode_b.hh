@@ -37,48 +37,14 @@ inline const Result ModeB(const Config& config) {
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
 
-    // Instantiate Phasor module for once off phasor generation
-
-    Vector<Device::CPU, F64> julianDate({1});
-    julianDate[0] = (1649366473.0 / 86400) + 2440587.5;
-    Vector<Device::CPU, F64> dut1({1});
-    dut1[0] = 0.0;
-
     auto phasorCoeffDims = reader.getStepOutputDims() * ArrayTensorDimensions({
         .A = 1,
         .F = config.preBeamformerChannelizerRate,
         .T = 0,
         .P = 1,
     });
-    auto phasorAntennaCoeffs = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(1));
-    reader.fillAntennaCalibrations(1, phasorAntennaCoeffs);
-
-    auto phasor = Modules::Phasor::ATA<CF32>(
-        {
-            .numberOfAntennas = phasorCoeffDims.numberOfAspects(),
-            .numberOfFrequencyChannels = phasorCoeffDims.numberOfFrequencyChannels(),
-            .numberOfPolarizations = phasorCoeffDims.numberOfPolarizations(),
-
-            .observationFrequencyHz = reader.getObservationFrequency(),
-            .channelBandwidthHz = reader.getChannelBandwidth(),
-            .totalBandwidthHz = reader.getTotalBandwidth(),
-            .frequencyStartIndex = reader.getChannelStartIndex(),
-
-            .referenceAntennaIndex = 0,
-            .arrayReferencePosition = reader.getReferencePosition(),
-            .boresightCoordinate = reader.getBoresightCoordinate(),
-            .antennaPositions = reader.getAntennaPositions(),
-            .antennaCalibrations = ArrayTensor<Device::CPU, CF64>(phasorAntennaCoeffs),
-            .beamCoordinates = reader.getBeamCoordinates(),
-
-            .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
-        },
-        {
-            .blockJulianDate = julianDate,
-            .blockDut1 = dut1,
-        }
-    );
-    phasor.preprocess();
+    auto phasorAntennaCoeffs = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCoefficientsDims(1));
+    reader.fillAntennaCoefficients(1, phasorAntennaCoeffs);
 
     // Instantiate compute pipeline and runner.
 
@@ -90,9 +56,15 @@ inline const Result ModeB(const Config& config) {
 
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
-        .beamformerPhasors = phasor.getOutputPhasors(),
+        .phasorChannelZeroFrequencyHz = reader.getObservationFrequency() - (reader.getTotalBandwidth() / 2.0),
+        .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
+        .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
 
-        .beamformerNumberOfBeams = reader.getBeamCoordinates().size(),
+        .phasorAntennaCoefficients = ArrayTensor<Device::CPU, CF64>(phasorAntennaCoeffs),
+        .phasorBeamAntennaDelays = PhasorTensor<Device::CPU, F64>(reader.getBeamAntennaDelays(), reader.getBeamAntennaDelayDims()),
+        .phasorDelayTimes = Vector<Device::CPU, F64>(reader.getDelayTimes(), {reader.getNumberOfDelayTimes()}),
+
+        .beamformerNumberOfBeams = reader.getBeamAntennaDelayDims().numberOfBeams(),
         .beamformerIncoherentBeam = true,
 
         .detectorEnable = true,
@@ -102,6 +74,7 @@ inline const Result ModeB(const Config& config) {
         // TODO: Review this calculation.
         .castBlockSize = 32,
         .channelizerBlockSize = timeRelatedBlockSize,
+        .phasorBlockSize = 32,
         .beamformerBlockSize = timeRelatedBlockSize,
         .detectorBlockSize = 32,
     };
@@ -121,12 +94,16 @@ inline const Result ModeB(const Config& config) {
             .sourceCoordinate = reader.getBoresightCoordinate(),
             .azimuthStart = 0.0,
             .zenithStart = 0.0,
-            .firstChannelCenterFrequency = 0.0,
-            .channelBandwidthHz = reader.getChannelBandwidth(),
+            .firstChannelCenterFrequency = (-1*reader.getObservationFrequency())
+                - (-1*reader.getChannelBandwidth())*(readerTotalOutputDims.numberOfFrequencyChannels()-1)
+                    /2,
+            .channelBandwidthHz = -1*reader.getChannelBandwidth(),
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .source_name = "Unknown",
             .rawdatafile = config.inputGuppiFile,
+
+            .numberOfInputFrequencyChannelBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
         },
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
@@ -163,6 +140,8 @@ inline const Result ModeB(const Config& config) {
 
             // Transfer output data from this pipeline to the next runner.
             Plan::TransferOut(computeRunner, readerRunner,
+                              worker.getStepOutputJulianDate(),
+                              worker.getStepOutputDut1(),
                               worker.getStepOutputBuffer());
 
             return stepCount++;

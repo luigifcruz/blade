@@ -91,6 +91,22 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
+    constexpr const PhasorTensorDimensions getBeamAntennaDelayDims() const { 
+        return bfr5->getBeamAntennaDelayDims();
+    }
+
+    constexpr F64* getBeamAntennaDelays() const {
+        return bfr5->getBeamAntennaDelays();
+    }
+
+    constexpr const U64 getNumberOfDelayTimes() const { 
+        return bfr5->getNumberOfDelayTimes();
+    }
+
+    constexpr F64* getDelayTimes() const {
+        return bfr5->getDelayTimes();
+    }
+
     constexpr const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate) const {
         return bfr5->getAntennaCoefficientsDims(channelizerRate);
     }

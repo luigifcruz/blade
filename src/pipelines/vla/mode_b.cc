@@ -5,13 +5,11 @@
 namespace Blade::Pipelines::VLA {
 
 template<typename IT, typename OT>
-ModeB<IT, OT>::ModeB(const Config& config) : config(config) {
+ModeB<IT, OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), blockDut1({1}) {
     BL_DEBUG("Initializing VLA Pipeline Mode B.");
 
     BL_DEBUG("Allocating pipeline buffers.");
     BL_CHECK_THROW(this->input.resize(config.inputDimensions));
-    BL_CHECK_THROW(this->phasors.resize(config.beamformerPhasors.dims()));
-    BL_CHECK_THROW(Memory::Copy(this->phasors, config.beamformerPhasors));
 
     if constexpr (!std::is_same<IT, CF32>::value) {
         BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
@@ -44,6 +42,30 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config) {
         });
     }
 
+    
+    BL_DEBUG("Instantiating phasor module.");
+    this->connect(phasor, {
+        .numberOfBeams = config.phasorBeamAntennaDelays.dims().numberOfBeams(),
+        .numberOfAntennas = channelizer->getOutputBuffer().dims().numberOfAspects(),
+        .numberOfFrequencyChannels = channelizer->getOutputBuffer().dims().numberOfFrequencyChannels(),
+        .numberOfPolarizations = channelizer->getOutputBuffer().dims().numberOfPolarizations(),
+
+        .channelZeroFrequencyHz = config.phasorChannelZeroFrequencyHz,
+        .channelBandwidthHz = config.phasorChannelBandwidthHz,
+        .frequencyStartIndex = config.phasorFrequencyStartIndex,
+
+        .antennaCoefficients = ArrayTensor<Device::CPU, CF64>(config.phasorAntennaCoefficients),
+        .beamAntennaDelays = PhasorTensor<Device::CPU, F64>(config.phasorBeamAntennaDelays),
+        .delayTimes = Vector<Device::CPU, F64>(config.phasorDelayTimes),
+
+        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
+
+        .blockSize = config.phasorBlockSize,
+    }, {
+        .blockJulianDate = this->blockJulianDate,
+        .blockDut1 = this->blockDut1,
+    });
+
     BL_DEBUG("Instantiating beamformer module.");
     this->connect(beamformer, {
         .enableIncoherentBeam = config.beamformerIncoherentBeam,
@@ -52,7 +74,7 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config) {
         .blockSize = config.beamformerBlockSize,
     }, {
         .buf = channelizer->getOutputBuffer(),
-        .phasors = this->phasors,
+        .phasors = phasor->getOutputPhasors(),
     });
 
 
@@ -88,13 +110,19 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config) {
 }
 
 template<typename IT, typename OT>
-const Result ModeB<IT, OT>::transferIn(const ArrayTensor<Device::CPU, IT>& input,
-                                   const cudaStream_t& stream) { 
+const Result ModeB<IT, OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
+                                       const Vector<Device::CPU, F64>& blockDut1,
+                                       const ArrayTensor<Device::CPU, IT>& input,
+                                       const cudaStream_t& stream) { 
     // Copy input to static buffers.
+    BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
     BL_CHECK(Memory::Copy(this->input, input, stream));
 
     // Print dynamic arguments on first run.
     if (this->getCurrentComputeStep() == 0) {
+        BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
     }
 
     return Result::SUCCESS;

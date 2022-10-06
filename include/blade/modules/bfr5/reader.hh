@@ -73,6 +73,29 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
+    const PhasorTensorDimensions getBeamAntennaDelayDims() const {
+        const auto bfr5Dims = this->getTotalDims();
+        return {
+            bfr5Dims.numberOfBeams(),
+            bfr5Dims.numberOfAntennas(),
+            1,
+            1,
+            1,
+        };
+    }
+
+    F64* getBeamAntennaDelays() const {
+        return this->bfr5.delay_info.delays;
+    }
+
+    const U64 getNumberOfDelayTimes() const {
+        return this->bfr5.delay_info.time_array_elements;
+    }
+
+    F64* getDelayTimes() const {
+        return this->bfr5.delay_info.time_array;
+    }
+
     const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate) const {
         const auto bfr5Dims = this->getTotalDims();
         return {
