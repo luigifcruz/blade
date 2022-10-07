@@ -36,26 +36,30 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
         return Result::ASSERTION_ERROR;
     }
 
-    const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
-    auto input = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, stepInputDims);
     if (this->config.transposeBTPF) {
         // from A F T P
         // to   A T P F (F is reversed)
+
+        // reverse the batches too seeing as they are an extension of the F dimension
+        const auto offset = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep()) * stepInputDims.size();
+        auto buffer = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, stepInputDims);
+
         const U64 numberOfTimePolarizationSamples = stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations();
         const U64 numberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
         const U64 numberOfAspects = stepInputDims.numberOfAspects();
         
         for(U64 a = 0; a < numberOfAspects; a++) {
             for(U64 f = numberOfFrequencyChannels; f-- > 0; ) {
-                const U64 aspectChannelFactor = (a*numberOfFrequencyChannels + f);
+                const U64 aspectChannelSourceFactor = (a*numberOfFrequencyChannels + f)*numberOfTimePolarizationSamples;
+                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples + f;
                 BL_CHECK(
                     Memory::Copy2D(
-                        input,
-                        1, // dstPitch
-                        aspectChannelFactor*numberOfTimePolarizationSamples*sizeof(IT), // dstOffset 
+                        buffer,
+                        numberOfFrequencyChannels*sizeof(IT), // dstPitch
+                        aspectChannelDestinationFactor*sizeof(IT), // dstOffset 
                         data,
-                        numberOfTimePolarizationSamples, // srcPitch
-                        aspectChannelFactor*numberOfTimePolarizationSamples*sizeof(IT), // srcOffset
+                        1*sizeof(IT), // srcPitch
+                        aspectChannelSourceFactor*sizeof(IT), // srcOffset
                         sizeof(IT),
                         numberOfTimePolarizationSamples,
                         stream
@@ -65,7 +69,9 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
         }
     }
     else {
-        BL_CHECK(Memory::Copy(input, data, stream));
+        const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
+        auto buffer = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, stepInputDims);
+        BL_CHECK(Memory::Copy(buffer, data, stream));
     }
 
     return Result::SUCCESS;
