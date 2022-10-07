@@ -106,6 +106,7 @@ inline const Result ModeB(const Config& config) {
             .numberOfInputFrequencyChannelBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
         },
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
+        .transposeBTPF = true,
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
     };
 

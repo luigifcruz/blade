@@ -51,7 +51,7 @@ void Writer<IT>::openFilesWriteHeaders() {
     // Check configuration values.
     for (size_t i = 0; i < this->fileDescriptors.size(); i++) {
         auto filepath = fmt::format("{}-beam{:04}.fil", this->config.filepath, i % 10000);
-        this->fileDescriptors[i] = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+        this->fileDescriptors[i] = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (this->fileDescriptors[i] < 1) {
             BL_FATAL("Could not open '{}': {}\n", filepath, this->fileDescriptors[i]);
             BL_CHECK_THROW(Result::ERROR);
@@ -64,6 +64,7 @@ void Writer<IT>::openFilesWriteHeaders() {
 
 template<typename IT>
 const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
+    // Expect data with dimensions: [Fbatch, B, T, P, F]
 
     const auto inputDims = this->input.buffer.dims();
     const U64 numberOfTimePolarizationSamples = inputDims.numberOfTimeSamples()*inputDims.numberOfPolarizations();
@@ -88,9 +89,10 @@ const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
             for (size_t tp = 0; tp < numberOfTimePolarizationSamples; tp++) {
                 for (size_t fb = 0; fb < this->config.numberOfInputFrequencyChannelBatches; fb++) {
                     iovecs[iovec_count].iov_base = this->input.buffer.data() +
-                    fb * frequencyBatchByteStride +
-                    a * aspectByteStride +
-                    tp * timepolSampleByteStride;
+                        ( fb * frequencyBatchByteStride
+                        + a * aspectByteStride
+                        + tp * timepolSampleByteStride
+                        )/sizeof(IT);
                     iovecs[iovec_count].iov_len = timepolSampleByteStride;
                     iovec_count++;
                     if(iovec_count == max_iovecs) {
