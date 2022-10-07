@@ -31,7 +31,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         .nbeams = (I32) inputDims.numberOfAspects(),
         .ibeam = -1,
         .nbits = (I32) (this->input.buffer.size_bytes()/this->input.buffer.size())*8,
-        .tstart = this->config.julianDateStart,
+        .tstart = this->config.julianDateStart - 2400000.5, // from JD to MJD
         .tsamp = 1.0/this->config.channelBandwidthHz,
         .nifs = this->config.numberOfIfChannels,
     };
