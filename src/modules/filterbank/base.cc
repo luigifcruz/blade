@@ -82,7 +82,7 @@ const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
         if (this->config.numberOfInputFrequencyChannelBatches == 1) {
             bytesWritten += write(
                 this->fileDescriptors[a],
-                this->input.buffer.data() + a*aspectByteStride,
+                this->input.buffer.data() + a*aspectByteStride/sizeof(IT),
                 aspectByteStride
             );
         } else {
