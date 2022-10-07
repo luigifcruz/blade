@@ -43,7 +43,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
         .arrayReferencePosition = config.phasorArrayReferencePosition,
         .boresightCoordinate = config.phasorBoresightCoordinate,
         .antennaPositions = config.phasorAntennaPositions,
-        .antennaCalibrations = ArrayTensor<Device::CPU, CF64>(config.phasorAntennaCalibrations),
+        .antennaCalibrations = config.phasorAntennaCalibrations,
         .beamCoordinates = config.phasorBeamCoordinates,
 
         .blockSize = config.phasorBlockSize,

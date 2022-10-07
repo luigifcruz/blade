@@ -57,7 +57,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     // Check configuration values.
     if (this->getConfigCalibrationDims().size() != config.antennaCalibrations.size()) {
         BL_FATAL("Number of antenna calibrations ({}) doesn't match with the expected size ({}).", 
-                config.antennaCalibrations.size(), this->getConfigCalibrationDims());
+                config.antennaCalibrations.size(), this->getConfigCalibrationDims().size());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -83,7 +83,6 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Calibration Dimensions [A, F, T, P]: {}", this->config.antennaCalibrations.dims());
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
 }

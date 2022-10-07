@@ -26,11 +26,6 @@ static struct {
     std::unordered_map<U64, void*> OutputPointerMap;
 
     struct {
-        TestPipelineB::Config B;
-        TestPipelineH::Config H;
-    } RunnersConfig;
-
-    struct {
         std::unique_ptr<Runner<TestPipelineB>> B; 
         std::unique_ptr<Runner<TestPipelineH>> H; 
     } RunnersInstances;
@@ -109,28 +104,25 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114},        // 5b
         },
-        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>({
-            State.RunnersConfig.B.inputDimensions.numberOfAspects(),
-            State.RunnersConfig.B.inputDimensions.numberOfFrequencyChannels() * State.RunnersConfig.B.preBeamformerChannelizerRate,
-            State.RunnersConfig.B.inputDimensions.numberOfPolarizations(),
-        }),
+        .phasorAntennaCalibrations = std::vector<CF64>(ArrayTensorDimensions({
+            BLADE_ATA_MODE_BH_NANT,
+            BLADE_ATA_MODE_BH_NCHAN * BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
+            1,
+            BLADE_ATA_MODE_BH_NPOL,
+        }).size()),
         .phasorBeamCoordinates = {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
     });
 
-    State.RunnersConfig.H = {
+    State.RunnersInstances.H = Runner<TestPipelineH>::New(numberOfWorkers, {
         .inputDimensions = State.RunnersInstances.B->getWorker().getOutputBuffer().dims(),
 
         .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
 
         .detectorNumberOfOutputPolarizations = 1,
-    };
-
-    State.RunnersInstances.H = 
-        Runner<TestPipelineH>::New(numberOfWorkers, 
-                                   State.RunnersConfig.H);
+    });
 
     State.InputPointerMap.reserve(numberOfWorkers);
     State.OutputPointerMap.reserve(numberOfWorkers);

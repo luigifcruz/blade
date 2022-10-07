@@ -15,8 +15,6 @@ class BLADE_API Vector<Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
         BL_CHECK_THROW(this->resize(dims));
     }
 
-    explicit Vector(const Vector<Device::CPU, T, Dims>& other) : VectorImpl<T, Dims>(other.data(), other.dims()) {}
-
     ~Vector() {
         if (this->container.empty() || !this->managed) {
             return;
