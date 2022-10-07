@@ -21,7 +21,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         .data_type = 1,
         .barycentric = this->config.baryCentric,
         .pulsarcentric = this->config.pulsarCentric,
-        .src_raj = this->config.sourceCoordinate.RA,
+        .src_raj = this->config.sourceCoordinate.RA * 24.0/360.0, // from degrees to hours
         .src_dej = this->config.sourceCoordinate.DEC,
         .az_start = this->config.azimuthStart,
         .za_start = this->config.zenithStart,
