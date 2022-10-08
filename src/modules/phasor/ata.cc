@@ -192,7 +192,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                 const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
                 const U64 frequencyCoeffOffset = (f + currentFrequencyStepOffset) * this->config.numberOfPolarizations;
 
-                const F64 freq = (f + this->config.frequencyStartIndex + currentFrequencyStepOffset) * this->config.channelBandwidthHz;
+                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + currentFrequencyStepOffset) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 
