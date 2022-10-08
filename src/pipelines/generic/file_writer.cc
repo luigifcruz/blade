@@ -49,9 +49,9 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
         const U64 numberOfAspects = stepInputDims.numberOfAspects();
         
         for(U64 a = 0; a < numberOfAspects; a++) {
-            for(U64 f = numberOfFrequencyChannels; f-- > 0; ) {
+            for(U64 f = 0; f < numberOfFrequencyChannels; f++) {
                 const U64 aspectChannelSourceFactor = (a*numberOfFrequencyChannels + f)*numberOfTimePolarizationSamples;
-                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples + f;
+                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples + (numberOfFrequencyChannels-1 - f);
                 BL_CHECK(
                     Memory::Copy2D(
                         buffer,
