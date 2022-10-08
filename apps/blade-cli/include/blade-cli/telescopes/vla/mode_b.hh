@@ -97,7 +97,7 @@ inline const Result ModeB(const Config& config) {
             .firstChannelCenterFrequency = (-1*reader.getObservationFrequency())
                 - (-1*reader.getChannelBandwidth())*(readerTotalOutputDims.numberOfFrequencyChannels()-1)
                     /2,
-            .channelBandwidthHz = -1*reader.getChannelBandwidth(),
+            .channelBandwidthHz = -1*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate,
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .source_name = "Unknown",
