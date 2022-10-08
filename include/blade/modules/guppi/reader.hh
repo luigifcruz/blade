@@ -97,6 +97,10 @@ class BLADE_API Reader : public Module {
     const F64 getChannelBandwidth() const;
     const U64 getChannelStartIndex() const;
     const F64 getObservationFrequency() const;
+    const F64 getAzimuthAngle() const;
+    const F64 getZenithAngle() const;
+    const std::string getSourceName() const;
+    const std::string getTelescopeName() const;
 
  private:
     // Variables 

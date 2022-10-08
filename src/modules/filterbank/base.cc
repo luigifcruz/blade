@@ -17,7 +17,7 @@ Writer<IT>::Writer(const Config& config, const Input& input)
 
     this->filterbank_header = {
         .machine_id = this->config.machineId,
-        .telescope_id = this->config.telescopeId,
+        .telescope_id = filterbank_telescope_id(this->config.telescopeName.c_str()),
         .data_type = 1,
         .barycentric = this->config.baryCentric,
         .pulsarcentric = this->config.pulsarCentric,
@@ -35,8 +35,8 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         .tsamp = 1.0/this->config.channelBandwidthHz,
         .nifs = this->config.numberOfIfChannels,
     };
-    strncpy(this->filterbank_header.source_name, this->config.source_name.c_str(), 80);
-    strncpy(this->filterbank_header.rawdatafile, this->config.rawdatafile.c_str(), 80);
+    strncpy(this->filterbank_header.source_name, this->config.sourceName.c_str(), 80);
+    strncpy(this->filterbank_header.rawdatafile, this->config.sourceDataFilename.c_str(), 80);
 
     this->openFilesWriteHeaders();
 

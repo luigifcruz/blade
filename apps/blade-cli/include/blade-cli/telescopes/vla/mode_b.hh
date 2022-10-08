@@ -65,7 +65,7 @@ inline const Result ModeB(const Config& config) {
         .phasorDelayTimes = Vector<Device::CPU, F64>(reader.getDelayTimes(), {reader.getNumberOfDelayTimes()}),
 
         .beamformerNumberOfBeams = reader.getBeamAntennaDelayDims().numberOfBeams(),
-        .beamformerIncoherentBeam = true,
+        .beamformerIncoherentBeam = false,
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
@@ -88,20 +88,20 @@ inline const Result ModeB(const Config& config) {
             .filepath = config.outputFile,
             
             .machineId = 0,
-            .telescopeId = 0,
+            .telescopeName = reader.getTelescopeName(),
             .baryCentric = 1,
             .pulsarCentric = 1,
             .sourceCoordinate = reader.getBoresightCoordinate(),
-            .azimuthStart = 0.0,
-            .zenithStart = 0.0,
+            .azimuthStart = reader.getAzimuthAngle(),
+            .zenithStart = reader.getZenithAngle(),
             .firstChannelCenterFrequency = (-1*reader.getObservationFrequency())
                 - (-1*reader.getChannelBandwidth())*(readerTotalOutputDims.numberOfFrequencyChannels()-1)
                     /2,
             .channelBandwidthHz = -1*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate,
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
-            .source_name = "Unknown",
-            .rawdatafile = config.inputGuppiFile,
+            .sourceName = reader.getSourceName(),
+            .sourceDataFilename = config.inputGuppiFile,
 
             .numberOfInputFrequencyChannelBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
         },

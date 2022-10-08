@@ -25,7 +25,7 @@ class BLADE_API Writer : public Module {
         std::string filepath;
 
         int machineId;
-        int telescopeId;
+        std::string telescopeName;
         int baryCentric;
         int pulsarCentric;
         RA_DEC sourceCoordinate;
@@ -35,8 +35,8 @@ class BLADE_API Writer : public Module {
         double channelBandwidthHz;
         double julianDateStart;
         int numberOfIfChannels;
-        std::string source_name;
-        std::string rawdatafile;
+        std::string sourceName;
+        std::string sourceDataFilename;
 
         U64 numberOfInputFrequencyChannelBatches = 1;
         U64 blockSize = 512;

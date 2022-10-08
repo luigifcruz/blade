@@ -15,6 +15,10 @@ typedef struct {
     U64 piperblk;
     U64 pktidx;
     F64 dut1;
+    F64 az;
+    F64 el;
+    char src_name[72];
+    char telescope_id[72];
 } guppiraw_block_meta_t;
 
 const U64 KEY_UINT64_SCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
@@ -24,6 +28,10 @@ const U64 KEY_UINT64_SYNCTIME = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','
 const U64 KEY_UINT64_PIPERBLK = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
 const U64 KEY_UINT64_PKTIDX = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
 const U64 KEY_UINT64_DUT1 = GUPPI_RAW_KEY_UINT64_ID_LE('D','U','T','1',' ',' ',' ',' ');
+const U64 KEY_UINT64_AZ = GUPPI_RAW_KEY_UINT64_ID_LE('A','Z',' ',' ',' ',' ',' ',' ');
+const U64 KEY_UINT64_EL = GUPPI_RAW_KEY_UINT64_ID_LE('E','L',' ',' ',' ',' ',' ',' ');
+const U64 KEY_UINT64_SRC_NAME = GUPPI_RAW_KEY_UINT64_ID_LE('S','R','C','_','N','A','M','E');
+const U64 KEY_UINT64_TELESCOP = GUPPI_RAW_KEY_UINT64_ID_LE('T','E','L','E','S','C','O','P');
 
 void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
     if        (((U64*)entry)[0] == KEY_UINT64_SCHAN) {
@@ -40,6 +48,21 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
         hgetu8(entry, "PKTIDX", &((guppiraw_block_meta_t*)block_meta)->pktidx);
     } else if (((U64*)entry)[0] == KEY_UINT64_DUT1) {
         hgetr8(entry, "DUT1", &((guppiraw_block_meta_t*)block_meta)->dut1);
+    } else if (((U64*)entry)[0] == KEY_UINT64_AZ) {
+        hgetr8(entry, "AZ", &((guppiraw_block_meta_t*)block_meta)->az);
+    } else if (((U64*)entry)[0] == KEY_UINT64_EL) {
+        hgetr8(entry, "EL", &((guppiraw_block_meta_t*)block_meta)->el);
+    } else if (((U64*)entry)[0] == KEY_UINT64_SRC_NAME) {
+        hgets(entry, "SRC_NAME", 72, ((guppiraw_block_meta_t*)block_meta)->src_name);
+    } else if (((U64*)entry)[0] == KEY_UINT64_TELESCOP) {
+        hgets(entry, "TELESCOP", 72, ((guppiraw_block_meta_t*)block_meta)->telescope_id);
+    } else if (guppiraw_header_entry_is_END((U64*)entry)) {
+        if (((guppiraw_block_meta_t*)block_meta)->src_name[0] == '\0') {
+            strcpy(((guppiraw_block_meta_t*)block_meta)->src_name, "Unknown");
+        }
+        if (((guppiraw_block_meta_t*)block_meta)->telescope_id[0] == '\0') {
+            strcpy(((guppiraw_block_meta_t*)block_meta)->telescope_id, "Unknown");
+        }
     } 
 }
 
@@ -130,6 +153,26 @@ const U64 Reader<OT>::getChannelStartIndex() const {
 template<typename OT>
 const F64 Reader<OT>::getObservationFrequency() const {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getAzimuthAngle() const {
+    return getBlockMeta(&gr_iterate)->az;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getZenithAngle() const {
+    return getBlockMeta(&gr_iterate)->el;
+}
+
+template<typename OT>
+const std::string Reader<OT>::getSourceName() const {
+    return std::string(getBlockMeta(&gr_iterate)->src_name);
+}
+
+template<typename OT>
+const std::string Reader<OT>::getTelescopeName() const {
+    return std::string(getBlockMeta(&gr_iterate)->telescope_id);
 }
 
 template<typename OT>

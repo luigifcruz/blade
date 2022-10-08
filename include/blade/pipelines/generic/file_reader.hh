@@ -48,6 +48,22 @@ class BLADE_API FileReader : public Pipeline {
     constexpr const U64 getChannelStartIndex() const {
         return guppi->getChannelStartIndex();
     }
+    
+    constexpr const F64 getAzimuthAngle() const {
+        return guppi->getAzimuthAngle();
+    }
+
+    constexpr const F64 getZenithAngle() const {
+        return guppi->getZenithAngle();
+    }
+
+    constexpr const std::string getSourceName() const {
+        return guppi->getSourceName();
+    }
+
+    constexpr const std::string getTelescopeName() const {
+        return guppi->getTelescopeName();
+    }
 
     constexpr const U64 getNumberOfSteps() const {
         return guppi->getNumberOfSteps();
