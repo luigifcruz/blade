@@ -85,10 +85,8 @@ inline const Result ModeB(const Config& config) {
             .sourceCoordinate = reader.getBoresightCoordinate(),
             .azimuthStart = reader.getAzimuthAngle(),
             .zenithStart = reader.getZenithAngle(),
-            .firstChannelCenterFrequency = (-1*reader.getObservationFrequency())
-                - (-1*reader.getChannelBandwidth())*(readerTotalOutputDims.numberOfFrequencyChannels()-1)
-                    /2,
-            .channelBandwidthHz = -1*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate,
+            .observationFrequencyHz = reader.getObservationFrequency(),
+            .observationBandwidthHz = -1*reader.getTotalBandwidth(), // Negated as frequencies are reversed
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .sourceName = reader.getSourceName(),

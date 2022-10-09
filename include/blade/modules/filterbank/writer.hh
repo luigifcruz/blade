@@ -31,8 +31,8 @@ class BLADE_API Writer : public Module {
         RA_DEC sourceCoordinate;
         double azimuthStart;
         double zenithStart;
-        double firstChannelCenterFrequency;
-        double channelBandwidthHz;
+        double observationFrequencyHz;
+        double observationBandwidthHz;
         double julianDateStart;
         int numberOfIfChannels;
         std::string sourceName;

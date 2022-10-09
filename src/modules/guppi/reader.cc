@@ -142,7 +142,7 @@ const F64 Reader<OT>::getChannelBandwidth() const {
 
 template<typename OT>
 const F64 Reader<OT>::getTotalBandwidth() const {
-    return getChannelBandwidth() * getStepOutputBufferDims().numberOfFrequencyChannels();
+    return getChannelBandwidth() * getTotalOutputBufferDims().numberOfFrequencyChannels();
 }
 
 template<typename OT>

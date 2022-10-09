@@ -25,14 +25,14 @@ Writer<IT>::Writer(const Config& config, const Input& input)
         .src_dej = this->config.sourceCoordinate.DEC,
         .az_start = this->config.azimuthStart,
         .za_start = this->config.zenithStart,
-        .fch1 = this->config.firstChannelCenterFrequency,
-        .foff = this->config.channelBandwidthHz,
+        .fch1 = 1e-6 * (this->config.observationFrequencyHz - this->config.observationBandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels())),
+        .foff = 1e-6 * (this->config.observationBandwidthHz / inputDims.numberOfFrequencyChannels()),
         .nchans = (I32) inputDims.numberOfFrequencyChannels(),
         .nbeams = (I32) inputDims.numberOfAspects(),
         .ibeam = -1,
-        .nbits = (I32) (this->input.buffer.size_bytes()/this->input.buffer.size())*8,
+        .nbits = (I32) sizeof(IT)*8,
         .tstart = this->config.julianDateStart - 2400000.5, // from JD to MJD
-        .tsamp = 1.0/this->config.channelBandwidthHz,
+        .tsamp = abs(1.0/(this->config.observationBandwidthHz / inputDims.numberOfFrequencyChannels())), // time always moves forward
         .nifs = this->config.numberOfIfChannels,
     };
     strncpy(this->filterbank_header.source_name, this->config.sourceName.c_str(), 80);
