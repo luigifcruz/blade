@@ -52,7 +52,7 @@ class BLADE_API Reader : public Module {
     F64 getUnixDateOfLastReadBlock();
 
     constexpr F64 getJulianDateOfLastReadBlock() {
-        return calc_julian_date_from_unix(this->getUnixDateOfLastReadBlock());
+        return calc_julian_date_from_unix_sec(this->getUnixDateOfLastReadBlock());
     }
 
     constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {

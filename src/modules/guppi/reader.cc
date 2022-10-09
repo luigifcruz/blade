@@ -189,7 +189,7 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
     // Query internal library Julian Date. 
     const auto unixDate = this->getUnixDateOfLastReadBlock();
 
-    this->output.stepJulianDate[0] = calc_julian_date_from_unix(unixDate);
+    this->output.stepJulianDate[0] = calc_julian_date_from_unix_sec(unixDate);
 
     // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
