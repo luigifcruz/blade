@@ -129,10 +129,10 @@ F64 Reader<OT>::getUnixDateOfLastReadBlock() {
         this->getDatashape()->n_time,
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
-        (getBlockMeta(&gr_iterate)->pktidx + 
-            (this->lastread_block_index + 
-            (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
-            this->getDatashape()->n_time));
+        getBlockMeta(&gr_iterate)->pktidx + 
+            ((F64)this->lastread_block_index + 0.5)
+            * getBlockMeta(&gr_iterate)->piperblk
+    );
 }
 
 template<typename OT>

@@ -45,11 +45,26 @@ VLA<OT>::VLA(const typename VLA<OT>::Config& config,
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", this->getOutputDelays().dims(), "N/A");
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Frequency steps: {}", this->frequencySteps);
+    BL_INFO("Delay Times:")
+    time_t curtime = 0;
+    char timestr[32] = {0};
+    for (U64 i = 0; i < config.delayTimes.size(); i++) {
+        curtime = config.delayTimes[i];
+        ctime_r(&curtime, timestr);
+        timestr[strlen(timestr)-1] = '\0'; // Chop off trailing newline
+        BL_INFO("   {}: {} ({})", i, config.delayTimes[i], timestr);
+    }
 }
 
 template<typename OT>
 const Result VLA<OT>::preprocess(const cudaStream_t& stream) {
-    // TODO: update delayTimeIndex based on blockJulianDate, blockDut1 and config.delayTimes
+    if (this->delayTimeIndex < this->config.delayTimes.size()-1) {
+        const auto delayTimeThreshold = (3*this->config.delayTimes[this->delayTimeIndex+1] - this->config.delayTimes[this->delayTimeIndex]) / 2.0;
+        const auto blockUnixS = calc_unix_sec_from_julian_date(this->input.blockJulianDate[0]);
+        if (blockUnixS >= delayTimeThreshold) {
+            this->delayTimeIndex += 1;
+        }
+    }
 
     const U64 currentFrequencyStepOffset = this->frequencyStepIndex * this->config.numberOfFrequencyChannels;
     const auto beamAntennaDelayDims = this->config.beamAntennaDelays.dims();
