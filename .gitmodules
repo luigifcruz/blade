@@ -13,3 +13,6 @@
 [submodule "subprojects/filterbankc99"]
 	path = subprojects/filterbankc99
 	url = https://github.com/MydonSolutions/filterbankc99
+[submodule "subprojects/seticore"]
+	path = subprojects/seticore
+	url = https://github.com/lacker/seticore
