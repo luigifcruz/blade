@@ -19,7 +19,7 @@ inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::ATA::ModeB<OT>;
-    using Writer = Pipelines::Generic::Accumulate<Modules::Guppi::Writer<OT>, OT>;
+    using Writer = Pipelines::Generic::Accumulate<Modules::Guppi::Writer<OT>, Device::CPU, OT>;
 
     // Instantiate reader pipeline and runner.
 

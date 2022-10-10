@@ -4,8 +4,8 @@
 
 namespace Blade::Pipelines::Generic {
 
-template<typename MT, typename IT>
-Accumulate<MT, IT>::Accumulate(const Config& config) 
+template<typename MT, Device DT, typename IT>
+Accumulate<MT, DT, IT>::Accumulate(const Config& config) 
      : Accumulator(config.accumulateRate),
        config(config) {
     BL_DEBUG("Initializing CLI Accumulate Pipeline.");
@@ -26,8 +26,8 @@ Accumulate<MT, IT>::Accumulate(const Config& config)
     });
 }
 
-template<typename MT, typename IT>
-const Result Accumulate<MT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+template<typename MT, Device DT, typename IT>
+const Result Accumulate<MT, DT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                         const cudaStream_t& stream) {
     const auto stepInputDims = data.dims();
     if (stepInputDims != this->config.inputDimensions) {
@@ -42,7 +42,7 @@ const Result Accumulate<MT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
 
         // reverse the batches too seeing as they are an extension of the F dimension
         const auto offset = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep()) * stepInputDims.size();
-        auto buffer = ArrayTensor<Device::CPU, IT>(accumulationBuffer.data() + offset, stepInputDims);
+        auto buffer = ArrayTensor<DT, IT>(accumulationBuffer.data() + offset, stepInputDims);
 
         const U64 numberOfTimePolarizationSamples = stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations();
         const U64 numberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
@@ -70,18 +70,18 @@ const Result Accumulate<MT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
     }
     else {
         const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
-        auto buffer = ArrayTensor<Device::CPU, IT>(accumulationBuffer.data() + offset, stepInputDims);
+        auto buffer = ArrayTensor<DT, IT>(accumulationBuffer.data() + offset, stepInputDims);
         BL_CHECK(Memory::Copy(buffer, data, stream));
     }
 
     return Result::SUCCESS;
 }
 
-template class BLADE_API Accumulate<Modules::Guppi::Writer<CF16>, CF16>;
-template class BLADE_API Accumulate<Modules::Guppi::Writer<CF32>, CF32>;
+template class BLADE_API Accumulate<Modules::Guppi::Writer<CF16>, Device::CPU, CF16>;
+template class BLADE_API Accumulate<Modules::Guppi::Writer<CF32>, Device::CPU, CF32>;
 
-template class BLADE_API Accumulate<Modules::Filterbank::Writer<F16>, F16>;
-template class BLADE_API Accumulate<Modules::Filterbank::Writer<F32>, F32>;
-template class BLADE_API Accumulate<Modules::Filterbank::Writer<F64>, F64>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F16>, Device::CPU, F16>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F32>, Device::CPU, F32>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F64>, Device::CPU, F64>;
 
 }  // namespace Blade::Pipelines::Generic

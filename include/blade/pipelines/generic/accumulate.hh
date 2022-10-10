@@ -12,7 +12,7 @@
 
 namespace Blade::Pipelines::Generic {
 
-template<typename MT, typename IT>
+template<typename MT, Device DT, typename IT>
 class BLADE_API Accumulate : public Pipeline, public Accumulator {
  public:
     struct Config {
@@ -47,7 +47,7 @@ class BLADE_API Accumulate : public Pipeline, public Accumulator {
  private:
     const Config config;
 
-    ArrayTensor<Device::CPU, IT> accumulationBuffer;
+    ArrayTensor<DT, IT> accumulationBuffer;
 
     std::shared_ptr<MT> moduleUnderlying;
 };
