@@ -8,7 +8,7 @@
 #include "blade/utils/indicators.hh"
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/generic/file_reader.hh"
-#include "blade/pipelines/generic/file_writer.hh"
+#include "blade/pipelines/generic/accumulate.hh"
 
 using namespace indicators;
 
@@ -19,7 +19,7 @@ inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::ATA::ModeB<OT>;
-    using Writer = Pipelines::Generic::FileWriter<Modules::Guppi::Writer<OT>, OT>;
+    using Writer = Pipelines::Generic::Accumulate<Modules::Guppi::Writer<OT>, OT>;
 
     // Instantiate reader pipeline and runner.
 
@@ -75,7 +75,7 @@ inline const Result ModeB(const Config& config) {
     // Instantiate writer pipeline and runner.
 
     typename Writer::Config writerConfig = {
-        .writerConfig = {
+        .moduleConfig = {
             .filepath = config.outputFile,
             .directio = true,
             .inputFrequencyBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
@@ -87,13 +87,13 @@ inline const Result ModeB(const Config& config) {
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);
     auto& writer = writerRunner->getWorker();
 
-    // Append information to the FileWriter's GUPPI header.
+    // Append information to the Accumulator's GUPPI header.
 
-    writer.getWriter()->headerPut("OBSFREQ", reader.getObservationFrequency());
-    writer.getWriter()->headerPut("OBSBW", reader.getChannelBandwidth() * 
+    writer.getModule()->headerPut("OBSFREQ", reader.getObservationFrequency());
+    writer.getModule()->headerPut("OBSBW", reader.getChannelBandwidth() * 
                               readerTotalOutputDims.numberOfFrequencyChannels());
-    writer.getWriter()->headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
-    writer.getWriter()->headerPut("PKTIDX", 0);
+    writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
+    writer.getModule()->headerPut("PKTIDX", 0);
 
     indicators::ProgressBar bar{
         option::BarWidth{100},

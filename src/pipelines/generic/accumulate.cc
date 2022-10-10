@@ -1,16 +1,16 @@
-#define BL_LOG_DOMAIN "P::FILE_WRITER"
+#define BL_LOG_DOMAIN "P::ACCUMULATE"
 
-#include "blade/pipelines/generic/file_writer.hh"
+#include "blade/pipelines/generic/accumulate.hh"
 
 namespace Blade::Pipelines::Generic {
 
-template<typename WT, typename IT>
-FileWriter<WT, IT>::FileWriter(const Config& config) 
+template<typename MT, typename IT>
+Accumulate<MT, IT>::Accumulate(const Config& config) 
      : Accumulator(config.accumulateRate),
        config(config) {
-    BL_DEBUG("Initializing CLI File Writer Pipeline.");
+    BL_DEBUG("Initializing CLI Accumulate Pipeline.");
 
-    this->writerBuffer.resize(ArrayTensorDimensions({
+    this->accumulationBuffer.resize(ArrayTensorDimensions({
         .A = config.inputDimensions.numberOfAspects(),
         .F = config.inputDimensions.numberOfFrequencyChannels() * config.accumulateRate,
         .T = config.inputDimensions.numberOfTimeSamples(),
@@ -18,16 +18,16 @@ FileWriter<WT, IT>::FileWriter(const Config& config)
     }));
 
     BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", config.inputDimensions, "N/A");
-    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->writerBuffer.dims(), "N/A");
+    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->accumulationBuffer.dims(), "N/A");
 
-    BL_DEBUG("Instantiating file writer.");
-    this->connect(writer, config.writerConfig, {
-        .buffer = writerBuffer,
+    BL_DEBUG("Instantiating accumulated module.");
+    this->connect(moduleUnderlying, config.moduleConfig, {
+        .buffer = accumulationBuffer,
     });
 }
 
-template<typename WT, typename IT>
-const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+template<typename MT, typename IT>
+const Result Accumulate<MT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                         const cudaStream_t& stream) {
     const auto stepInputDims = data.dims();
     if (stepInputDims != this->config.inputDimensions) {
@@ -42,7 +42,7 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
 
         // reverse the batches too seeing as they are an extension of the F dimension
         const auto offset = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep()) * stepInputDims.size();
-        auto buffer = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, stepInputDims);
+        auto buffer = ArrayTensor<Device::CPU, IT>(accumulationBuffer.data() + offset, stepInputDims);
 
         const U64 numberOfTimePolarizationSamples = stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations();
         const U64 numberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
@@ -70,18 +70,18 @@ const Result FileWriter<WT, IT>::accumulate(const ArrayTensor<Device::CUDA, IT>&
     }
     else {
         const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
-        auto buffer = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, stepInputDims);
+        auto buffer = ArrayTensor<Device::CPU, IT>(accumulationBuffer.data() + offset, stepInputDims);
         BL_CHECK(Memory::Copy(buffer, data, stream));
     }
 
     return Result::SUCCESS;
 }
 
-template class BLADE_API FileWriter<Modules::Guppi::Writer<CF16>, CF16>;
-template class BLADE_API FileWriter<Modules::Guppi::Writer<CF32>, CF32>;
+template class BLADE_API Accumulate<Modules::Guppi::Writer<CF16>, CF16>;
+template class BLADE_API Accumulate<Modules::Guppi::Writer<CF32>, CF32>;
 
-template class BLADE_API FileWriter<Modules::Filterbank::Writer<F16>, F16>;
-template class BLADE_API FileWriter<Modules::Filterbank::Writer<F32>, F32>;
-template class BLADE_API FileWriter<Modules::Filterbank::Writer<F64>, F64>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F16>, F16>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F32>, F32>;
+template class BLADE_API Accumulate<Modules::Filterbank::Writer<F64>, F64>;
 
 }  // namespace Blade::Pipelines::Generic

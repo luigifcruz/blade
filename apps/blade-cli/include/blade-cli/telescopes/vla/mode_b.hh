@@ -9,7 +9,7 @@
 #include "blade/pipelines/vla/mode_b.hh"
 #include "blade/modules/phasor/ata.hh"
 #include "blade/pipelines/generic/file_reader.hh"
-#include "blade/pipelines/generic/file_writer.hh"
+#include "blade/pipelines/generic/accumulate.hh"
 
 using namespace indicators;
 
@@ -20,7 +20,7 @@ inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::VLA::ModeB<IT, OT>;
-    using Writer = Pipelines::Generic::FileWriter<Modules::Filterbank::Writer<OT>, OT>;
+    using Writer = Pipelines::Generic::Accumulate<Modules::Filterbank::Writer<OT>, OT>;
 
     // Instantiate reader pipeline and runner.
 
@@ -75,7 +75,7 @@ inline const Result ModeB(const Config& config) {
     // Instantiate writer pipeline and runner.
 
     typename Writer::Config writerConfig = {
-        .writerConfig = {
+        .moduleConfig = {
             .filepath = config.outputFile,
             
             .machineId = 0,

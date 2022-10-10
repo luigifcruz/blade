@@ -25,7 +25,7 @@ sum_lst += {'File Reader': all_deps_found}
 cfg_lst.set('BLADE_PIPELINE_GENERIC_FILE_READER', all_deps_found)
 
 #
-#  File Writer
+#  Accumulate
 #
 
 deps = [
@@ -40,13 +40,13 @@ endforeach
 
 if all_deps_found
     src_lst += files([
-        'file_writer.cc',
+        'accumulate.cc',
     ])
 endif
 
-sum_lst += {'File Writer': all_deps_found}
+sum_lst += {'Accumulate': all_deps_found}
 
-cfg_lst.set('BLADE_PIPELINE_GENERIC_FILE_WRITER', all_deps_found)
+cfg_lst.set('BLADE_PIPELINE_GENERIC_ACCUMULATE', all_deps_found)
 
 #
 #  Mode H

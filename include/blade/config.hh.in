@@ -26,9 +26,12 @@
 // VLA Pipelines
 #mesondefine BLADE_PIPELINE_VLA_MODE_B
 
+// Seticore Pipelines
+#mesondefine BLADE_PIPELINE_SETICORE_MODE_D
+
 // Generic Pipelines
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
-#mesondefine BLADE_PIPELINE_GENERIC_FILE_WRITER
+#mesondefine BLADE_PIPELINE_GENERIC_ACCUMULATE
 #mesondefine BLADE_PIPELINE_GENERIC_MODE_H
 
 // Dependency Loaders

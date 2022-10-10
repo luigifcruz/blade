@@ -1,5 +1,5 @@
-#ifndef BLADE_PIPELINES_GENERIC_FILE_WRITER_HH
-#define BLADE_PIPELINES_GENERIC_FILE_WRITER_HH
+#ifndef BLADE_PIPELINES_GENERIC_ACCUMULATE_HH
+#define BLADE_PIPELINES_GENERIC_ACCUMULATE_HH
 
 #include <memory>
 #include <deque>
@@ -12,25 +12,25 @@
 
 namespace Blade::Pipelines::Generic {
 
-template<typename WT, typename IT>
-class BLADE_API FileWriter : public Pipeline, public Accumulator {
+template<typename MT, typename IT>
+class BLADE_API Accumulate : public Pipeline, public Accumulator {
  public:
     struct Config {
-        WT::Config writerConfig;
+        MT::Config moduleConfig;
 
         ArrayTensorDimensions inputDimensions;
         BOOL transposeBTPF = false;
         U64 accumulateRate = 1;
     };
 
-    explicit FileWriter(const Config& config);
+    explicit Accumulate(const Config& config);
 
     constexpr const U64 getStepInputBufferSize() const {
         return this->config.inputDimensions.size();
     }
 
     constexpr const U64 getTotalInputBufferSize() const {
-        return this->writerBuffer.dims().size();
+        return this->accumulationBuffer.dims().size();
     }
 
     constexpr const Config& getConfig() const {
@@ -40,16 +40,16 @@ class BLADE_API FileWriter : public Pipeline, public Accumulator {
     const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                             const cudaStream_t& stream);
 
-    const std::shared_ptr<WT> getWriter() {
-        return this->writer;
+    const std::shared_ptr<MT> getModule() {
+        return this->moduleUnderlying;
     }
 
  private:
     const Config config;
 
-    ArrayTensor<Device::CPU, IT> writerBuffer;
+    ArrayTensor<Device::CPU, IT> accumulationBuffer;
 
-    std::shared_ptr<WT> writer;
+    std::shared_ptr<MT> moduleUnderlying;
 };
 
 }  // namespace Blade::Pipelines::Generic
