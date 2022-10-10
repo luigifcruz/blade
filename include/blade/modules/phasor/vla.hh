@@ -104,7 +104,7 @@ class BLADE_API VLA : public Module {
 
  private:
     constexpr const U64 getNumberOfBeams() const {
-        return this->config.beamAntennaDelays.size() / this->config.numberOfAntennas;
+        return this->config.beamAntennaDelays.size() / (this->config.numberOfAntennas * this->config.delayTimes.size());
     }
 
     const Config config;
