@@ -34,7 +34,7 @@ class BLADE_API ModeB : public Pipeline {
         LLA phasorArrayReferencePosition; 
         RA_DEC phasorBoresightCoordinate;
         std::vector<XYZ> phasorAntennaPositions;
-        ArrayTensor<Device::CPU, CF64> phasorAntennaCoefficients; 
+        std::vector<CF64> phasorAntennaCoefficients; 
         std::vector<RA_DEC> phasorBeamCoordinates;
 
         BOOL beamformerIncoherentBeam = false;

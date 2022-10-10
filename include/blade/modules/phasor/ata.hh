@@ -45,6 +45,7 @@ class BLADE_API ATA : public Generic<OT> {
     std::vector<UVW> boresightUvw;
     std::vector<UVW> sourceUvw;
     std::vector<F64> boresightDelay;
+    ArrayTensor<Device::CPU, CF64> antennaCoefficients;
 
     U64 frequencySteps;
     U64 frequencyStepIndex;

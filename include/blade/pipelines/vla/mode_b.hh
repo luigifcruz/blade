@@ -28,9 +28,9 @@ class BLADE_API ModeB : public Pipeline {
         F64 phasorChannelBandwidthHz;
         U64 phasorFrequencyStartIndex;
 
-        ArrayTensor<Device::CPU, CF64> phasorAntennaCoefficients;
-        PhasorTensor<Device::CPU, F64> phasorBeamAntennaDelays;
-        Vector<Device::CPU, F64> phasorDelayTimes;
+        std::vector<CF64> phasorAntennaCoefficients;
+        std::vector<F64> phasorBeamAntennaDelays;
+        std::vector<F64> phasorDelayTimes;
 
         U64 beamformerNumberOfBeams;
         BOOL beamformerIncoherentBeam = false;

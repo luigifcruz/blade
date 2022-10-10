@@ -55,23 +55,25 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    const auto coefficientUpchannelizedDims =
-        config.antennaCoefficients.dims() * ArrayTensorDimensions({
-            .A = 1,
-            .F = config.preBeamformerChannelizerRate,
-            .T = 1,
-            .P = 1,
-        });
-    const auto coefficientExpectationRatio = coefficientUpchannelizedDims / this->getConfigCoefficientDims();
-    const auto coefficientExpectationFrequencyRatio = (F64) coefficientUpchannelizedDims.numberOfFrequencyChannels() / this->getConfigCoefficientDims().numberOfFrequencyChannels();
-    if (coefficientExpectationRatio.size() == 0 || coefficientExpectationRatio.size() != coefficientExpectationFrequencyRatio) {
-        BL_FATAL("Number of antenna coefficients ({}) is not the expected size ({} nor an integer multiple on the frequency axis).", 
-                coefficientUpchannelizedDims, this->getConfigCoefficientDims());
+    const auto coefficientStepDims = this->getConfigCoefficientDims();
+    if (config.antennaCoefficients.size() % coefficientStepDims.size()) {
+        BL_FATAL("Number of antenna coefficients ({}) is not the expected size ({}), nor an integer multiple (on the frequency axis).", 
+                config.antennaCoefficients.size(), coefficientStepDims);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->frequencySteps = coefficientExpectationFrequencyRatio;
+    this->frequencySteps = config.antennaCoefficients.size() / coefficientStepDims.size();
     this->frequencyStepIndex = 0;
+
+    const auto coefficientTotalDims =
+        coefficientStepDims * ArrayTensorDimensions({
+            .A = 1,
+            .F = this->frequencySteps,
+            .T = 1,
+            .P = 1,
+        });
+    this->antennaCoefficients.resize(coefficientTotalDims);
+    Memory::Copy(this->antennaCoefficients, config.antennaCoefficients);
 
     //  Resizing array to the required length.
     antennasXyz.resize(this->config.numberOfAntennas);
@@ -95,7 +97,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Coefficient Dimensions [A, F*{}, T, P]: {}", config.preBeamformerChannelizerRate, coefficientUpchannelizedDims);
+    BL_INFO("Coefficient Dimensions [A, F, T, P]: {}", coefficientTotalDims);
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Frequency steps: {}", this->frequencySteps);
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
@@ -202,7 +204,7 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                     const U64 coefficientIndex = (antennaOffset + frequencyCoeffOffset)/this->config.preBeamformerChannelizerRate + polarizationOffset;
                     const U64 phasorsIndex = beamOffset + antennaOffset + frequencyPhasorOffset + polarizationOffset;
 
-                    this->output.phasors[phasorsIndex] = phasor * this->config.antennaCoefficients[coefficientIndex];
+                    this->output.phasors[phasorsIndex] = phasor * this->antennaCoefficients[coefficientIndex];
                 }
             }
         }

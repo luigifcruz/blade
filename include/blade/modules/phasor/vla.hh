@@ -11,7 +11,6 @@ class BLADE_API VLA : public Module {
     // Configuration
 
     struct Config {
-        U64 numberOfBeams;
         U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
         U64 numberOfPolarizations;
@@ -25,9 +24,9 @@ class BLADE_API VLA : public Module {
         // LLA arrayReferencePosition; 
         // RA_DEC boresightCoordinate;
         // std::vector<XYZ> antennaPositions;
-        ArrayTensor<Device::CPU, CF64> antennaCoefficients;
-        PhasorTensor<Device::CPU, F64> beamAntennaDelays;
-        Vector<Device::CPU, F64> delayTimes;
+        std::vector<CF64> antennaCoefficients;
+        std::vector<F64> beamAntennaDelays;
+        std::vector<F64> delayTimes;
         // std::vector<RA_DEC> beamCoordinates;
 
         U64 preBeamformerChannelizerRate = 1;
@@ -79,7 +78,7 @@ class BLADE_API VLA : public Module {
  protected:
     const PhasorTensorDimensions getOutputPhasorsDims() const {
         return {
-            .B = this->config.numberOfBeams,
+            .B = this->getNumberOfBeams(),
             .A = this->config.numberOfAntennas,
             .F = this->config.numberOfFrequencyChannels,
             .T = 1,
@@ -89,7 +88,7 @@ class BLADE_API VLA : public Module {
 
     const DelayTensorDimensions getOutputDelaysDims() const {
         return {
-            .B = this->config.numberOfBeams,
+            .B = this->getNumberOfBeams(),
             .A = this->config.numberOfAntennas,
         };
     }
@@ -104,9 +103,17 @@ class BLADE_API VLA : public Module {
     }
 
  private:
+    constexpr const U64 getNumberOfBeams() const {
+        return this->config.beamAntennaDelays.size() / this->config.numberOfAntennas;
+    }
+
     const Config config;
     const Input input;
     Output output;
+    
+    ArrayTensor<Device::CPU, CF64> antennaCoefficients;
+    PhasorTensor<Device::CPU, F64> beamAntennaDelays;
+    Vector<Device::CPU, F64> delayTimes;
 
     U64 frequencySteps;
     U64 frequencyStepIndex;

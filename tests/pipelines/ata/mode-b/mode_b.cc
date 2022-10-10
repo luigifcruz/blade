@@ -33,7 +33,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
 
-    TestPipeline::Config config = {
+    runner = Runner<TestPipeline>::New(numberOfWorkers, {
         .inputDimensions = {
             .A = BLADE_ATA_MODE_B_NANT,
             .F = BLADE_ATA_MODE_B_NCHAN,
@@ -79,7 +79,12 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114}         // 5b
         },
-        .phasorAntennaCoefficients = {},
+        .phasorAntennaCoefficients = std::vector<CF64>(ArrayTensorDimensions({
+            BLADE_ATA_MODE_B_NANT,
+            BLADE_ATA_MODE_B_NCHAN * BLADE_ATA_MODE_B_CHANNELIZER_RATE,
+            1,
+            BLADE_ATA_MODE_B_NPOL,
+        }).size()),
         .phasorBeamCoordinates = {
             {0.63722, 1.07552424},
             {0.64169, 1.079896295},
@@ -96,16 +101,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,
         .detectorIntegrationSize = BLADE_ATA_MODE_B_DETECTOR_INTEGRATION,
         .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
-    };
-
-    config.phasorAntennaCoefficients.resize(ArrayTensorDimensions({
-        config.inputDimensions.numberOfAspects(),
-        config.inputDimensions.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
-        1,
-        config.inputDimensions.numberOfPolarizations(),
-    }));
-
-    runner = Runner<TestPipeline>::New(numberOfWorkers, config);
+    });
 
     return true;
 }

@@ -37,15 +37,6 @@ inline const Result ModeB(const Config& config) {
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
 
-    auto phasorCoeffDims = reader.getStepOutputDims() * ArrayTensorDimensions({
-        .A = 1,
-        .F = config.preBeamformerChannelizerRate,
-        .T = 0,
-        .P = 1,
-    });
-    auto phasorAntennaCoeffs = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCoefficientsDims(1));
-    reader.fillAntennaCoefficients(1, phasorAntennaCoeffs);
-
     // Instantiate compute pipeline and runner.
 
     // TODO: less static hardware limit `1024`
@@ -60,11 +51,11 @@ inline const Result ModeB(const Config& config) {
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
 
-        .phasorAntennaCoefficients = ArrayTensor<Device::CPU, CF64>(phasorAntennaCoeffs),
-        .phasorBeamAntennaDelays = PhasorTensor<Device::CPU, F64>(reader.getBeamAntennaDelays(), reader.getBeamAntennaDelayDims()),
-        .phasorDelayTimes = Vector<Device::CPU, F64>(reader.getDelayTimes(), {reader.getNumberOfDelayTimes()}),
+        .phasorAntennaCoefficients = reader.getAntennaCoefficients(1),
+        .phasorBeamAntennaDelays = reader.getBeamAntennaDelays(),
+        .phasorDelayTimes = reader.getDelayTimes(),
 
-        .beamformerNumberOfBeams = reader.getBeamAntennaDelayDims().numberOfBeams(),
+        .beamformerNumberOfBeams = reader.getRecipeTotalDims().numberOfBeams(),
         .beamformerIncoherentBeam = false,
 
         .detectorEnable = true,

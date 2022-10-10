@@ -107,32 +107,24 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
-    constexpr const PhasorTensorDimensions getBeamAntennaDelayDims() const { 
-        return bfr5->getBeamAntennaDelayDims();
-    }
-
-    constexpr F64* getBeamAntennaDelays() const {
+    constexpr std::vector<F64> getBeamAntennaDelays() const {
         return bfr5->getBeamAntennaDelays();
     }
 
-    constexpr const U64 getNumberOfDelayTimes() const { 
-        return bfr5->getNumberOfDelayTimes();
-    }
-
-    constexpr F64* getDelayTimes() const {
+    constexpr std::vector<F64> getDelayTimes() const {
         return bfr5->getDelayTimes();
     }
 
-    constexpr const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate) const {
-        return bfr5->getAntennaCoefficientsDims(channelizerRate);
-    }
-
-    constexpr void fillAntennaCoefficients(const U64& preBeamformerChannelizerRate, ArrayTensor<Device::CPU, CF64>& antennaCoefficients) const {
-        return bfr5->fillAntennaCoefficients(preBeamformerChannelizerRate, antennaCoefficients);
+    constexpr std::vector<CF64> getAntennaCoefficients(const U64& preBeamformerChannelizerRate) const {
+        return bfr5->getAntennaCoefficients(preBeamformerChannelizerRate);
     }
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
+    }
+
+    constexpr const PhasorTensorDimensions getRecipeTotalDims() const {
+        return bfr5->getTotalDims();
     }
 
  private:

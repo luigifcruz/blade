@@ -73,30 +73,15 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    const PhasorTensorDimensions getBeamAntennaDelayDims() const {
-        const auto bfr5Dims = this->getTotalDims();
-        return {
-            bfr5Dims.numberOfBeams(),
-            bfr5Dims.numberOfAntennas(),
-            1,
-            1,
-            1,
-        };
+    std::vector<F64> getBeamAntennaDelays() const {
+        return std::vector<F64>(this->bfr5.delay_info.delays, this->bfr5.delay_info.delays + this->bfr5.delay_info.delay_elements);
     }
 
-    F64* getBeamAntennaDelays() const {
-        return this->bfr5.delay_info.delays;
+    std::vector<F64> getDelayTimes() const {
+        return std::vector<F64>(this->bfr5.delay_info.time_array, this->bfr5.delay_info.time_array + this->bfr5.delay_info.time_array_elements);
     }
 
-    const U64 getNumberOfDelayTimes() const {
-        return this->bfr5.delay_info.time_array_elements;
-    }
-
-    F64* getDelayTimes() const {
-        return this->bfr5.delay_info.time_array;
-    }
-
-    const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate) const {
+    const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate = 1) const {
         const auto bfr5Dims = this->getTotalDims();
         return {
             bfr5Dims.numberOfAntennas(),
@@ -106,8 +91,7 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    void fillAntennaCoefficients(const U64& channelizerRate, 
-                                ArrayTensor<Device::CPU, CF64>& antennaCoefficients);
+    std::vector<CF64> getAntennaCoefficients(const U64& channelizerRate = 1);
 
  private:
     // Variables

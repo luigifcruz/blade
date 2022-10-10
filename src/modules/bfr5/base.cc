@@ -63,28 +63,24 @@ Reader::Reader(const Config& config, const Input& input)
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-void Reader::fillAntennaCoefficients(const U64& channelizerRate, 
-                                     ArrayTensor<Device::CPU, CF64>& antennaCoefficients) {
-    const auto expectedDimensions = getAntennaCoefficientsDims(channelizerRate);
-    if (expectedDimensions != antennaCoefficients.dims()
-    ) {
-        BL_FATAL("Cannot fill inappropriately sized tensor: {} != {}", antennaCoefficients.dims(), expectedDimensions);
-        BL_CHECK_THROW(Result::ERROR);
-    }
+std::vector<CF64> Reader::getAntennaCoefficients(const U64& channelizerRate) {
+    std::vector<CF64> antennaCoefficients;
+    const auto coefficientDims = getAntennaCoefficientsDims(channelizerRate);
+    antennaCoefficients.resize(coefficientDims.size());
 
     const auto bfr5Dims = this->getTotalDims();
 
     const size_t calAntStride = 1;
-    const size_t calPolStride = expectedDimensions.numberOfAspects() * calAntStride;
-    const size_t calChnStride = expectedDimensions.numberOfPolarizations() * calPolStride;
+    const size_t calPolStride = coefficientDims.numberOfAspects() * calAntStride;
+    const size_t calChnStride = coefficientDims.numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = expectedDimensions.numberOfPolarizations() * weightsPolStride;
+    const size_t weightsChnStride = coefficientDims.numberOfPolarizations() * weightsPolStride;
     const size_t weightsAntStride = bfr5Dims.numberOfFrequencyChannels() * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < expectedDimensions.numberOfAspects(); antIdx++) {
+    for (U64 antIdx = 0; antIdx < coefficientDims.numberOfAspects(); antIdx++) {
         for (U64 chnIdx = 0; chnIdx < bfr5Dims.numberOfFrequencyChannels(); chnIdx++) {
-            for (U64 polIdx = 0; polIdx < expectedDimensions.numberOfPolarizations(); polIdx++) {
+            for (U64 polIdx = 0; polIdx < coefficientDims.numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 
@@ -101,6 +97,8 @@ void Reader::fillAntennaCoefficients(const U64& channelizerRate,
             }
         }
     }
+
+    return antennaCoefficients;
 }
 
 }  // namespace Blade::Modules::Bfr5

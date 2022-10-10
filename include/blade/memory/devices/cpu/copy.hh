@@ -25,6 +25,20 @@ static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
     return Result::SUCCESS;
 }
 
+template<typename T, typename Dims>
+static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
+                         const std::vector<T>& src) {
+    if (dst.size() != src.size()) {
+        BL_FATAL("Size mismatch between source and destination ({}, {}).",
+                src.size(), dst.size());
+        return Result::ASSERTION_ERROR;
+    }
+
+    memcpy(dst.data(), src.data(), dst.size_bytes());
+
+    return Result::SUCCESS;
+}
+
 }  // namespace Blade::Memory
 
 #endif

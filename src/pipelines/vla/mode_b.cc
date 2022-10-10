@@ -45,7 +45,6 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}
     
     BL_DEBUG("Instantiating phasor module.");
     this->connect(phasor, {
-        .numberOfBeams = config.phasorBeamAntennaDelays.dims().numberOfBeams(),
         .numberOfAntennas = channelizer->getOutputBuffer().dims().numberOfAspects(),
         .numberOfFrequencyChannels = channelizer->getOutputBuffer().dims().numberOfFrequencyChannels(),
         .numberOfPolarizations = channelizer->getOutputBuffer().dims().numberOfPolarizations(),
@@ -54,9 +53,9 @@ ModeB<IT, OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}
         .channelBandwidthHz = config.phasorChannelBandwidthHz,
         .frequencyStartIndex = config.phasorFrequencyStartIndex,
 
-        .antennaCoefficients = ArrayTensor<Device::CPU, CF64>(config.phasorAntennaCoefficients),
-        .beamAntennaDelays = PhasorTensor<Device::CPU, F64>(config.phasorBeamAntennaDelays),
-        .delayTimes = Vector<Device::CPU, F64>(config.phasorDelayTimes),
+        .antennaCoefficients = config.phasorAntennaCoefficients,
+        .beamAntennaDelays = config.phasorBeamAntennaDelays,
+        .delayTimes = config.phasorDelayTimes,
 
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
