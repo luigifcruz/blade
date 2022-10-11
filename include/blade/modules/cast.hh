@@ -53,7 +53,7 @@ class BLADE_API Cast : public Module {
 
     // Expected Dimensions
 
-    const ArrayTensorDimensions getOutputBufferDims() const {
+    const ArrayDimensions getOutputBufferDims() const {
         return getInputBuffer().dims();
     }
 };

@@ -9,14 +9,14 @@ class Test : public Pipeline {
     typedef typename Modules::Beamformer::ATA<IT, OT>::Config Config;
 
     explicit Test(const Config& config,
-                  const ArrayTensorDimensions& inputDims,
-                  const PhasorTensorDimensions& phasorDims) {
+                  const ArrayDimensions& inputDims,
+                  const PhasorDimensions& phasorDims) {
         BL_CHECK_THROW(this->input.resize(inputDims));
         BL_CHECK_THROW(this->phasors.resize(phasorDims));
         this->connect(beamformer, config, {input, phasors});
     }
 
-    constexpr const ArrayTensorDimensions& getOutputDims() const {
+    constexpr const ArrayDimensions& getOutputDims() const {
         return beamformer->getOutputBuffer().dims();
     }
 
@@ -46,14 +46,14 @@ class Test : public Pipeline {
 int main() {
     BL_INFO("Testing beamformer with the ATA kernel.");
 
-    const ArrayTensorDimensions& arrayDims = {
+    const ArrayDimensions& arrayDims = {
         .A = 2,
         .F = 192,
         .T = 512,
         .P = 2,
     };
 
-    const PhasorTensorDimensions& phasorDims = {
+    const PhasorDimensions& phasorDims = {
         .B = 1,
         .A = 2,
         .F = 192,

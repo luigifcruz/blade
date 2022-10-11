@@ -40,7 +40,7 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous
 
-    const PhasorTensorDimensions getTotalDims() const {
+    const PhasorDimensions getTotalDims() const {
         return {
             .B = this->bfr5.dim_info.nbeams,
             .A = this->bfr5.dim_info.nants,
@@ -73,7 +73,7 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    const ArrayTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const{
+    const ArrayDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const{
         const auto bfr5Dims = this->getTotalDims();
         return {
             bfr5Dims.numberOfAntennas(),

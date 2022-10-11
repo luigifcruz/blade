@@ -58,7 +58,7 @@ class BLADE_API Detector : public Module {
 
     // Expected Dimensions
 
-    const ArrayTensorDimensions getOutputBufferDims() const {
+    const ArrayDimensions getOutputBufferDims() const {
         return {
             .A = getInputBuffer().dims().numberOfAspects(),
             .F = getInputBuffer().dims().numberOfFrequencyChannels(),

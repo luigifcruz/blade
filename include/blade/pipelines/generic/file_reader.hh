@@ -25,7 +25,7 @@ class BLADE_API FileReader : public Pipeline {
     explicit FileReader(const Config& config);
 
     // GUPPI RAW determined values
-    constexpr const ArrayTensorDimensions getStepOutputDims() const {
+    constexpr const ArrayDimensions getStepOutputDims() const {
         return guppi->getStepOutputBufferDims();
     }
 
@@ -53,7 +53,7 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
-    constexpr const ArrayTensorDimensions getTotalOutputDims() const {
+    constexpr const ArrayDimensions getTotalOutputDims() const {
         return guppi->getTotalOutputBufferDims();
     }
 
@@ -87,7 +87,7 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getAntennaPositions();
     }
 
-    constexpr const ArrayTensorDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
+    constexpr const ArrayDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
         return bfr5->getAntennaCalibrationsDims(channelizerRate);
     }
 

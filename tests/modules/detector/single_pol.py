@@ -29,8 +29,8 @@ if __name__ == "__main__":
     NBEAMS = 2
     NPOLS = 2
 
-    input_dims = bl.vector.ArrayTensorDimensions(NBEAMS, NCHANS, NTIME, NPOLS)
-    output_dims = bl.vector.ArrayTensorDimensions(NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
+    input_dims = bl.vector.ArrayDimensions(NBEAMS, NCHANS, NTIME, NPOLS)
+    output_dims = bl.vector.ArrayDimensions(NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
 
     #
     # Blade Implementation

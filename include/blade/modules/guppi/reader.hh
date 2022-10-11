@@ -57,7 +57,7 @@ class BLADE_API Reader : public Module {
         return this->output.stepDut1;
     }
 
-    const ArrayTensorDimensions getTotalOutputBufferDims() const {
+    const ArrayDimensions getTotalOutputBufferDims() const {
         return {
             .A = this->getDatashape()->n_aspect,
             .F = this->getDatashape()->n_aspectchan,
@@ -66,7 +66,7 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    const ArrayTensorDimensions getStepOutputBufferDims() const {
+    const ArrayDimensions getStepOutputBufferDims() const {
         return {
             .A = this->config.stepNumberOfAspects,
             .F = this->config.stepNumberOfFrequencyChannels,

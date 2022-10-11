@@ -64,7 +64,7 @@ class BLADE_API Generic : public Module {
 
     // Expected Dimensions
 
-    virtual const ArrayTensorDimensions getOutputBufferDims() const = 0;
+    virtual const ArrayDimensions getOutputBufferDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Beamformer

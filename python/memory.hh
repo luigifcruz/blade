@@ -35,8 +35,8 @@ inline void init_vector(const py::module& m, const char* type) {
 template<Device D, typename T>
 inline void init_vector_dims(py::module& m, const char* name) {
     py::module sub = m.def_submodule(name);
-    init_vector<D, T, ArrayTensorDimensions>(sub, "ArrayTensor");
-    init_vector<D, T, PhasorTensorDimensions>(sub, "PhasorTensor");
+    init_vector<D, T, ArrayDimensions>(sub, "ArrayTensor");
+    init_vector<D, T, PhasorDimensions>(sub, "PhasorTensor");
     init_vector<D, T, Dimensions>(sub, "Vector");
 }
 
@@ -51,7 +51,7 @@ inline void init_vector_device(py::module& m, const char* name) {
 inline void init_memory_vector(py::module& m) {
     py::module vector = m.def_submodule("vector");
 
-    py::class_<ArrayTensorDimensions>(vector, "ArrayTensorDimensions")
+    py::class_<ArrayDimensions>(vector, "ArrayDimensions")
         .def(py::init<const U64&,
                       const U64&,
                       const U64&,
@@ -59,14 +59,14 @@ inline void init_memory_vector(py::module& m) {
                                      py::arg("F"),
                                      py::arg("T"),
                                      py::arg("P"))
-        .def_property_readonly("shape", [](ArrayTensorDimensions& obj) {
+        .def_property_readonly("shape", [](ArrayDimensions& obj) {
             return std::make_tuple(obj.A, obj.F, obj.T, obj.P);
         })
-        .def("__len__", [](ArrayTensorDimensions& obj){
+        .def("__len__", [](ArrayDimensions& obj){
             return obj.size();
         });
 
-    py::class_<PhasorTensorDimensions>(vector, "PhasorTensorDimensions")
+    py::class_<PhasorDimensions>(vector, "PhasorDimensions")
         .def(py::init<const U64&,
                       const U64&,
                       const U64&,
@@ -76,10 +76,10 @@ inline void init_memory_vector(py::module& m) {
                                      py::arg("F"),
                                      py::arg("T"),
                                      py::arg("P"))
-        .def_property_readonly("shape", [](PhasorTensorDimensions& obj) {
+        .def_property_readonly("shape", [](PhasorDimensions& obj) {
             return std::make_tuple(obj.B, obj.A, obj.F, obj.T, obj.P);
         })
-        .def("__len__", [](PhasorTensorDimensions& obj){
+        .def("__len__", [](PhasorDimensions& obj){
             return obj.size();
         });
 

@@ -80,9 +80,9 @@ class BLADE_API Generic : public Module {
 
     // Expected Dimensions
 
-    virtual const DelayTensorDimensions getOutputDelaysDims() const = 0;
-    virtual const PhasorTensorDimensions getOutputPhasorsDims() const = 0;
-    virtual const ArrayTensorDimensions getConfigCalibrationDims() const = 0;
+    virtual const DelayDimensions getOutputDelaysDims() const = 0;
+    virtual const PhasorDimensions getOutputPhasorsDims() const = 0;
+    virtual const ArrayDimensions getConfigCalibrationDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Phasor

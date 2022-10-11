@@ -11,7 +11,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
     BL_DEBUG("Initializing Pipeline Mode H.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    const auto accumulationFactor = ArrayTensorDimensions{1, 1, config.accumulateRate, 1};
+    const auto accumulationFactor = ArrayDimensions{1, 1, config.accumulateRate, 1};
     BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
 
     if constexpr (!std::is_same<IT, CF32>::value) {

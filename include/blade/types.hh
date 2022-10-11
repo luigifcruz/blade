@@ -40,7 +40,7 @@ struct HA_DEC {
     double DEC;
 };
 
-struct ArrayTensorDimensions {
+struct ArrayDimensions {
  public:
     U64 A;
     U64 F;
@@ -67,15 +67,15 @@ struct ArrayTensorDimensions {
         return A * F * T * P;
     }
 
-    const bool operator==(const ArrayTensorDimensions& other) const {
+    const bool operator==(const ArrayDimensions& other) const {
         return (other.A == this->A) &&
                (other.F == this->F) &&
                (other.T == this->T) &&
                (other.P == this->P);
     }
 
-    ArrayTensorDimensions operator*(const ArrayTensorDimensions& other) const {
-        return ArrayTensorDimensions {
+    ArrayDimensions operator*(const ArrayDimensions& other) const {
+        return ArrayDimensions {
             other.A * this->A, 
             other.F * this->F,
             other.T * this->T,
@@ -83,8 +83,8 @@ struct ArrayTensorDimensions {
         };
     }
 
-    ArrayTensorDimensions operator/(const ArrayTensorDimensions& other) const {
-        return ArrayTensorDimensions {
+    ArrayDimensions operator/(const ArrayDimensions& other) const {
+        return ArrayDimensions {
             this->A / other.A, 
             this->F / other.F,
             this->T / other.T,
@@ -94,9 +94,9 @@ struct ArrayTensorDimensions {
 };
 
 template<Device I, typename T>
-using ArrayTensor = Vector<I, T, ArrayTensorDimensions>;
+using ArrayTensor = Vector<I, T, ArrayDimensions>;
 
-struct PhasorTensorDimensions {
+struct PhasorDimensions {
  public:
     U64 B;
     U64 A;
@@ -128,7 +128,7 @@ struct PhasorTensorDimensions {
         return B * A * F * T * P;
     }
 
-    const bool operator==(const PhasorTensorDimensions& other) const {
+    const bool operator==(const PhasorDimensions& other) const {
         return (other.B == this->B) &&
                (other.A == this->A) &&
                (other.F == this->F) &&
@@ -136,8 +136,8 @@ struct PhasorTensorDimensions {
                (other.P == this->P);
     }
 
-    PhasorTensorDimensions operator*(const PhasorTensorDimensions& other) const {
-        return PhasorTensorDimensions {
+    PhasorDimensions operator*(const PhasorDimensions& other) const {
+        return PhasorDimensions {
             other.B * this->B, 
             other.A * this->A, 
             other.F * this->F,
@@ -146,8 +146,8 @@ struct PhasorTensorDimensions {
         };
     }
 
-    PhasorTensorDimensions operator/(const PhasorTensorDimensions& other) const {
-        return PhasorTensorDimensions {
+    PhasorDimensions operator/(const PhasorDimensions& other) const {
+        return PhasorDimensions {
             this->B / other.B, 
             this->A / other.A, 
             this->F / other.F,
@@ -158,9 +158,9 @@ struct PhasorTensorDimensions {
 };
 
 template<Device I, typename T>
-using PhasorTensor = Vector<I, T, PhasorTensorDimensions>;
+using PhasorTensor = Vector<I, T, PhasorDimensions>;
 
-struct DelayTensorDimensions {
+struct DelayDimensions {
  public:
     U64 B;
     U64 A;
@@ -177,20 +177,20 @@ struct DelayTensorDimensions {
         return B * A;
     }
 
-    const bool operator==(const DelayTensorDimensions& other) const {
+    const bool operator==(const DelayDimensions& other) const {
         return (other.B == this->B) &&
                (other.A == this->A);
     }
 
-    DelayTensorDimensions operator*(const DelayTensorDimensions& other) const {
-        return DelayTensorDimensions {
+    DelayDimensions operator*(const DelayDimensions& other) const {
+        return DelayDimensions {
             other.B * this->B, 
             other.A * this->A, 
         };
     }
 
-    DelayTensorDimensions operator/(const DelayTensorDimensions& other) const {
-        return DelayTensorDimensions {
+    DelayDimensions operator/(const DelayDimensions& other) const {
+        return DelayDimensions {
             this->B / other.B, 
             this->A / other.A, 
         };
@@ -198,47 +198,47 @@ struct DelayTensorDimensions {
 };
 
 template<Device I, typename T>
-using DelayTensor = Vector<I, T, DelayTensorDimensions>;
+using DelayTensor = Vector<I, T, DelayDimensions>;
 
 }  // namespace Blade
 
 namespace fmt {
 
 template <>
-struct formatter<Blade::ArrayTensorDimensions> {
+struct formatter<Blade::ArrayDimensions> {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
     }
 
     template <typename FormatContext>
-    auto format(const Blade::ArrayTensorDimensions& p, FormatContext& ctx) {
+    auto format(const Blade::ArrayDimensions& p, FormatContext& ctx) {
         return format_to(ctx.out(), "[{}, {}, {}, {}]", p.A, p.F, p.T, p.P);
     }
 };
 
 template <>
-struct formatter<Blade::PhasorTensorDimensions> {
+struct formatter<Blade::PhasorDimensions> {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
     }
 
     template <typename FormatContext>
-    auto format(const Blade::PhasorTensorDimensions& p, FormatContext& ctx) {
+    auto format(const Blade::PhasorDimensions& p, FormatContext& ctx) {
         return format_to(ctx.out(), "[{}, {}, {}, {}, {}]", p.B, p.A, p.F, p.T, p.P);
     }
 };
 
 template <>
-struct formatter<Blade::DelayTensorDimensions> {
+struct formatter<Blade::DelayDimensions> {
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
     }
 
     template <typename FormatContext>
-    auto format(const Blade::DelayTensorDimensions& p, FormatContext& ctx) {
+    auto format(const Blade::DelayDimensions& p, FormatContext& ctx) {
         return format_to(ctx.out(), "[{}, {}]", p.B, p.A);
     }
 };

@@ -14,7 +14,7 @@ class BLADE_API ATA : public Generic<OT> {
     const Result preprocess(const cudaStream_t& stream = 0) final;
 
  protected:
-    const PhasorTensorDimensions getOutputPhasorsDims() const {
+    const PhasorDimensions getOutputPhasorsDims() const {
         return {
             .B = this->config.beamCoordinates.size(),
             .A = this->config.numberOfAntennas,
@@ -24,14 +24,14 @@ class BLADE_API ATA : public Generic<OT> {
         };
     }
 
-    const DelayTensorDimensions getOutputDelaysDims() const {
+    const DelayDimensions getOutputDelaysDims() const {
         return {
             .B = this->config.beamCoordinates.size(),
             .A = this->config.numberOfAntennas,
         };
     }
 
-    const ArrayTensorDimensions getConfigCalibrationDims() const {
+    const ArrayDimensions getConfigCalibrationDims() const {
         return {
             .A = this->config.numberOfAntennas,
             .F = this->config.numberOfFrequencyChannels,

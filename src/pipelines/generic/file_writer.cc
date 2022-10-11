@@ -10,7 +10,7 @@ FileWriter<IT>::FileWriter(const Config& config)
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 
-    this->writerBuffer.resize(ArrayTensorDimensions({
+    this->writerBuffer.resize(ArrayDimensions({
         .A = config.inputDimensions.numberOfAspects(),
         .F = config.inputDimensions.numberOfFrequencyChannels() * config.accumulateRate,
         .T = config.inputDimensions.numberOfTimeSamples(),

@@ -12,7 +12,7 @@ class BLADE_API ATA : public Generic<IT, OT> {
                  const typename Generic<IT, OT>::Input& input);
 
  protected:
-    const ArrayTensorDimensions getOutputBufferDims() const {
+    const ArrayDimensions getOutputBufferDims() const {
         return {
             .A = this->getInputPhasors().dims().numberOfBeams() 
                     + U64(this->config.enableIncoherentBeam ? 1 : 0),

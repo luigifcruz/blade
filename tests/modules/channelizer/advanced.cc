@@ -10,12 +10,12 @@ class Test : public Pipeline {
  public:
     typedef typename Modules::Channelizer<IT, OT>::Config Config;
 
-    explicit Test(const Config& config, const ArrayTensorDimensions& arrayDims) {
+    explicit Test(const Config& config, const ArrayDimensions& arrayDims) {
         BL_CHECK_THROW(this->input.resize(arrayDims));
         this->connect(channelizer, config, {input});
     }
 
-    constexpr const ArrayTensorDimensions& getOutputDims() const {
+    constexpr const ArrayDimensions& getOutputDims() const {
         return channelizer->getOutputBuffer().dims();
     }
 
@@ -37,7 +37,7 @@ class Test : public Pipeline {
 int main() {
     BL_INFO("Testing advanced channelizer.");
 
-    const ArrayTensorDimensions& arrayDims = {
+    const ArrayDimensions& arrayDims = {
         .A = 2,
         .F = 4,
         .T = 8,

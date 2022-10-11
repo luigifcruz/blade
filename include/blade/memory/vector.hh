@@ -12,8 +12,6 @@ requires(T t) {
     { t == t } -> std::same_as<BOOL>;
 };
 
-template<Device I, typename T, typename Dims = Dimensions> class Vector;
-
 template<typename T, typename Dims>
 requires IsDimensions<Dims>
 class VectorImpl {

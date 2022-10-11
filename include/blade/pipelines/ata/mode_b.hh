@@ -22,7 +22,7 @@ class BLADE_API ModeB : public Pipeline {
     // Configuration 
 
     struct Config {
-        ArrayTensorDimensions inputDimensions;
+        ArrayDimensions inputDimensions;
 
         U64 preBeamformerChannelizerRate;
 

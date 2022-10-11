@@ -19,7 +19,7 @@ class BLADE_API ModeH : public Pipeline, public Accumulator {
     // Configuration 
 
     struct Config {
-        ArrayTensorDimensions inputDimensions;
+        ArrayDimensions inputDimensions;
 
         U64 accumulateRate;
 
