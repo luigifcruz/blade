@@ -36,26 +36,32 @@ const Result Accumulate<MT, DT, IT>::accumulate(const ArrayTensor<Device::CUDA, 
         return Result::ASSERTION_ERROR;
     }
 
-    if (this->config.transposeBTPF) {
+    if (this->config.transposeATPF) {
         // from A F T P
         // to   A T P F (F is reversed)
 
         // reverse the batches too seeing as they are an extension of the F dimension
-        const auto offset = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep()) * stepInputDims.size();
-        auto buffer = ArrayTensor<DT, IT>(accumulationBuffer.data() + offset, stepInputDims);
+        const auto numberOfInputFrequencyChannelBatches = this->getAccumulatorNumberOfSteps();
+        const auto frequencyChannelBatchIndex = (numberOfInputFrequencyChannelBatches-1 - this->getCurrentAccumulatorStep());
+        auto accumulationBufferBatchSegment = ArrayTensor<DT, IT>(accumulationBuffer.data() + frequencyChannelBatchIndex*stepInputDims.size(), stepInputDims);
 
         const U64 numberOfTimePolarizationSamples = stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations();
-        const U64 numberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
         const U64 numberOfAspects = stepInputDims.numberOfAspects();
+        const U64 stepNumberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
+        const U64 totalNumberOfFrequencyChannels = stepNumberOfFrequencyChannels * numberOfInputFrequencyChannelBatches;
         
+        const U64 destinationNumberOfFrequencyChannels = this->config.reconstituteBatchedDimensions ? totalNumberOfFrequencyChannels : stepNumberOfFrequencyChannels;
+        const U64 destinationFrequencyBatchTerm = this->config.reconstituteBatchedDimensions ? frequencyChannelBatchIndex*stepNumberOfFrequencyChannels : 0;
+
         for(U64 a = 0; a < numberOfAspects; a++) {
-            for(U64 f = 0; f < numberOfFrequencyChannels; f++) {
-                const U64 aspectChannelSourceFactor = (a*numberOfFrequencyChannels + f)*numberOfTimePolarizationSamples;
-                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples*numberOfFrequencyChannels + (numberOfFrequencyChannels-1 - f);
+            const U64 aspectDestinationTerm = a*numberOfTimePolarizationSamples*destinationNumberOfFrequencyChannels + destinationFrequencyBatchTerm;
+            for(U64 f = 0; f < stepNumberOfFrequencyChannels; f++) {
+                const U64 aspectChannelSourceFactor = (a*stepNumberOfFrequencyChannels + f)*numberOfTimePolarizationSamples;
+                const U64 aspectChannelDestinationFactor = aspectDestinationTerm + (stepNumberOfFrequencyChannels-1 - f);
                 BL_CHECK(
                     Memory::Copy2D(
-                        buffer,
-                        numberOfFrequencyChannels*sizeof(IT), // dstPitch
+                        this->config.reconstituteBatchedDimensions ? accumulationBuffer : accumulationBufferBatchSegment,
+                        destinationNumberOfFrequencyChannels*sizeof(IT), // dstPitch
                         aspectChannelDestinationFactor*sizeof(IT), // dstOffset 
                         data,
                         1*sizeof(IT), // srcPitch
@@ -67,11 +73,37 @@ const Result Accumulate<MT, DT, IT>::accumulate(const ArrayTensor<Device::CUDA, 
                 );
             }
         }
-    }
-    else {
-        const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
-        auto buffer = ArrayTensor<DT, IT>(accumulationBuffer.data() + offset, stepInputDims);
-        BL_CHECK(Memory::Copy(buffer, data, stream));
+    } else {
+        if (this->config.reconstituteBatchedDimensions) {
+            // TODO test this
+            const auto numberOfInputFrequencyChannelBatches = this->getAccumulatorNumberOfSteps();
+            const auto frequencyChannelBatchIndex = this->getCurrentAccumulatorStep();
+            auto accumulationBufferBatchSegment = ArrayTensor<DT, IT>(accumulationBuffer.data() + frequencyChannelBatchIndex*stepInputDims.size(), stepInputDims);
+
+            const U64 numberOfTimePolarizationSamples = stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations();
+            const U64 numberOfAspects = stepInputDims.numberOfAspects();
+            const U64 stepNumberOfFrequencyChannels = stepInputDims.numberOfFrequencyChannels();
+            const U64 totalNumberOfFrequencyChannels = stepNumberOfFrequencyChannels * numberOfInputFrequencyChannelBatches;
+
+            BL_CHECK(
+                Memory::Copy2D(
+                    accumulationBuffer,
+                    totalNumberOfFrequencyChannels*numberOfTimePolarizationSamples*sizeof(IT), // dstPitch
+                    frequencyChannelBatchIndex*stepNumberOfFrequencyChannels*numberOfTimePolarizationSamples*sizeof(IT), // dstOffset 
+                    data,
+                    stepNumberOfFrequencyChannels*numberOfTimePolarizationSamples*sizeof(IT), // srcPitch
+                    0, // srcOffset
+                    stepNumberOfFrequencyChannels*numberOfTimePolarizationSamples*sizeof(IT),
+                    numberOfAspects,
+                    stream
+                )
+            );
+
+        } else {
+            const auto offset = this->getCurrentAccumulatorStep() * stepInputDims.size();
+            auto buffer = ArrayTensor<DT, IT>(accumulationBuffer.data() + offset, stepInputDims);
+            BL_CHECK(Memory::Copy(buffer, data, stream));
+        }
     }
 
     return Result::SUCCESS;

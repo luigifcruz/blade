@@ -19,7 +19,8 @@ class BLADE_API Accumulate : public Pipeline, public Accumulator {
         MT::Config moduleConfig;
 
         ArrayTensorDimensions inputDimensions;
-        BOOL transposeBTPF = false;
+        BOOL transposeATPF = false;
+        BOOL reconstituteBatchedDimensions = false;
         U64 accumulateRate = 1;
     };
 

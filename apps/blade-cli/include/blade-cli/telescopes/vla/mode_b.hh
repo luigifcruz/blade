@@ -39,8 +39,8 @@ inline const Result ModeB(const Config& config) {
 
     // Instantiate compute pipeline and runner.
 
-    // TODO: less static hardware limit `1024`
-    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 1024 ? 1024 : config.stepNumberOfTimeSamples;
+    // TODO: less static hardware limit `512`
+    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 512 ? 512 : config.stepNumberOfTimeSamples;
 
     typename Compute::Config computeConfig = {
         .inputDimensions = reader.getStepOutputDims(),
@@ -56,7 +56,7 @@ inline const Result ModeB(const Config& config) {
         .phasorDelayTimes = reader.getDelayTimes(),
 
         .beamformerNumberOfBeams = reader.getRecipeTotalDims().numberOfBeams(),
-        .beamformerIncoherentBeam = false,
+        .beamformerIncoherentBeam = true,
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
@@ -92,10 +92,11 @@ inline const Result ModeB(const Config& config) {
             .sourceName = reader.getSourceName(),
             .sourceDataFilename = config.inputGuppiFile,
 
-            .numberOfInputFrequencyChannelBatches = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
+            .numberOfInputFrequencyChannelBatches = 1, // Accumulate pipeline set to reconstituteBatchedDimensions.
         },
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-        .transposeBTPF = true,
+        .transposeATPF = true,
+        .reconstituteBatchedDimensions = true,
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
     };
 
