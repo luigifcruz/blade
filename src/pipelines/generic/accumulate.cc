@@ -51,7 +51,7 @@ const Result Accumulate<MT, DT, IT>::accumulate(const ArrayTensor<Device::CUDA, 
         for(U64 a = 0; a < numberOfAspects; a++) {
             for(U64 f = 0; f < numberOfFrequencyChannels; f++) {
                 const U64 aspectChannelSourceFactor = (a*numberOfFrequencyChannels + f)*numberOfTimePolarizationSamples;
-                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples + (numberOfFrequencyChannels-1 - f);
+                const U64 aspectChannelDestinationFactor = a*numberOfTimePolarizationSamples*numberOfFrequencyChannels + (numberOfFrequencyChannels-1 - f);
                 BL_CHECK(
                     Memory::Copy2D(
                         buffer,
