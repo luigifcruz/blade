@@ -36,6 +36,7 @@ class VectorImpl {
                managed(false) {}
 
     VectorImpl(const VectorImpl&) = delete;
+    VectorImpl(const VectorImpl&&) = delete;
     bool operator==(const VectorImpl&) = delete;
     VectorImpl& operator=(const VectorImpl&) = delete;
 
