@@ -3,6 +3,7 @@
 
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
+#include "blade/memory/devices/cpu/copy.hh"
 
 namespace Blade {
 
@@ -13,6 +14,13 @@ class BLADE_API Vector<Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
 
     explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
+    }
+
+    Vector(const Vector& other) : VectorImpl<T, Dims>(other.dims()) {
+        BL_DEBUG("Vector copy performed ({} bytes) on CPU.",
+                 other.dims().size() * sizeof(T));
+        BL_CHECK_THROW(this->resize(other.dims()));
+        BL_CHECK_THROW(Memory::Copy(*this, other));
     }
 
     ~Vector() {

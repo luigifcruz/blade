@@ -24,7 +24,11 @@ class VectorImpl {
              : dimensions(dims),
                container(other),
                managed(false) {
-        BL_CHECK_THROW(dims.size() == other.size() ? Result::SUCCESS : Result::ERROR);
+        if (dims.size() != other.size()) {
+            BL_FATAL("Container size ({}) doesn't match dimensions size ({})",
+                     other.size(), dims.size());
+            BL_CHECK_THROW(Result::ERROR);
+        }
     }
     explicit VectorImpl(T* ptr, const Dims& dims)
              : dimensions(dims),
@@ -58,7 +62,11 @@ class VectorImpl {
         return container.empty();
     }
 
-    constexpr T& operator[](U64 idx) const {
+    constexpr T& operator[](U64 idx) {
+        return container[idx];
+    }
+
+    constexpr const T& operator[](U64 idx) const {
         return container[idx];
     }
 
@@ -105,7 +113,12 @@ class VectorImpl {
     explicit VectorImpl(const Dims& dims)
              : dimensions(dims),
                container(),
-               managed(true) {}
+               managed(true) {
+        if (dims.size() <= 0) {
+            BL_FATAL("Dimensions ({}) equals to invalid size ({}).", dims, dims.size());
+            BL_CHECK_THROW(Result::ERROR);
+        }
+    }
 
     constexpr const std::span<T>& span() const {
         return container;
