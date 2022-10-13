@@ -56,10 +56,10 @@ class BLADE_API Plan {
     }
 
     // Compute is used to trigger the compute step of a pipeline.
-    template<class T>
-    static void Compute(T& pipeline) {
+    template<class Pipeline>
+    static void Compute(Pipeline& pipeline) {
         // If pipeline has accumulator, check if it's complete.
-        if constexpr (std::is_base_of<Accumulator, T>::value) {
+        if constexpr (std::is_base_of<Accumulator, Pipeline>::value) {
             if (!pipeline.accumulationComplete()) {
                 BL_CHECK_THROW(Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE);
             }
@@ -69,7 +69,7 @@ class BLADE_API Plan {
         BL_CHECK_THROW(pipeline.compute());
 
         // If pipeline has accumulator, reset it after compute.
-        if constexpr (std::is_base_of<Accumulator, T>::value) {
+        if constexpr (std::is_base_of<Accumulator, Pipeline>::value) {
             pipeline.resetAccumulatorSteps();
         }
     } 
@@ -87,8 +87,10 @@ class BLADE_API Plan {
     }
 
     // TransferOut(3) is used to transfer output data from one pipeline to a vector.
-    template<Device SD, typename ST, Device DD, typename DT>
-    static void TransferOut(ArrayTensor<SD, ST>& dst, const ArrayTensor<DD, DT>& src, auto& pipeline) {
+    template<Device SDev, typename SType, Device DDev, typename DType>
+    static void TransferOut(ArrayTensor<SDev, SType>& dst, 
+                            const ArrayTensor<DDev, DType>& src, 
+                            auto& pipeline) {
         // Transfer data to the vector.
         BL_CHECK_THROW(Memory::Copy(dst, src, pipeline.getCudaStream()));
     }
@@ -118,10 +120,10 @@ class BLADE_API Plan {
     } 
 
     // Accumulate is used to concatenate output data from one pipeline to another.
-    template<typename T, typename... Args>
-    static void Accumulate(T& destinationRunner, auto& sourceRunner, Args&... transfers) {
+    template<typename Runner, typename... Args>
+    static void Accumulate(Runner& destinationRunner, auto& sourceRunner, Args&... transfers) {
         // Check if runner supports accumulation.
-        if constexpr (std::is_base_of<Accumulator, T>::value) {
+        if constexpr (std::is_base_of<Accumulator, Runner>::value) {
             BL_CHECK_THROW(Result::PLAN_ERROR_NO_ACCUMULATOR);
         }
 

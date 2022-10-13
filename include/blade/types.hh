@@ -93,8 +93,8 @@ struct ArrayDimensions {
     }
 };
 
-template<Device I, typename T>
-using ArrayTensor = Vector<I, T, ArrayDimensions>;
+template<Device Dev, typename Type>
+using ArrayTensor = Vector<Dev, Type, ArrayDimensions>;
 
 struct PhasorDimensions {
  public:
@@ -157,8 +157,8 @@ struct PhasorDimensions {
     }
 };
 
-template<Device I, typename T>
-using PhasorTensor = Vector<I, T, PhasorDimensions>;
+template<Device Dev, typename Type>
+using PhasorTensor = Vector<Dev, Type, PhasorDimensions>;
 
 struct DelayDimensions {
  public:
@@ -197,8 +197,8 @@ struct DelayDimensions {
     }
 };
 
-template<Device I, typename T>
-using DelayTensor = Vector<I, T, DelayDimensions>;
+template<Device Dev, typename Type>
+using DelayTensor = Vector<Dev, Type, DelayDimensions>;
 
 }  // namespace Blade
 

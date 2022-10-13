@@ -12,7 +12,7 @@ requires(T t) {
     { t == t } -> std::same_as<BOOL>;
 };
 
-template<typename T, typename Dims>
+template<typename Type, typename Dims>
 requires IsDimensions<Dims>
 class VectorImpl {
  public:
@@ -20,7 +20,7 @@ class VectorImpl {
              : dimensions(),
                container(),
                managed(true) {}
-    explicit VectorImpl(const std::span<T>& other, const Dims& dims)
+    explicit VectorImpl(const std::span<Type>& other, const Dims& dims)
              : dimensions(dims),
                container(other),
                managed(false) {
@@ -30,13 +30,13 @@ class VectorImpl {
             BL_CHECK_THROW(Result::ERROR);
         }
     }
-    explicit VectorImpl(T* ptr, const Dims& dims)
+    explicit VectorImpl(Type* ptr, const Dims& dims)
              : dimensions(dims),
                container(ptr, dims.size()),
                managed(false) {}
     explicit VectorImpl(void* ptr, const Dims& dims)
              : dimensions(dims),
-               container(static_cast<T*>(ptr), dims.size()),
+               container(static_cast<Type*>(ptr), dims.size()),
                managed(false) {}
 
     VectorImpl(const VectorImpl&) = delete;
@@ -46,7 +46,7 @@ class VectorImpl {
 
     virtual ~VectorImpl() {}
 
-    constexpr T* data() const noexcept {
+    constexpr Type* data() const noexcept {
         return container.data();
     }
 
@@ -62,11 +62,11 @@ class VectorImpl {
         return container.empty();
     }
 
-    constexpr T& operator[](U64 idx) {
+    constexpr Type& operator[](U64 idx) {
         return container[idx];
     }
 
-    constexpr const T& operator[](U64 idx) const {
+    constexpr const Type& operator[](U64 idx) const {
         return container[idx];
     }
 
@@ -86,7 +86,7 @@ class VectorImpl {
         return container.end();
     }
 
-    const Result link(const VectorImpl<T, Dims>& src) {
+    const Result link(const VectorImpl<Type, Dims>& src) {
         if (src.empty()) {
             BL_FATAL("Source can't be empty while linking.");
             return Result::ERROR;
@@ -107,7 +107,7 @@ class VectorImpl {
 
  protected:
     Dims dimensions;
-    std::span<T> container;
+    std::span<Type> container;
     bool managed;
 
     explicit VectorImpl(const Dims& dims)
@@ -120,7 +120,7 @@ class VectorImpl {
         }
     }
 
-    constexpr const std::span<T>& span() const {
+    constexpr const std::span<Type>& span() const {
         return container;
     }
 };

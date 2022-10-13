@@ -54,10 +54,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
     if (kernel_key == "cufft") {
         BL_INFO("FFT Backend: cuFFT");
 
-        // FFT dimension (1D, 2D, ...)
+        // FFT dimension (1D, 2D, ...).
         int rank = 1;
 
-        // FFT size for each dimension
+        // FFT size for each dimension.
         int n[] = { static_cast<int>(config.rate) }; 
 
         // Distance between successive input element and output element.

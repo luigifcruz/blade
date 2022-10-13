@@ -13,17 +13,17 @@
 
 namespace Blade {
 
-template<class T>
+template<class Pipeline>
 class BLADE_API Runner {
  public:
-    static std::unique_ptr<Runner<T>> New(const U64& numberOfWorkers,
-                                          const typename T::Config& config,
-                                          const BOOL& printET = true) {
-        return std::make_unique<Runner<T>>(numberOfWorkers, config, printET);
+    static std::unique_ptr<Runner<Pipeline>> New(const U64& numberOfWorkers,
+                                                 const typename Pipeline::Config& config,
+                                                 const BOOL& printET = true) {
+        return std::make_unique<Runner<Pipeline>>(numberOfWorkers, config, printET);
     }
 
     explicit Runner(const U64& numberOfWorkers,
-                    const typename T::Config& config,
+                    const typename Pipeline::Config& config,
                     const BOOL& printET = true) {
         if (printET) {
             BL_LOG_PRINT_ET();
@@ -38,11 +38,11 @@ class BLADE_API Runner {
 
         for (U64 i = 0; i < numberOfWorkers; i++) {
             BL_DEBUG("Initializing new worker.");
-            workers.push_back(std::make_unique<T>(config));
+            workers.push_back(std::make_unique<Pipeline>(config));
         }
     }
 
-    constexpr T& getWorker(const U64& index = 0) const {
+    constexpr Pipeline& getWorker(const U64& index = 0) const {
         return *workers[index];
     }
 
@@ -58,11 +58,11 @@ class BLADE_API Runner {
         return jobs.size() == 0;
     }
     
-    constexpr T& getNextWorker() {
+    constexpr Pipeline& getNextWorker() {
         return *workers[head];
     }
 
-    const Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
+    const Result applyToAllWorkers(const std::function<const Result(Pipeline&)>& modifier,
                                    const bool block = false) {
         for (auto& worker : workers) {
              BL_CHECK(modifier(*worker));
@@ -77,7 +77,7 @@ class BLADE_API Runner {
         return Result::SUCCESS;
     }
 
-    bool enqueue(const std::function<const U64(T&)>& jobFunc) {
+    bool enqueue(const std::function<const U64(Pipeline&)>& jobFunc) {
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
@@ -163,12 +163,12 @@ class BLADE_API Runner {
  private:
     struct Job {
         U64 id;
-        std::unique_ptr<T>& worker;
+        std::unique_ptr<Pipeline>& worker;
     };
 
     U64 head = 0;
     std::deque<Job> jobs;
-    std::vector<std::unique_ptr<T>> workers;
+    std::vector<std::unique_ptr<Pipeline>> workers;
 };
 
 }  // namespace Blade

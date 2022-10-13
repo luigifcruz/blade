@@ -6,9 +6,9 @@
 
 namespace Blade::Memory {
 
-template<typename T, typename Dims>
-static const Result Copy(Vector<Device::CPU, T, Dims>& dst,
-                         const Vector<Device::CPU, T, Dims>& src) {
+template<typename Type, typename Dims>
+static const Result Copy(Vector<Device::CPU, Type, Dims>& dst,
+                         const Vector<Device::CPU, Type, Dims>& src) {
     if (dst.size() != src.size()) {
         BL_FATAL("Size mismatch between source and destination ({}, {}).",
                 src.size(), dst.size());

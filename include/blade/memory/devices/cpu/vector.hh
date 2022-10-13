@@ -7,18 +7,19 @@
 
 namespace Blade {
 
-template<typename T, typename Dims>
-class BLADE_API Vector<Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
+template<typename Type, typename Dims>
+class BLADE_API Vector<Device::CPU, Type, Dims>
+     : public VectorImpl<Type, Dims> {
  public:
-    using VectorImpl<T, Dims>::VectorImpl;
+    using VectorImpl<Type, Dims>::VectorImpl;
 
-    explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
+    explicit Vector(const Dims& dims) : VectorImpl<Type, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
     }
 
-    Vector(const Vector& other) : VectorImpl<T, Dims>(other.dims()) {
+    Vector(const Vector& other) : VectorImpl<Type, Dims>(other.dims()) {
         BL_DEBUG("Vector copy performed ({} bytes) on CPU.",
-                 other.dims().size() * sizeof(T));
+                 other.dims().size() * sizeof(Type));
         BL_CHECK_THROW(this->resize(other.dims()));
         BL_CHECK_THROW(Memory::Copy(*this, other));
     }
@@ -34,7 +35,6 @@ class BLADE_API Vector<Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
     }
 
     const Result resize(const Dims& dims) final {
-        // TODO: Implement resize.
         if (!this->container.empty()) {
             BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
@@ -46,16 +46,16 @@ class BLADE_API Vector<Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
         }
 
         // Calculate byte size.
-        auto size_bytes = dims.size() * sizeof(T);
+        auto size_bytes = dims.size() * sizeof(Type);
 
         // Allocate memory with CUDA.
-        T* ptr;
+        Type* ptr;
         BL_CUDA_CHECK(cudaMallocHost(&ptr, size_bytes), [&]{
             BL_FATAL("Failed to allocate CPU memory: {}", err);
         });
 
         // Register metadata.
-        this->container = std::span<T>(ptr, dims.size());
+        this->container = std::span<Type>(ptr, dims.size());
         this->dimensions = dims;
         this->managed = true;
 

@@ -7,21 +7,21 @@
 using namespace Blade;
 namespace py = pybind11;
 
-template<Device D, typename T, class Dims>
+template<Device Dev, typename Type, class Dims>
 inline void init_vector(const py::module& m, const char* type) {
-    using Class = Vector<D, T, Dims>;
+    using Class = Vector<Dev, Type, Dims>;
 
     py::class_<Class, std::shared_ptr<Class>>(m, type, py::buffer_protocol())
         .def(py::init<>())
         .def(py::init<const Dims&>(), py::arg("dimensions"))
         .def_buffer([](Class& obj){
-            return py::buffer_info(obj.data(), sizeof(T),
-                                   py::format_descriptor<T>::format(), obj.size());
+            return py::buffer_info(obj.data(), sizeof(Type),
+                                   py::format_descriptor<Type>::format(), obj.size());
         })
         .def("__getitem__", [](Class& obj, const U64& index){
             return obj[index];
         }, py::return_value_policy::reference)
-        .def("__setitem__", [](Class& obj, const U64& index, const T& val){
+        .def("__setitem__", [](Class& obj, const U64& index, const Type& val){
             obj[index] = val;
         })
         .def("__len__", [](Class& obj){
@@ -32,20 +32,20 @@ inline void init_vector(const py::module& m, const char* type) {
         });
 }
 
-template<Device D, typename T>
+template<Device Dev, typename Type>
 inline void init_vector_dims(py::module& m, const char* name) {
     py::module sub = m.def_submodule(name);
-    init_vector<D, T, ArrayDimensions>(sub, "ArrayTensor");
-    init_vector<D, T, PhasorDimensions>(sub, "PhasorTensor");
-    init_vector<D, T, Dimensions>(sub, "Vector");
+    init_vector<Dev, Type, ArrayDimensions>(sub, "ArrayTensor");
+    init_vector<Dev, Type, PhasorDimensions>(sub, "PhasorTensor");
+    init_vector<Dev, Type, Dimensions>(sub, "Vector");
 }
 
-template<Device D>
+template<Device Dev>
 inline void init_vector_device(py::module& m, const char* name) {
     py::module sub = m.def_submodule(name);
-    init_vector_dims<D, CF32>(sub, "cf32");
-    init_vector_dims<D, F32>(sub, "f32");
-    init_vector_dims<D, F64>(sub, "f64");
+    init_vector_dims<Dev, CF32>(sub, "cf32");
+    init_vector_dims<Dev, F32>(sub, "f32");
+    init_vector_dims<Dev, F64>(sub, "f64");
 }
 
 inline void init_memory_vector(py::module& m) {

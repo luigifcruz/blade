@@ -6,8 +6,8 @@
 
 namespace Blade::Memory {
 
-template<typename T, typename Dims>
-static const Result PageLock(const Vector<Device::CPU, T, Dims>& vec,
+template<typename Type, typename Dims>
+static const Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
                              const bool& readOnly = false) {
     cudaPointerAttributes attr;
     BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, vec.data()), [&]{

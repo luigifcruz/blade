@@ -5,16 +5,25 @@
 
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
+#include "blade/memory/devices/cuda/copy.hh"
 
 namespace Blade {
 
-template<typename T, typename Dims>
-class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
+template<typename Type, typename Dims>
+class BLADE_API Vector<Device::CUDA, Type, Dims>
+     : public VectorImpl<Type, Dims> {
  public:
-    using VectorImpl<T, Dims>::VectorImpl;
+    using VectorImpl<Type, Dims>::VectorImpl;
 
-    explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
+    explicit Vector(const Dims& dims) : VectorImpl<Type, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
+    }
+
+    Vector(const Vector& other) : VectorImpl<Type, Dims>(other.dims()) {
+        BL_DEBUG("Vector copy performed ({} bytes) on CUDA.",
+                 other.dims().size() * sizeof(Type));
+        BL_CHECK_THROW(this->resize(other.dims()));
+        BL_CHECK_THROW(Memory::Copy(*this, other));
     }
 
     ~Vector() {
@@ -28,7 +37,6 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
     }
 
     const Result resize(const Dims& dims) final {
-        // TODO: Implement resize.
         if (!this->container.empty()) {
             BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
@@ -40,16 +48,16 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
         }
 
         // Calculate byte size.
-        auto size_bytes = dims.size() * sizeof(T);
+        auto size_bytes = dims.size() * sizeof(Type);
 
         // Allocate memory with CUDA.
-        T* ptr;
+        Type* ptr;
         BL_CUDA_CHECK(cudaMalloc(&ptr, size_bytes), [&]{
             BL_FATAL("Failed to allocate CUDA memory: {}", err);
         });
 
         // Register metadata.
-        this->container = std::span<T>(ptr, dims.size());
+        this->container = std::span<Type>(ptr, dims.size());
         this->dimensions = dims;
         this->managed = true;
 
@@ -57,13 +65,21 @@ class BLADE_API Vector<Device::CUDA, T, Dims> : public VectorImpl<T, Dims> {
     }
 };
 
-template<typename T, typename Dims>
-class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<T, Dims> {
+template<typename Type, typename Dims>
+class BLADE_API Vector<Device::CUDA | Device::CPU, Type, Dims>
+     : public VectorImpl<Type, Dims> {
  public:
-    using VectorImpl<T, Dims>::VectorImpl;
+    using VectorImpl<Type, Dims>::VectorImpl;
 
-    explicit Vector(const Dims& dims) : VectorImpl<T, Dims>(dims) {
+    explicit Vector(const Dims& dims) : VectorImpl<Type, Dims>(dims) {
         BL_CHECK_THROW(this->resize(dims));
+    }
+
+    Vector(const Vector& other) : VectorImpl<Type, Dims>(other.dims()) {
+        BL_DEBUG("Vector copy performed ({} bytes) on CUDA.",
+                 other.dims().size() * sizeof(Type));
+        BL_CHECK_THROW(this->resize(other.dims()));
+        BL_CHECK_THROW(Memory::Copy(*this, other));
     }
 
     ~Vector() {
@@ -77,7 +93,6 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
     }
 
     const Result resize(const Dims& dims) final {
-        // TODO: Implement resize.
         if (!this->container.empty()) {
             BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
@@ -89,16 +104,16 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
         }
 
         // Calculate byte size.
-        auto size_bytes = dims.size() * sizeof(T);
+        auto size_bytes = dims.size() * sizeof(Type);
 
         // Allocate memory with CUDA.
-        T* ptr;
+        Type* ptr;
         BL_CUDA_CHECK(cudaMallocManaged(&ptr, size_bytes), [&]{
             BL_FATAL("Failed to allocate CUDA memory: {}", err);
         });
 
         // Register metadata.
-        this->container = std::span<T>(ptr, dims.size());
+        this->container = std::span<Type>(ptr, dims.size());
         this->dimensions = dims;
         this->managed = true;
 
@@ -109,29 +124,29 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, T, Dims> : public VectorImpl<
         // Recreate CPU binding.
         if (!this->cpuVector) {
             this->cpuVector = std::make_unique
-                    <Vector<Device::CPU, T, Dims>>(this->container, this->dimensions);
+                    <Vector<Device::CPU, Type, Dims>>(this->container, this->dimensions);
         }
 
         // Recreate CUDA binding.
         if (!this->cudaVector) {
             this->cudaVector = std::make_unique
-                    <Vector<Device::CUDA, T, Dims>>(this->container, this->dimensions);
+                    <Vector<Device::CUDA, Type, Dims>>(this->container, this->dimensions);
         }
 
         return Result::SUCCESS;
     }
 
-    operator Vector<Device::CPU, T, Dims>&() const {
+    operator Vector<Device::CPU, Type, Dims>&() const {
         return *this->cpuVector;
     }
 
-    operator Vector<Device::CUDA, T, Dims>&() const {
+    operator Vector<Device::CUDA, Type, Dims>&() const {
         return *this->cudaVector;
     }
 
  protected:
-    std::unique_ptr<Vector<Device::CPU, T, Dims>> cpuVector;
-    std::unique_ptr<Vector<Device::CUDA, T, Dims>> cudaVector;
+    std::unique_ptr<Vector<Device::CPU, Type, Dims>> cpuVector;
+    std::unique_ptr<Vector<Device::CUDA, Type, Dims>> cudaVector;
 };
 
 }  // namespace Blade

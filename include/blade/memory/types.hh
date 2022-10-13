@@ -252,7 +252,7 @@ class Dimensions : public std::vector<U64> {
     }
 };
 
-template<Device I, typename T, typename Dims = Dimensions>
+template<Device Dev, typename Type, typename Dims = Dimensions>
 class Vector;
 
 }  // namespace Blade
