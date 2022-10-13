@@ -89,8 +89,13 @@ Reader<OT>::Reader(const Config& config, const Input& input)
                                                  guppiraw_parse_block_meta);
 
     if (res) {
-        BL_FATAL("Errored opening stem ({}): {}.{:04d}.raw\n", res, 
+        BL_FATAL("Errored opening stem ({}): {}.{:04d}.raw", res,
                 this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
+        BL_DEBUG("\tin file {}", this->gr_iterate.fileenum_offset + this->gr_iterate.n_file);
+        guppiraw_file_info_t* gr_fileinfo = guppiraw_iterate_file_info(&this->gr_iterate, this->gr_iterate.n_file-1);
+        BL_DEBUG("\taround block #{}/{}", gr_fileinfo->block_index, gr_fileinfo->n_block);
+        BL_DEBUG("\tblock #{} @ {}/{}", gr_fileinfo->block_index, gr_fileinfo->file_header_pos[gr_fileinfo->block_index], gr_fileinfo->bytesize_file);
+        BL_DEBUG("\tblock #{} @ {}/{}", gr_fileinfo->block_index-1, gr_fileinfo->file_header_pos[gr_fileinfo->block_index-1], gr_fileinfo->bytesize_file);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
