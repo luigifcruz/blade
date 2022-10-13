@@ -20,6 +20,7 @@ class BLADE_API Reader : public Module {
 
     struct Config {
         std::string filepath;
+        U64 channelizerRate;
 
         U64 blockSize = 512;
     };
@@ -52,39 +53,30 @@ class BLADE_API Reader : public Module {
 
     constexpr const LLA getReferencePosition() const {
         return {
-            this->bfr5.tel_info.latitude,
-            this->bfr5.tel_info.longitude,
-            this->bfr5.tel_info.altitude
+            .LON = this->bfr5.tel_info.longitude,
+            .LAT = this->bfr5.tel_info.latitude,
+            .ALT = this->bfr5.tel_info.altitude,
         };
     }
 
-    constexpr const RA_DEC getBoresightCoordinate() const {
+    constexpr const RA_DEC getBoresightCoordinates() const {
         return {
-            this->bfr5.obs_info.phase_center_ra,
-            this->bfr5.obs_info.phase_center_dec
+            .RA = this->bfr5.obs_info.phase_center_ra,
+            .DEC = this->bfr5.obs_info.phase_center_dec
         };
     }
 
-    const std::vector<XYZ> getAntennaPositions() const {
+    constexpr const std::vector<XYZ>& getAntennaPositions() const {
         return this->antennaPositions;
     }
 
-    const std::vector<RA_DEC> getBeamCoordinates() const {
+    constexpr const std::vector<RA_DEC>& getBeamCoordinates() const {
         return this->beamCoordinates;
     }
 
-    const ArrayDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const{
-        const auto bfr5Dims = this->getTotalDims();
-        return {
-            bfr5Dims.numberOfAntennas(),
-            bfr5Dims.numberOfFrequencyChannels() * channelizerRate,
-            1,
-            bfr5Dims.numberOfPolarizations(),
-        };
+    constexpr const ArrayTensor<Device::CPU, CF64>& getAntennaCalibrations() const {
+        return this->antennaCalibrations;
     }
-
-    void fillAntennaCalibrations(const U64& channelizerRate, 
-                                ArrayTensor<Device::CPU, CF64>& antennaCalibrations);
 
  private:
     // Variables
@@ -95,8 +87,19 @@ class BLADE_API Reader : public Module {
 
     BFR5_file_t bfr5;
 
+    // TODO: Update from vector to ArrayTensor. 
     std::vector<XYZ> antennaPositions;
     std::vector<RA_DEC> beamCoordinates;
+    ArrayTensor<Device::CPU, CF64> antennaCalibrations;
+
+    const ArrayDimensions getAntennaCalibrationsDims() const{
+        return {
+            .A = getTotalDims().numberOfAntennas(),
+            .F = getTotalDims().numberOfFrequencyChannels() * config.channelizerRate,
+            .T = 1,
+            .P = getTotalDims().numberOfPolarizations(),
+        };
+    }
 };
 
 }  // namespace Blade::Modules

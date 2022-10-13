@@ -67,7 +67,7 @@ Reader::Reader(const Config& config, const Input& input)
     const size_t weightsChnStride = getAntennaCalibrationsDims().numberOfPolarizations() * weightsPolStride;
     const size_t weightsAntStride = getTotalDims().numberOfFrequencyChannels() * weightsChnStride;
 
-    antennaCalibrations.resize(getAntennaCalibrationsDims().size());
+    antennaCalibrations.resize(getAntennaCalibrationsDims());
 
     for (U64 antIdx = 0; antIdx < getAntennaCalibrationsDims().numberOfAspects(); antIdx++) {
         for (U64 chnIdx = 0; chnIdx < getTotalDims().numberOfFrequencyChannels(); chnIdx++) {
@@ -90,7 +90,6 @@ Reader::Reader(const Config& config, const Input& input)
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
     BL_INFO("Calibrations Dimensions [A, F, T, P]: {} -> {}", "N/A", getAntennaCalibrationsDims());
-    // TODO: Is this data or phasor dimensions?
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
     BL_INFO("Channelizer Rate: {}", config.channelizerRate);
 }

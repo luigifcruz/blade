@@ -79,8 +79,8 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getReferencePosition();
     }
 
-    constexpr const RA_DEC getBoresightCoordinate() const {
-        return bfr5->getBoresightCoordinate();
+    constexpr const RA_DEC getBoresightCoordinates() const {
+        return bfr5->getBoresightCoordinates();
     }
 
     constexpr const std::vector<XYZ> getAntennaPositions() const {

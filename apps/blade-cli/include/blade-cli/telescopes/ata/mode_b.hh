@@ -48,7 +48,7 @@ inline const Result ModeB(const Config& config) {
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
         .phasorReferenceAntennaIndex = 0,
         .phasorArrayReferencePosition = reader.getReferencePosition(),
-        .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
+        .phasorBoresightCoordinate = reader.getBoresightCoordinates(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
         .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(config.preBeamformerChannelizerRate)),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
