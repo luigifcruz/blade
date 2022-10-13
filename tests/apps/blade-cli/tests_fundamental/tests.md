@@ -3,7 +3,7 @@
 For the purposes of brevity, the RAW data is spoken about programmatically, with dimensions [pol, time, chan, ant].
 
 
-<details><summary>0. cal_all Ones, delays Zeros, RAW signal in [:, :, CHAN, :]</summary>
+<details><summary>0. cal_all Ones, delays Zeros, RAW signal in [:, :, NCHAN/2, :]</summary>
 
 
 <details><summary>GUPPI RAW Input</summary>

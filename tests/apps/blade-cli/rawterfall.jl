@@ -15,13 +15,18 @@ for filestem in ARGS
     data = Array(grheader)
     read!(fio, data) # complex [pol, time, chan, ant]
     data = abs.(data) # real [pol, time, chan, ant]
-    data = (data[1, :, :, :].^2) + (data[2, :, :, :].^2) # real [time, chan, ant]
-    data = (sum(data, dims=3))/(size(data, 3)) # real [time, chan, 1]
+    data = sqrt.((data[1, :, :, :].^2) + (data[2, :, :, :].^2)) # real [time, chan, ant]
 
-    fig = heatmap(data[:, :, 1], title=stem)
-    xlabel!(fig, "Frequency Channels")
-    ylabel!(fig, "Time samples")
+    nants = size(data, 3)
+
+    ant_plots = Vector(undef, nants)
+    for ant_i in 1:nants
+      ant_plots[ant_i]= heatmap(data[:, :, ant_i])
+    end
     
-    savefig(fig, @sprintf("%s.png", stem))
+    plot(ant_plots..., layout=nants, title=stem, colorbar = true)
+    xlabel!("Frequency Channels")
+    ylabel!("Time samples")
+    savefig(@sprintf("%s.png", stem))
   close(fio)
 end

@@ -29,8 +29,8 @@ header = createHeader(
 )
 
 data = Array(header) # [pol, time, chan, ant]
-data[:, :, div(n_chan_perant,2), :] .= 1
-data[:, :, div(n_chan_perant,2), :] .= div(typemax(real(eltype(data))), 4)
+data .= div(typemax(real(eltype(data))), 16)
+data[:, :, div(n_chan_perant,2), :] .= div(typemax(real(eltype(data))), 2)
 
 open("/mnt/buf1/mydonsol_blade/basics/synthetic_test_0.0000.raw", "w") do fio
 	for i in 1:32
