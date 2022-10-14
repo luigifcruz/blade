@@ -36,7 +36,7 @@ class BLADE_API Vector<Device::CUDA, Type, Dims>
         }
     }
 
-    const Result resize(const Dims& dims) final {
+    const Result resize(const Dims& dims) {
         if (!this->container.empty()) {
             BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;
@@ -92,7 +92,7 @@ class BLADE_API Vector<Device::CUDA | Device::CPU, Type, Dims>
         }
     }
 
-    const Result resize(const Dims& dims) final {
+    const Result resize(const Dims& dims) {
         if (!this->container.empty()) {
             BL_FATAL("Can't resize initialized vector.");
             return Result::ERROR;

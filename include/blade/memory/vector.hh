@@ -30,6 +30,10 @@ class VectorImpl {
             BL_CHECK_THROW(Result::ERROR);
         }
     }
+    explicit VectorImpl(const std::span<Type>& other)
+             : dimensions({other.size()}),
+               container(other),
+               managed(false) {}
     explicit VectorImpl(Type* ptr, const Dims& dims)
              : dimensions(dims),
                container(ptr, dims.size()),

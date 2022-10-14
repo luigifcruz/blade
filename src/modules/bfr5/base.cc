@@ -20,17 +20,18 @@ Reader::Reader(const Config& config, const Input& input)
     BFR5open(config.filepath.c_str(), &this->bfr5);
     BFR5read_all(&this->bfr5);
 
+    // Resize data holders.
+    beamCoordinates.resize(this->bfr5.beam_info.ra_elements);
+    antennaPositions.resize(getTotalDims().numberOfAspects());
+    antennaCalibrations.resize(getAntennaCalibrationsDims());
+     
     // Calculate beam coordinates.
     for (U64 i = 0; i < this->bfr5.beam_info.ra_elements; i++) {
-        beamCoordinates.push_back({
-            this->bfr5.beam_info.ras[i],
-            this->bfr5.beam_info.decs[i]
-        });
+        beamCoordinates[i].RA = this->bfr5.beam_info.ras[i];
+        beamCoordinates[i].DEC = this->bfr5.beam_info.decs[i];
     }
 
     // Calculate antenna positions.
-    antennaPositions.resize(getTotalDims().numberOfAspects());
-
     const U64 antennaPositionsByteSize = getTotalDims().numberOfAspects() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
@@ -66,8 +67,6 @@ Reader::Reader(const Config& config, const Input& input)
     const size_t weightsPolStride = 1;
     const size_t weightsChnStride = getAntennaCalibrationsDims().numberOfPolarizations() * weightsPolStride;
     const size_t weightsAntStride = getTotalDims().numberOfFrequencyChannels() * weightsChnStride;
-
-    antennaCalibrations.resize(getAntennaCalibrationsDims());
 
     for (U64 antIdx = 0; antIdx < getAntennaCalibrationsDims().numberOfAspects(); antIdx++) {
         for (U64 chnIdx = 0; chnIdx < getTotalDims().numberOfFrequencyChannels(); chnIdx++) {
