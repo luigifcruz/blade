@@ -34,7 +34,8 @@ class BLADE_API ATA : public Generic<OT> {
     const ArrayDimensions getConfigCalibrationDims() const {
         return {
             .A = this->config.numberOfAntennas,
-            .F = this->config.numberOfFrequencyChannels,
+            .F = this->config.numberOfFrequencyChannels *
+                 this->numberOfFrequencySteps,
             .T = 1,
             .P = this->config.numberOfPolarizations,
         };

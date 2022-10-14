@@ -18,15 +18,16 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
     BL_DEBUG("Instantiating BFR5 file reader.");
     this->connect(bfr5, {
         .filepath = config.inputBfr5File,
+        .channelizerRate = config.channelizerRate,
     }, {});
 
     // Checking file and recipe bounds.
     const auto bfr5Dims = bfr5->getTotalDims();
     const auto guppiDims = guppi->getTotalOutputBufferDims();
 
-    if (guppiDims.numberOfAspects() != bfr5Dims.numberOfAntennas()) {
-        BL_FATAL("Number of antennas from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
-                guppiDims.numberOfAspects(), bfr5Dims.numberOfAntennas());
+    if (guppiDims.numberOfAspects() != bfr5Dims.numberOfAspects()) {
+        BL_FATAL("Number of aspects from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
+                guppiDims.numberOfAspects(), bfr5Dims.numberOfAspects());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 

@@ -41,10 +41,10 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous
 
-    const PhasorDimensions getTotalDims() const {
+    // TODO: This is the data size, right?
+    const ArrayDimensions getTotalDims() const {
         return {
-            .B = this->bfr5.dim_info.nbeams,
-            .A = this->bfr5.dim_info.nants,
+            .A = this->bfr5.dim_info.nbeams * this->bfr5.dim_info.nants,
             .F = this->bfr5.dim_info.nchan,
             .T = this->bfr5.dim_info.ntimes,
             .P = this->bfr5.dim_info.npol,
@@ -94,7 +94,7 @@ class BLADE_API Reader : public Module {
 
     const ArrayDimensions getAntennaCalibrationsDims() const{
         return {
-            .A = getTotalDims().numberOfAntennas(),
+            .A = getTotalDims().numberOfAspects(),
             .F = getTotalDims().numberOfFrequencyChannels() * config.channelizerRate,
             .T = 1,
             .P = getTotalDims().numberOfPolarizations(),

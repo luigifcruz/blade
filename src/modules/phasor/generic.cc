@@ -12,7 +12,9 @@ template<typename OT>
 Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, phasor_kernel),
           config(config),
-          input(input) {
+          input(input),
+          numberOfFrequencySteps(0),
+          currentFrequencyStep(0) {
     // Check configuration values.
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
@@ -80,6 +82,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
+    BL_INFO("Calibrations Dimensions (A, F, T, P): {}", config.antennaCalibrations.dims());
 }
 
 template class BLADE_API Generic<CF32>;

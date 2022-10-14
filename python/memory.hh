@@ -44,6 +44,7 @@ template<Device Dev>
 inline void init_vector_device(py::module& m, const char* name) {
     py::module sub = m.def_submodule(name);
     init_vector_dims<Dev, CF32>(sub, "cf32");
+    init_vector_dims<Dev, CF64>(sub, "cf64");
     init_vector_dims<Dev, F32>(sub, "f32");
     init_vector_dims<Dev, F64>(sub, "f64");
 }

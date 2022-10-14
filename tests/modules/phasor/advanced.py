@@ -38,9 +38,11 @@ if __name__ == "__main__":
     # Blade Implementation
     #
 
-    cal_shape = (20, 192, 2)
+    cal_shape = (20, 192, 1, 2)
     calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
     calibration = np.array(calibration, dtype=np.complex128)
+    bl_calibration = bl.vector.cpu.cf64.ArrayTensor(bl.vector.ArrayDimensions(*cal_shape))
+    np.copyto(np.array(bl_calibration, copy=False), calibration.flatten())
 
     phase_center_pos_rad = [0.64169, 1.079896295]
     beam1_pos_rad        = [0.63722, 1.07552424]
@@ -88,7 +90,7 @@ if __name__ == "__main__":
             bl.XYZ(-2523898.1150373477, -4123456.314794732, 4147860.3045849088),    # 4j 
             bl.XYZ(-2523824.598229116, -4123527.93080514, 4147833.98936114),        # 5b
         ],
-        antenna_calibrations = calibration.flatten(),
+        antenna_calibrations = bl_calibration,
         beam_coordinates = [
             bl.RA_DEC(*beam1_pos_rad),
             bl.RA_DEC(*beam2_pos_rad)
@@ -222,13 +224,13 @@ if __name__ == "__main__":
                 obsnchan, channelBandwidthHz)
         py_phasors[0, i, :] *= get_fringe_rate(delay1, rfFrequencyHz,
                 totalBandwidthHz)
-        py_phasors[0, i, :] *= calibration[i, :, 0]
+        py_phasors[0, i, :] *= calibration[i, :, 0, 0]
 
         py_phasors[1, i, :] = create_delay_phasors(delay2, frequencyStartIndex,
                 obsnchan, channelBandwidthHz)
         py_phasors[1, i, :] *= get_fringe_rate(delay2, rfFrequencyHz,
                 totalBandwidthHz)
-        py_phasors[1, i, :] *= calibration[i, :, 0]
+        py_phasors[1, i, :] *= calibration[i, :, 0, 0]
 
     #
     # Compare Results

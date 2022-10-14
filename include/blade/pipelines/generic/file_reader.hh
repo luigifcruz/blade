@@ -18,6 +18,7 @@ class BLADE_API FileReader : public Pipeline {
         std::string inputGuppiFile;
         std::string inputBfr5File;
 
+        U64 channelizerRate;
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
     };
@@ -83,21 +84,16 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getBoresightCoordinates();
     }
 
-    constexpr const std::vector<XYZ> getAntennaPositions() const {
+    constexpr const std::vector<XYZ>& getAntennaPositions() const {
         return bfr5->getAntennaPositions();
     }
 
-    constexpr const ArrayDimensions getAntennaCalibrationsDims(const U64& channelizerRate) const {
-        return bfr5->getAntennaCalibrationsDims(channelizerRate);
-    }
-
-    constexpr void fillAntennaCalibrations(const U64& preBeamformerChannelizerRate, 
-                                           ArrayTensor<Device::CPU, CF64>& antennaCalibrations) const {
-        return bfr5->fillAntennaCalibrations(preBeamformerChannelizerRate, antennaCalibrations);
-    }
-
-    constexpr const std::vector<RA_DEC> getBeamCoordinates() const {
+    constexpr const std::vector<RA_DEC>& getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
+    }
+
+    constexpr const ArrayTensor<Device::CPU, CF64>& getAntennaCalibrations() const {
+        return bfr5->getAntennaCalibrations();
     }
 
  private:

@@ -26,6 +26,7 @@ inline const Result ModeB(const Config& config) {
     typename Reader::Config readerConfig = {
         .inputGuppiFile = config.inputGuppiFile,
         .inputBfr5File = config.inputBfr5File,
+        .channelizerRate = config.preBeamformerChannelizerRate,
         .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples * 
                                    config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
@@ -50,7 +51,7 @@ inline const Result ModeB(const Config& config) {
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getBoresightCoordinates(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>(reader.getAntennaCalibrationsDims(config.preBeamformerChannelizerRate)),
+        .phasorAntennaCalibrations = reader.getAntennaCalibrations(),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
         .beamformerIncoherentBeam = false,
@@ -67,8 +68,6 @@ inline const Result ModeB(const Config& config) {
         .detectorBlockSize = 32,
     };
 
-    reader.fillAntennaCalibrations(config.preBeamformerChannelizerRate, computeConfig.phasorAntennaCalibrations);
-
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
 
     // Instantiate writer pipeline and runner.
@@ -77,7 +76,8 @@ inline const Result ModeB(const Config& config) {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels()
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / 
+                          computeConfig.inputDimensions.numberOfFrequencyChannels()
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);

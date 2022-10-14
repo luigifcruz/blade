@@ -29,9 +29,9 @@ Reader::Reader(const Config& config, const Input& input)
     }
 
     // Calculate antenna positions.
-    antennaPositions.resize(getTotalDims().numberOfAntennas());
+    antennaPositions.resize(getTotalDims().numberOfAspects());
 
-    const U64 antennaPositionsByteSize = getTotalDims().numberOfAntennas() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getTotalDims().numberOfAspects() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
