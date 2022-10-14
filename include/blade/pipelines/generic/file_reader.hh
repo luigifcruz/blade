@@ -115,8 +115,8 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getDelayTimes();
     }
 
-    constexpr std::vector<CF64> getAntennaCoefficients(const U64& preBeamformerChannelizerRate) const {
-        return bfr5->getAntennaCoefficients(preBeamformerChannelizerRate);
+    constexpr std::vector<CF64> getAntennaCoefficients(const U64& numberOfFrequencyChannels = 0, const U64& frequencyChannelStartIndex = 0) const {
+        return bfr5->getAntennaCoefficients(numberOfFrequencyChannels, frequencyChannelStartIndex);
     }
 
     constexpr const std::vector<RA_DEC> getBeamCoordinates() const {

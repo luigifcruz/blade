@@ -53,7 +53,7 @@ inline const Result ModeB(const Config& config) {
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getBoresightCoordinate(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCoefficients = reader.getAntennaCoefficients(config.preBeamformerChannelizerRate),
+        .phasorAntennaCoefficients = reader.getAntennaCoefficients(readerTotalOutputDims.numberOfFrequencyChannels(), reader.getChannelStartIndex()),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
 
         .beamformerIncoherentBeam = false,

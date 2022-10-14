@@ -31,7 +31,7 @@ class BLADE_API ATA : public Generic<OT> {
         };
     }
 
-    const ArrayTensorDimensions getConfigCoefficientDims() const {
+    const ArrayTensorDimensions getConfigDims() const {
         return {
             .A = this->config.numberOfAntennas,
             .F = this->config.numberOfFrequencyChannels,

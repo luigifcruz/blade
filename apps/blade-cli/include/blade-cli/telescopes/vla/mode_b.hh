@@ -51,7 +51,7 @@ inline const Result ModeB(const Config& config) {
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
 
-        .phasorAntennaCoefficients = reader.getAntennaCoefficients(1),
+        .phasorAntennaCoefficients = reader.getAntennaCoefficients(readerTotalOutputDims.numberOfFrequencyChannels(), reader.getChannelStartIndex()),
         .phasorBeamAntennaDelays = reader.getBeamAntennaDelays(),
         .phasorDelayTimes = reader.getDelayTimes(),
 

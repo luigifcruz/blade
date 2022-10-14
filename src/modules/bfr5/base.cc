@@ -63,12 +63,20 @@ Reader::Reader(const Config& config, const Input& input)
     BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
 }
 
-std::vector<CF64> Reader::getAntennaCoefficients(const U64& channelizerRate) {
+std::vector<CF64> Reader::getAntennaCoefficients(const U64& numberOfFrequencyChannels, const U64& frequencyChannelStartIndex) {
+    // transpose from F,P,A to A,F,1,P
     std::vector<CF64> antennaCoefficients;
-    const auto coefficientDims = getAntennaCoefficientsDims(channelizerRate);
+    const auto coefficientDims = ArrayTensorDimensions({
+        .A = this->bfr5.cal_info.cal_all_dims[2],
+        .F = numberOfFrequencyChannels == 0 ? this->bfr5.cal_info.cal_all_dims[0] : numberOfFrequencyChannels,
+        .T = 1,
+        .P = this->bfr5.cal_info.cal_all_dims[1],
+    });
+    if (frequencyChannelStartIndex + coefficientDims.numberOfFrequencyChannels() > this->bfr5.cal_info.cal_all_dims[0]) {
+        BL_FATAL("Requested frequency-channel range [{}, {}) exceeeds dimensions of BFR5 contents ({}).", frequencyChannelStartIndex, frequencyChannelStartIndex + coefficientDims.numberOfFrequencyChannels(), this->bfr5.cal_info.cal_all_dims[0]);
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
     antennaCoefficients.resize(coefficientDims.size());
-
-    const auto bfr5Dims = this->getTotalDims();
 
     const size_t calAntStride = 1;
     const size_t calPolStride = coefficientDims.numberOfAspects() * calAntStride;
@@ -76,24 +84,21 @@ std::vector<CF64> Reader::getAntennaCoefficients(const U64& channelizerRate) {
 
     const size_t weightsPolStride = 1;
     const size_t weightsChnStride = coefficientDims.numberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = bfr5Dims.numberOfFrequencyChannels() * weightsChnStride;
+    const size_t weightsAntStride = coefficientDims.numberOfFrequencyChannels() * weightsChnStride;
 
     for (U64 antIdx = 0; antIdx < coefficientDims.numberOfAspects(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < bfr5Dims.numberOfFrequencyChannels(); chnIdx++) {
+        for (U64 chnIdx = 0; chnIdx < coefficientDims.numberOfFrequencyChannels(); chnIdx++) {
             for (U64 polIdx = 0; polIdx < coefficientDims.numberOfPolarizations(); polIdx++) {
-                for (U64 fchIdx = 0; fchIdx < channelizerRate; fchIdx++) {
-                    const auto inputIdx = chnIdx * calChnStride +
-                                          polIdx * calPolStride + 
-                                          antIdx * calAntStride;
+                const auto inputIdx = (frequencyChannelStartIndex + chnIdx) * calChnStride +
+                                        polIdx * calPolStride + 
+                                        antIdx * calAntStride;
 
-                    const auto frqIdx = chnIdx * channelizerRate + fchIdx;
-                    const auto outputIdx = antIdx * weightsAntStride +
-                                           polIdx * weightsPolStride +
-                                           frqIdx * weightsChnStride;
+                const auto outputIdx = antIdx * weightsAntStride +
+                                        polIdx * weightsPolStride +
+                                        chnIdx * weightsChnStride;
 
-                    const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
-                    antennaCoefficients.data()[outputIdx] = {coeff.re, coeff.im};
-                }
+                const auto& coeff = this->bfr5.cal_info.cal_all[inputIdx];
+                antennaCoefficients.data()[outputIdx] = {coeff.re, coeff.im};
             }
         }
     }

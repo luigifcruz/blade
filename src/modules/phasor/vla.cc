@@ -16,29 +16,33 @@ VLA<OT>::VLA(const typename VLA<OT>::Config& config,
       config(config),
       input(input) {
     // Check configuration values.
-    const auto coefficientCoarseStepDims = this->getConfigCoefficientDims() / ArrayTensorDimensions({
+    const auto fineStepDims = this->getConfigDims();
+    const auto coarseStepDims = fineStepDims / ArrayTensorDimensions({
         .A = 1,
         .F = this->config.preBeamformerChannelizerRate,
         .T = 1,
         .P = 1,
     });
-    if (config.antennaCoefficients.size() % coefficientCoarseStepDims.size() != 0) {
+    
+    // Calculate the number of frequency-channels in the coefficients,
+    // it infers the total number of observation coarse frequency-channels
+    const auto coefficientNumberOfFrequencyChannels = config.antennaCoefficients.size() / (config.numberOfAntennas * config.numberOfPolarizations);
+    
+    if (config.antennaCoefficients.size() % coarseStepDims.size() != 0) {
         BL_FATAL("Number of antenna coefficients ({}) is not the expected size ({}), nor an integer multiple (on the frequency axis).", 
-                config.antennaCoefficients.size(), coefficientCoarseStepDims);
+                config.antennaCoefficients.size(), coarseStepDims);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->frequencySteps = config.antennaCoefficients.size() / coefficientCoarseStepDims.size();
+    this->frequencySteps = coefficientNumberOfFrequencyChannels / coarseStepDims.numberOfFrequencyChannels();
     this->frequencyStepIndex = 0;
 
-    const auto coefficientTotalDims =
-        coefficientCoarseStepDims * ArrayTensorDimensions({
-            .A = 1,
-            .F = this->frequencySteps,
-            .T = 1,
-            .P = 1,
-        });
-    this->antennaCoefficients.resize(coefficientTotalDims);
+    this->antennaCoefficients.resize({
+        .A = config.numberOfAntennas,
+        .F = coefficientNumberOfFrequencyChannels,
+        .T = 1,
+        .P = config.numberOfPolarizations,
+    });
     BL_CHECK_THROW(Memory::Copy(this->antennaCoefficients, config.antennaCoefficients));
 
     this->beamAntennaDelays.resize({
@@ -60,7 +64,7 @@ VLA<OT>::VLA(const typename VLA<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Coefficient Dimensions [A, F, T, P]: {}", coefficientTotalDims);
+    BL_INFO("Coefficient Dimensions [A, F, T, P]: {}", antennaCoefficients.dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", this->getOutputDelays().dims(), "N/A");
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Frequency steps: {}", this->frequencySteps);
@@ -106,7 +110,7 @@ const Result VLA<OT>::preprocess(const cudaStream_t& stream) {
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
                 const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
-                const U64 frequencyCoeffOffset = ((f + currentFrequencyStepOffset) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
+                const U64 frequencyCoeffOffset = (this->config.frequencyStartIndex + (f + currentFrequencyStepOffset) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
 
                 const F64 freq = this->config.channelZeroFrequencyHz + this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + currentFrequencyStepOffset) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq);

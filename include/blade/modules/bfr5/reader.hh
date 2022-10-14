@@ -81,17 +81,16 @@ class BLADE_API Reader : public Module {
         return std::vector<F64>(this->bfr5.delay_info.time_array, this->bfr5.delay_info.time_array + this->bfr5.delay_info.time_array_elements);
     }
 
-    const ArrayTensorDimensions getAntennaCoefficientsDims(const U64& channelizerRate = 1) const {
-        const auto bfr5Dims = this->getTotalDims();
+    const ArrayTensorDimensions getAntennaCoefficientsDims() const {
         return {
-            bfr5Dims.numberOfAntennas(),
-            bfr5Dims.numberOfFrequencyChannels() * channelizerRate,
-            1,
-            bfr5Dims.numberOfPolarizations(),
+            .A = this->bfr5.cal_info.cal_all_dims[2],
+            .F = this->bfr5.cal_info.cal_all_dims[0],
+            .T = 1,
+            .P = this->bfr5.cal_info.cal_all_dims[1],
         };
     }
 
-    std::vector<CF64> getAntennaCoefficients(const U64& channelizerRate = 1);
+    std::vector<CF64> getAntennaCoefficients(const U64& numberOfFrequencyChannels = 0, const U64& frequencyChannelStartIndex = 0);
 
  private:
     // Variables
