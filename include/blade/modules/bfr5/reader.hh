@@ -95,7 +95,7 @@ class BLADE_API Reader : public Module {
     const ArrayDimensions getAntennaCalibrationsDims() const{
         return {
             .A = getTotalDims().numberOfAspects(),
-            .F = getTotalDims().numberOfFrequencyChannels() * config.channelizerRate,
+            .F = getTotalDims().numberOfFrequencyChannels(), // * config.channelizerRate,
             .T = 1,
             .P = getTotalDims().numberOfPolarizations(),
         };

@@ -58,9 +58,10 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
     const auto& calibrationNumberOfChannels = config.antennaCalibrations.dims().numberOfFrequencyChannels();
     
-    if ((calibrationNumberOfChannels % dataNumberOfChannels) != 0) {
-        BL_FATAL("Number of frequency channels ({}) has to be divisable "
-                 "by antenna calibrations frequency channels ({}).",
+    // TODO: [NEXT] Add multi-step support.
+    if (calibrationNumberOfChannels != dataNumberOfChannels) {
+        BL_FATAL("Number of frequency channels ({}) has to be equal "
+                 "to the antenna calibrations frequency channels ({}).",
                  dataNumberOfChannels, calibrationNumberOfChannels);
         BL_CHECK_THROW(Result::ERROR);
     
@@ -95,7 +96,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
+    BL_INFO("Phasors Dimensions [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
     BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
