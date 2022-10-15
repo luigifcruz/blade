@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::CAST"
+
 #include <type_traits>
 #include <typeindex>
 
@@ -12,19 +14,22 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
         : Module(config.blockSize, cast_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Cast Module Configuration");
-    BL_INFO("Input Size: {}", config.inputSize);
-
-    auto size = config.inputSize * CudaTypeSize<IT>();
+    // Check configuration values.
+    auto size = getInputBuffer().size() * CudaTypeSize<IT>();
     kernel = Template("cast").instantiate(CudaType<IT>(), CudaType<OT>(), size);
     grid = dim3((size + block.x - 1) / block.x);
 
-    BL_CHECK_THROW(InitInput(input.buf, config.inputSize));
-    BL_CHECK_THROW(InitOutput(output.buf, config.inputSize));
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+
+    // Print configuration values.
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), 
+                                                 getOutputBuffer().dims());
 }
 
 template<typename IT, typename OT>
-Result Cast<IT, OT>::process(const cudaStream_t& stream) {
+const Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
         ->configure(grid, block, 0, stream)
@@ -38,7 +43,23 @@ Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     return Result::SUCCESS;
 }
 
-template class BLADE_API Cast<CF32, CF16>;
 template class BLADE_API Cast<CI8, CF32>;
+template class BLADE_API Cast<CI8, CF16>;
+
+template class BLADE_API Cast<CF16, F16>;
+template class BLADE_API Cast<CF16, F32>;
+template class BLADE_API Cast<CF16, CF32>;
+
+template class BLADE_API Cast<CF32, F16>;
+template class BLADE_API Cast<CF32, F32>;
+template class BLADE_API Cast<CF32, CF16>;
+
+template class BLADE_API Cast<F16, F32>;
+template class BLADE_API Cast<F16, CF32>;
+template class BLADE_API Cast<F16, CF16>;
+
+template class BLADE_API Cast<F32, F16>;
+template class BLADE_API Cast<F32, CF32>;
+template class BLADE_API Cast<F32, CF16>;
 
 }  // namespace Blade::Modules

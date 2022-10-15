@@ -8,7 +8,6 @@
 #include "blade/types.hh"
 #include "blade/logger.hh"
 #include "blade/macros.hh"
-#include "blade/memory/base.hh"
 
 #include "blade/utils/jitify2.hh"
 using namespace jitify2::reflection;
@@ -21,11 +20,11 @@ class Module {
                     const jitify2::PreprocessedProgram& kernel);
     virtual ~Module() = default;
 
-    virtual constexpr Result preprocess(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result  preprocess(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 
-    virtual constexpr Result process(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result process(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 
@@ -35,34 +34,8 @@ class Module {
     dim3 grid, block;
 
     template<typename T>
-    static Result InitInput(const T& buffer, std::size_t size) {
-        if (buffer.empty()) {
-            BL_DEBUG("Input is empty, allocating {} elements", size);
-            return const_cast<T&>(buffer).resize(size);
-        }
-
-        if (buffer.size() != size) {
-            BL_FATAL("Input size ({}) doesn't match the configuration size ({}).",
-                buffer.size(), size);
-            return Result::ERROR;
-        }
-
-        return Result::SUCCESS;
-    }
-
-    template<typename T>
-    static Result InitOutput(T& buffer, std::size_t size) {
-        if (!buffer.empty()) {
-            BL_FATAL("The output buffer should be empty on initialization.");
-            return Result::ERROR;
-        }
-
-        return buffer.resize(size);
-    }
-
-    template<typename T>
     static const std::string CudaType() {
-        static std::map<std::type_index, std::string> type_map = {
+        static std::unordered_map<std::type_index, std::string> type_map = {
             {typeid(CF16),  "__half"},
             {typeid(CF32),  "float"},
             {typeid(CI8),   "char"},
@@ -85,7 +58,7 @@ class Module {
 
     template<typename T>
     static const std::size_t CudaTypeSize() {
-        static std::map<std::type_index, std::size_t> size_map = {
+        static std::unordered_map<std::type_index, std::size_t> size_map = {
             {typeid(CF16),  2},
             {typeid(CF32),  2},
             {typeid(CI8),   2},

@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::PHASOR::ATA"
+
 #include "blade/modules/phasor/ata.hh"
 
 extern "C" {
@@ -52,13 +54,26 @@ template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
-    if (this->getCalibrationsSize() != config.antennaCalibrations.size()) {
-        BL_FATAL("Number of antenna calibrations ({}) doesn't match with" 
-                 " the expected size ({}).", this->getCalibrationsSize(),
-                 config.antennaCalibrations.size());
-        throw Result::ERROR;
+    // Check configuration values.
+    const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
+    const auto& calibrationNumberOfChannels = config.antennaCalibrations.dims().numberOfFrequencyChannels();
+    
+    // TODO: [NEXT] Add multi-step support.
+    if (calibrationNumberOfChannels != dataNumberOfChannels) {
+        BL_FATAL("Number of frequency channels ({}) has to be equal "
+                 "to the antenna calibrations frequency channels ({}).",
+                 dataNumberOfChannels, calibrationNumberOfChannels);
+        BL_CHECK_THROW(Result::ERROR);
+    
     }
+    this->numberOfFrequencySteps = calibrationNumberOfChannels / dataNumberOfChannels;
 
+    if (this->getConfigCalibrationDims() != config.antennaCalibrations.dims()) {
+        BL_FATAL("Dimensions of antenna calibrations {} doesn't match with the expected dimensions {}.", 
+                config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+    
     //  Resizing array to the required length.
     antennasXyz.resize(this->config.numberOfAntennas);
     boresightUvw.resize(this->config.numberOfAntennas);
@@ -76,12 +91,18 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT);
 
-    BL_CHECK_THROW(this->InitOutput(this->output.delays, getDelaysSize()));
-    BL_CHECK_THROW(this->InitOutput(this->output.phasors, getPhasorsSize()));
+    // Allocate output buffers.
+    BL_CHECK_THROW(this->output.phasors.resize(getOutputPhasorsDims()));
+    BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
+
+    // Print configuration values.
+    BL_INFO("Phasors Dimensions [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
+    BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
+    BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
 
 template<typename OT>
-Result ATA<OT>::preprocess(const cudaStream_t& stream) {
+const Result ATA<OT>::preprocess(const cudaStream_t& stream) {
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
     eraASTROM astrom;
@@ -91,8 +112,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         this->config.arrayReferencePosition.LON,
         this->config.arrayReferencePosition.LAT,
         this->config.arrayReferencePosition.ALT,
-        this->input.frameJulianDate[0],
-        this->input.frameDut1[0],
+        this->input.blockJulianDate[0],
+        this->input.blockDut1[0],
         &astrom);
 
     //  Convert Boresight RA & Declination to Hour Angle & Declination.
@@ -118,7 +139,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         boresightDelay.data()
     );
 
-    for (U64 b = 0; b < this->config.numberOfBeams; b++) {
+    for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         //  Copy Reference Position (XYZ) to Source Position (UVW).
         for (U64 i = 0; i < antennasXyz.size(); i++) {
             sourceUvw[i] = reinterpret_cast<const UVW&>(antennasXyz[i]);
@@ -150,7 +171,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
         }
     }
 
-    for (U64 b = 0; b < this->config.numberOfBeams; b++) {
+    // TODO: Implement frequency channel iterator.
+    for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         const U64 beamOffset = (b * 
                                 this->config.numberOfAntennas * 
                                 this->config.numberOfFrequencyChannels * 
@@ -162,7 +184,7 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
                                        this->config.numberOfPolarizations);
 
             const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
-            const F64 fringe = this->config.rfFrequencyHz - (this->config.totalBandwidthHz / 2.0);
+            const F64 fringe = this->config.observationFrequencyHz - (this->config.totalBandwidthHz / 2.0);
             const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
@@ -183,6 +205,8 @@ Result ATA<OT>::preprocess(const cudaStream_t& stream) {
             }
         }
     }
+    
+    this->currentFrequencyStep = (this->currentFrequencyStep + 1) % this->numberOfFrequencySteps;
 
     return Result::SUCCESS;
 }

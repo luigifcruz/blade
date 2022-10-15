@@ -50,11 +50,15 @@ $ cd blade
 $ CC=gcc-10 CXX=g++-10 meson build
 ```
 
+### Rules
+
+- All frequencies are in Hertz.
+- All angles are in radians.
+
 ### Implementation Notes
 
 - This code is following the [Google C++ Code Style Guide](https://google.github.io/styleguide/cppguide.html).
-    - The default line length is 88.
-    - Using namespaces is allowed in tests.
+    - The default line length is 88. This can be overridden if necessary. Please, be sensible.
 - The CUDA C++ Standard Library is being ignored for now because of performance inconsistencies.
 - The library is implemented using bleeding-edge features like CUDA 11.4 and C++20.
 
@@ -123,36 +127,36 @@ enum class Device : uint8_t {
     CUDA    = 1 << 1,
 };
 
-Vector<Device::CPU, CF32> cpu_array(50); // Allocates CPU array.
-Vector<Device::CUDA, CF32> gpu_array(50); // Allocates CUDA array.
+ArrayTensor<Device::CPU, CF32> cpu_array(50); // Allocates CPU array.
+ArrayTensor<Device::CUDA, CF32> gpu_array(50); // Allocates CUDA array.
 
 // Allocates managed memory available in the host (CPU) and device(CUDA).
-Vector<Device::CUDA | Device::CPU, CF32> managed_array(50);
+ArrayTensor<Device::CUDA | Device::CPU, CF32> managed_array(50);
 ```
 
 The custom library offers compile-time checks to ensure the requested data locale of a method matches the array passed as an argument.
 
 ```cpp
-Result processor(Vector<Device::CUDA, CF32>& gpu_array) {
+Result processor(ArrayTensor<Device::CUDA, CF32>& gpu_array) {
 ...
 }
 
-Vector<Device::CPU, CF32> cpu_array(64);
+ArrayTensor<Device::CPU, CF32> cpu_array(64);
 processor(cpu_array); // Fails! Passing CPU array to method expecting CUDA.
 
-Vector<Device::CUDA, CF32> gpu_array(64);
+ArrayTensor<Device::CUDA, CF32> gpu_array(64);
 processor(gpu_array); // Works!
 
-Vector<Device::CPU | Device::CUDA, CF32> managed_array(64);
+ArrayTensor<Device::CPU | Device::CUDA, CF32> managed_array(64);
 processor(managed_array); // Works! Unified vectors are also supported!
 ```
 
 Overloads of the `Memory::Copy` method supporting multiple devices provides an easy way to copy elements between arrays.
 
 ```cpp
-Vector<Device::CUDA, CF32> gpu_array_src(64);
-Vector<Device::CUDA, CF32> gpu_array_dst(64);
-Vector<Device::CPU, CF32> cpu_array_dst(64);
+ArrayTensor<Device::CUDA, CF32> gpu_array_src(64);
+ArrayTensor<Device::CUDA, CF32> gpu_array_dst(64);
+ArrayTensor<Device::CPU, CF32> cpu_array_dst(64);
 
 Memory::Copy(gpu_array_dst, gpu_array_src);
 
@@ -179,20 +183,20 @@ class BLADE_API Cast : public Module {
     };
 
     struct Input {
-        const Vector<Device::CUDA, IT>& buf;
+        const ArrayTensor<Device::CUDA, IT>& buf;
     };
 
     struct Output {
-        Vector<Device::CUDA, OT> buf;
+        ArrayTensor<Device::CUDA, OT> buf;
     };
 
     explicit Cast(const Config& config, const Input& input);
 
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
+    constexpr ArrayTensor<Device::CUDA, IT>& getInput() {
+        return const_cast<ArrayTensor<Device::CUDA, IT>&>(this->input.buf);
     }
 
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutput() const {
         return this->output.buf;
     }
 ...
@@ -231,8 +235,8 @@ class Test : public Pipeline {
         return channelizer->getBufferSize();
     }
 
-    Result run(const Vector<Device::CPU, IT>& input,
-                     Vector<Device::CPU, OT>& output) {
+    Result run(const ArrayTensor<Device::CPU, IT>& input,
+                     ArrayTensor<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(channelizer->getInput(), input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, channelizer->getOutput()));
@@ -241,7 +245,7 @@ class Test : public Pipeline {
     }
 
  private:
-    Vector<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Channelizer<IT, OT>> channelizer;
 };
 ```

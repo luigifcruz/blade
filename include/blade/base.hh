@@ -5,11 +5,10 @@
 #include "blade/macros.hh"
 #include "blade/logger.hh"
 #include "blade/pipeline.hh"
-#include "blade/memory/base.hh"
 
 namespace Blade {
 
-inline Result SetCudaDevice(int device_id) {
+inline const Result SetCudaDevice(int device_id) {
     BL_CUDA_CHECK(cudaSetDevice(device_id), [&]{
        BL_FATAL("Failed to set device: {}", err);
     });

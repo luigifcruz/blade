@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::PHASOR"
+
 #include <algorithm>
 
 #include "blade/modules/phasor/generic.hh"
@@ -10,30 +12,25 @@ template<typename OT>
 Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(config.blockSize, phasor_kernel),
           config(config),
-          input(input) {
-    BL_INFO("===== Phasor Module Configuration");
-
-    if (config.numberOfBeams != config.beamCoordinates.size()) {
-        BL_FATAL("Number of Beams configuration ({}) mismatches the number of"
-                 " beams coordinates ({}).", config.numberOfBeams,
-                 config.beamCoordinates.size());
-        throw Result::ERROR;
-    }
-
+          input(input),
+          numberOfFrequencySteps(0),
+          currentFrequencyStep(0) {
+    // Check configuration values.
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"
                  " antenna positions ({}).", config.numberOfAntennas,
                  config.antennaPositions.size());
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
     
     if (config.referenceAntennaIndex >= config.numberOfAntennas) {
         BL_FATAL("Reference Antenna Index ({}) is larger than the number of"
                  " antennas ({}).", config.referenceAntennaIndex,
                  config.numberOfAntennas);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
+    // Check if calibration values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;
 
@@ -63,11 +60,9 @@ Generic<OT>::Generic(const Config& config, const Input& input)
                 min_cal, max_cal, min_value, max_value); 
     }
 
-    BL_INFO("Number of Beams: {}", config.numberOfBeams);
-    BL_INFO("Number of Antennas: {}", config.numberOfAntennas);
-    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
-    BL_INFO("RF Frequency (Hz): {}", config.rfFrequencyHz);
+    // Print generic configuration values.
+    BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
+    BL_INFO("Observation Frequency (Hz): {}", config.observationFrequencyHz);
     BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
     BL_INFO("Total Bandwidth (Hz): {}", config.totalBandwidthHz);
     BL_INFO("Frequency Start Index: {}", config.frequencyStartIndex);
@@ -77,18 +72,17 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         config.arrayReferencePosition.ALT);
     BL_INFO("Boresight Coordinate (RA, DEC): ({}, {})",
         config.boresightCoordinate.RA, config.boresightCoordinate.DEC);
-
     BL_INFO("ECEF Antenna Positions (X, Y, Z):");
     for (U64 i = 0; i < config.antennaPositions.size(); i++) {
         BL_INFO("    {}: ({}, {}, {})", i, config.antennaPositions[i].X, 
             config.antennaPositions[i].Y, config.antennaPositions[i].Z);
     }
-
     BL_INFO("Beam Coordinates (RA, DEC):");
     for (U64 i = 0; i < config.beamCoordinates.size(); i++) {
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
+    BL_INFO("Calibrations Dimensions (A, F, T, P): {}", config.antennaCalibrations.dims());
 }
 
 template class BLADE_API Generic<CF32>;

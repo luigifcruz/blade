@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "MODULE"
+
 #include "blade/module.hh"
 
 namespace Blade {

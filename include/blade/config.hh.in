@@ -1,2 +1,33 @@
 #define BLADE_VERSION_STR "@version@"
 #define BLADE_BUILD_TYPE "@build_type@"
+
+// Generic Modules
+#mesondefine BLADE_MODULE_CAST
+#mesondefine BLADE_MODULE_CHANNELIZER
+#mesondefine BLADE_MODULE_DETECTOR
+#mesondefine BLADE_MODULE_BFR5
+#mesondefine BLADE_MODULE_GUPPI
+
+// ATA Specific Modules
+#mesondefine BLADE_MODULE_ATA_BEAMFORMER
+#mesondefine BLADE_MODULE_ATA_PHASOR
+
+// MeerKAT Specific Modules
+#mesondefine BLADE_MODULE_MEERKAT_BEAMFORMER
+
+// VLA Specific Modules
+#mesondefine BLADE_MODULE_VLA_BEAMFORMER
+
+// ATA Pipelines
+#mesondefine BLADE_PIPELINE_ATA_MODE_B
+
+// Generic Pipelines
+#mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
+#mesondefine BLADE_PIPELINE_GENERIC_FILE_WRITER
+#mesondefine BLADE_PIPELINE_GENERIC_MODE_H
+
+// Dependency Loaders
+#mesondefine BLADE_LOADER_RADIOINTERFEROMETRY
+#mesondefine BLADE_LOADER_GUPPIRAW
+#mesondefine BLADE_LOADER_BFR5
+#mesondefine BLADE_LOADER_CLI11

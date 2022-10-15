@@ -9,33 +9,24 @@
 #include "blade/module.hh"
 #include "blade/pipeline.hh"
 #include "blade/macros.hh"
+#include "blade/accumulator.hh"
 
 namespace Blade {
 
-template<class T>
+template<class Pipeline>
 class BLADE_API Runner {
  public:
-    static std::unique_ptr<Runner<T>> New(const U64& numberOfWorkers,
-                                          const typename T::Config& config,
-                                          const BOOL& printET = true) {
-        return std::make_unique<Runner<T>>(numberOfWorkers, config, printET);
+    static std::unique_ptr<Runner<Pipeline>> New(const U64& numberOfWorkers,
+                                                 const typename Pipeline::Config& config,
+                                                 const BOOL& printET = true) {
+        return std::make_unique<Runner<Pipeline>>(numberOfWorkers, config, printET);
     }
 
     explicit Runner(const U64& numberOfWorkers,
-                    const typename T::Config& config,
+                    const typename Pipeline::Config& config,
                     const BOOL& printET = true) {
         if (printET) {
-            BL_INFO(R"(
-
-Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
-Version {} | Build Type: {}
-                .-.
-    .-""`""-.    |(0 0)
-_/`oOoOoOoOo`\_ \ \-/
-'.-=-=-=-=-=-=-.' \/ \
-`-=.=-.-=.=-'    \ /\
-    ^  ^  ^       _H_ \
-            )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+            BL_LOG_PRINT_ET();
         }
 
         BL_INFO("Instantiating new runner.");
@@ -47,13 +38,11 @@ _/`oOoOoOoOo`\_ \ \-/
 
         for (U64 i = 0; i < numberOfWorkers; i++) {
             BL_DEBUG("Initializing new worker.");
-            workers.push_back(std::make_unique<T>(config));
+            workers.push_back(std::make_unique<Pipeline>(config));
         }
     }
 
-    virtual ~Runner() = default;
-
-    constexpr const T& getWorker(const U64& index = 0) const {
+    constexpr Pipeline& getWorker(const U64& index = 0) const {
         return *workers[index];
     }
 
@@ -64,13 +53,17 @@ _/`oOoOoOoOo`\_ \ \-/
     constexpr const bool slotAvailable() const {
         return jobs.size() != workers.size();
     }
+
+    constexpr const bool empty() const {
+        return jobs.size() == 0;
+    }
     
-    constexpr const T& getNextWorker() const {
+    constexpr Pipeline& getNextWorker() {
         return *workers[head];
     }
 
-    Result applyToAllWorkers(const std::function<const Result(T&)>& modifier,
-                             const bool block = false) {
+    const Result applyToAllWorkers(const std::function<const Result(Pipeline&)>& modifier,
+                                   const bool block = false) {
         for (auto& worker : workers) {
              BL_CHECK(modifier(*worker));
         }
@@ -84,17 +77,57 @@ _/`oOoOoOoOo`\_ \ \-/
         return Result::SUCCESS;
     }
 
-    bool enqueue(const std::function<const U64(T&)>& jobFunc) {
+    bool enqueue(const std::function<const U64(Pipeline&)>& jobFunc) {
         // Return if there are no workers available.
         if (jobs.size() == workers.size()) {
             return false;
         }
 
-        jobs.push_back({
-            .id = jobFunc(*workers[head]),
-            .worker = workers[head],
-        });
+        try {
+            jobs.push_back({
+                .id = jobFunc(*workers[head]),
+                .worker = workers[head],
+            });
+        } catch (const Result& err) {
+            // Print user friendly error and issue fatal error.
+            if (err == Result::PLAN_ERROR_ACCUMULATION_COMPLETE) {
+                BL_FATAL("Can't accumulate block because buffer is full.");
+                BL_CHECK_THROW(err);
+            }
 
+            if (err == Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED) {
+                BL_FATAL("Can't transfer data because destination is not synchronized.");
+                BL_CHECK_THROW(err);
+            }
+
+            if (err == Result::PLAN_ERROR_NO_ACCUMULATOR) {
+                BL_FATAL("This mode doesn't support accumulation.");
+                BL_CHECK_THROW(err);
+            }
+
+            if (err == Result::PLAN_ERROR_NO_SLOT) {
+                BL_FATAL("No slot available after compute. Data has nowhere to go.")
+                BL_CHECK_THROW(err);
+            }
+
+            // Ignore if throw was a skip operation.
+            if (err == Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE || 
+                err == Result::PLAN_SKIP_USER_INITIATED ||
+                err == Result::PLAN_SKIP_NO_DEQUEUE || 
+                err == Result::PLAN_SKIP_NO_SLOT) {
+                return false;
+            }
+
+            // Ignore if throw originates from exhaustion.
+            if (err == Result::EXHAUSTED) {
+                return false;
+            }
+
+            // Fatal error otherwise.
+            BL_CHECK_THROW(err);
+        }
+
+        // Bump job queue head index.
         head = (head + 1) % workers.size();
 
         return true;
@@ -130,59 +163,14 @@ _/`oOoOoOoOo`\_ \ \-/
  private:
     struct Job {
         U64 id;
-        std::unique_ptr<T>& worker;
+        std::unique_ptr<Pipeline>& worker;
     };
 
     U64 head = 0;
     std::deque<Job> jobs;
-    std::vector<std::unique_ptr<T>> workers;
+    std::vector<std::unique_ptr<Pipeline>> workers;
 };
 
 }  // namespace Blade
 
 #endif
-
-/*
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&#G#&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&GJ5#&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&P!?B&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&&#Y^~G&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&#GYJ&G75&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&#7:.  ?5^Y#&@&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@G^    .#!  .!5#@&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&Y.     ?#      :?G&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&#7       PB^.       ~#&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&G^        P@&B57:     5@&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&BGBBB##.         5@&&@@#GJ~. J@&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&P.   ^&~         Y@&&&&&&@&#55&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@5    YG         J@&&&&&&&&&@&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@J   :#^        ?@&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&GB&&&&&#P#@@?   J5        7@&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@@@@@&&&&&&&@@#Y^  7&B?BY :?G&!  .B:       !@&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&@&GP5YJ??BP^:~YBP!. .~JP7 ~&^   7##J~.?J       ~&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&@&5^     :57 :?5?^:~7?GG!   G5  ^PY~#7?5P#^      ^&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&@#Y^      ?5~~YY?!777~..7Y7^ ^&: JG! ~#.  :!Y5J!:  :&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&@#J:      :55JPPJ7!^.       ^?JG5!GJ   !B      .^?Y5?!&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&@B?.       7#BGY!:              :#B5:    ?G          :7G&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&@B?.        7B&B5J??777!!!~~~^^:: ^#?      YP       ~J5G#&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&G7.           .:^!?JJYJJ?77!!!777?YJ?J?~    55       !@@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&@&P!       :^!J5:        .:^~7??JJ!~:..:!?Y5P?: GJ        Y@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&5^  .^!?YPB#&@@&.              ?&@@&&#BPY??PGJJY#?        .B&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&G?!J5G#&&@@&&&&&&B             :P@&&&&&&&&@@&&G?!YB~         !&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&#&@@@&&&&&&&&&&&&B^:.         !#@&&&&&&&&&&&&&&B?:            5@&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&5!?JJJ?7!^..Y&&&&&&&&&&&&&&&&&&@#Y:          .#&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&~    .:^!P##&&&&&&&&&&&&&&&&&&&&&@&5^         !&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&#.      .5&&&&&&&&&&&&&&&&&&&&&&&&&&@&P~        5@&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&@5      7#@&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&G!      :#&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&@7    :P@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&B7.    7@&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&:   ?#@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@BJ:   5@&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&G  ^G@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@#Y: .#&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&@J J&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&5^7&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&JG@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@&P#&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-*/

@@ -9,21 +9,22 @@ template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
     explicit Test(const U64& inputSize) {
-        this->connect(cast, {inputSize, 512}, {input});
+        BL_CHECK_THROW(input.resize({inputSize, 1, 1, 1}));
+        this->connect(cast, {512}, {input});
     }
 
-    Result run(const Vector<Device::CPU, IT>& input,
-                     Vector<Device::CPU, OT>& output) {
-        BL_CHECK(this->copy(cast->getInput(), input));
+    const Result run(const ArrayTensor<Device::CPU, IT>& input,
+                           ArrayTensor<Device::CPU, OT>& output) {
+        BL_CHECK(this->copy(this->input, input));
         BL_CHECK(this->compute());
-        BL_CHECK(this->copy(output, cast->getOutput()));
+        BL_CHECK(this->copy(output, cast->getOutputBuffer()));
         BL_CHECK(this->synchronize());
 
         return Result::SUCCESS;
     }
 
  private:
-    Vector<Device::CUDA, IT> input;
+    ArrayTensor<Device::CUDA, IT> input;
     std::shared_ptr<Modules::Cast<IT, OT>> cast;
 };
 
@@ -31,9 +32,9 @@ template<typename IT, typename OT>
 int complex_test(const U64 testSize) {
     auto mod = Test<std::complex<IT>, std::complex<OT>>{testSize};
 
-    Vector<Device::CPU, std::complex<IT>> input(testSize);
-    Vector<Device::CPU, std::complex<OT>> output(testSize);
-    Vector<Device::CPU, std::complex<OT>> result(testSize);
+    ArrayTensor<Device::CPU, std::complex<IT>> input({testSize, 1, 1, 1});
+    ArrayTensor<Device::CPU, std::complex<OT>> output({testSize, 1, 1, 1});
+    ArrayTensor<Device::CPU, std::complex<OT>> result({testSize, 1, 1, 1});
 
     for (U64 i = 0; i < testSize; i++) {
         input[i] = {
@@ -71,8 +72,6 @@ int main() {
     BL_INFO("Testing cast module.");
 
     const U64 testSize = 134400000;
-
-    // TODO: Add non-complex tests.
 
     BL_INFO("Casting CI8 to CF32...");
     if (complex_test<I8, F32>(testSize) != 0) {

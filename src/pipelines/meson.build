@@ -1,1 +1,2 @@
 subdir('ata')
+subdir('generic')

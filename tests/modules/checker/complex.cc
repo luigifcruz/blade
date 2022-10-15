@@ -2,7 +2,7 @@
 
 using namespace Blade;
 
-Result Init(U64 testSize = 8192) {
+const Result Init(U64 testSize = 8192) {
     BL_INFO("Allocating CUDA memory...");
     static CF32* input_ptr;
     static CF32* output_ptr;
@@ -17,20 +17,20 @@ Result Init(U64 testSize = 8192) {
         BL_FATAL("Can't allocate complex checker test output buffer: {}", err);
     });
 
-    Vector<Device::CPU, CF32> input{input_ptr, testSize};
-    Vector<Device::CPU, CF32> output{output_ptr, testSize};
+    ArrayTensor<Device::CPU, CF32> input{input_ptr, {testSize, 1, 1, 1}};
+    ArrayTensor<Device::CPU, CF32> output{output_ptr, {testSize, 1, 1, 1}};
 
     BL_INFO("Generating test data...");
     std::srand(unsigned(std::time(nullptr)));
 
-    for (auto& element : input.getUnderlying()) {
+    for (auto& element : input) {
         element = {
             static_cast<F32>(std::rand()),
             static_cast<F32>(std::rand())
         };
     }
 
-    for (auto& element : output.getUnderlying()) {
+    for (auto& element : output) {
         element = std::complex(1.42, 1.69);
     }
 

@@ -11,25 +11,35 @@ class BLADE_API ATA : public Generic<OT> {
     explicit ATA(const typename Generic<OT>::Config& config,
                  const typename Generic<OT>::Input& input);
 
-    constexpr U64 getPhasorsSize() const {
-        return this->config.numberOfBeams * 
-               this->config.numberOfAntennas *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfPolarizations;
+    const Result preprocess(const cudaStream_t& stream = 0) final;
+
+ protected:
+    const PhasorDimensions getOutputPhasorsDims() const {
+        return {
+            .B = this->config.beamCoordinates.size(),
+            .A = this->config.numberOfAntennas,
+            .F = this->config.numberOfFrequencyChannels,
+            .T = 1,
+            .P = this->config.numberOfPolarizations,
+        };
     }
 
-    constexpr U64 getDelaysSize() const {
-        return this->config.numberOfAntennas * 
-               this->config.numberOfBeams;
+    const DelayDimensions getOutputDelaysDims() const {
+        return {
+            .B = this->config.beamCoordinates.size(),
+            .A = this->config.numberOfAntennas,
+        };
     }
 
-    constexpr U64 getCalibrationsSize() const {
-        return this->config.numberOfAntennas *
-               this->config.numberOfFrequencyChannels *
-               this->config.numberOfPolarizations;
+    const ArrayDimensions getConfigCalibrationDims() const {
+        return {
+            .A = this->config.numberOfAntennas,
+            .F = this->config.numberOfFrequencyChannels *
+                 this->numberOfFrequencySteps,
+            .T = 1,
+            .P = this->config.numberOfPolarizations,
+        };
     }
-
-    Result preprocess(const cudaStream_t& stream = 0) final;
 
  private:
     std::vector<XYZ> antennasXyz;

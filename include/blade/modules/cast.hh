@@ -9,39 +9,53 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 class BLADE_API Cast : public Module {
  public:
+    // Configuration
+
     struct Config {
-        U64 inputSize;
         U64 blockSize = 512;
     };
-
-    struct Input {
-        const Vector<Device::CUDA, IT>& buf;
-    };
-
-    struct Output {
-        Vector<Device::CUDA, OT> buf;
-    };
-
-    explicit Cast(const Config& config, const Input& input);
-
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
-    }
-
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
-        return this->output.buf;
-    }
 
     constexpr const Config& getConfig() const {
         return this->config;
     }
 
-    Result process(const cudaStream_t& stream = 0) final;
+    // Input
+
+    struct Input {
+        const ArrayTensor<Device::CUDA, IT>& buf;
+    };
+
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return this->input.buf;
+    }
+
+    // Output 
+
+    struct Output {
+        ArrayTensor<Device::CUDA, OT> buf;
+    };
+
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
+        return this->output.buf;
+    }
+
+    // Constructor & Processing
+
+    explicit Cast(const Config& config, const Input& input);
+    const Result process(const cudaStream_t& stream = 0) final;
 
  private:
+    // Variables
+
     const Config config;
     const Input input;
     Output output;
+
+    // Expected Dimensions
+
+    const ArrayDimensions getOutputBufferDims() const {
+        return getInputBuffer().dims();
+    }
 };
 
 }  // namespace Blade::Modules

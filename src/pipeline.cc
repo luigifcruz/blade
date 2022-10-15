@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "PIPELINE"
+
 #include "blade/pipeline.hh"
 
 namespace Blade {
@@ -17,7 +19,7 @@ Pipeline::~Pipeline() {
     cudaStreamDestroy(this->stream);
 }
 
-Result Pipeline::synchronize() {
+const Result Pipeline::synchronize() {
     BL_CUDA_CHECK(cudaStreamSynchronize(this->stream), [&]{
         BL_FATAL("Failed to synchronize stream: {}", err);
     });
@@ -28,7 +30,7 @@ bool Pipeline::isSynchronized() {
     return cudaStreamQuery(this->stream) == cudaSuccess;
 }
 
-Result Pipeline::compute() {
+const Result Pipeline::compute() {
     for (auto& module : this->modules) {
         BL_CHECK(module->preprocess());
     }
@@ -57,6 +59,10 @@ Result Pipeline::compute() {
             BL_CUDA_CHECK(cudaGraphInstantiate(&this->instance, this->graph,
                     NULL, NULL, 0), [&]{
                 BL_FATAL("Failed to instantiate CUDA Graph: {}", err);
+            });
+
+            BL_CUDA_CHECK(cudaGraphLaunch(this->instance, this->stream), [&]{
+                BL_FATAL("Failed launch CUDA graph: {}", err);
             });
 
             this->state = State::GRAPH;

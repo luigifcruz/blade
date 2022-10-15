@@ -9,13 +9,14 @@ namespace Blade::Modules::Phasor {
 template<typename OT>
 class BLADE_API Generic : public Module {
  public:
+    // Configuration
+
     struct Config {
-        U64 numberOfBeams;
         U64 numberOfAntennas;
         U64 numberOfFrequencyChannels;
         U64 numberOfPolarizations;
 
-        F64 rfFrequencyHz;
+        F64 observationFrequencyHz;
         F64 channelBandwidthHz;
         F64 totalBandwidthHz;
         U64 frequencyStartIndex;
@@ -24,47 +25,69 @@ class BLADE_API Generic : public Module {
         LLA arrayReferencePosition; 
         RA_DEC boresightCoordinate;
         std::vector<XYZ> antennaPositions;
-        std::vector<CF64> antennaCalibrations; 
+        ArrayTensor<Device::CPU, CF64> antennaCalibrations;
         std::vector<RA_DEC> beamCoordinates;
 
         U64 blockSize = 512;
     };
 
-    struct Input {
-        const Vector<Device::CPU, F64>& frameJulianDate;
-        const Vector<Device::CPU, F64>& frameDut1;
-    };
-
-    struct Output {
-        Vector<Device::CPU, F64> delays;
-        Vector<Device::CPU | Device::CUDA, OT> phasors;
-    };
-
-    explicit Generic(const Config& config, const Input& input);
-    virtual ~Generic() = default;
-
-    constexpr Vector<Device::CPU, F64>& getDelays() {
-        return this->output.delays;
-    } 
-
-    constexpr Vector<Device::CPU | Device::CUDA, OT>& getPhasors() {
-        return this->output.phasors;
-    } 
-
-    constexpr Config getConfig() const {
+    constexpr const Config& getConfig() const {
         return config;
     }
 
-    virtual constexpr U64 getPhasorsSize() const = 0;
-    virtual constexpr U64 getDelaysSize() const = 0;
-    virtual constexpr U64 getCalibrationsSize() const = 0;
+    // Input 
 
-    virtual Result preprocess(const cudaStream_t& stream = 0) = 0;
+    struct Input {
+        const Vector<Device::CPU, F64>& blockJulianDate;
+        const Vector<Device::CPU, F64>& blockDut1;
+    };
+
+    constexpr const Vector<Device::CPU, F64>& getInputJulianDate() const {
+        return this->input.blockJulianDate;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getInputDut1() const {
+        return this->input.blockDut1;
+    }
+
+    // Output
+
+    struct Output {
+        DelayTensor<Device::CPU, F64> delays;
+        PhasorTensor<Device::CPU | Device::CUDA, OT> phasors;
+    };
+
+    constexpr const DelayTensor<Device::CPU, F64>& getOutputDelays() const {
+        return this->output.delays;
+    } 
+
+    constexpr const PhasorTensor<Device::CPU | Device::CUDA, OT>& getOutputPhasors() const {
+        return this->output.phasors;
+    } 
+
+    // Constructor & Processing
+
+    explicit Generic(const Config& config, const Input& input);
+    virtual ~Generic() = default;
+    virtual const Result preprocess(const cudaStream_t& stream = 0) = 0;
 
  protected:
+    // Variables
+
     const Config config;
     const Input input;
     Output output;
+
+    // Expected Dimensions
+
+    virtual const DelayDimensions getOutputDelaysDims() const = 0;
+    virtual const PhasorDimensions getOutputPhasorsDims() const = 0;
+    virtual const ArrayDimensions getConfigCalibrationDims() const = 0;
+
+    // Miscellaneous
+
+    U64 numberOfFrequencySteps;
+    U64 currentFrequencyStep;
 };
 
 }  // namespace Blade::Modules::Phasor

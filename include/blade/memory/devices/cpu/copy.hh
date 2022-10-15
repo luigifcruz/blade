@@ -6,18 +6,23 @@
 
 namespace Blade::Memory {
 
-template<typename T>
-static Result Copy(Vector<Device::CPU, T>& dst,
-                   const Vector<Device::CPU, T>& src) {
+template<typename Type, typename Dims>
+static const Result Copy(Vector<Device::CPU, Type, Dims>& dst,
+                         const Vector<Device::CPU, Type, Dims>& src) {
     if (dst.size() != src.size()) {
         BL_FATAL("Size mismatch between source and destination ({}, {}).",
                 src.size(), dst.size());
         return Result::ASSERTION_ERROR;
     }
 
+    if (dst.dims() != src.dims()) {
+        BL_FATAL("Dimensions mismatch between source ({}) and destination ({}).",
+                src.dims(), dst.dims());
+    }
+
     memcpy(dst.data(), src.data(), src.size_bytes());
 
-    return Memory::Copy(dst, src);
+    return Result::SUCCESS;
 }
 
 }  // namespace Blade::Memory

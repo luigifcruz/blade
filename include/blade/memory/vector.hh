@@ -5,76 +5,128 @@
 
 namespace Blade {
 
-template<Device I, typename T> class Vector;
+template <typename T>
+concept IsDimensions = 
+requires(T t) {
+    { t.size() } -> std::same_as<U64>;
+    { t == t } -> std::same_as<BOOL>;
+};
 
-template<typename T>
+template<typename Type, typename Dims>
+requires IsDimensions<Dims>
 class VectorImpl {
  public:
     VectorImpl()
-             : container(),
-               managed(false) {}
-    explicit VectorImpl(const U64& size)
-             : container(),
-               managed(true) {
-        this->resize(size);
+             : dimensions(),
+               container(),
+               managed(true) {}
+    explicit VectorImpl(const std::span<Type>& other, const Dims& dims)
+             : dimensions(dims),
+               container(other),
+               managed(false) {
+        if (dims.size() != other.size()) {
+            BL_FATAL("Container size ({}) doesn't match dimensions size ({})",
+                     other.size(), dims.size());
+            BL_CHECK_THROW(Result::ERROR);
+        }
     }
-    explicit VectorImpl(const std::span<T>& other)
-             : container(other),
+    explicit VectorImpl(const std::span<Type>& other)
+             : dimensions({other.size()}),
+               container(other),
                managed(false) {}
-    explicit VectorImpl(T* ptr, const U64& size)
-             : container(ptr, size),
+    explicit VectorImpl(Type* ptr, const Dims& dims)
+             : dimensions(dims),
+               container(ptr, dims.size()),
                managed(false) {}
-    explicit VectorImpl(void* ptr, const U64& size)
-             : container(static_cast<T*>(ptr), size),
+    explicit VectorImpl(void* ptr, const Dims& dims)
+             : dimensions(dims),
+               container(static_cast<Type*>(ptr), dims.size()),
                managed(false) {}
 
     VectorImpl(const VectorImpl&) = delete;
+    VectorImpl(const VectorImpl&&) = delete;
+    bool operator==(const VectorImpl&) = delete;
     VectorImpl& operator=(const VectorImpl&) = delete;
 
     virtual ~VectorImpl() {}
 
-    constexpr T* data() const noexcept {
+    constexpr Type* data() const noexcept {
         return container.data();
     }
 
-    constexpr U64 size() const noexcept {
+    constexpr const U64 size() const noexcept {
         return container.size();
     }
 
-    constexpr U64 size_bytes() const noexcept {
+    constexpr const U64 size_bytes() const noexcept {
         return container.size_bytes();
     }
 
-    [[nodiscard]] constexpr bool empty() const noexcept {
+    [[nodiscard]] constexpr const bool empty() const noexcept {
         return container.empty();
     }
 
-    constexpr T& operator[](U64 idx) const {
+    constexpr Type& operator[](U64 idx) {
         return container[idx];
     }
 
-    // TODO: Implement iterator.
-    constexpr const std::span<T>& getUnderlying() const {
-        return container;
+    constexpr const Type& operator[](U64 idx) const {
+        return container[idx];
     }
 
-    Result link(const VectorImpl<T>& src) {
+    constexpr auto begin() {
+        return container.begin();
+    }
+
+    constexpr auto end() {
+        return container.end();
+    }
+
+    constexpr const auto begin() const {
+        return container.begin();
+    }
+
+    constexpr const auto end() const {
+        return container.end();
+    }
+
+    const Result link(const VectorImpl<Type, Dims>& src) {
         if (src.empty()) {
             BL_FATAL("Source can't be empty while linking.");
             return Result::ERROR;
         }
 
         this->managed = false;
-        this->container = src.getUnderlying();
+        this->container = src.span();
+        this->dimensions = src.dims();
 
         return Result::SUCCESS;
     }
 
-    virtual Result resize(const U64& size) = 0;
+    virtual const Result resize(const Dims& dims) = 0;
+
+    constexpr const Dims& dims() const {
+        return dimensions;
+    }
 
  protected:
-    std::span<T> container;
+    Dims dimensions;
+    std::span<Type> container;
     bool managed;
+
+    explicit VectorImpl(const Dims& dims)
+             : dimensions(dims),
+               container(),
+               managed(true) {
+        if (dims.size() <= 0) {
+            BL_FATAL("Dimensions ({}) equals to invalid size ({}).", dims, dims.size());
+            BL_CHECK_THROW(Result::ERROR);
+        }
+    }
+
+    constexpr const std::span<Type>& span() const {
+        return container;
+    }
 };
 
 }  // namespace Blade

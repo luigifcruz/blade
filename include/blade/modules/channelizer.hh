@@ -12,50 +12,46 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 class BLADE_API Channelizer : public Module {
  public:
-    struct Config {
-        U64 numberOfBeams;
-        U64 numberOfAntennas;
-        U64 numberOfFrequencyChannels;
-        U64 numberOfTimeSamples;
-        U64 numberOfPolarizations; 
+    // Configuration
 
+    struct Config {
         U64 rate = 4;
+
         U64 blockSize = 512;
     };
-
-    struct Input {
-        const Vector<Device::CUDA, IT>& buf;
-    };
-
-    struct Output {
-        Vector<Device::CUDA, OT> buf;
-    };
-
-    explicit Channelizer(const Config& config, const Input& input);
-
-    constexpr Vector<Device::CUDA, IT>& getInput() {
-        return const_cast<Vector<Device::CUDA, IT>&>(this->input.buf);
-    }
-
-    constexpr const Vector<Device::CUDA, OT>& getOutput() const {
-        return this->output.buf;
-    }
 
     constexpr const Config& getConfig() const {
         return this->config;
     }
 
-    constexpr const U64 getBufferSize() const {
-        return config.numberOfPolarizations * 
-               config.numberOfTimeSamples *
-               config.numberOfAntennas * 
-               config.numberOfFrequencyChannels * 
-               config.numberOfBeams;
+    // Input
+
+    struct Input {
+        const ArrayTensor<Device::CUDA, IT>& buf;
+    };
+
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return this->input.buf;
     }
 
-    Result process(const cudaStream_t& stream = 0) final;
+    // Output
+
+    struct Output {
+        ArrayTensor<Device::CUDA, OT> buf;
+    };
+
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
+        return this->output.buf;
+    }
+
+    // Constructor & Processing
+
+    explicit Channelizer(const Config& config, const Input& input);
+    const Result process(const cudaStream_t& stream = 0) final;
 
  private:
+    // Variables 
+
     const Config config;
     const Input input;
     Output output;
@@ -66,11 +62,22 @@ class BLADE_API Channelizer : public Module {
     std::string post_kernel;
     dim3 post_grid, post_block;
 
-    Vector<Device::CUDA, OT> buffer;
-    Vector<Device::CPU | Device::CUDA, U64> indices;
+    ArrayTensor<Device::CUDA, OT> buffer;
+    ArrayTensor<Device::CPU | Device::CUDA, U64> indices;
 
     cufftHandle plan;
     std::string kernel_key;
+
+    // Expected Dimensions
+
+    const ArrayDimensions getOutputBufferDims() const {
+        return {
+            .A = getInputBuffer().dims().numberOfAspects(),
+            .F = getInputBuffer().dims().numberOfFrequencyChannels() * config.rate,
+            .T = getInputBuffer().dims().numberOfTimeSamples() / config.rate,
+            .P = getInputBuffer().dims().numberOfPolarizations(),
+        };
+    }
 };
 
 }  // namespace Blade::Modules

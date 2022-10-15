@@ -14,8 +14,8 @@ U64 Checker::run(IT a, OT b, U64 size, U64 scale) {
 }
 
 template<typename IT, typename OT>
-U64 Checker::run(const Vector<Device::CPU, std::complex<IT>>& a,
-                         const Vector<Device::CPU, std::complex<OT>>& b) {
+U64 Checker::run(const ArrayTensor<Device::CPU, std::complex<IT>>& a,
+                         const ArrayTensor<Device::CPU, std::complex<OT>>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -28,8 +28,8 @@ U64 Checker::run(const Vector<Device::CPU, std::complex<IT>>& a,
 }
 
 template<typename IT, typename OT>
-U64 Checker::run(const Vector<Device::CPU, IT>& a,
-                         const Vector<Device::CPU, OT>& b) {
+U64 Checker::run(const ArrayTensor<Device::CPU, IT>& a,
+                         const ArrayTensor<Device::CPU, OT>& b) {
     if (a.size() != b.size()) {
         BL_FATAL("Size mismatch between checker inputs.");
         return -1;
@@ -38,22 +38,22 @@ U64 Checker::run(const Vector<Device::CPU, IT>& a,
     return Checker::run(a.data(), b.data(), a.size());
 }
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, CF32>&,
-                                            const Vector<Device::CPU, CF32>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, CF32>&,
+                                    const ArrayTensor<Device::CPU, CF32>&);
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, CI8>&,
-                                            const Vector<Device::CPU, CI8>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, CI8>&,
+                                    const ArrayTensor<Device::CPU, CI8>&);
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, CF16>&,
-                                            const Vector<Device::CPU, CF16>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, CF16>&,
+                                    const ArrayTensor<Device::CPU, CF16>&);
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, F32>&,
-                                            const Vector<Device::CPU, F32>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, F32>&,
+                                    const ArrayTensor<Device::CPU, F32>&);
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, I8>&,
-                                            const Vector<Device::CPU, I8>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, I8>&,
+                                    const ArrayTensor<Device::CPU, I8>&);
 
-template U64 BLADE_API Checker::run(const Vector<Device::CPU, F16>&,
-                                            const Vector<Device::CPU, F16>&);
+template U64 BLADE_API Checker::run(const ArrayTensor<Device::CPU, F16>&,
+                                    const ArrayTensor<Device::CPU, F16>&);
 
 }  // namespace Blade::Modules

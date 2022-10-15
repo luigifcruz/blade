@@ -1,3 +1,5 @@
+#define BL_LOG_DOMAIN "M::DETECTOR"
+
 #include "blade/modules/detector.hh"
 
 #include "detector.jit.hh"
@@ -9,31 +11,30 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         : Module(config.blockSize, detector_kernel),
           config(config),
           input(input) {
-    BL_INFO("===== Detector Module Configuration");
-
-    if ((config.numberOfTimeSamples % config.integrationSize) != 0) {
-        BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the integration size ({}).", config.numberOfTimeSamples,
-                config.integrationSize);
-        throw Result::ERROR;
-    }
-
-    if (config.numberOfPolarizations != 2) {
-        BL_FATAL("Number of polarizations ({}) should be two (2).", config.numberOfPolarizations);
-        throw Result::ERROR;
-    }
-
-    if (config.numberOfBeams <= 0) {
-        BL_FATAL("Number of beams ({}) should be more than zero.", config.numberOfBeams);
-        throw Result::ERROR;
-    }
-
+    // Check configuration values.
     if (config.integrationSize <= 0) {
         BL_WARN("Integration size ({}) should be more than zero.", config.integrationSize);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
-    grid = dim3((((getInputSize() / config.numberOfPolarizations) + block.x - 1) / block.x));
+    if ((getInputBuffer().dims().numberOfTimeSamples() % config.integrationSize) != 0) {
+        BL_FATAL("The number of time samples ({}) should be divisable "
+                "by the integration size ({}).", getInputBuffer().dims().numberOfTimeSamples(), config.integrationSize);
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (getInputBuffer().dims().numberOfPolarizations() != 2) {
+        BL_FATAL("Number of polarizations ({}) should be two (2).", getInputBuffer().dims().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (getInputBuffer().dims().numberOfAspects() <= 0) {
+        BL_FATAL("Number of aspects ({}) should be more than zero.", getInputBuffer().dims().numberOfAspects());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    // Configure kernel instantiation.
+    grid = dim3((((getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) + block.x - 1) / block.x));
 
     std::string kernel_key;
     switch (config.numberOfOutputPolarizations) {
@@ -42,29 +43,28 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
         default:
             BL_FATAL("Number of output polarizations ({}) not supported.", 
                 config.numberOfOutputPolarizations);
-            throw Result::ERROR;
+            BL_CHECK_THROW(Result::ERROR);
     }
 
     kernel =
         Template(kernel_key)
-            .instantiate(getInputSize() / 
-                         config.numberOfPolarizations,
-                         config.numberOfFrequencyChannels,
+            .instantiate(getInputBuffer().size() / 
+                         getInputBuffer().dims().numberOfPolarizations(),
+                         getInputBuffer().dims().numberOfFrequencyChannels(),
                          config.integrationSize); 
 
-    BL_INFO("Number of Beams: {}", config.numberOfBeams);
-    BL_INFO("Number of Frequency Channels: {}", config.numberOfFrequencyChannels);
-    BL_INFO("Number of Time Samples: {}", config.numberOfTimeSamples);
-    BL_INFO("Number of Polarizations: {}", config.numberOfPolarizations);
+    // Allocate output buffers.
+    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+
+    // Print configuration values.
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("Integration Size: {}", config.integrationSize);
     BL_INFO("Number of Output Polarizations: {}", config.numberOfOutputPolarizations);
-
-    BL_CHECK_THROW(InitInput(input.buf, getInputSize()));
-    BL_CHECK_THROW(InitOutput(output.buf, getOutputSize()));
 }
 
 template<typename IT, typename OT>
-Result Detector<IT, OT>::process(const cudaStream_t& stream) {
+const Result Detector<IT, OT>::process(const cudaStream_t& stream) {
     cache
         .get_kernel(kernel)
         ->configure(grid, block, 0, stream)
