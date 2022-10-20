@@ -7,7 +7,7 @@
 namespace Blade::Modules::Bfr5 {
 
 Reader::Reader(const Config& config, const Input& input) 
-        : Module(config.blockSize, bfr5_kernel),
+        : Module(bfr5_program),
           config(config),
           input(input) {
     // Check configuration values.

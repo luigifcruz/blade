@@ -10,7 +10,7 @@ namespace Blade::Modules::Phasor {
 
 template<typename OT>
 Generic<OT>::Generic(const Config& config, const Input& input)
-        : Module(config.blockSize, phasor_kernel),
+        : Module(phasor_program),
           config(config),
           input(input),
           numberOfFrequencySteps(0),

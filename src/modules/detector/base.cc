@@ -8,7 +8,7 @@ namespace Blade::Modules {
 
 template<typename IT, typename OT>
 Detector<IT, OT>::Detector(const Config& config, const Input& input)
-        : Module(config.blockSize, detector_kernel),
+        : Module(detector_program),
           config(config),
           input(input) {
     // Check configuration values.
@@ -34,8 +34,6 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
     }
 
     // Configure kernel instantiation.
-    grid = dim3((((getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) + block.x - 1) / block.x));
-
     std::string kernel_key;
     switch (config.numberOfOutputPolarizations) {
         case 4: kernel_key = "detector_4pol"; break;
@@ -46,12 +44,23 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
             BL_CHECK_THROW(Result::ERROR);
     }
 
-    kernel =
-        Template(kernel_key)
-            .instantiate(getInputBuffer().size() / 
-                         getInputBuffer().dims().numberOfPolarizations(),
-                         getInputBuffer().dims().numberOfFrequencyChannels(),
-                         config.integrationSize); 
+    BL_CHECK_THROW(
+        createKernel(
+            // Kernel name.
+            "main",
+            // Kernel function key.
+            kernel_key,
+            // Kernel grid & block size.
+            PadGridSize(
+                getInputBuffer().size() / 
+                getInputBuffer().dims().numberOfPolarizations(), config.blockSize),
+            config.blockSize,
+            // Kernel templates.
+            getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations(),
+            getInputBuffer().dims().numberOfFrequencyChannels(),
+            config.integrationSize
+        )
+    );
 
     // Allocate output buffers.
     BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
@@ -65,17 +74,7 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 
 template<typename IT, typename OT>
 const Result Detector<IT, OT>::process(const cudaStream_t& stream) {
-    cache
-        .get_kernel(kernel)
-        ->configure(grid, block, 0, stream)
-        ->launch(input.buf.data(), output.buf.data());
-
-    BL_CUDA_CHECK_KERNEL([&]{
-        BL_FATAL("Module failed to execute: {}", err);
-        return Result::CUDA_ERROR;
-    });
-
-    return Result::SUCCESS;
+    return runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 
 template class BLADE_API Detector<CF32, F32>;

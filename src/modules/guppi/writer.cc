@@ -8,7 +8,7 @@ namespace Blade::Modules::Guppi {
 
 template<typename IT>
 Writer<IT>::Writer(const Config& config, const Input& input)
-        : Module(config.blockSize, guppi_kernel),
+        : Module(guppi_program),
           config(config),
           input(input),
           fileId(0),
