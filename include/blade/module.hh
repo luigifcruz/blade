@@ -16,11 +16,11 @@ namespace Blade {
 
 class Module {
  public:
-    explicit Module(const U64& blockSize,
-                    const jitify2::PreprocessedProgram& kernel);
+    explicit Module(const jitify2::PreprocessedProgram& program)
+        : cache(100, *program) {};
     virtual ~Module() = default;
 
-    virtual constexpr const Result  preprocess(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result preprocess(const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 
@@ -29,9 +29,48 @@ class Module {
     }
 
  protected:
-    jitify2::ProgramCache<> cache;
-    std::string kernel;
-    dim3 grid, block;
+    const Result createKernel(const std::string& name,
+                              const std::string& key,
+                              const dim3& gridSize,
+                              const dim3& blockSize, 
+                              const auto... templateArguments) {
+        if (blockSize.x > 1024) {
+            BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
+                    blockSize.x, blockSize.y, blockSize.z);
+            return Result::ERROR;
+        }
+
+        if ((blockSize.x % 32) != 0) {
+            BL_WARN("Best performance is achieved when the block size ({}, {}, {}) "
+                    "is a multiple of 32.", blockSize.x, blockSize.y, blockSize.z);
+        }
+
+        kernels.insert({name, {
+            .gridSize = gridSize,
+            .blockSize = blockSize,
+            .key = Template(key).instantiate(templateArguments...), 
+        }});
+
+        return Result::SUCCESS;
+    } 
+
+    const Result runKernel(const std::string& name,
+                           const cudaStream_t& stream,
+                           auto... kernelArguments) {
+        const auto& kernel = kernels[name];
+
+        cache
+            .get_kernel(kernel.key)
+            ->configure(kernel.gridSize, kernel.blockSize, 0, stream)
+            ->launch(kernelArguments...);
+
+        BL_CUDA_CHECK_KERNEL([&]{
+            BL_FATAL("Module failed to execute: {}", err);
+            return Result::CUDA_ERROR;
+        });
+
+        return Result::SUCCESS;
+    }
 
     template<typename T>
     static const std::string CudaType() {
@@ -78,6 +117,22 @@ class Module {
         }
         return size_map[type];
     }
+
+    static dim3 PadGridSize(const dim3& gridSize, const dim3& blockSize) {
+        return dim3((gridSize.x + (blockSize.x - 1)) / blockSize.x,
+                    (gridSize.y + (blockSize.y - 1)) / blockSize.y,
+                    (gridSize.z + (blockSize.z - 1)) / blockSize.z);
+    }
+
+ private:
+    struct Kernel {
+        dim3 gridSize;
+        dim3 blockSize;
+        std::string key;
+    };
+
+    jitify2::ProgramCache<> cache;
+    std::unordered_map<std::string, Kernel> kernels;
 };
 
 }  // namespace Blade
