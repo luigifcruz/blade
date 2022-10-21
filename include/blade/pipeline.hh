@@ -13,11 +13,23 @@ namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline();
+    Pipeline(const U64& numberOfAccumulationSteps = 0);
     virtual ~Pipeline();
 
     const Result synchronize();
     bool isSynchronized();
+
+    constexpr const bool accumulationComplete() const {
+        return accumulationStepCounter == numberOfAccumulationSteps;
+    }
+
+    constexpr const U64 getAccumulatorNumberOfSteps() const {
+        return numberOfAccumulationSteps;
+    }
+
+    constexpr const U64 getCurrentAccumulatorStep() const {
+        return accumulationStepCounter;
+    }
 
  protected:
     template<typename Block>
@@ -136,13 +148,16 @@ class BLADE_API Pipeline {
             src_pad, width, height, this->stream);
     }
 
-    constexpr const U64& getCurrentComputeStep() const {
-        return stepCount;
+    constexpr const U64& getCurrentComputeCount() const {
+        return currentComputeCount;
     }
 
     constexpr const cudaStream_t& getCudaStream() const {
         return stream;
     }
+
+    const U64 incrementAccumulatorStep();
+    const U64 resetAccumulatorSteps();
 
     friend class Plan;
 
@@ -154,11 +169,13 @@ class BLADE_API Pipeline {
     };
 
     State state;
-    U64 stepCount;
     cudaGraph_t graph;
     cudaStream_t stream;
     cudaGraphExec_t instance;
     std::vector<std::shared_ptr<Module>> modules;
+    const U64 numberOfAccumulationSteps;
+    U64 accumulationStepCounter;
+    U64 currentComputeCount;
 };
 
 }  // namespace Blade

@@ -4,7 +4,13 @@
 
 namespace Blade {
 
-Pipeline::Pipeline() : state(State::IDLE), stepCount(0) {
+Pipeline::Pipeline(const U64& numberOfAccumulationSteps)
+     : state(State::IDLE),
+       numberOfAccumulationSteps(numberOfAccumulationSteps),
+       accumulationStepCounter(0),
+       currentComputeCount(0) {
+    BL_INFO("Pipeline with {} accumulation steps.", numberOfAccumulationSteps);
+
     BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream,
             cudaStreamNonBlocking), [&]{
         BL_FATAL("Failed to create stream for CUDA steam: {}", err);
@@ -17,6 +23,16 @@ Pipeline::~Pipeline() {
         cudaGraphDestroy(this->graph);
     }
     cudaStreamDestroy(this->stream);
+}
+
+const U64 Pipeline::incrementAccumulatorStep() {
+    return ++accumulationStepCounter;
+}
+
+const U64 Pipeline::resetAccumulatorSteps() {
+    const auto& previous = accumulationStepCounter;
+    accumulationStepCounter = 0;
+    return previous;
 }
 
 const Result Pipeline::synchronize() {
@@ -32,7 +48,7 @@ bool Pipeline::isSynchronized() {
 
 const Result Pipeline::compute() {
     for (auto& module : this->modules) {
-        BL_CHECK(module->preprocess());
+        BL_CHECK(module->preprocess(this->stream, this->currentComputeCount));
     }
 
     switch (state) {
@@ -84,7 +100,7 @@ const Result Pipeline::compute() {
         return Result::CUDA_ERROR;
     });
 
-    stepCount += 1;
+    this->currentComputeCount += 1;
 
     return Result::SUCCESS;
 }

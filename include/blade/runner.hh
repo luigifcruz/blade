@@ -9,7 +9,6 @@
 #include "blade/module.hh"
 #include "blade/pipeline.hh"
 #include "blade/macros.hh"
-#include "blade/accumulator.hh"
 
 namespace Blade {
 

@@ -5,7 +5,6 @@
 #include <deque>
 
 #include "blade/pipeline.hh"
-#include "blade/accumulator.hh"
 
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/detector.hh"
@@ -14,7 +13,7 @@
 namespace Blade::Pipelines::Generic {
 
 template<typename IT, typename OT>
-class BLADE_API ModeH : public Pipeline, public Accumulator {
+class BLADE_API ModeH : public Pipeline {
  public:
     // Configuration 
 

@@ -120,7 +120,8 @@ const F64 Reader<OT>::getObservationFrequency() const {
 }
 
 template<typename OT>
-const Result Reader<OT>::preprocess(const cudaStream_t& stream) {
+const Result Reader<OT>::preprocess(const cudaStream_t& stream,
+                                    const U64& currentComputeCount) {
     if (!this->keepRunning()) {
         return Result::EXHAUSTED;
     }

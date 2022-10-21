@@ -6,7 +6,7 @@ namespace Blade::Pipelines::Generic {
 
 template<typename IT, typename OT>
 ModeH<IT, OT>::ModeH(const Config& config)
-     : Accumulator(config.accumulateRate),
+     : Pipeline(config.accumulateRate),
        config(config) {
     BL_DEBUG("Initializing Pipeline Mode H.");
 

@@ -83,7 +83,8 @@ class BLADE_API Reader : public Module {
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input);
-    const Result preprocess(const cudaStream_t& stream = 0) final;
+    const Result preprocess(const cudaStream_t& stream = 0,
+                            const U64& currentComputeCount = 0) final;
 
     // Miscellaneous 
 

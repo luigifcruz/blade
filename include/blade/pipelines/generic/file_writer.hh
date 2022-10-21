@@ -5,14 +5,13 @@
 #include <deque>
 
 #include "blade/pipeline.hh"
-#include "blade/accumulator.hh"
 
 #include "blade/modules/guppi/writer.hh"
 
 namespace Blade::Pipelines::Generic {
 
 template<typename IT>
-class BLADE_API FileWriter : public Pipeline, public Accumulator {
+class BLADE_API FileWriter : public Pipeline {
  public:
     struct Config {
         std::string outputGuppiFile;

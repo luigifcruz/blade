@@ -136,7 +136,7 @@ inline const Result ModeB(const Config& config) {
 
             // Increment progress bar.
             bar.set_progress(static_cast<float>(stepCount) / 
-                    reader.getNumberOfSteps() * 100);
+                             reader.getNumberOfSteps() * 100);
 
             // Compute input data. 
             Plan::Compute(worker);
