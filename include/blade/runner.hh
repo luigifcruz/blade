@@ -111,6 +111,7 @@ class BLADE_API Runner {
 
             // Ignore if throw was a skip operation.
             if (err == Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE || 
+                err == Result::PLAN_SKIP_COMPUTE_INCOMPLETE ||
                 err == Result::PLAN_SKIP_USER_INITIATED ||
                 err == Result::PLAN_SKIP_NO_DEQUEUE || 
                 err == Result::PLAN_SKIP_NO_SLOT) {
@@ -121,6 +122,8 @@ class BLADE_API Runner {
             if (err == Result::EXHAUSTED) {
                 return false;
             }
+
+            BL_FATAL("Unknown error.");
 
             // Fatal error otherwise.
             BL_CHECK_THROW(err);

@@ -13,7 +13,8 @@ namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline(const U64& numberOfAccumulationSteps = 0);
+    Pipeline(const U64& numberOfAccumulationSteps = 0,
+             const U64& numberOfComputeSteps = 1);
     virtual ~Pipeline();
 
     const Result synchronize();
@@ -29,6 +30,18 @@ class BLADE_API Pipeline {
 
     constexpr const U64 getCurrentAccumulatorStep() const {
         return accumulationStepCounter;
+    }
+
+    constexpr const bool computeComplete() const {
+        return computeStepCounter == numberOfComputeSteps;
+    }
+
+    constexpr const U64 getComputeNumberOfSteps() const {
+        return numberOfComputeSteps;
+    }
+
+    constexpr const U64 getCurrentComputeStep() const {
+        return computeStepCounter;
     }
 
  protected:
@@ -158,6 +171,8 @@ class BLADE_API Pipeline {
 
     const U64 incrementAccumulatorStep();
     const U64 resetAccumulatorSteps();
+    const U64 incrementComputeStep();
+    const U64 resetComputeSteps();
 
     friend class Plan;
 
@@ -174,7 +189,9 @@ class BLADE_API Pipeline {
     cudaGraphExec_t instance;
     std::vector<std::shared_ptr<Module>> modules;
     const U64 numberOfAccumulationSteps;
+    const U64 numberOfComputeSteps;
     U64 accumulationStepCounter;
+    U64 computeStepCounter;
     U64 currentComputeCount;
 };
 
