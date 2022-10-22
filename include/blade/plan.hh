@@ -68,7 +68,6 @@ class BLADE_API Plan {
             BL_CHECK_THROW(Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE);
         }
 
-        BL_INFO("A");
         // Run compute step.
         BL_CHECK_THROW(pipeline.compute());
         
@@ -79,7 +78,7 @@ class BLADE_API Plan {
         pipeline.resetAccumulatorSteps();
 
         // Skip if compute is incomplete.
-        if (pipeline.computeComplete()) {
+        if (!pipeline.computeComplete()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_COMPUTE_INCOMPLETE);
         }
 
@@ -92,7 +91,7 @@ class BLADE_API Plan {
     static void TransferIn(auto& pipeline, Args&... transfers) {
         // Check if destionation pipeline is synchronized.
         if (!pipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            pipeline.synchronize();
         }
 
         // Transfer data to the pipeline.
@@ -120,9 +119,9 @@ class BLADE_API Plan {
         auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
         auto& destinationPipeline = destinationRunner->getNextWorker();
 
-        // Check if destionation pipeline is synchronized.
+        // Check if destination pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.
@@ -151,7 +150,7 @@ class BLADE_API Plan {
 
         // Check if destionation pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.
