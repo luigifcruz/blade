@@ -9,21 +9,27 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
                          const typename Generic<IT, OT>::Input& input)
         : Generic<IT, OT>(config, input) {
     // Configure kernels.
-    this->grid = dim3(
-        this->getInputBuffer().dims().numberOfFrequencyChannels(),
-        this->getInputBuffer().dims().numberOfTimeSamples()/ config.blockSize);
-
-    this->kernel = 
-        Template("MeerKAT")
-            .instantiate(
-                this->getInputPhasors().dims().numberOfBeams(),
-                this->getInputPhasors().dims().numberOfAntennas(),
-                this->getInputBuffer().dims().numberOfFrequencyChannels(),
-                this->getInputBuffer().dims().numberOfTimeSamples(),
-                this->getInputBuffer().dims().numberOfPolarizations(),
-                config.blockSize,
-                config.enableIncoherentBeam,
-                config.enableIncoherentBeamSqrt);
+    BL_CHECK_THROW(
+        this->createKernel(
+            // Kernel name. 
+            "main",
+            // Kernel function key.
+            "MeerKAT",
+            // Kernel grid & block sizes.
+            dim3(this->getInputBuffer().dims().numberOfFrequencyChannels(),
+                 this->getInputBuffer().dims().numberOfTimeSamples() / config.blockSize),
+            config.blockSize,
+            // Kernel templates.
+            this->getInputPhasors().dims().numberOfBeams(),
+            this->getInputPhasors().dims().numberOfAntennas(),
+            this->getInputBuffer().dims().numberOfFrequencyChannels(),
+            this->getInputBuffer().dims().numberOfTimeSamples(),
+            this->getInputBuffer().dims().numberOfPolarizations(),
+            config.blockSize,
+            config.enableIncoherentBeam,
+            config.enableIncoherentBeamSqrt
+        )
+    );
 
     // Allocate output buffers.
     BL_CHECK_THROW(this->output.buf.resize(getOutputBufferDims()));

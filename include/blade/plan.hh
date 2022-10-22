@@ -10,7 +10,6 @@
 #include "blade/module.hh"
 #include "blade/pipeline.hh"
 #include "blade/macros.hh"
-#include "blade/accumulator.hh"
 
 namespace Blade {
 
@@ -24,14 +23,21 @@ class BLADE_API Plan {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
 
-        // If pipeline has accumulator, check if it's complete.
-        if constexpr (std::is_base_of<Accumulator, T>::value) {
-            auto& pipeline = runner->getNextWorker();
+        // Check if accumulator is complete.
+        auto& pipeline = runner->getNextWorker();
 
-            // Check if pipeline is not full.
-            if (pipeline.accumulationComplete()) {
-                BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
-            }
+        // Check if pipeline is not full.
+        if (pipeline.accumulationComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+        }
+
+        if (pipeline.computeComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+        }
+
+        // Check if pipeline is not processing.
+        if (!pipeline.isSynchronized()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
     } 
 
@@ -58,20 +64,27 @@ class BLADE_API Plan {
     // Compute is used to trigger the compute step of a pipeline.
     template<class Pipeline>
     static void Compute(Pipeline& pipeline) {
-        // If pipeline has accumulator, check if it's complete.
-        if constexpr (std::is_base_of<Accumulator, Pipeline>::value) {
-            if (!pipeline.accumulationComplete()) {
-                BL_CHECK_THROW(Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE);
-            }
+        // Check if accumulator is complete.
+        if (!pipeline.accumulationComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE);
         }
 
         // Run compute step.
         BL_CHECK_THROW(pipeline.compute());
+        
+        // Increment compute after compute step.
+        pipeline.incrementComputeStep();
 
-        // If pipeline has accumulator, reset it after compute.
-        if constexpr (std::is_base_of<Accumulator, Pipeline>::value) {
-            pipeline.resetAccumulatorSteps();
+        // Reset accumulator after compute.
+        pipeline.resetAccumulatorSteps();
+
+        // Skip if compute is incomplete.
+        if (!pipeline.computeComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_COMPUTE_INCOMPLETE);
         }
+
+        // Reset compute if complete.
+        pipeline.resetComputeSteps();
     } 
 
     // TransferIn is used to the copy data to a pipeline.
@@ -79,7 +92,7 @@ class BLADE_API Plan {
     static void TransferIn(auto& pipeline, Args&... transfers) {
         // Check if destionation pipeline is synchronized.
         if (!pipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            pipeline.synchronize();
         }
 
         // Transfer data to the pipeline.
@@ -107,9 +120,9 @@ class BLADE_API Plan {
         auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
         auto& destinationPipeline = destinationRunner->getNextWorker();
 
-        // Check if destionation pipeline is synchronized.
+        // Check if destination pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.
@@ -122,11 +135,6 @@ class BLADE_API Plan {
     // Accumulate is used to concatenate output data from one pipeline to another.
     template<typename Runner, typename... Args>
     static void Accumulate(Runner& destinationRunner, auto& sourceRunner, Args&... transfers) {
-        // Check if runner supports accumulation.
-        if constexpr (std::is_base_of<Accumulator, Runner>::value) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_NO_ACCUMULATOR);
-        }
-
         // Check if runner has an available slot.
         if (!destinationRunner->slotAvailable()) {
             BL_CHECK_THROW(Result::PLAN_ERROR_NO_SLOT);
@@ -136,14 +144,14 @@ class BLADE_API Plan {
         auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
         auto& destinationPipeline = destinationRunner->getNextWorker();
 
-        // Check if destionation pipeline is synchronized.
-        if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+        // Check if runner needs accumulation.
+        if (destinationPipeline.getAccumulatorNumberOfSteps() == 0) {
+            BL_CHECK_THROW(Result::PLAN_ERROR_NO_ACCUMULATOR);
         }
 
-        // Check if pipeline is not full.
-        if (destinationPipeline.accumulationComplete()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_ACCUMULATION_COMPLETE);
+        // Check if destionation pipeline is synchronized.
+        if (!destinationPipeline.isSynchronized()) {
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.

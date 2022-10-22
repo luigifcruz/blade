@@ -8,7 +8,7 @@ namespace Blade::Modules::Guppi {
 
 template<typename IT>
 Writer<IT>::Writer(const Config& config, const Input& input)
-        : Module(config.blockSize, guppi_kernel),
+        : Module(guppi_program),
           config(config),
           input(input),
           fileId(0),
@@ -43,7 +43,8 @@ Writer<IT>::Writer(const Config& config, const Input& input)
 }
 
 template<typename IT>
-const Result Writer<IT>::preprocess(const cudaStream_t& stream) {
+const Result Writer<IT>::preprocess(const cudaStream_t& stream,
+                                    const U64& currentComputeCount) {
     const auto& bytesWritten = guppiraw_write_block_batched(
                                     this->fileDescriptor, 
                                     &this->gr_header, 

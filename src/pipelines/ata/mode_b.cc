@@ -105,7 +105,7 @@ const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDa
     BL_CHECK(Memory::Copy(this->input, input, stream));
 
     // Print dynamic arguments on first run.
-    if (this->getCurrentComputeStep() == 0) {
+    if (this->getCurrentComputeCount() == 0) {
         BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
         BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
     }

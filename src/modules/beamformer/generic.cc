@@ -8,7 +8,7 @@ namespace Blade::Modules::Beamformer {
 
 template<typename IT, typename OT>
 Generic<IT, OT>::Generic(const Config& config, const Input& input)
-        : Module(config.blockSize, beamformer_kernel),
+        : Module(beamformer_program),
           config(config),
           input(input) {
     // Check configuration values.
@@ -27,17 +27,7 @@ Generic<IT, OT>::Generic(const Config& config, const Input& input)
 
 template<typename IT, typename OT>
 const Result Generic<IT, OT>::process(const cudaStream_t& stream) {
-    cache
-        .get_kernel(kernel)
-        ->configure(grid, block, 0, stream)
-        ->launch(input.buf.data(), input.phasors.data(), output.buf.data());
-
-    BL_CUDA_CHECK_KERNEL([&]{
-        BL_FATAL("Module failed to execute: {}", err);
-        return Result::CUDA_ERROR;
-    });
-
-    return Result::SUCCESS;
+    return runKernel("main", stream, input.buf.data(), input.phasors.data(), output.buf.data());
 }
 
 template class BLADE_API Generic<CF32, CF32>;

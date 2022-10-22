@@ -6,7 +6,7 @@ namespace Blade::Pipelines::Generic {
 
 template<typename IT, typename OT>
 ModeH<IT, OT>::ModeH(const Config& config)
-     : Accumulator(config.accumulateRate),
+     : Pipeline(config.accumulateRate, config.detectorIntegrationSize),
        config(config) {
     BL_DEBUG("Initializing Pipeline Mode H.");
 
@@ -34,7 +34,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
-        .integrationSize = 1,
+        .integrationSize = config.detectorIntegrationSize,
         .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
         .blockSize = config.detectorBlockSize,

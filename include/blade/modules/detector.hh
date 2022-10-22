@@ -47,7 +47,8 @@ class BLADE_API Detector : public Module {
     // Constructor & Processing
 
     explicit Detector(const Config& config, const Input& input);
-    const Result process(const cudaStream_t& stream = 0) final;
+    const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
+    const Result process(const cudaStream_t& stream) final;
 
  private:
     // Variables 
@@ -56,13 +57,16 @@ class BLADE_API Detector : public Module {
     const Input input;
     Output output;
 
+    U64 apparentIntegrationSize;
+    Vector<Device::CUDA | Device::CPU, BOOL> ctrlResetTensor;
+
     // Expected Dimensions
 
     const ArrayDimensions getOutputBufferDims() const {
         return {
             .A = getInputBuffer().dims().numberOfAspects(),
             .F = getInputBuffer().dims().numberOfFrequencyChannels(),
-            .T = getInputBuffer().dims().numberOfTimeSamples() / config.integrationSize,
+            .T = getInputBuffer().dims().numberOfTimeSamples() / apparentIntegrationSize,
             .P = config.numberOfOutputPolarizations,
         }; 
     }

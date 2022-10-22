@@ -36,7 +36,7 @@
 /*
  * BL SETI: This file have the following modifications:
  * 1. output_dir is actually the output_filename.
- * 2. Modify varname to be [INPUT_FILENAME]_kernel.
+ * 2. Modify varname to be [INPUT_FILENAME]_program.
  * */
 
 #include "blade/utils/jitify2.hh"
@@ -121,7 +121,7 @@ T remove_extension(T const & filename)
 // Replaces non-alphanumeric characters with '_' and prepends '_' if the string
 // begins with a digit.
 std::string sanitize_varname(const std::string& s) {
-  return remove_extension(base_name(s)) + "_kernel";
+  return remove_extension(base_name(s)) + "_program";
 }
 
 bool read_file(const std::string& fullpath, std::string* content) {

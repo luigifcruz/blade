@@ -6,7 +6,7 @@ namespace Blade::Pipelines::Generic {
 
 template<typename IT>
 FileWriter<IT>::FileWriter(const Config& config) 
-     : Accumulator(config.accumulateRate),
+     : Pipeline(config.accumulateRate),
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 

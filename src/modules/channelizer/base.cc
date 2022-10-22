@@ -8,7 +8,7 @@ namespace Blade::Modules {
 
 template<typename IT, typename OT>
 Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
-        : Module(config.blockSize, channelizer_kernel),
+        : Module(channelizer_program),
           config(config),
           input(input),
           pre_block(config.blockSize),
@@ -46,12 +46,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         return;
     }
 
-    switch (config.rate) {
-        case 4:  kernel_key = "fft_4pnt"; break;
-        default: kernel_key = "cufft"; break;
-    }
-
-    if (kernel_key == "cufft") {
+    if (config.rate != 4) {
         BL_INFO("FFT Backend: cuFFT");
 
         // FFT dimension (1D, 2D, ...).
@@ -82,10 +77,25 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                       CUFFT_C2C, batch);
 
         // Perform FFT shift before cuFFT.
-        pre_kernel = Template("shifter").instantiate(getInputBuffer().size(), getInputBuffer().dims().numberOfPolarizations());
-        pre_grid = dim3((getInputBuffer().size() + pre_block.x - 1) / pre_block.x);
+        BL_CHECK_THROW(
+            createKernel(
+                // Kernel name.
+                "pre",
+                // Kernel function key.
+                "shifter",
+                // Kernel grid & block size.
+                PadGridSize(getInputBuffer().size(), config.blockSize), 
+                config.blockSize,
+                // Kernel templates.
+                getInputBuffer().size(),
+                getInputBuffer().dims().numberOfPolarizations()
+            )
+        );
 
         if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
+            BL_WARN("Using a slow FFT implementation because channelization "
+                    "rate is different than number of time samples.");
+
             BL_CHECK_THROW(buffer.resize(getInputBuffer().dims()));
             BL_CHECK_THROW(indices.resize(getInputBuffer().dims()));
 
@@ -125,28 +135,43 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                 }
             }
 
-            post_kernel = Template("shuffler").instantiate(getInputBuffer().size());
-            post_grid = dim3((getInputBuffer().size() + post_block.x - 1) / post_block.x);
+            BL_CHECK_THROW(
+                createKernel(
+                    // Kernel name.
+                    "post",
+                    // Kernel function key.
+                    "shuffler",
+                    // Kernel grid & block size.
+                    PadGridSize(getInputBuffer().size(), config.blockSize), 
+                    config.blockSize,
+                    // Kernel templates.
+                    getInputBuffer().size()
+                )
+            );
         }
     } else {
         BL_INFO("FFT Backend: Internal");
 
-        grid = 
-            (
-                (
+        BL_CHECK_THROW(
+            createKernel(
+                // Kernel name.
+                "internal",
+                // Kernel function key.
+                "fft_4pnt",
+                // Kernel grid & block size.
+                PadGridSize(
                     getInputBuffer().size() / 
                     config.rate /
-                    getInputBuffer().dims().numberOfPolarizations()
-                ) + block.x - 1
-            ) / block.x;
-
-        kernel =
-            Template(kernel_key)
-                .instantiate(getInputBuffer().size(),
-                             config.rate,
-                             getInputBuffer().dims().numberOfPolarizations(),
-                             getInputBuffer().dims().numberOfTimeSamples(),
-                             getInputBuffer().dims().numberOfFrequencyChannels());
+                    getInputBuffer().dims().numberOfPolarizations(), config.blockSize),
+                config.blockSize,
+                // Kernel templates.
+                getInputBuffer().size(),
+                config.rate,
+                getInputBuffer().dims().numberOfPolarizations(),
+                getInputBuffer().dims().numberOfTimeSamples(),
+                getInputBuffer().dims().numberOfFrequencyChannels()
+            )
+        );
     }
 }
 
@@ -156,13 +181,10 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
         return Result::SUCCESS;
     } 
 
-    if (kernel_key == "cufft") {
+    if (config.rate != 4) {
         cufftSetStream(plan, stream);
 
-        cache
-            .get_kernel(pre_kernel)
-            ->configure(pre_grid, pre_block, 0, stream)
-            ->launch(input.buf.data(), output.buf.data());
+        BL_CHECK(runKernel("pre", stream, input.buf.data(), output.buf.data()));
 
         for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
             cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
@@ -176,22 +198,11 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
         }
 
         if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
-            cache
-                .get_kernel(post_kernel)
-                    ->configure(post_grid, post_block, 0, stream)
-                    ->launch(buffer.data(), indices.data(), output.buf.data());
+            BL_CHECK(runKernel("post", stream, buffer.data(), indices.data(), output.buf.data()));
         }
     } else {
-        cache
-            .get_kernel(kernel)
-                ->configure(grid, block, 0, stream)
-                ->launch(input.buf.data(), output.buf.data());
+        BL_CHECK(runKernel("internal", stream, input.buf.data(), output.buf.data()));
     }
-
-    BL_CUDA_CHECK_KERNEL([&]{
-        BL_FATAL("Module failed to execute: {}", err);
-        return Result::CUDA_ERROR;
-    });
 
     return Result::SUCCESS;
 }
