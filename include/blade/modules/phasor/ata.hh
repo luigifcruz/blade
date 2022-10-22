@@ -11,8 +11,7 @@ class BLADE_API ATA : public Generic<OT> {
     explicit ATA(const typename Generic<OT>::Config& config,
                  const typename Generic<OT>::Input& input);
 
-    const Result preprocess(const cudaStream_t& stream = 0,
-                            const U64& currentComputeCount = 0) final;
+    const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 
  protected:
     const PhasorDimensions getOutputPhasorsDims() const {

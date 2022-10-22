@@ -30,6 +30,15 @@ class BLADE_API Plan {
         if (pipeline.accumulationComplete()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
+
+        if (pipeline.computeComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+        }
+
+        // Check if pipeline is not processing.
+        if (!pipeline.isSynchronized()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+        }
     } 
 
     static void Dequeue(auto& runner, U64* id) {
@@ -62,9 +71,20 @@ class BLADE_API Plan {
 
         // Run compute step.
         BL_CHECK_THROW(pipeline.compute());
+        
+        // Increment compute after compute step.
+        pipeline.incrementComputeStep();
 
         // Reset accumulator after compute.
         pipeline.resetAccumulatorSteps();
+
+        // Skip if compute is incomplete.
+        if (!pipeline.computeComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_COMPUTE_INCOMPLETE);
+        }
+
+        // Reset compute if complete.
+        pipeline.resetComputeSteps();
     } 
 
     // TransferIn is used to the copy data to a pipeline.
@@ -72,7 +92,7 @@ class BLADE_API Plan {
     static void TransferIn(auto& pipeline, Args&... transfers) {
         // Check if destionation pipeline is synchronized.
         if (!pipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            pipeline.synchronize();
         }
 
         // Transfer data to the pipeline.
@@ -100,9 +120,9 @@ class BLADE_API Plan {
         auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
         auto& destinationPipeline = destinationRunner->getNextWorker();
 
-        // Check if destionation pipeline is synchronized.
+        // Check if destination pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.
@@ -131,12 +151,7 @@ class BLADE_API Plan {
 
         // Check if destionation pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED);     
-        }
-
-        // Check if pipeline is not full.
-        if (destinationPipeline.accumulationComplete()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_ACCUMULATION_COMPLETE);
+            destinationPipeline.synchronize();
         }
 
         // Fetch CUDA stream of source pipeline.

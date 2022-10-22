@@ -121,6 +121,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
 
         .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
 
+        .detectorIntegrationSize = BLADE_ATA_MODE_BH_INTEGRATION_SIZE,
         .detectorNumberOfOutputPolarizations = 1,
     });
 
@@ -170,7 +171,7 @@ void blade_ata_bh_register_output_buffer_ready_cb(blade_output_buffer_ready_cb* 
     State.Callbacks.OutputBufferReady = f;
 }
 
-bool blade_ata_bh_compute_step() {
+void blade_ata_bh_compute_step() {
     assert(State.RunnersInstances.B);
     assert(State.RunnersInstances.H);
 
@@ -250,7 +251,4 @@ bool blade_ata_bh_compute_step() {
 
     // Prevent memory clobber inside spin-loop.
     Plan::Loop();
-
-    // Return if pipeline is computing something.
-    return !(ModeB->empty() && ModeH->empty());
 }

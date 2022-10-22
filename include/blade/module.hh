@@ -20,12 +20,12 @@ class Module {
         : cache(100, *program) {};
     virtual ~Module() = default;
 
-    virtual constexpr const Result preprocess(const cudaStream_t& stream = 0, 
-                                              const U64& currentComputeCount = 0) {
+    virtual constexpr const Result preprocess(const cudaStream_t& stream, 
+                                              const U64& currentComputeCount) {
         return Result::SUCCESS;
     }
 
-    virtual constexpr const Result process(const cudaStream_t& stream = 0) {
+    virtual constexpr const Result process(const cudaStream_t& stream) {
         return Result::SUCCESS;
     }
 

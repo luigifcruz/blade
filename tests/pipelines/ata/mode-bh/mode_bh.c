@@ -19,10 +19,6 @@ typedef struct {
 bool input_buffer_fetch_cb(void* user_data_ptr, void** buffer) {
     userdata_t* user_data = (userdata_t*)user_data_ptr;
 
-    if (user_data->step_count >= BLADE_ATA_MODE_BH_ITERATIONS) {
-        return false;
-    }
-
     *buffer = user_data->input_buffers[user_data->input_buffer_count]; 
 
     user_data->input_buffer_count = (user_data->input_buffer_count + 1) 
@@ -99,7 +95,9 @@ int main(int argc, char **argv) {
 
     // Blade is single-threaded!
     // For the love of god, don't put this on a different thread.
-    while (blade_ata_bh_compute_step());
+    while (user_data.step_count < BLADE_ATA_MODE_BH_ITERATIONS) {
+        blade_ata_bh_compute_step();
+    }
     printf("Finished processing %ld steps.\n", user_data.step_count);
 
     clock_t end = clock();

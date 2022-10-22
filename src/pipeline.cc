@@ -4,12 +4,16 @@
 
 namespace Blade {
 
-Pipeline::Pipeline(const U64& numberOfAccumulationSteps)
+Pipeline::Pipeline(const U64& numberOfAccumulationSteps,
+                   const U64& numberOfComputeSteps)
      : state(State::IDLE),
        numberOfAccumulationSteps(numberOfAccumulationSteps),
+       numberOfComputeSteps(numberOfComputeSteps),
        accumulationStepCounter(0),
+       computeStepCounter(0),
        currentComputeCount(0) {
-    BL_INFO("Pipeline with {} accumulation steps.", numberOfAccumulationSteps);
+    BL_INFO("Pipeline with {} accumulation and {} compute steps.", 
+            numberOfAccumulationSteps, numberOfComputeSteps);
 
     BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream,
             cudaStreamNonBlocking), [&]{
@@ -32,6 +36,16 @@ const U64 Pipeline::incrementAccumulatorStep() {
 const U64 Pipeline::resetAccumulatorSteps() {
     const auto& previous = accumulationStepCounter;
     accumulationStepCounter = 0;
+    return previous;
+}
+
+const U64 Pipeline::incrementComputeStep() {
+    return ++computeStepCounter;
+}
+
+const U64 Pipeline::resetComputeSteps() {
+    const auto& previous = computeStepCounter;
+    computeStepCounter = 0;
     return previous;
 }
 
