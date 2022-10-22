@@ -35,6 +35,7 @@ class BLADE_API Plan {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
 
+        // Check if pipeline is not processing.
         if (!pipeline.isSynchronized()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }

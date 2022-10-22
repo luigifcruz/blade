@@ -83,8 +83,7 @@ class BLADE_API Reader : public Module {
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input);
-    const Result preprocess(const cudaStream_t& stream = 0,
-                            const U64& currentComputeCount = 0) final;
+    const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 
     // Miscellaneous 
 
@@ -110,7 +109,8 @@ class BLADE_API Reader : public Module {
     // Helpers
 
     const bool keepRunning() const {
-        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= this->config.stepNumberOfTimeSamples;
+        return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= 
+                this->config.stepNumberOfTimeSamples;
     }
 
     const guppiraw_datashape_t* getDatashape() const {
