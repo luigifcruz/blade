@@ -96,6 +96,11 @@ class VectorImpl {
             return Result::ERROR;
         }
 
+        if (!this->empty()) {
+            BL_FATAL("Destination has to be empty while linking.");
+            return Result::ERROR;
+        }
+
         this->managed = false;
         this->container = src.span();
         this->dimensions = src.dims();

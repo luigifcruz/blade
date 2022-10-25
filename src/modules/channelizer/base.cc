@@ -31,21 +31,24 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         throw Result::ERROR;
     }
 
-    // Allocate output buffers.
-    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+    // Allocate output buffer or link input with output.
+    if (config.rate == 1) {
+        BL_CHECK_THROW(output.buf.link(input.buf));
+    } else {
+        BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+    }
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("FFT Size: {}", config.rate);
 
-    // Configure FFT chain.
     if (config.rate == 1) {
         BL_INFO("FFT Backend: Bypass");
-        BL_CHECK_THROW(output.buf.link(input.buf));
         return;
     }
 
+    // Configure FFT chain.
     if (config.rate != 4) {
         BL_INFO("FFT Backend: cuFFT");
 
