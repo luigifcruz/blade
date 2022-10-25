@@ -179,6 +179,13 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
 }
 
 template<typename IT, typename OT>
+Channelizer<IT, OT>::~Channelizer() {
+    if (config.rate != 4 && config.rate != 1) {
+        cufftDestroy(plan);
+    }
+}
+
+template<typename IT, typename OT>
 const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     if (config.rate == 1) {
         return Result::SUCCESS;

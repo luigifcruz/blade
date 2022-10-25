@@ -48,6 +48,7 @@ class BLADE_API Channelizer : public Module {
 
     explicit Channelizer(const Config& config, const Input& input);
     const Result process(const cudaStream_t& stream) final;
+    ~Channelizer();
 
  private:
     // Variables 
