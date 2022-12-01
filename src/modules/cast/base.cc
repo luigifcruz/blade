@@ -23,8 +23,9 @@ Cast<IT, OT>::Cast(const Config& config, const Input& input)
             "cast",
             // Kernel grid & block size.
             PadGridSize(
-                getInputBuffer().size() * 
-                CudaTypeSize<IT>(), config.blockSize),
+                getInputBuffer().size() * CudaTypeSize<IT>(), 
+                config.blockSize
+            ),
             config.blockSize,
             // Kernel templates.
             CudaType<IT>(),
