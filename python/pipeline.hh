@@ -139,6 +139,9 @@ inline void init_pipeline(const py::module& m) {
 #ifdef BLADE_MODULE_DETECTOR
     init_pipeline_connect<Modules::Detector<CF32, F32>>(pipeline);
 #endif
+#ifdef BLADE_MODULE_POLARIZER
+    init_pipeline_connect<Modules::Polarizer<CF32, CF32>>(pipeline);
+#endif
 #ifdef BLADE_MODULE_ATA_PHASOR
     init_pipeline_connect<Modules::Phasor::ATA<CF32>>(pipeline);
 #endif
