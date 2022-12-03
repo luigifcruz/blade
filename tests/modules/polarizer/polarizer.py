@@ -35,6 +35,7 @@ if __name__ == "__main__":
     #
 
     config = bl.Polarizer.Config(
+        mode = bl.Polarizer.Mode.XY2LR,
         block_size = 512
     )
 

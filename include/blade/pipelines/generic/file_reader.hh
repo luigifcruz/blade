@@ -99,8 +99,11 @@ class BLADE_API FileReader : public Pipeline {
  private:
     const Config config;
 
+    using GuppiReader = typename Modules::Guppi::Reader<OT>;
     std::shared_ptr<Modules::Guppi::Reader<OT>> guppi;
-    std::shared_ptr<Modules::Bfr5::Reader> bfr5;
+
+    using Bfr5Reader = typename Modules::Bfr5::Reader; 
+    std::shared_ptr<Bfr5Reader> bfr5;
 };
 
 }  // namespace Blade::Pipelines::Generic

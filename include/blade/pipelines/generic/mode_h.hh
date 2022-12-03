@@ -9,6 +9,7 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/detector.hh"
 #include "blade/modules/cast.hh"
+#include "blade/modules/polarizer.hh"
 
 namespace Blade::Pipelines::Generic {
 
@@ -22,10 +23,13 @@ class BLADE_API ModeH : public Pipeline {
 
         U64 accumulateRate;
 
+        BOOL outputCircularPolarization = false;
+
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;
 
         U64 castBlockSize = 512;
+        U64 polarizerBlockSize = 512;
         U64 channelizerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };
@@ -54,9 +58,17 @@ class BLADE_API ModeH : public Pipeline {
 
     ArrayTensor<Device::CUDA, IT> input;
 
-    std::shared_ptr<Modules::Cast<CF16, CF32>> cast;
-    std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
-    std::shared_ptr<Modules::Detector<CF32, F32>> detector;
+    using InputCast = typename Modules::Cast<CF16, CF32>;
+    std::shared_ptr<InputCast> cast;
+
+    using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
+    std::shared_ptr<PreChannelizer> channelizer;
+
+    using Polarizer = typename Modules::Polarizer<CF32, CF32>;
+    std::shared_ptr<Polarizer> polarizer;
+
+    using Detector = typename Modules::Detector<CF32, F32>;
+    std::shared_ptr<Detector> detector;
 
     constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
         if constexpr (!std::is_same<IT, CF32>::value) {

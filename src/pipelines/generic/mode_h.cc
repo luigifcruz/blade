@@ -32,6 +32,14 @@ ModeH<IT, OT>::ModeH(const Config& config)
         .buf = this->getChannelizerInput(),
     });
 
+    BL_DEBUG("Instatiating polarizer module.")
+    this->connect(polarizer, {
+        .mode = (config.outputCircularPolarization) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS, 
+        .blockSize = config.polarizerBlockSize,
+    }, {
+        .buf = channelizer->getOutputBuffer(),
+    });
+
     BL_DEBUG("Instantiating detector module.");
     this->connect(detector, {
         .integrationSize = config.detectorIntegrationSize,
@@ -39,7 +47,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
         .blockSize = config.detectorBlockSize,
     }, {
-        .buf = channelizer->getOutputBuffer(),
+        .buf = polarizer->getOutputBuffer(),
     });
 }
 

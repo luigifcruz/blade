@@ -35,7 +35,12 @@ Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
     );
 
     // Allocate output buffers.
-    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+    if (config.mode == Mode::BYPASS) {
+        BL_INFO("Bypass: Enabled");
+        BL_CHECK_THROW(output.buf.link(input.buf));
+    } else {
+        BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+    }
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
@@ -45,6 +50,10 @@ Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
 
 template<typename IT, typename OT>
 const Result Polarizer<IT, OT>::process(const cudaStream_t& stream) {
+    if (config.mode == Mode::BYPASS) {
+        return Result::SUCCESS;
+    }
+
     return this->runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 

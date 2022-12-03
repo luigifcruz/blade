@@ -63,6 +63,14 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
         .phasors = phasor->getOutputPhasors(),
     });
 
+    BL_DEBUG("Instatiating polarizer module.")
+    this->connect(polarizer, {
+        .mode = (config.outputCircularPolarization) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS, 
+        .blockSize = config.polarizerBlockSize,
+    }, {
+        .buf = beamformer->getOutputBuffer(),
+    });
+
     if (config.detectorEnable) {
         BL_DEBUG("Instantiating detector module.");
         this->connect(detector, {
@@ -71,7 +79,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 
             .blockSize = config.detectorBlockSize,
         }, {
-            .buf = beamformer->getOutputBuffer(),
+            .buf = polarizer->getOutputBuffer(),
         });
 
         if constexpr (!std::is_same<OT, F32>::value) {
@@ -88,7 +96,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
             this->connect(complexOutputCast, {
                 .blockSize = config.castBlockSize,
             }, {
-                .buf = beamformer->getOutputBuffer(),
+                .buf = polarizer->getOutputBuffer(),
             });
         }
     }

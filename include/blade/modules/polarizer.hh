@@ -11,7 +11,13 @@ class BLADE_API Polarizer : public Module {
  public:
     // Configuration
 
+    enum class Mode : uint8_t {
+        BYPASS,
+        XY2LR,
+    };
+
     struct Config {
+        Mode mode = Mode::XY2LR; 
         U64 blockSize = 512;
     };
 

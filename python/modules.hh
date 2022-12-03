@@ -149,8 +149,15 @@ inline void init_polarizer(const py::module& m) {
 
     py::class_<Class, std::shared_ptr<Class>> polarizer(m, "Polarizer");
 
+    py::enum_<Class::Mode>(polarizer, "Mode")
+        .value("BYPASS", Class::Mode::BYPASS)
+        .value("XY2LR", Class::Mode::XY2LR)
+        .export_values();
+
     py::class_<Class::Config>(polarizer, "Config")
-        .def(py::init<const U64&>(), py::arg("block_size"));
+        .def(py::init<const Class::Mode, 
+                      const U64&>(), py::arg("mode"), 
+                                     py::arg("block_size"));
 
     py::class_<Class::Input>(polarizer, "Input")
         .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
