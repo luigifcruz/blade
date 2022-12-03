@@ -142,6 +142,36 @@ inline void init_detector(const py::module& m) {
 
 #endif
 
+#ifdef BLADE_MODULE_POLARIZER
+
+inline void init_polarizer(const py::module& m) {
+    using Class = Modules::Polarizer<CF32, CF32>;
+
+    py::class_<Class, std::shared_ptr<Class>> polarizer(m, "Polarizer");
+
+    py::enum_<Class::Mode>(polarizer, "Mode")
+        .value("BYPASS", Class::Mode::BYPASS)
+        .value("XY2LR", Class::Mode::XY2LR)
+        .export_values();
+
+    py::class_<Class::Config>(polarizer, "Config")
+        .def(py::init<const Class::Mode, 
+                      const U64&>(), py::arg("mode"), 
+                                     py::arg("block_size"));
+
+    py::class_<Class::Input>(polarizer, "Input")
+        .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
+        
+    polarizer
+        .def(py::init<const Class::Config&,
+                      const Class::Input&>(), py::arg("config"),
+                                              py::arg("input"))
+        .def("input", &Class::getInputBuffer, py::return_value_policy::reference)
+        .def("output", &Class::getOutputBuffer, py::return_value_policy::reference);
+}
+
+#endif
+
 inline void init_modules(const py::module& m) {
 #ifdef BLADE_MODULE_ATA_BEAMFORMER
     init_ata_beamformer(m);
@@ -154,5 +184,8 @@ inline void init_modules(const py::module& m) {
 #endif
 #ifdef BLADE_MODULE_DETECTOR
     init_detector(m);
+#endif
+#ifdef BLADE_MODULE_POLARIZER
+    init_polarizer(m);
 #endif
 }

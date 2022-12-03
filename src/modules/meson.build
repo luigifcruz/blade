@@ -5,6 +5,7 @@ subdir('phasor')
 subdir('detector')
 subdir('beamformer')
 subdir('channelizer')
+subdir('polarizer')
 subdir('guppi')
 subdir('bfr5')
 

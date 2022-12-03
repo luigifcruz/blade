@@ -67,7 +67,9 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
             // Kernel grid & block size.
             PadGridSize(
                 getInputBuffer().size() / 
-                getInputBuffer().dims().numberOfPolarizations(), config.blockSize),
+                    getInputBuffer().dims().numberOfPolarizations(),
+                config.blockSize
+            ),
             config.blockSize,
             // Kernel templates.
             getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations(),

@@ -87,7 +87,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                 // Kernel function key.
                 "shifter",
                 // Kernel grid & block size.
-                PadGridSize(getInputBuffer().size(), config.blockSize), 
+                PadGridSize(
+                    getInputBuffer().size(), 
+                    config.blockSize
+                ), 
                 config.blockSize,
                 // Kernel templates.
                 getInputBuffer().size(),
@@ -145,7 +148,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                     // Kernel function key.
                     "shuffler",
                     // Kernel grid & block size.
-                    PadGridSize(getInputBuffer().size(), config.blockSize), 
+                    PadGridSize(
+                        getInputBuffer().size(),
+                        config.blockSize\
+                    ), 
                     config.blockSize,
                     // Kernel templates.
                     getInputBuffer().size()
@@ -164,8 +170,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                 // Kernel grid & block size.
                 PadGridSize(
                     getInputBuffer().size() / 
-                    config.rate /
-                    getInputBuffer().dims().numberOfPolarizations(), config.blockSize),
+                        config.rate /
+                        getInputBuffer().dims().numberOfPolarizations(), 
+                    config.blockSize
+                ),
                 config.blockSize,
                 // Kernel templates.
                 getInputBuffer().size(),

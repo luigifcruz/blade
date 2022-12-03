@@ -65,7 +65,8 @@ class BLADE_API FileWriter : public Pipeline {
 
     ArrayTensor<Device::CPU, IT> writerBuffer;
 
-    std::shared_ptr<Modules::Guppi::Writer<IT>> guppi;
+    using GuppiWriter = typename Modules::Guppi::Writer<IT>;
+    std::shared_ptr<GuppiWriter> guppi;
 };
 
 }  // namespace Blade::Pipelines::Generic

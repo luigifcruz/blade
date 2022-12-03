@@ -15,6 +15,10 @@
 #include "blade/modules/detector.hh"
 #endif
 
+#ifdef BLADE_MODULE_POLARIZER
+#include "blade/modules/polarizer.hh"
+#endif
+
 #ifdef BLADE_MODULE_GUPPI
 #include "blade/modules/guppi/base.hh"
 #endif

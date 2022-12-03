@@ -10,6 +10,7 @@
 #include "blade/modules/channelizer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
+#include "blade/modules/polarizer.hh"
 #include "blade/modules/detector.hh"
 
 namespace Blade::Pipelines::ATA {
@@ -39,6 +40,8 @@ class BLADE_API ModeB : public Pipeline {
 
         BOOL beamformerIncoherentBeam = false;
 
+        BOOL outputCircularPolarization = false;
+
         BOOL detectorEnable = false;
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;
@@ -47,6 +50,7 @@ class BLADE_API ModeB : public Pipeline {
         U64 channelizerBlockSize = 512;
         U64 phasorBlockSize = 512;
         U64 beamformerBlockSize = 512;
+        U64 polarizerBlockSize = 512;
         U64 detectorBlockSize = 512;
     };
 
@@ -90,11 +94,23 @@ class BLADE_API ModeB : public Pipeline {
     Vector<Device::CPU, F64> blockJulianDate;
     Vector<Device::CPU, F64> blockDut1;
 
-    std::shared_ptr<Modules::Cast<CI8, CF32>> inputCast;
-    std::shared_ptr<Modules::Channelizer<CF32, CF32>> channelizer;
-    std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
-    std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
-    std::shared_ptr<Modules::Detector<CF32, F32>> detector;
+    using InputCast = typename Modules::Cast<CI8, CF32>;
+    std::shared_ptr<InputCast> inputCast;
+
+    using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
+    std::shared_ptr<PreChannelizer> channelizer;
+
+    using Phasor = typename Modules::Phasor::ATA<CF32>;
+    std::shared_ptr<Phasor> phasor;
+
+    using Beamformer = typename Modules::Beamformer::ATA<CF32, CF32>;
+    std::shared_ptr<Beamformer> beamformer;
+
+    using Polarizer = typename Modules::Polarizer<CF32, CF32>;
+    std::shared_ptr<Polarizer> polarizer;
+
+    using Detector = typename Modules::Detector<CF32, F32>;
+    std::shared_ptr<Detector> detector;
 
     // Output Cast for path without Detector (CF32).
     std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
