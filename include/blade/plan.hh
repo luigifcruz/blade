@@ -130,8 +130,8 @@ class BLADE_API Plan {
                 BL_CHECK_THROW(
                     Memory::Copy2D(
                         dst,
-                        numberOfFrequencyChannels*sizeof(SType), // dstPitch
-                        aspectChannelDestinationFactor*sizeof(SType), // dstOffset 
+                        numberOfFrequencyChannels*sizeof(DType), // dstPitch
+                        aspectChannelDestinationFactor*sizeof(DType), // dstOffset 
                         src,
                         1*sizeof(SType), // srcPitch
                         aspectChannelSourceFactor*sizeof(SType), // srcOffset
