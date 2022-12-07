@@ -23,7 +23,7 @@ class BLADE_API ModeH : public Pipeline {
 
         U64 accumulateRate;
 
-        BOOL outputCircularPolarization = false;
+        BOOL polarizerConvertToCircular = false;
 
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;

@@ -27,6 +27,8 @@ class BLADE_API ModeB : public Pipeline {
 
         U64 preBeamformerChannelizerRate;
 
+        BOOL preBeamformerPolarizerConvertToCircular = false;
+
         F64 phasorObservationFrequencyHz;
         F64 phasorChannelBandwidthHz;
         F64 phasorTotalBandwidthHz;
@@ -39,8 +41,6 @@ class BLADE_API ModeB : public Pipeline {
         std::vector<RA_DEC> phasorBeamCoordinates;
 
         BOOL beamformerIncoherentBeam = false;
-
-        BOOL outputCircularPolarization = false;
 
         BOOL detectorEnable = false;
         U64 detectorIntegrationSize;
