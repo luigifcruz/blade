@@ -34,7 +34,7 @@ ModeH<IT, OT>::ModeH(const Config& config)
 
     BL_DEBUG("Instatiating polarizer module.")
     this->connect(polarizer, {
-        .mode = (config.outputCircularPolarization) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS, 
+        .mode = (config.polarizerConvertToCircular) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS, 
         .blockSize = config.polarizerBlockSize,
     }, {
         .buf = channelizer->getOutputBuffer(),
