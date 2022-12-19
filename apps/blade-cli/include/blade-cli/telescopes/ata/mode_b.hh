@@ -50,7 +50,7 @@ inline const Result ModeB(const Config& config) {
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
-        .phasorTotalBandwidthHz = reader.getTotalBandwidth(),
+        .phasorTotalBandwidthHz = reader.getObservationBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
         .phasorReferenceAntennaIndex = 0,
         .phasorArrayReferencePosition = reader.getReferencePosition(),
@@ -92,9 +92,8 @@ inline const Result ModeB(const Config& config) {
 
         // Append information to the Accumulator's GUPPI header.
 
-        writer.getModule()->headerPut("OBSFREQ", reader.getObservationFrequency());
-        writer.getModule()->headerPut("OBSBW", reader.getChannelBandwidth() * 
-                                readerTotalOutputDims.numberOfFrequencyChannels());
+        writer.getModule()->headerPut("OBSFREQ", reader.getCenterFrequency()*1e-6);
+        writer.getModule()->headerPut("OBSBW", reader.getBandwidth()*1e-6);
         writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
         writer.getModule()->headerPut("PKTIDX", 0);
     }
@@ -110,8 +109,8 @@ inline const Result ModeB(const Config& config) {
                 .sourceCoordinate = reader.getPhaseCenterCoordinates(),
                 .azimuthStart = reader.getAzimuthAngle(),
                 .zenithStart = reader.getZenithAngle(),
-                .observationFrequencyHz = reader.getObservationFrequency(),
-                .observationBandwidthHz = -1*reader.getTotalBandwidth(), // Negated as frequencies are reversed
+                .centerFrequencyHz = reader.getCenterFrequency(),
+                .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are reversed
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
                 .sourceName = reader.getSourceName(),

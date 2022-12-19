@@ -36,9 +36,9 @@ Reader::Reader(const Config& config, const Input& input)
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
 
-    if (antFrame != "xyz" && antFrame != "XYZ") {
-        if (antFrame == "ecef" || antFrame == "ECEF") {
-            calc_position_to_xyz_frame_from_ecef(
+    if (antFrame != "ecef" && antFrame != "ECEF") {
+        if (antFrame == "xyz" || antFrame == "XYZ") {
+            calc_position_to_ecef_frame_from_xyz(
                 reinterpret_cast<F64*>(antennaPositions.data()),
                 antennaPositions.size(),
                 this->bfr5.tel_info.latitude,
@@ -47,7 +47,7 @@ Reader::Reader(const Config& config, const Input& input)
         }
 
         if (antFrame == "enu" || antFrame == "ENU") {
-            calc_position_to_xyz_frame_from_enu(
+            calc_position_to_ecef_frame_from_enu(
                 reinterpret_cast<F64*>(antennaPositions.data()),
                 antennaPositions.size(),
                 this->bfr5.tel_info.latitude,

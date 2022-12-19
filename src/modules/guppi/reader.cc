@@ -8,6 +8,7 @@ namespace Blade::Modules::Guppi {
 
 typedef struct {
     I32 nants;
+    I32 fenchan;
     F64 chan_bw_mhz;
     I32 chan_start;
     F64 obs_freq_mhz;
@@ -22,6 +23,7 @@ typedef struct {
 } guppiraw_block_meta_t;
 
 const U64 KEY_UINT64_SCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
+const U64 KEY_UINT64_FENCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('F','E','N','C','H','A','N',' ');
 const U64 KEY_UINT64_CHAN_BW = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
 const U64 KEY_UINT64_OBSFREQ = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
 const U64 KEY_UINT64_SYNCTIME = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
@@ -36,6 +38,8 @@ const U64 KEY_UINT64_TELESCOP = GUPPI_RAW_KEY_UINT64_ID_LE('T','E','L','E','S','
 void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
     if        (((U64*)entry)[0] == KEY_UINT64_SCHAN) {
         hgeti4(entry, "SCHAN", &((guppiraw_block_meta_t*)block_meta)->chan_start);
+    } else if (((U64*)entry)[0] == KEY_UINT64_FENCHAN) {
+        hgeti4(entry, "FENCHAN", &((guppiraw_block_meta_t*)block_meta)->fenchan);
     } else if (((U64*)entry)[0] == KEY_UINT64_CHAN_BW) {
         hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
     } else if (((U64*)entry)[0] == KEY_UINT64_OBSFREQ) {
@@ -146,8 +150,13 @@ const F64 Reader<OT>::getChannelBandwidth() const {
 }
 
 template<typename OT>
-const F64 Reader<OT>::getTotalBandwidth() const {
-    return getChannelBandwidth() * getTotalOutputBufferDims().numberOfFrequencyChannels();
+const F64 Reader<OT>::getObservationBandwidth() const {
+    return getChannelBandwidth() * getBlockMeta(&gr_iterate)->fenchan;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getBandwidth() const {
+    return getChannelBandwidth() * this->getDatashape()->n_aspectchan;
 }
 
 template<typename OT>
@@ -156,8 +165,16 @@ const U64 Reader<OT>::getChannelStartIndex() const {
 }
 
 template<typename OT>
+const F64 Reader<OT>::getCenterFrequency() const {
+    return (double)getBlockMeta(&gr_iterate)->obs_freq_mhz*1e6;
+}
+
+template<typename OT>
 const F64 Reader<OT>::getObservationFrequency() const {
-    return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
+    return getCenterFrequency() +
+    (-((double)getChannelStartIndex()) - (((double)this->getDatashape()->n_aspectchan) / 2.0)
+        + (((double)getBlockMeta(&gr_iterate)->fenchan) / 2.0) + 0.5
+    ) * getChannelBandwidth();
 }
 
 template<typename OT>

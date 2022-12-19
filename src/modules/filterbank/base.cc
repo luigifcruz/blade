@@ -24,14 +24,14 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.src_dej = this->config.sourceCoordinate.DEC;
     this->filterbank_header.az_start = this->config.azimuthStart;
     this->filterbank_header.za_start = this->config.zenithStart;
-    this->filterbank_header.fch1 = 1e-6 * (this->config.observationFrequencyHz - this->config.observationBandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels()));
-    this->filterbank_header.foff = 1e-6 * (this->config.observationBandwidthHz / inputDims.numberOfFrequencyChannels());
+    this->filterbank_header.fch1 = 1e-6 * (this->config.centerFrequencyHz - this->config.bandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels()));
+    this->filterbank_header.foff = 1e-6 * (this->config.bandwidthHz / inputDims.numberOfFrequencyChannels());
     this->filterbank_header.nchans = (I32) inputDims.numberOfFrequencyChannels();
     this->filterbank_header.nbeams = (I32) inputDims.numberOfAspects();
     this->filterbank_header.ibeam = -1;
     this->filterbank_header.nbits = (I32) sizeof(InputType)*8;
     this->filterbank_header.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
-    this->filterbank_header.tsamp = abs(1.0/(this->config.observationBandwidthHz / inputDims.numberOfFrequencyChannels())); // time always moves forward
+    this->filterbank_header.tsamp = abs(1.0/(this->config.bandwidthHz / inputDims.numberOfFrequencyChannels())); // time always moves forward
     this->filterbank_header.nifs = this->config.numberOfIfChannels;
     strncpy(this->filterbank_header.source_name, this->config.sourceName.c_str(), 80);
     strncpy(this->filterbank_header.rawdatafile, this->config.sourceDataFilename.c_str(), 80);
