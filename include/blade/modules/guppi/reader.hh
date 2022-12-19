@@ -49,6 +49,12 @@ class BLADE_API Reader : public Module {
         return this->output.stepBuffer;
     }
 
+    F64 getUnixDateOfLastReadBlock();
+
+    constexpr F64 getJulianDateOfLastReadBlock() {
+        return calc_julian_date_from_unix_sec(this->getUnixDateOfLastReadBlock());
+    }
+
     constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {
         return this->output.stepJulianDate;
     }
@@ -76,8 +82,8 @@ class BLADE_API Reader : public Module {
     }
 
     const U64 getNumberOfSteps() {
-        return this->getTotalOutputBufferDims().size() / 
-               this->getStepOutputBufferDims().size();
+        return (this->getTotalOutputBufferDims() / 
+               this->getStepOutputBufferDims()).size();
     }
 
     // Constructor & Processing
@@ -91,6 +97,10 @@ class BLADE_API Reader : public Module {
     const F64 getChannelBandwidth() const;
     const U64 getChannelStartIndex() const;
     const F64 getObservationFrequency() const;
+    const F64 getAzimuthAngle() const;
+    const F64 getZenithAngle() const;
+    const std::string getSourceName() const;
+    const std::string getTelescopeName() const;
 
  private:
     // Variables 
@@ -99,7 +109,7 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    I32 lastread_block_index = -1;
+    I32 lastread_block_index = 0;
     U64 lastread_aspect_index;
     U64 lastread_channel_index;
     U64 lastread_time_index;

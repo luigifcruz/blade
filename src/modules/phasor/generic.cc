@@ -30,34 +30,34 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    // Check if calibration values are within bounds.
+    // Check if coefficient values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;
 
-    F64 max_cal = 0.0, min_cal = 0.0;
-    for (const auto& calibration : config.antennaCalibrations) {
-        if (calibration.real() > max_cal) {
-            max_cal = calibration.real();
+    F64 max_coeff = 0.0, min_coeff = 0.0;
+    for (const auto& coefficient : config.antennaCoefficients) {
+        if (coefficient.real() > max_coeff) {
+            max_coeff = coefficient.real();
         }
 
-        if (calibration.imag() > max_cal) {
-            max_cal = calibration.imag();
+        if (coefficient.imag() > max_coeff) {
+            max_coeff = coefficient.imag();
         }
 
-        if (calibration.real() < min_cal) {
-            min_cal = calibration.real();
+        if (coefficient.real() < min_coeff) {
+            min_coeff = coefficient.real();
         }
 
-        if (calibration.imag() < min_cal) {
-            min_cal = calibration.imag();
+        if (coefficient.imag() < min_coeff) {
+            min_coeff = coefficient.imag();
         }
     }
 
-    if ((max_value < max_cal) || ((min_value > min_cal))) {
-        BL_WARN("Overflow Possible! At least one calibration value is smaller" 
+    if ((max_value < max_coeff) || ((min_value > min_coeff))) {
+        BL_WARN("Overflow Possible! At least one coefficient value is smaller" 
                 " or larger ({:.2f}, {:.2f}) than what CF16 can hold ({:.2f}, {:.2f})"
                 " with current configuration parameters.",
-                min_cal, max_cal, min_value, max_value); 
+                min_coeff, max_coeff, min_value, max_value); 
     }
 
     // Print generic configuration values.
@@ -82,7 +82,6 @@ Generic<OT>::Generic(const Config& config, const Input& input)
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
-    BL_INFO("Calibrations Dimensions (A, F, T, P): {}", config.antennaCalibrations.dims());
 }
 
 template class BLADE_API Generic<CF32>;

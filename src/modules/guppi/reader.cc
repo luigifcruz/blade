@@ -15,6 +15,10 @@ typedef struct {
     U64 piperblk;
     U64 pktidx;
     F64 dut1;
+    F64 az;
+    F64 el;
+    char src_name[72];
+    char telescope_id[72];
 } guppiraw_block_meta_t;
 
 const U64 KEY_UINT64_SCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
@@ -24,6 +28,10 @@ const U64 KEY_UINT64_SYNCTIME = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','
 const U64 KEY_UINT64_PIPERBLK = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
 const U64 KEY_UINT64_PKTIDX = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X',' ',' ');
 const U64 KEY_UINT64_DUT1 = GUPPI_RAW_KEY_UINT64_ID_LE('D','U','T','1',' ',' ',' ',' ');
+const U64 KEY_UINT64_AZ = GUPPI_RAW_KEY_UINT64_ID_LE('A','Z',' ',' ',' ',' ',' ',' ');
+const U64 KEY_UINT64_EL = GUPPI_RAW_KEY_UINT64_ID_LE('E','L',' ',' ',' ',' ',' ',' ');
+const U64 KEY_UINT64_SRC_NAME = GUPPI_RAW_KEY_UINT64_ID_LE('S','R','C','_','N','A','M','E');
+const U64 KEY_UINT64_TELESCOP = GUPPI_RAW_KEY_UINT64_ID_LE('T','E','L','E','S','C','O','P');
 
 void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
     if        (((U64*)entry)[0] == KEY_UINT64_SCHAN) {
@@ -40,7 +48,22 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
         hgetu8(entry, "PKTIDX", &((guppiraw_block_meta_t*)block_meta)->pktidx);
     } else if (((U64*)entry)[0] == KEY_UINT64_DUT1) {
         hgetr8(entry, "DUT1", &((guppiraw_block_meta_t*)block_meta)->dut1);
-    } 
+    } else if (((U64*)entry)[0] == KEY_UINT64_AZ) {
+        hgetr8(entry, "AZ", &((guppiraw_block_meta_t*)block_meta)->az);
+    } else if (((U64*)entry)[0] == KEY_UINT64_EL) {
+        hgetr8(entry, "EL", &((guppiraw_block_meta_t*)block_meta)->el);
+    } else if (((U64*)entry)[0] == KEY_UINT64_SRC_NAME) {
+        hgets(entry, "SRC_NAME", 72, ((guppiraw_block_meta_t*)block_meta)->src_name);
+    } else if (((U64*)entry)[0] == KEY_UINT64_TELESCOP) {
+        hgets(entry, "TELESCOP", 72, ((guppiraw_block_meta_t*)block_meta)->telescope_id);
+    } else if (guppiraw_header_entry_is_END((U64*)entry)) {
+        if (((guppiraw_block_meta_t*)block_meta)->src_name[0] == '\0') {
+            strcpy(((guppiraw_block_meta_t*)block_meta)->src_name, "Unknown");
+        }
+        if (((guppiraw_block_meta_t*)block_meta)->telescope_id[0] == '\0') {
+            strcpy(((guppiraw_block_meta_t*)block_meta)->telescope_id, "Unknown");
+        }
+    }
 }
 
 inline guppiraw_block_meta_t* getBlockMeta(const guppiraw_iterate_info_t* gr_iterate_ptr) {
@@ -59,15 +82,20 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     // Open GUPPI file and configure step size.
-    const auto res = 
-        guppiraw_iterate_open_with_user_metadata(&gr_iterate, 
-                                                 config.filepath.c_str(), 
+    const auto res =
+        guppiraw_iterate_open_with_user_metadata(&gr_iterate,
+                                                 config.filepath.c_str(),
                                                  sizeof(guppiraw_block_meta_t),
                                                  guppiraw_parse_block_meta);
 
     if (res) {
-        BL_FATAL("Errored opening stem ({}): {}.{:04d}.raw\n", res, 
+        BL_FATAL("Errored opening stem ({}): {}.{:04d}.raw", res,
                 this->gr_iterate.stempath, this->gr_iterate.fileenum_offset);
+        BL_DEBUG("\tin file {}", this->gr_iterate.fileenum_offset + this->gr_iterate.n_file);
+        guppiraw_file_info_t* gr_fileinfo = guppiraw_iterate_file_info(&this->gr_iterate, this->gr_iterate.n_file-1);
+        BL_DEBUG("\taround block #{}/{}", gr_fileinfo->block_index, gr_fileinfo->n_block);
+        BL_DEBUG("\tblock #{} @ {}/{}", gr_fileinfo->block_index, gr_fileinfo->file_header_pos[gr_fileinfo->block_index], gr_fileinfo->bytesize_file);
+        BL_DEBUG("\tblock #{} @ {}/{}", gr_fileinfo->block_index-1, gr_fileinfo->file_header_pos[gr_fileinfo->block_index-1], gr_fileinfo->bytesize_file);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
@@ -100,13 +128,26 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 }
 
 template<typename OT>
+F64 Reader<OT>::getUnixDateOfLastReadBlock() {
+    return guppiraw_calc_unix_date(
+        1.0 / this->getChannelBandwidth(),
+        this->getDatashape()->n_time,
+        getBlockMeta(&gr_iterate)->piperblk,
+        getBlockMeta(&gr_iterate)->synctime,
+        getBlockMeta(&gr_iterate)->pktidx +
+            ((F64)this->lastread_block_index + 0.5)
+            * getBlockMeta(&gr_iterate)->piperblk
+    );
+}
+
+template<typename OT>
 const F64 Reader<OT>::getChannelBandwidth() const {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
 }
 
 template<typename OT>
 const F64 Reader<OT>::getTotalBandwidth() const {
-    return getChannelBandwidth() * getStepOutputBufferDims().numberOfFrequencyChannels();
+    return getChannelBandwidth() * getTotalOutputBufferDims().numberOfFrequencyChannels();
 }
 
 template<typename OT>
@@ -117,6 +158,26 @@ const U64 Reader<OT>::getChannelStartIndex() const {
 template<typename OT>
 const F64 Reader<OT>::getObservationFrequency() const {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getAzimuthAngle() const {
+    return getBlockMeta(&gr_iterate)->az;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getZenithAngle() const {
+    return getBlockMeta(&gr_iterate)->el;
+}
+
+template<typename OT>
+const std::string Reader<OT>::getSourceName() const {
+    return std::string(getBlockMeta(&gr_iterate)->src_name);
+}
+
+template<typename OT>
+const std::string Reader<OT>::getTelescopeName() const {
+    return std::string(getBlockMeta(&gr_iterate)->telescope_id);
 }
 
 template<typename OT>
@@ -131,25 +192,16 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     this->lastread_channel_index = gr_iterate.chan_index;
     this->lastread_time_index = gr_iterate.time_index;
 
-    // Query internal library Julian Date. 
-    const auto unixDate =
-        guppiraw_calc_unix_date(
-            1.0 / this->getChannelBandwidth(),
-            this->getDatashape()->n_time,
-            getBlockMeta(&gr_iterate)->piperblk,
-            getBlockMeta(&gr_iterate)->synctime,
-            (getBlockMeta(&gr_iterate)->pktidx + 
-             (this->lastread_block_index + 
-              (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
-              this->getDatashape()->n_time));
+    // Query internal library Unix Date, converting to Julian Date.
+    const auto unixDate = this->getUnixDateOfLastReadBlock();
 
-    this->output.stepJulianDate[0] = calc_julian_date_from_unix(unixDate);
+    this->output.stepJulianDate[0] = calc_julian_date_from_unix_sec(unixDate);
 
     // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
 
     // Run library internal read method.
-    const I64 bytes_read = 
+    const I64 bytes_read =
         guppiraw_iterate_read(&this->gr_iterate,
                               this->getStepOutputBufferDims().numberOfTimeSamples(),
                               this->getStepOutputBufferDims().numberOfFrequencyChannels(),

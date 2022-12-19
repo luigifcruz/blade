@@ -52,8 +52,10 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
         .arrayReferencePosition = config.phasorArrayReferencePosition,
         .boresightCoordinate = config.phasorBoresightCoordinate,
         .antennaPositions = config.phasorAntennaPositions,
-        .antennaCalibrations = config.phasorAntennaCalibrations,
+        .antennaCoefficients = config.phasorAntennaCoefficients,
         .beamCoordinates = config.phasorBeamCoordinates,
+
+        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .blockSize = config.phasorBlockSize,
     }, {

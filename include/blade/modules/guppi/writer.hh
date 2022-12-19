@@ -51,7 +51,7 @@ class BLADE_API Writer : public Module {
     explicit Writer(const Config& config, const Input& input);
     const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 
-    // Miscullaneous
+    // Miscellaneous
 
     constexpr void headerPut(std::string key, std::string value) {
         guppiraw_header_put_string(&this->gr_header, key.c_str(), value.c_str());

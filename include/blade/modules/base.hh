@@ -27,6 +27,10 @@
 #include "blade/modules/bfr5/base.hh"
 #endif
 
+#ifdef BLADE_MODULE_FILTERBANK
+#include "blade/modules/filterbank/base.hh"
+#endif
+
 #ifdef BLADE_MODULE_ATA_BEAMFORMER
 #include "blade/modules/beamformer/ata.hh"
 #endif

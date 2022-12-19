@@ -18,7 +18,6 @@ class BLADE_API FileReader : public Pipeline {
         std::string inputGuppiFile;
         std::string inputBfr5File;
 
-        U64 channelizerRate;
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
     };
@@ -49,6 +48,22 @@ class BLADE_API FileReader : public Pipeline {
     constexpr const U64 getChannelStartIndex() const {
         return guppi->getChannelStartIndex();
     }
+    
+    constexpr const F64 getAzimuthAngle() const {
+        return guppi->getAzimuthAngle();
+    }
+
+    constexpr const F64 getZenithAngle() const {
+        return guppi->getZenithAngle();
+    }
+
+    constexpr const std::string getSourceName() const {
+        return guppi->getSourceName();
+    }
+
+    constexpr const std::string getTelescopeName() const {
+        return guppi->getTelescopeName();
+    }
 
     constexpr const U64 getNumberOfSteps() const {
         return guppi->getNumberOfSteps();
@@ -66,6 +81,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getStepOutputBuffer();
     }
 
+    F64 getJulianDateOfLastReadBlock() const {
+        return guppi->getJulianDateOfLastReadBlock();
+    }
+
     const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
         return guppi->getStepOutputJulianDate();
     }
@@ -80,20 +99,32 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getReferencePosition();
     }
 
-    constexpr const RA_DEC getBoresightCoordinates() const {
-        return bfr5->getBoresightCoordinates();
+    constexpr const RA_DEC getPhaseCenterCoordinates() const {
+        return bfr5->getPhaseCenterCoordinates();
     }
 
     constexpr const std::vector<XYZ>& getAntennaPositions() const {
         return bfr5->getAntennaPositions();
     }
 
+    constexpr std::vector<F64> getBeamAntennaDelays() const {
+        return bfr5->getBeamAntennaDelays();
+    }
+
+    constexpr std::vector<F64> getDelayTimes() const {
+        return bfr5->getDelayTimes();
+    }
+
+    constexpr std::vector<CF64> getAntennaCoefficients(const U64& numberOfFrequencyChannels = 0, const U64& frequencyChannelStartIndex = 0) const {
+        return bfr5->getAntennaCoefficients(numberOfFrequencyChannels, frequencyChannelStartIndex);
+    }
+
     constexpr const std::vector<RA_DEC>& getBeamCoordinates() const {
         return bfr5->getBeamCoordinates();
     }
 
-    constexpr const ArrayTensor<Device::CPU, CF64>& getAntennaCalibrations() const {
-        return bfr5->getAntennaCalibrations();
+    constexpr const PhasorDimensions getRecipeDims() const {
+        return bfr5->getDims();
     }
 
  private:
