@@ -25,7 +25,7 @@
 
 // Generic Pipelines
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
-#mesondefine BLADE_PIPELINE_GENERIC_FILE_WRITER
+#mesondefine BLADE_PIPELINE_GENERIC_ACCUMULATOR
 #mesondefine BLADE_PIPELINE_GENERIC_MODE_H
 
 // Dependency Loaders
