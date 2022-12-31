@@ -12,9 +12,7 @@ template<typename OT>
 Generic<OT>::Generic(const Config& config, const Input& input)
         : Module(phasor_program),
           config(config),
-          input(input),
-          numberOfFrequencySteps(0),
-          currentFrequencyStep(0) {
+          input(input) {
     // Check configuration values.
     if (config.numberOfAntennas != config.antennaPositions.size()) {
         BL_FATAL("Number of Antennas configuration ({}) mismatches the number of"

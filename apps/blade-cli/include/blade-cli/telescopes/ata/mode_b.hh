@@ -158,6 +158,7 @@ inline const Result ModeB(const Config& config) {
             Plan::TransferOut(computeRunner, readerRunner,
                               worker.getStepOutputJulianDate(),
                               worker.getStepOutputDut1(),
+                              worker.getStepOutputFrequencyChannelOffset(),
                               worker.getStepOutputBuffer());
 
             return stepCount++;

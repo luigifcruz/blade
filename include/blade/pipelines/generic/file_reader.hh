@@ -101,6 +101,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getStepOutputDut1();
     }
 
+    const Vector<Device::CPU, U64>& getStepOutputFrequencyChannelOffset() {
+        return guppi->getStepOutputFrequencyChannelOffset();
+    }
+
     // BFR5 determined values
 
     constexpr const LLA getReferencePosition() const {

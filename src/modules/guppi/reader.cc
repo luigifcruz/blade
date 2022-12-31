@@ -122,6 +122,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     // Allocate output buffers.
     BL_CHECK_THROW(output.stepDut1.resize({1}));
     BL_CHECK_THROW(output.stepJulianDate.resize({1}));
+    BL_CHECK_THROW(output.stepFrequencyChannelOffset.resize({1}));
     BL_CHECK_THROW(output.stepBuffer.resize(getStepOutputBufferDims()));
 
     // Print configuration information.
@@ -166,7 +167,7 @@ const U64 Reader<OT>::getChannelStartIndex() const {
 
 template<typename OT>
 const F64 Reader<OT>::getCenterFrequency() const {
-    return (double)getBlockMeta(&gr_iterate)->obs_freq_mhz*1e6;
+    return (double)getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
 }
 
 template<typename OT>
@@ -211,15 +212,18 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
 
     // Query internal library Unix Date, converting to Julian Date.
     const auto unixDate = this->getUnixDateOfLastReadBlock();
-
     this->output.stepJulianDate[0] = calc_julian_date_from_unix_sec(unixDate);
 
     // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
 
+    // Stow frequency-channel offset
+    this->output.stepFrequencyChannelOffset[0] = this->lastread_channel_index;
+
     // Run library internal read method.
     const I64 bytes_read =
         guppiraw_iterate_read(&this->gr_iterate,
+                            //   this->config.iterate_time_first_not_frequency,
                               this->getStepOutputBufferDims().numberOfTimeSamples(),
                               this->getStepOutputBufferDims().numberOfFrequencyChannels(),
                               this->getStepOutputBufferDims().numberOfAspects(),

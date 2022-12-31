@@ -42,6 +42,7 @@ class BLADE_API Generic : public Module {
     struct Input {
         const Vector<Device::CPU, F64>& blockJulianDate;
         const Vector<Device::CPU, F64>& blockDut1;
+        const Vector<Device::CPU, U64>& blockFrequencyChannelOffset;
     };
 
     constexpr const Vector<Device::CPU, F64>& getInputJulianDate() const {
@@ -50,6 +51,10 @@ class BLADE_API Generic : public Module {
 
     constexpr const Vector<Device::CPU, F64>& getInputDut1() const {
         return this->input.blockDut1;
+    }
+
+    constexpr const Vector<Device::CPU, U64>& getInputFrequencyChannelOffset() const {
+        return this->input.blockFrequencyChannelOffset;
     }
 
     // Output
@@ -85,11 +90,6 @@ class BLADE_API Generic : public Module {
     virtual const DelayDimensions getOutputDelaysDims() const = 0;
     virtual const PhasorDimensions getOutputPhasorsDims() const = 0;
     virtual const ArrayDimensions getConfigCofficientsDims() const = 0;
-
-    // Miscellaneous
-
-    U64 numberOfFrequencySteps;
-    U64 currentFrequencyStep;
 };
 
 }  // namespace Blade::Modules::Phasor

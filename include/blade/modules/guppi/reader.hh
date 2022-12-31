@@ -25,6 +25,7 @@ class BLADE_API Reader : public Module {
         U64 stepNumberOfFrequencyChannels;
         U64 stepNumberOfAspects;
 
+        BOOL iterate_time_first_not_frequency = true;
         U64 blockSize = 512;
     };
 
@@ -43,6 +44,7 @@ class BLADE_API Reader : public Module {
         ArrayTensor<Device::CPU, OT> stepBuffer;
         Vector<Device::CPU, F64> stepJulianDate;
         Vector<Device::CPU, F64> stepDut1;
+        Vector<Device::CPU, U64> stepFrequencyChannelOffset;
     };
 
     constexpr const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() const {
@@ -61,6 +63,10 @@ class BLADE_API Reader : public Module {
 
     constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() const {
         return this->output.stepDut1;
+    }
+
+    constexpr const Vector<Device::CPU, U64>& getStepOutputFrequencyChannelOffset() const {
+        return this->output.stepFrequencyChannelOffset;
     }
 
     const ArrayDimensions getTotalOutputBufferDims() const {

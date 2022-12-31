@@ -16,8 +16,9 @@ class Test(bl.Pipeline):
         bl.Pipeline.__init__(self)
         self.block_julian_date = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
         self.block_dut1 = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
+        self.block_frequency_channel_offset = bl.vector.cpu.u64.Vector(bl.vector.Dimensions(1))
         _config = phasor_config
-        _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
+        _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1, self.block_frequency_channel_offset)
         self.phasor = self.connect(_config, _input)
 
     def output_dims(self):
@@ -25,9 +26,11 @@ class Test(bl.Pipeline):
 
     def run(self, block_julian_date: float,
                   block_dut1: float,
+                  block_frequency_channel_offset: int,
                   phasors: bl.vector.cpu.cf32):
         self.block_julian_date[0] = block_julian_date
         self.block_dut1[0] = block_dut1
+        self.block_frequency_channel_offset[0] = block_frequency_channel_offset
         self.compute()
         self.copy(phasors, self.phasor.phasors())
         self.synchronize()
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 
     bl_output = bl.vector.cpu.cf32.PhasorTensor(mod.output_dims())
 
-    mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, bl_output)
+    mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, 0, bl_output)
 
     bl_phasors = np.array(bl_output, copy=False)
     bl_phasors = bl_phasors.reshape((2, 20, 192, 2))

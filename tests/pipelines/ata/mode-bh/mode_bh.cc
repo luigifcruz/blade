@@ -40,6 +40,7 @@ static struct {
 
 static Vector<Device::CPU, F64> dummyJulianDate({1});
 static Vector<Device::CPU, F64> dummyDut1({1});
+static Vector<Device::CPU, U64> dummyFrequencyChannelOffset({1});
 
 bool blade_pin_memory(void* buffer, U64 size) {
     return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
@@ -57,6 +58,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
 
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
+    dummyFrequencyChannelOffset[0] = 0;
 
     State.RunnersInstances.B = Runner<TestPipelineB>::New(numberOfWorkers, {
         .inputDimensions = {
@@ -200,6 +202,7 @@ void blade_ata_bh_compute_step() {
         Plan::TransferIn(worker, 
                          dummyJulianDate,
                          dummyDut1,
+                         dummyFrequencyChannelOffset,
                          input);
 
         // Compute input data.

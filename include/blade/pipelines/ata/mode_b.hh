@@ -58,6 +58,7 @@ class BLADE_API ModeB : public Pipeline {
 
     const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
                             const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
                             const ArrayTensor<Device::CPU, CI8>& input,
                             const cudaStream_t& stream);
 
@@ -93,6 +94,7 @@ class BLADE_API ModeB : public Pipeline {
     ArrayTensor<Device::CUDA, CI8> input;
     Vector<Device::CPU, F64> blockJulianDate;
     Vector<Device::CPU, F64> blockDut1;
+    Vector<Device::CPU, U64> blockFrequencyChannelOffset;
 
     using InputCast = typename Modules::Cast<CI8, CF32>;
     std::shared_ptr<InputCast> inputCast;

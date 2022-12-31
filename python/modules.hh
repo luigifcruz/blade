@@ -77,8 +77,10 @@ inline void init_ata_phasor(const py::module& m) {
 
     py::class_<Class::Input>(phasor, "Input")
         .def(py::init<const Vector<Device::CPU, F64>&,
-                      const Vector<Device::CPU, F64>&>(), py::arg("block_julian_date"),
-                                                          py::arg("block_dut1"));
+                      const Vector<Device::CPU, F64>&,
+                      const Vector<Device::CPU, U64>&>(), py::arg("block_julian_date"),
+                                                          py::arg("block_dut1"),
+                                                          py::arg("block_frequency_channel_offset"));
 
     phasor
         .def(py::init<const Class::Config&,

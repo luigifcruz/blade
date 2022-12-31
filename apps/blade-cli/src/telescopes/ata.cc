@@ -10,7 +10,7 @@ const Result Setup(const Config& config) {
                 case TypeId::CF16:
                     return ModeB<CI8, CF16>(config);
                 case TypeId::CF32:
-            return ModeB<CI8, CF32>(config);
+                    return ModeB<CI8, CF32>(config);
                 case TypeId::F16:
                     return ModeB<CI8, F16>(config);
                 case TypeId::F32:

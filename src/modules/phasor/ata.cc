@@ -73,9 +73,6 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    this->numberOfFrequencySteps = coefficientNumberOfFrequencyChannels / coarseStepDims.numberOfFrequencyChannels();
-    this->currentFrequencyStep = 0;
-
     this->antennaCoefficients.resize({
         .A = config.numberOfAntennas,
         .F = coefficientNumberOfFrequencyChannels,
@@ -109,13 +106,11 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_INFO("Coefficient Dimensions [A, F, T, P]: {}", this->antennaCoefficients.dims());
     BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
-    BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
 
 template<typename OT>
 const Result ATA<OT>::preprocess(const cudaStream_t& stream,
                                  const U64& currentComputeCount) {
-    const U64 currentFrequencyStepOffset = this->numberOfFrequencySteps * this->config.numberOfFrequencyChannels;
 
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
@@ -205,9 +200,9 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
                 const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
-                const U64 frequencyCoeffOffset = ((f + currentFrequencyStepOffset) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
+                const U64 frequencyCoeffOffset = ((f + this->input.blockFrequencyChannelOffset[0]) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
 
-                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + currentFrequencyStepOffset) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
+                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + this->input.blockFrequencyChannelOffset[0]) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 
@@ -222,8 +217,6 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
             }
         }
     }
-
-    this->currentFrequencyStep = (this->currentFrequencyStep + 1) % this->numberOfFrequencySteps;
 
     return Result::SUCCESS;
 }
