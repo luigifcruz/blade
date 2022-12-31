@@ -55,7 +55,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    const auto fineStepDims = this->getConfigCofficientsDims();
+    const auto fineStepDims = this->getConfigCoefficientsDims();
     const auto coarseStepDims = fineStepDims / ArrayDimensions({
         .A = 1,
         .F = this->config.preBeamformerChannelizerRate,

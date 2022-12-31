@@ -89,7 +89,7 @@ class BLADE_API Generic : public Module {
 
     virtual const DelayDimensions getOutputDelaysDims() const = 0;
     virtual const PhasorDimensions getOutputPhasorsDims() const = 0;
-    virtual const ArrayDimensions getConfigCofficientsDims() const = 0;
+    virtual const ArrayDimensions getConfigCoefficientsDims() const = 0;
 };
 
 }  // namespace Blade::Modules::Phasor

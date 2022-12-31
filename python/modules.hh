@@ -71,7 +71,7 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("array_reference_position"),
                                      py::arg("boresight_coordinate"),
                                      py::arg("antenna_positions"),
-                                     py::arg("antenna_calibrations"),
+                                     py::arg("antenna_coefficients"),
                                      py::arg("beam_coordinates"),
                                      py::arg("block_size"));
 
