@@ -20,8 +20,8 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.data_type = 1;
     this->filterbank_header.barycentric = this->config.baryCentric;
     this->filterbank_header.pulsarcentric = this->config.pulsarCentric;
-    this->filterbank_header.src_raj = this->config.sourceCoordinate.RA * 24.0/360.0; // from degrees to hours
-    this->filterbank_header.src_dej = this->config.sourceCoordinate.DEC;
+    this->filterbank_header.src_raj = this->config.sourceCoordinate.RA * 12.0/BL_PHYSICAL_CONSTANT_PI; // from radians to hours
+    this->filterbank_header.src_dej = this->config.sourceCoordinate.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI;
     this->filterbank_header.az_start = this->config.azimuthStart;
     this->filterbank_header.za_start = this->config.zenithStart;
     this->filterbank_header.fch1 = 1e-6 * (this->config.centerFrequencyHz - this->config.bandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels()));
