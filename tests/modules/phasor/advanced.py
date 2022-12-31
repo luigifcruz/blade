@@ -96,6 +96,7 @@ if __name__ == "__main__":
             bl.RA_DEC(*beam1_pos_rad),
             bl.RA_DEC(*beam2_pos_rad)
         ],
+        preBeamformerChannelizerRate = 1,
 
         block_size = 512
     )

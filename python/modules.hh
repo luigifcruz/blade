@@ -60,6 +60,7 @@ inline void init_ata_phasor(const py::module& m) {
                       const std::vector<XYZ>&,
                       const std::vector<CF64>&,
                       const std::vector<RA_DEC>&,
+                      const U64&,
                       const U64&>(), py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),
                                      py::arg("number_of_polarizations"),
@@ -73,6 +74,7 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("antenna_positions"),
                                      py::arg("antenna_coefficients"),
                                      py::arg("beam_coordinates"),
+                                     py::arg("preBeamformerChannelizerRate"),
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(phasor, "Input")

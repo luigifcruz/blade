@@ -47,6 +47,8 @@ inline void init_vector_device(py::module& m, const char* name) {
     init_vector_dims<Dev, CF64>(sub, "cf64");
     init_vector_dims<Dev, F32>(sub, "f32");
     init_vector_dims<Dev, F64>(sub, "f64");
+    init_vector_dims<Dev, U32>(sub, "u32");
+    init_vector_dims<Dev, U64>(sub, "u64");
 }
 
 inline void init_memory_vector(py::module& m) {
