@@ -57,12 +57,12 @@ if __name__ == "__main__":
     # Python Implementation
     #
 
-    py_input = bl_input.flatten().view(np.float32)
-    py_output = np.zeros((NBEAMS * NCHANS * NTIME * NPOLS), dtype=np.complex64).view(np.float32)
+    py_input = bl_input.flatten().view(np.complex64)
+    py_output = np.zeros((NBEAMS * NCHANS * NTIME * NPOLS), dtype=np.complex64)
 
     start = time.time()
-    py_output[0::2] = py_input[0::2] + py_input[1::2]
-    py_output[1::2] = py_input[0::2] - py_input[1::2]
+    py_output[0::2] = py_input[0::2] + 1j * py_input[1::2]
+    py_output[1::2] = py_input[0::2] - 1j * py_input[1::2]
     print(f"Detection with Python took {time.time()-start:.2f} s.")
 
     py_output = py_output.view(np.complex64)
