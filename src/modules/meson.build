@@ -9,5 +9,6 @@ subdir('polarizer')
 subdir('guppi')
 subdir('bfr5')
 subdir('filterbank')
+subdir('seticore')
 
 summary(sum_lst, section: 'Modules', bool_yn: true)

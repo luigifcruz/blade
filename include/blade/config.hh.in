@@ -9,6 +9,7 @@
 #mesondefine BLADE_MODULE_GUPPI
 #mesondefine BLADE_MODULE_POLARIZER
 #mesondefine BLADE_MODULE_FILTERBANK
+#mesondefine BLADE_MODULE_SETICORE
 
 // ATA Specific Modules
 #mesondefine BLADE_MODULE_ATA_BEAMFORMER
@@ -22,6 +23,7 @@
 
 // ATA Pipelines
 #mesondefine BLADE_PIPELINE_ATA_MODE_B
+#mesondefine BLADE_PIPELINE_ATA_MODE_BS
 
 // Generic Pipelines
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
@@ -34,3 +36,4 @@
 #mesondefine BLADE_LOADER_BFR5
 #mesondefine BLADE_LOADER_FILTERBANK
 #mesondefine BLADE_LOADER_CLI11
+#mesondefine BLADE_LOADER_SETICORE

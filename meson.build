@@ -13,7 +13,7 @@ cfg_lst = configuration_data()
 src_lst = []
 dep_lst = [
     dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'cufft']),
-    dependency('fmt'),
+    subproject('fmt').get_variable('fmt_dep'),
 ]
 inc_lst = [
     include_directories('include'),

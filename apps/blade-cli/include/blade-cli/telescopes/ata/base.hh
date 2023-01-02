@@ -7,6 +7,10 @@
 #include "blade-cli/telescopes/ata/mode_b.hh"
 #endif
 
+#if defined(BLADE_PIPELINE_ATA_MODE_BS)
+#include "blade-cli/telescopes/ata/mode_bs.hh"
+#endif
+
 #if defined(BLADE_PIPELINE_ATA_MODE_B) && defined(BLADE_PIPELINE_GENERIC_MODE_H)
 #endif
 

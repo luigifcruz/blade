@@ -19,6 +19,9 @@ const Result Setup(const Config& config) {
                     BL_FATAL("This ATA output is not implemented yet.");    
             }
 #endif
+#if defined(BLADE_PIPELINE_ATA_MODE_BS)
+        case ModeId::MODE_BS:
+            return ModeBS<CI8>(config);
 #endif
 #if defined(BLADE_PIPELINE_ATA_MODE_B) && defined(BLADE_PIPELINE_GENERIC_MODE_H)
 #endif
