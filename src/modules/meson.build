@@ -10,5 +10,6 @@ subdir('guppi')
 subdir('bfr5')
 subdir('filterbank')
 subdir('seticore')
+subdir('transposer')
 
 summary(sum_lst, section: 'Modules', bool_yn: true)

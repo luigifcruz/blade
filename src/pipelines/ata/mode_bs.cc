@@ -75,6 +75,13 @@ ModeBS::ModeBS(const Config& config) : config(config), blockJulianDate({1}), blo
         .buf = beamformer->getOutputBuffer(),
     });
 
+    BL_DEBUG("Instantiating transposer module.");
+    this->connect(transposer, {
+    }, {
+        .buf = detector->getOutputBuffer(),
+    });
+
+    BL_DEBUG("Instantiating dedoppler module.");
     this->connect(dedoppler, {
         .mitigateDcSpike = config.searchMitigateDcSpike,
         .minimumDriftRate = config.searchMinimumDriftrate,
@@ -83,7 +90,7 @@ ModeBS::ModeBS(const Config& config) : config(config), blockJulianDate({1}), blo
         .channelBandwidthHz = config.phasorChannelBandwidthHz / config.preBeamformerChannelizerRate,
         .blockSize = config.searchBlockSize,
     }, {
-        .buf = detector->getOutputBuffer(),
+        .buf = transposer->getOutputBuffer(),
     });
 }
 

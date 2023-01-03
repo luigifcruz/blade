@@ -8,6 +8,7 @@
 
 #include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
+#include "blade/modules/transposer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
 #include "blade/modules/detector.hh"
@@ -106,6 +107,7 @@ class BLADE_API ModeBS : public Pipeline {
     std::shared_ptr<Modules::Phasor::ATA<CF32>> phasor;
     std::shared_ptr<Modules::Beamformer::ATA<CF32, CF32>> beamformer;
     std::shared_ptr<Modules::Detector<CF32, F32>> detector;
+    std::shared_ptr<Modules::Transposer<Device::CUDA, F32, ArrayDimensionOrder::AFTP, ArrayDimensionOrder::ATPF>> transposer;
     std::shared_ptr<Modules::Seticore::Dedoppler> dedoppler;
 };
 
