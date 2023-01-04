@@ -44,6 +44,14 @@ inline const Result ModeB(const Config& config) {
     // TODO: less static hardware limit `1024`
     const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 1024 ? 1024 : config.stepNumberOfTimeSamples;
 
+    const auto filterbankOutput = config.outputType == TypeId::F16 || config.outputType == TypeId::F32;
+
+    // Device (CUDA) transposition is faster, but uses way too much CUDA memory.
+    // TODO rectify this: seems the CUDA Graph takes up a lot of memory when the fine-channel count is high
+    //  on account of the transposition being a `for(i : A*F)` loop of memcpy2D calls. Consider a kernel instead,
+    //  or having the detector module output ATPF seeing as it is not inplace anyway.
+    const auto deviceTransposition = filterbankOutput && false;
+
     typename Compute::Config computeConfig = {
         .inputDimensions = reader.getStepOutputDims(),
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
@@ -61,9 +69,10 @@ inline const Result ModeB(const Config& config) {
 
         .beamformerIncoherentBeam = false,
 
-        .detectorEnable = config.outputType == TypeId::F16 || config.outputType == TypeId::F32,
+        .detectorEnable = filterbankOutput,
         .detectorIntegrationSize = 1,
         .detectorNumberOfOutputPolarizations = 1,
+        .detectorTransposedATPFrevOutput = deviceTransposition,
 
         // TODO: Review this calculation.
         .castBlockSize = 32,
@@ -119,8 +128,9 @@ inline const Result ModeB(const Config& config) {
                 .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-            .transposeATPF = true,
-            .reconstituteBatchedDimensions = true,
+            .inputIsATPFNotAFTP = deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
+            .transposeATPF = ! deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
+            .reconstituteBatchedDimensions = true, 
             .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
         };
 

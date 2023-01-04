@@ -9,6 +9,7 @@ namespace Blade {
 enum class BLADE_API ArrayDimensionOrder : uint8_t {
     AFTP    = 0,
     ATPF    = 1,
+    ATPFrev = 2,
 };
 
 constexpr const char* ArrayDimensionOrderName(const ArrayDimensionOrder order) {
@@ -17,6 +18,8 @@ constexpr const char* ArrayDimensionOrderName(const ArrayDimensionOrder order) {
             return "AFTP";
         case ArrayDimensionOrder::ATPF:
             return "ATPF";
+        case ArrayDimensionOrder::ATPFrev:
+            return "ATPF (Frequency reversed)";
         default:
             return "????";
     }

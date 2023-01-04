@@ -86,15 +86,27 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
             .buf = beamformer->getOutputBuffer(),
         });
 
+        if (config.detectorTransposedATPFrevOutput) {
+            BL_DEBUG("Instantiating transposer module.");
+            this->connect(transposer, {
+            }, {
+                .buf = detector->getOutputBuffer(),
+            } );
+        }
+
         if constexpr (!std::is_same<OT, F32>::value) {
             BL_DEBUG("Instantiating output cast from F32 to {}.", TypeInfo<OT>::name);
             this->connect(outputCast, {
                 .blockSize = config.castBlockSize,
             }, {
-                .buf = detector->getOutputBuffer(),
+                .buf = config.detectorTransposedATPFrevOutput ? transposer->getOutputBuffer() : detector->getOutputBuffer(),
             });
         }
     } else {
+        if (config.detectorTransposedATPFrevOutput) {
+            BL_WARN("Transposition will not be enabled as the detector module is disabled.");
+        }
+
         if constexpr (!std::is_same<OT, CF32>::value) {
             BL_DEBUG("Instantiating output cast from CF32 to {}.", TypeInfo<OT>::name);
             this->connect(complexOutputCast, {

@@ -8,6 +8,7 @@
 
 #include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
+#include "blade/modules/transposer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
 #include "blade/modules/polarizer.hh"
@@ -45,6 +46,7 @@ class BLADE_API ModeB : public Pipeline {
         BOOL detectorEnable = false;
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;
+        BOOL detectorTransposedATPFrevOutput = false;
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
@@ -73,7 +75,11 @@ class BLADE_API ModeB : public Pipeline {
             if constexpr (!std::is_same<OT, F32>::value) {
                 return outputCast->getOutputBuffer();
             } else {
-                return detector->getOutputBuffer();
+                if (config.detectorTransposedATPFrevOutput) {
+                    return transposer->getOutputBuffer();
+                } else {
+                    return detector->getOutputBuffer();
+                }
             }
         } else {
             if constexpr (!std::is_same<OT, CF32>::value) {
@@ -113,6 +119,9 @@ class BLADE_API ModeB : public Pipeline {
 
     using Detector = typename Modules::Detector<CF32, F32>;
     std::shared_ptr<Detector> detector;
+
+    // Transposition for path with Detector enabling output to match Filterbank dimensionality (ATPF)
+    std::shared_ptr<Modules::Transposer<Device::CUDA, F32, ArrayDimensionOrder::AFTP, ArrayDimensionOrder::ATPFrev>> transposer;
 
     // Output Cast for path without Detector (CF32).
     std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
