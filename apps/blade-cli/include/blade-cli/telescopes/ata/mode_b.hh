@@ -18,7 +18,7 @@ template<typename IT, typename OT>
 inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
-    using Compute = Pipelines::ATA::ModeB<OT>;
+    using Compute = Pipelines::ATA::ModeB<IT, OT>;
     using GuppiWriter = Pipelines::Generic::Accumulator<Modules::Guppi::Writer<OT>, Device::CPU, OT>;
     std::unique_ptr<Runner<GuppiWriter>> guppiWriterRunner;
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<OT>, Device::CPU, OT>;

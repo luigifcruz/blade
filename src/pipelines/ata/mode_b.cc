@@ -4,19 +4,33 @@
 
 namespace Blade::Pipelines::ATA {
 
-template<typename OT>
-ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), blockDut1({1}), blockFrequencyChannelOffset({1}) {
+template<typename IT, typename OT>
+ModeB<IT, OT>::ModeB(const Config& config)
+    : Pipeline(config.accumulateRate, 1),
+      config(config),
+      blockJulianDate({1}),
+      blockDut1({1}),
+      blockFrequencyChannelOffset({1}) {
     BL_DEBUG("Initializing ATA Pipeline Mode B.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    BL_CHECK_THROW(this->input.resize(config.inputDimensions));
+    // accumulation in time
+    const auto accumulationFactor = ArrayDimensions{.A=1, .F=1, .T=config.accumulateRate, .P=1};
+    BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
+    if (config.accumulateRate > 1) {
+        BL_DEBUG("Input Dimensions: {}", config.inputDimensions);
+        BL_DEBUG("Accumulated Input Dimensions: {}", this->input.dims());
+        BL_DEBUG("Accumulated Input Byte Size: {}", this->input.size_bytes());
+    }
 
-    BL_DEBUG("Instantiating input cast from I8 to CF32.");
+    if constexpr (!std::is_same<IT, CF32>::value) {
+        BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
     this->connect(inputCast, {
         .blockSize = config.castBlockSize,
     }, {
         .buf = this->input,
     });
+    }
 
     BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
             config.preBeamformerChannelizerRate);
@@ -25,7 +39,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 
         .blockSize = config.channelizerBlockSize,
     }, {
-        .buf = inputCast->getOutputBuffer(),
+        .buf = this->getChannelizerInput(),
     });
 
     BL_DEBUG("Instatiating polarizer module.")
@@ -118,12 +132,16 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
     }
 }
 
-template<typename OT>
-const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
+template<typename IT, typename OT>
+const Result ModeB<IT, OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
                                    const Vector<Device::CPU, F64>& blockDut1,
                                    const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
-                                   const ArrayTensor<Device::CPU, CI8>& input,
+                                   const ArrayTensor<Device::CPU, IT>& input,
                                    const cudaStream_t& stream) { 
+    if (this->config.accumulateRate > 1) {
+        BL_FATAL("Configured to accumulate, cannot simply `transferIn`.");
+        return Result::ASSERTION_ERROR;
+    }
     // Copy input to static buffers.
     BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
     BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
@@ -139,9 +157,107 @@ const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDa
     return Result::SUCCESS;
 }
 
-template class BLADE_API ModeB<CF32>;
-template class BLADE_API ModeB<CF16>;
-template class BLADE_API ModeB<F32>;
-template class BLADE_API ModeB<F16>;
+template<typename IT, typename OT>
+const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJulianDate,
+                                   const Vector<Device::CPU, F64>& blockDut1,
+                                   const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
+                                   const ArrayTensor<Device::CPU, IT>& data,
+                                   const cudaStream_t& stream) { 
+    // Copy input to static buffers.
+    BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
+    BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+
+    if (config.inputDimensions != data.dims()) {
+        BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
+        return Result::ASSERTION_ERROR;
+    }
+
+    // Accumulate AFTP buffers across the T dimension
+    const auto& inputHeight = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
+    const auto& inputWidth = data.size_bytes() / inputHeight;
+
+    const auto& outputPitch = this->input.size_bytes() / inputHeight;
+    BL_CHECK(
+        Memory::Copy2D(
+            this->input,
+            outputPitch, // dstStride
+            outputPitch * this->getCurrentAccumulatorStep(), // dstOffset
+
+            data,
+            inputWidth,
+            0,
+
+            inputWidth,
+            inputHeight, 
+            stream
+        )
+    );
+
+    // Print dynamic arguments on first run.
+    if (this->getCurrentComputeCount() == 0) {
+        BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
+    }
+
+    return Result::SUCCESS;
+}
+
+template<typename IT, typename OT>
+const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJulianDate,
+                                   const Vector<Device::CPU, F64>& blockDut1,
+                                   const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
+                                   const ArrayTensor<Device::CUDA, IT>& data,
+                                   const cudaStream_t& stream) { 
+    // Copy input to static buffers.
+    BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
+    BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
+    BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+
+    if (config.inputDimensions != data.dims()) {
+        BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
+        return Result::ASSERTION_ERROR;
+    }
+
+    // Accumulate AFTP buffers across the T dimension
+    const auto& inputHeight = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
+    const auto& inputWidth = data.size_bytes() / inputHeight;
+
+    const auto& outputPitch = inputWidth * this->config.accumulateRate;
+
+    BL_CHECK(
+        Memory::Copy2D(
+            this->input,
+            outputPitch, // dstStride
+            inputWidth * this->getCurrentAccumulatorStep(), // dstOffset
+
+            data,
+            inputWidth,
+            0,
+
+            inputWidth,
+            inputHeight, 
+            stream
+        )
+    );
+
+    // Print dynamic arguments on first run.
+    if (this->getCurrentComputeCount() == 0) {
+        BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
+        BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
+    }
+
+    return Result::SUCCESS;
+}
+
+template class BLADE_API ModeB<CI8, CF32>;
+template class BLADE_API ModeB<CI8, CF16>;
+template class BLADE_API ModeB<CI8, F32>;
+template class BLADE_API ModeB<CI8, F16>;
+
+template class BLADE_API ModeB<CF32, CF32>;
+template class BLADE_API ModeB<CF32, CF16>;
+template class BLADE_API ModeB<CF32, F32>;
+template class BLADE_API ModeB<CF32, F16>;
 
 }  // namespace Blade::Pipelines::ATA

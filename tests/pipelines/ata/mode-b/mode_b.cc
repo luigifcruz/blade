@@ -14,7 +14,7 @@ extern "C" {
 using namespace Blade;
 using namespace Blade::Pipelines::ATA;
 
-using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
+using TestPipeline = ModeB<CI8, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
 static Vector<Device::CPU, F64> dummyJulianDate({1});

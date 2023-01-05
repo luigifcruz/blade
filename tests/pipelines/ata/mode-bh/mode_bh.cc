@@ -16,7 +16,7 @@ using namespace Blade;
 using namespace Blade::Pipelines::ATA;
 using namespace Blade::Pipelines::Generic;
 
-using TestPipelineB = ModeB<CF32>;
+using TestPipelineB = ModeB<CI8, CF32>;
 using TestPipelineH = ModeH<CF32, F32>;
 
 static struct {
