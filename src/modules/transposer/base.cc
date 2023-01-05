@@ -21,11 +21,18 @@ Transposer<Dev, ElementType, InputOrder, OutputOrder>::Transposer(const Config& 
     }
     else if (
         InputOrder == ArrayDimensionOrder::AFTP
-        && (OutputOrder == ArrayDimensionOrder::ATPF || OutputOrder == ArrayDimensionOrder::ATPFrev)
+        && OutputOrder == ArrayDimensionOrder::ATPF
     ) {
         const auto dimensions = getInputBuffer().dims();
         this->bypass = dimensions.numberOfFrequencyChannels() == 1;
         this->bypass |= dimensions.numberOfTimeSamples()*dimensions.numberOfPolarizations() == 1;
+    }
+    else if (
+        InputOrder == ArrayDimensionOrder::AFTP
+        && OutputOrder == ArrayDimensionOrder::ATPFrev
+    ) {
+        const auto dimensions = getInputBuffer().dims();
+        this->bypass = dimensions.numberOfFrequencyChannels() == 1;
     }
 
     if (!this->bypass) {
