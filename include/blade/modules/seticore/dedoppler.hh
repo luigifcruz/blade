@@ -22,6 +22,7 @@ class BLADE_API Dedoppler : public Module {
         F64 snrThreshold;
 
         F64 channelBandwidthHz;
+        F64 channelTimespanS;
 
         U64 blockSize = 512;
     };

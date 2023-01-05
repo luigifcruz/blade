@@ -14,11 +14,12 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
             input.buf.dims().numberOfTimeSamples(),
             input.buf.dims().numberOfFrequencyChannels(),
             1e-6 * this->config.channelBandwidthHz,
-            1.0/this->config.channelBandwidthHz,
+            this->config.channelTimespanS,
             config.mitigateDcSpike
           ) {
-    BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
+    BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
+    BL_INFO("Channel Timespan: {} s", this->config.channelTimespanS);
 }
 
 const Result Dedoppler::process(const cudaStream_t& stream) {
