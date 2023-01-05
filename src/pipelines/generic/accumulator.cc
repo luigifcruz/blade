@@ -40,6 +40,41 @@ const Result Accumulator<ModuleType, Dev, InputType>::accumulate(const ArrayTens
         return Result::ASSERTION_ERROR;
     }
 
+    if (this->config.inputIsATPFNotAFTP && this->config.reconstituteBatchedDimensions) {
+        // reconstitute ATPF from batches
+        const auto accumulationDims = this->accumulationBuffer.dims();
+        const U64 outputByteStrideA = this->accumulationBuffer.size_bytes() / accumulationDims.numberOfAspects();
+        const U64 outputByteStrideT = outputByteStrideA / accumulationDims.numberOfTimeSamples();
+        const U64 outputByteStrideP = outputByteStrideT / accumulationDims.numberOfPolarizations();
+        const U64 outputByteStrideF = outputByteStrideP / accumulationDims.numberOfFrequencyChannels();
+
+        const U64 inputByteStrideA = data.size_bytes() / stepInputDims.numberOfAspects();
+        const U64 inputByteStrideT = inputByteStrideA / stepInputDims.numberOfTimeSamples();
+        const U64 inputByteStrideP = inputByteStrideT / stepInputDims.numberOfPolarizations();
+
+        const auto frequencyChannelBatchIndex = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep());
+        const auto outputFrequencyChannelByteOffset = frequencyChannelBatchIndex*stepInputDims.numberOfFrequencyChannels()*outputByteStrideF;
+
+        for(U64 a = 0; a < stepInputDims.numberOfAspects(); a++) {
+            BL_CHECK(
+                Memory::Copy2D(
+                    this->accumulationBuffer,
+                    outputByteStrideP, // dstPitch
+                    a*outputByteStrideA + outputFrequencyChannelByteOffset, // dstOffset
+
+                    data,
+                    inputByteStrideP, // srcPitch
+                    a*inputByteStrideA, // srcOffset
+
+                    inputByteStrideP, // (FrequencyChannels) width
+                    stepInputDims.numberOfTimeSamples()*stepInputDims.numberOfPolarizations(), // height
+                    stream
+                )
+            );
+        }
+        return Result::SUCCESS;
+    }
+
     if (this->config.transposeATPF) {
         // from A F T P
         // to   A T P F (F is reversed)

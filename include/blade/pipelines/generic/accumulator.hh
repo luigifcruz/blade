@@ -18,6 +18,7 @@ class BLADE_API Accumulator : public Pipeline {
         ModuleType::Config moduleConfig;
 
         ArrayDimensions inputDimensions; // TODO break away from implicit Array restriction
+        BOOL inputIsATPFNotAFTP = false; // TODO put this in the template
         BOOL transposeATPF = false;
         BOOL reconstituteBatchedDimensions = false;
         U64 accumulateRate = 1;
