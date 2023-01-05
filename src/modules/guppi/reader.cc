@@ -103,6 +103,8 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
+    gr_iterate.iterate_time_first_not_frequency_first = this->config.stepTimeSamplesFirstNotFrequencyChannels;
+
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
@@ -115,17 +117,18 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         this->config.stepNumberOfTimeSamples = this->getDatashape()->n_time;
     }
 
+    // Print configuration information.
+    BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
+    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBufferDims());
+    BL_INFO("Stepping {} First", gr_iterate.iterate_time_first_not_frequency_first ? "Time Samples" : "Frequency Channels");
+    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
+    BL_INFO("Input File Path: {}", config.filepath);
+    
     // Allocate output buffers.
     BL_CHECK_THROW(output.stepDut1.resize({1}));
     BL_CHECK_THROW(output.stepJulianDate.resize({1}));
     BL_CHECK_THROW(output.stepFrequencyChannelOffset.resize({1}));
     BL_CHECK_THROW(output.stepBuffer.resize(getStepOutputBufferDims()));
-
-    // Print configuration information.
-    BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
-    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBuffer().dims());
-    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
-    BL_INFO("Input File Path: {}", config.filepath);
 }
 
 template<typename OT>
@@ -219,7 +222,6 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     // Run library internal read method.
     const I64 bytes_read =
         guppiraw_iterate_read(&this->gr_iterate,
-                            //   this->config.iterate_time_first_not_frequency,
                               this->getStepOutputBufferDims().numberOfTimeSamples(),
                               this->getStepOutputBufferDims().numberOfFrequencyChannels(),
                               this->getStepOutputBufferDims().numberOfAspects(),

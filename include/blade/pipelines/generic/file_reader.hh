@@ -20,6 +20,7 @@ class BLADE_API FileReader : public Pipeline {
 
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
+        BOOL stepTimeSamplesFirstNotFrequencyChannels = false;
     };
 
     explicit FileReader(const Config& config);
@@ -145,8 +146,7 @@ class BLADE_API FileReader : public Pipeline {
     using GuppiReader = typename Modules::Guppi::Reader<OT>;
     std::shared_ptr<Modules::Guppi::Reader<OT>> guppi;
 
-    using Bfr5Reader = typename Modules::Bfr5::Reader; 
-    std::shared_ptr<Bfr5Reader> bfr5;
+    std::shared_ptr<Modules::Bfr5::Reader> bfr5;
 };
 
 }  // namespace Blade::Pipelines::Generic

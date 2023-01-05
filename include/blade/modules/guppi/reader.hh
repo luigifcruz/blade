@@ -24,7 +24,7 @@ class BLADE_API Reader : public Module {
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
 
-        BOOL iterate_time_first_not_frequency = true;
+        BOOL stepTimeSamplesFirstNotFrequencyChannels = false;
         U64 blockSize = 512;
     };
 
