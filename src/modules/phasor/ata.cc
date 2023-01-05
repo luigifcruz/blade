@@ -58,7 +58,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     const auto fineStepDims = this->getConfigCoefficientsDims();
     const auto coarseStepDims = fineStepDims / ArrayDimensions({
         .A = 1,
-        .F = this->config.preBeamformerChannelizerRate,
+        .F = this->config.antennaCoefficientChannelRate,
         .T = 1,
         .P = 1,
     });
@@ -67,9 +67,9 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     // it infers the total number of observation coarse frequency-channels
     const auto coefficientNumberOfFrequencyChannels = config.antennaCoefficients.size() / (config.numberOfAntennas * config.numberOfPolarizations);
     
-    if (config.antennaCoefficients.size() % coarseStepDims.size() != 0) {
-        BL_FATAL("Number of antenna coefficients ({}) is not the expected size ({}), nor an integer multiple (on the frequency axis).", 
-                config.antennaCoefficients.size(), coarseStepDims);
+    if (coefficientNumberOfFrequencyChannels % coarseStepDims.numberOfFrequencyChannels() != 0) {
+        BL_FATAL("Number of antenna coefficient channels is not the expected size ({}), nor an integer multiple.", 
+                coefficientNumberOfFrequencyChannels, coarseStepDims.numberOfFrequencyChannels());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -200,9 +200,9 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
                 const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
-                const U64 frequencyCoeffOffset = ((f + this->input.blockFrequencyChannelOffset[0]) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
+                const U64 frequencyCoeffOffset = ((f + this->input.blockFrequencyChannelOffset[0]) / this->config.antennaCoefficientChannelRate) * this->config.numberOfPolarizations;
 
-                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + this->input.blockFrequencyChannelOffset[0]) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
+                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + this->input.blockFrequencyChannelOffset[0]) * this->config.channelBandwidthHz / this->config.antennaCoefficientChannelRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 

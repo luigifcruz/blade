@@ -28,7 +28,7 @@ class BLADE_API Generic : public Module {
         std::vector<CF64> antennaCoefficients;
         std::vector<RA_DEC> beamCoordinates;
 
-        U64 preBeamformerChannelizerRate = 1;
+        U64 antennaCoefficientChannelRate = 1;
 
         U64 blockSize = 512;
     };

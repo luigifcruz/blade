@@ -25,11 +25,11 @@ ModeB<IT, OT>::ModeB(const Config& config)
 
     if constexpr (!std::is_same<IT, CF32>::value) {
         BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
-    this->connect(inputCast, {
-        .blockSize = config.castBlockSize,
-    }, {
-        .buf = this->input,
-    });
+        this->connect(inputCast, {
+            .blockSize = config.castBlockSize,
+        }, {
+            .buf = this->input,
+        });
     }
 
     BL_DEBUG("Instantiating pre-beamformer channelizer with rate {}.",
@@ -69,7 +69,7 @@ ModeB<IT, OT>::ModeB(const Config& config)
         .antennaCoefficients = config.phasorAntennaCoefficients,
         .beamCoordinates = config.phasorBeamCoordinates,
 
-        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
+        .antennaCoefficientChannelRate = this->config.phasorAntennaCoefficientChannelRate,
 
         .blockSize = config.phasorBlockSize,
     }, {

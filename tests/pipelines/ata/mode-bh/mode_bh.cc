@@ -116,6 +116,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
+        .phasorAntennaCoefficientChannelRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
     });
 
     State.RunnersInstances.H = Runner<TestPipelineH>::New(numberOfWorkers, {
