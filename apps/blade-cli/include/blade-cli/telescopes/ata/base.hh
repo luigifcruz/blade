@@ -7,7 +7,7 @@
 #include "blade-cli/telescopes/ata/mode_b.hh"
 #endif
 
-#if defined(BLADE_PIPELINE_ATA_MODE_BS)
+#if 0
 #include "blade-cli/telescopes/ata/mode_bs.hh"
 #endif
 

@@ -73,4 +73,27 @@ sum_lst += {'Mode H': all_deps_found}
 
 cfg_lst.set('BLADE_PIPELINE_GENERIC_MODE_H', all_deps_found)
 
+#
+#  Mode S
+#
+
+deps = [
+    'BLADE_MODULE_SETICORE'
+]
+
+all_deps_found = true
+foreach x_dep : deps
+    all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
+endforeach
+
+if all_deps_found
+    src_lst += files([
+        'mode_s.cc',
+    ])
+endif
+
+sum_lst += {'Mode S': all_deps_found}
+
+cfg_lst.set('BLADE_PIPELINE_GENERIC_MODE_S', all_deps_found)
+
 summary(sum_lst, section: 'Generic Pipelines', bool_yn: true)

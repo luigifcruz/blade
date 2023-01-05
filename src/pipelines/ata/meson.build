@@ -23,21 +23,8 @@ if all_deps_found
     ])
 endif
 
-#
-#  Mode BS
-#
-
-dedopplersearch_deps_found = all_deps_found and cfg_lst.get('BLADE_MODULE_SETICORE', false)
-if dedopplersearch_deps_found
-src_lst += files([
-    'mode_bs.cc',
-])
-endif
-
 sum_lst += {'Mode B': all_deps_found}
-sum_lst += {'Mode BS': dedopplersearch_deps_found}
 
 cfg_lst.set('BLADE_PIPELINE_ATA_MODE_B', all_deps_found)
-cfg_lst.set('BLADE_PIPELINE_ATA_MODE_BS', all_deps_found and dedopplersearch_deps_found)
 
 summary(sum_lst, section: 'ATA Pipelines', bool_yn: true)
