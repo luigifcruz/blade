@@ -13,6 +13,7 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
         .filepath = config.inputGuppiFile,
         .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples, 
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+        .stepTimeSamplesFirstNotFrequencyChannels = config.stepTimeSamplesFirstNotFrequencyChannels,
     }, {});
 
     BL_DEBUG("Instantiating BFR5 file reader.");
