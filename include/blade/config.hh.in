@@ -24,7 +24,7 @@
 
 // ATA Pipelines
 #mesondefine BLADE_PIPELINE_ATA_MODE_B
-#mesondefine BLADE_PIPELINE_ATA_MODE_BS
+
 
 // Generic Pipelines
 #mesondefine BLADE_PIPELINE_GENERIC_FILE_READER

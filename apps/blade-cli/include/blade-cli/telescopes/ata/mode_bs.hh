@@ -6,9 +6,9 @@
 #include "blade/plan.hh"
 #include "blade/runner.hh"
 #include "blade/utils/indicators.hh"
-#include "blade/pipelines/ata/mode_bs.hh"
-#include "blade/pipelines/generic/file_reader.hh"
-#include "blade/pipelines/generic/accumulator.hh"
+#include "blade/pipelines/generic/mode_h.hh"
+#include "blade/pipelines/ata/mode_b.hh"
+#include "blade/pipelines/generic/mode_s.hh"
 
 using namespace indicators;
 
@@ -18,16 +18,20 @@ template<typename IT>
 inline const Result ModeBS(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
-    using Compute = Pipelines::ATA::ModeBS;
+    using Channelize = Pipelines::Generic::ModeH<IT, CF32>;
+    using Beamform = Pipelines::ATA::ModeB<CF32, F32>;
+    using Search = Pipelines::Generic::ModeS;
 
     // Instantiate reader pipeline and runner.
+    // lock timesteps to channelizerRate, as channelization is fastest when there is only 1 output timestep
+    //  (the config.stepNumberOfTimeSamples is accumulated for the Search input)
 
     typename Reader::Config readerConfig = {
         .inputGuppiFile = config.inputGuppiFile,
         .inputBfr5File = config.inputBfr5File,
-        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples *
-                                   config.preBeamformerChannelizerRate,
+        .stepNumberOfTimeSamples = config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+        .stepTimeSamplesFirstNotFrequencyChannels = true,
     };
 
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
@@ -35,14 +39,33 @@ inline const Result ModeBS(const Config& config) {
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
 
-    // Instantiate compute pipeline and runner.
+    // Instantiate channelize pipeline and runner.
 
-    // TODO: less static hardware limit `1024`
-    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 1024 ? 1024 : config.stepNumberOfTimeSamples;
-
-    typename Compute::Config computeConfig = {
+    typename Channelize::Config channelizeConfig = {
         .inputDimensions = reader.getStepOutputDims(),
-        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
+
+        .accumulateRate = 1, // will fully channelize each readerStepOutput (output.dims().T == 1)
+
+        .polarizerConvertToCircular = false,
+
+        .detectorIntegrationSize = 1,
+        .detectorNumberOfOutputPolarizations = 1,
+
+        .castBlockSize = 512,
+        .polarizerBlockSize = 512,
+        .channelizerBlockSize = 512,
+        .detectorBlockSize = 512,
+    };
+
+    auto channelizeRunner = Runner<Channelize>::New(config.numberOfWorkers, channelizeConfig, false);
+
+    // Instantiate beamform pipeline and runner.
+
+    typename Beamform::Config beamformConfig = {
+        .inputDimensions = channelizeRunner->getWorker().getOutputBuffer().dims(),
+        .accumulateRate = config.stepNumberOfTimeSamples,
+
+        .preBeamformerChannelizerRate = 1,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
@@ -52,34 +75,46 @@ inline const Result ModeBS(const Config& config) {
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getPhaseCenterCoordinates(),
         .phasorAntennaPositions = reader.getAntennaPositions(),
-        .phasorAntennaCoefficients = reader.getAntennaCoefficients(readerTotalOutputDims.numberOfFrequencyChannels(), reader.getChannelStartIndex()),
+        .phasorAntennaCoefficients = reader.getAntennaCoefficients(
+            readerTotalOutputDims.numberOfFrequencyChannels(),
+            reader.getChannelStartIndex()
+        ),
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
+        .phasorAntennaCoefficientChannelRate = config.preBeamformerChannelizerRate,
 
         .beamformerIncoherentBeam = false,
 
+        .detectorEnable = true,
         .detectorIntegrationSize = 1,
         .detectorNumberOfOutputPolarizations = 1,
-
-        .searchMitigateDcSpike = true,
-        .searchMinimumDriftrate = 0.0,
-        .searchMaximumDriftrate = 10.0,
-        .searchSnrThreshold = 10.0,
-        // .searchBandwidthHz = reader.getBandwidth(),
-        // .searchJulianDateStart = reader.getJulianDateOfLastReadBlock(),
-        // .searchTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfTimeSamples()/config.preBeamformerChannelizerRate,
-        // .searchTotalNumberOfFrequencyChannels = readerTotalOutputDims.numberOfFrequencyChannels()*config.preBeamformerChannelizerRate,
-        // .searchTotalChannelizerRate = config.preBeamformerChannelizerRate,
+        .detectorTransposedATPFrevOutput = true, // unnecessary AFTP == ATPF where T=P=1 
 
         // TODO: Review this calculation.
-        .castBlockSize = 32,
-        .channelizerBlockSize = timeRelatedBlockSize,
-        .phasorBlockSize = 32,
-        .beamformerBlockSize = timeRelatedBlockSize,
-        .detectorBlockSize = 32,
-        .searchBlockSize = 32,
+        .castBlockSize = 512,
+        .channelizerBlockSize = 512,
+        .phasorBlockSize = 512,
+        .beamformerBlockSize = config.stepNumberOfTimeSamples,
+        .detectorBlockSize = 512,
     };
 
-    auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
+    auto beamformRunner = Runner<Beamform>::New(config.numberOfWorkers, beamformConfig, false);
+
+    // Instantiate search pipeline and runner.
+
+    typename Search::Config searchConfig = {
+        .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
+        .accumulateRate = 1,
+
+        .searchMitigateDcSpike = true,
+        .searchMinimumDriftRate = 0.0,
+        .searchMaximumDriftRate = 10.0,
+        .searchSnrThreshold = 10.0,
+
+        .searchChannelBandwidthHz = reader.getChannelBandwidth(),
+        .searchChannelTimespanS = 1.0 / reader.getChannelBandwidth(),
+    };
+
+    auto searchRunner = Runner<Search>::New(config.numberOfWorkers, searchConfig, false);
 
     indicators::ProgressBar bar{
         option::BarWidth{100},
@@ -97,29 +132,43 @@ inline const Result ModeBS(const Config& config) {
 
     // Run main processing loop.
 
+    std::unordered_map<U64, Vector<Device::CPU, F64>> stepJulianDateMap;
+    std::unordered_map<U64, Vector<Device::CPU, F64>> stepDut1Map;
+    std::unordered_map<U64, Vector<Device::CPU, U64>> stepFrequencyChannelOffsetMap;
+
+    stepJulianDateMap.reserve(config.numberOfWorkers);
+    stepDut1Map.reserve(config.numberOfWorkers);
+    stepFrequencyChannelOffsetMap.reserve(config.numberOfWorkers);
+
     U64 stepCount = 0;
+    U64 stepIncrement = channelizeConfig.accumulateRate*beamformConfig.accumulateRate*searchConfig.accumulateRate;
     U64 callbackStep = 0;
     U64 workerId = 0;
 
     while (Plan::Loop()) {
         readerRunner->enqueue([&](auto& worker){
             // Check if next runner has free slot.
-            Plan::Available(computeRunner);
+            Plan::Available(channelizeRunner);
 
             // Read block of data.
             Plan::Compute(worker);
 
             // Transfer output data from this pipeline to the next runner.
-            Plan::TransferOut(computeRunner, readerRunner,
-                              worker.getStepOutputJulianDate(),
-                              worker.getStepOutputDut1(),
-                              worker.getStepOutputFrequencyChannelOffset(),
-                              worker.getStepOutputBuffer());
+            Plan::Accumulate(channelizeRunner, readerRunner,
+                            worker.getStepOutputBuffer());
+            stepCount += 1;
 
-            return stepCount++;
+            stepJulianDateMap.insert({stepCount, worker.getStepOutputJulianDate()});
+            stepDut1Map.insert({stepCount, worker.getStepOutputDut1()});
+            stepFrequencyChannelOffsetMap.insert({stepCount, worker.getStepOutputFrequencyChannelOffset()});
+
+            return stepCount;
         });
 
-        computeRunner->enqueue([&](auto& worker) {
+        channelizeRunner->enqueue([&](auto& worker) {
+            // Check if next runner has free slot.
+            Plan::Available(beamformRunner);
+
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(readerRunner, &callbackStep);
 
@@ -130,24 +179,66 @@ inline const Result ModeBS(const Config& config) {
             // Compute input data.
             Plan::Compute(worker);
 
+            // Concatenate output data inside search pipeline.
+            Plan::Accumulate(beamformRunner, channelizeRunner,
+                             stepJulianDateMap[callbackStep],
+                             stepDut1Map[callbackStep],
+                             stepFrequencyChannelOffsetMap[callbackStep],
+                             worker.getOutputBuffer());
+
             return callbackStep;
         });
 
-        // Try to dequeue job from compute runner.
-        if (computeRunner->dequeue(&callbackStep, &workerId)) {
-            auto& computeWorker = computeRunner->getWorker(workerId);
-            const std::vector<DedopplerHit>& hits = computeWorker.getOutputHits();
+        beamformRunner->enqueue([&](auto& worker) {
+            // Check if next runner has free slot.
+            Plan::Available(searchRunner);
+
+            // Try dequeue job from last runner. If unlucky, return.
+            Plan::Dequeue(channelizeRunner, &callbackStep);
+
+            // Compute input data.
+            Plan::Compute(worker);
+
+            // Concatenate output data inside search pipeline.
+            Plan::Accumulate(searchRunner, beamformRunner,
+                             worker.getOutputBuffer());
+
+            return callbackStep;
+        });
+
+        searchRunner->enqueue([&](auto& worker){
+            // Try dequeue job from last runner. If unlucky, return.
+            Plan::Dequeue(beamformRunner, &callbackStep);
+
+            // If accumulation complete, write data to disk.
+            Plan::Compute(worker);
+
+            return callbackStep;
+        });
+
+        // Try to dequeue job from the final runner.
+        if (searchRunner->dequeue(&callbackStep, &workerId)) {
+            
+            // TODO reimplement a link between the beamform-input/output/frequencyChannelOffset
+            //  and the dedoppler output
+
+            auto& searchWorker = searchRunner->getWorker(workerId);
+            const std::vector<DedopplerHit>& hits = searchWorker.getOutputHits();
 
             if (hits.size() > 0) {
-                BL_INFO("{} Hits:\n\tChannel Offset: {}", hits.size(), computeWorker.getFrequencyChannelOffset());
-                BL_INFO("\tJulian Date: {}", computeWorker.getJulianDate());
+                BL_INFO("{} Hits:\n\tChannel Offset: {}", hits.size(), stepFrequencyChannelOffsetMap[callbackStep][0]);
+                BL_INFO("\tJulian Date: {}", stepJulianDateMap[callbackStep][0]);
 
                 for (DedopplerHit hit : hits) {
                     BL_INFO("\t{}", hit.toString());
                 }
             }
 
-            if ((callbackStep + 1) == reader.getNumberOfSteps()) {
+            stepJulianDateMap.erase(callbackStep);
+            stepDut1Map.erase(callbackStep);
+            stepFrequencyChannelOffsetMap.erase(callbackStep);
+
+            if ((callbackStep + stepIncrement) == reader.getNumberOfSteps()) {
                 break;
             }
         }
@@ -156,7 +247,8 @@ inline const Result ModeBS(const Config& config) {
     // Gracefully destroy runners.
 
     readerRunner.reset();
-    computeRunner.reset();
+    beamformRunner.reset();
+    searchRunner.reset();
 
     return Result::SUCCESS;
 }
