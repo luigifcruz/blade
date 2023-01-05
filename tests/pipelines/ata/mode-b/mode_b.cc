@@ -97,7 +97,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
-        .phasorAntennaCoefficientChannelRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
+        .phasorAntennaCoefficientChannelRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
         .beamformerIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
