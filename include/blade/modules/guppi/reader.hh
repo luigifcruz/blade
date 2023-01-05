@@ -23,7 +23,6 @@ class BLADE_API Reader : public Module {
         std::string filepath;
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
-        U64 stepNumberOfAspects;
 
         BOOL iterate_time_first_not_frequency = true;
         U64 blockSize = 512;
@@ -80,7 +79,7 @@ class BLADE_API Reader : public Module {
 
     const ArrayDimensions getStepOutputBufferDims() const {
         return {
-            .A = this->config.stepNumberOfAspects,
+            .A = this->getDatashape()->n_aspect,
             .F = this->config.stepNumberOfFrequencyChannels,
             .T = this->config.stepNumberOfTimeSamples,
             .P = this->getDatashape()->n_pol,

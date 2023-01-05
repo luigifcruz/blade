@@ -107,10 +107,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
 
-    if (this->config.stepNumberOfAspects == 0) {
-        this->config.stepNumberOfAspects = getTotalOutputBufferDims().numberOfAspects();
-    }
-
     if (this->config.stepNumberOfFrequencyChannels == 0) {
         this->config.stepNumberOfFrequencyChannels = getTotalOutputBufferDims().numberOfFrequencyChannels();
     }
