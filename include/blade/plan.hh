@@ -37,9 +37,9 @@ class BLADE_API Plan {
         }
     } 
 
-    static void Dequeue(auto& runner, U64* id) {
+    static void Dequeue(auto& runner, U64* id, U64* workerId = nullptr) {
         // Dequeue job from runner.
-        if (!runner->dequeue(id)) {
+        if (!runner->dequeue(id, workerId)) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_DEQUEUE);
         }
     }
