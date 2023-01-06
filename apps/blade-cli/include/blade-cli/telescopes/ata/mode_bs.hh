@@ -9,6 +9,8 @@
 #include "blade/pipelines/generic/mode_h.hh"
 #include "blade/pipelines/ata/mode_b.hh"
 #include "blade/pipelines/generic/mode_s.hh"
+#include "blade/pipelines/generic/file_reader.hh"
+#include "blade/pipelines/generic/accumulator.hh"
 
 using namespace indicators;
 
@@ -21,6 +23,8 @@ inline const Result ModeBS(const Config& config) {
     using Channelize = Pipelines::Generic::ModeH<IT, CF32>;
     using Beamform = Pipelines::ATA::ModeB<CF32, F32>;
     using Search = Pipelines::Generic::ModeS;
+    using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<F32>, Device::CPU, F32>;
+    std::unique_ptr<Runner<FilterbankWriter>> filterbankWriterRunner;
 
     // Instantiate reader pipeline and runner.
     // lock timesteps to channelizerRate, as channelization is fastest when there is only 1 output timestep
@@ -44,7 +48,8 @@ inline const Result ModeBS(const Config& config) {
     typename Channelize::Config channelizeConfig = {
         .inputDimensions = reader.getStepOutputDims(),
 
-        .accumulateRate = 1, // will fully channelize each readerStepOutput (output.dims().T == 1)
+        // will fully channelize each readerStepOutput (output.dims().T == 1)
+        .accumulateRate = 1,
 
         .polarizerConvertToCircular = false,
 
@@ -87,7 +92,7 @@ inline const Result ModeBS(const Config& config) {
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
         .detectorNumberOfOutputPolarizations = 1,
-        .detectorTransposedATPFrevOutput = true, // unnecessary AFTP == ATPF where T=P=1 
+        .detectorTransposedATPFrevOutput = true,
 
         // TODO: Review this calculation.
         .castBlockSize = 512,
@@ -116,6 +121,50 @@ inline const Result ModeBS(const Config& config) {
 
     auto searchRunner = Runner<Search>::New(config.numberOfWorkers, searchConfig, false);
 
+    // Instantiate writer pipeline and runner.
+    
+    typename FilterbankWriter::Config writerConfig = {
+        .moduleConfig = {
+            .filepath = config.outputFile,
+            
+            .machineId = 0,
+            .telescopeName = reader.getTelescopeName(),
+            .baryCentric = 1,
+            .pulsarCentric = 1,
+            .sourceCoordinate = reader.getPhaseCenterCoordinates(),
+            .azimuthStart = reader.getAzimuthAngle(),
+            .zenithStart = reader.getZenithAngle(),
+            .centerFrequencyHz = reader.getCenterFrequency(),
+            .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are reversed
+            .julianDateStart = reader.getJulianDateOfLastReadBlock(),
+            .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
+            .sourceName = reader.getSourceName(),
+            .sourceDataFilename = config.inputGuppiFile,
+
+            .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
+        },
+        .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
+        .inputIsATPFNotAFTP = true, // ModeB.detectorTransposedATPFOutput is enabled
+        .transposeATPF = false, // ModeB.detectorTransposedATPFOutput is enabled
+        .reconstituteBatchedDimensions = true,
+        .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
+    };
+
+    const auto readerTotalTimeSteps = readerTotalOutputDims.numberOfTimeSamples() / reader.getStepOutputDims().numberOfTimeSamples();
+    const auto filterbankOutputEnabled = readerTotalTimeSteps == config.stepNumberOfTimeSamples;
+    if (filterbankOutputEnabled) {
+        BL_INFO(
+            "The beamformer steps all time-samples at a time (-T = {} == {}), so the filterbank output is enabled.",
+            config.stepNumberOfTimeSamples, readerTotalTimeSteps
+        );
+        filterbankWriterRunner = Runner<FilterbankWriter>::New(1, writerConfig, false);
+    } else {
+        BL_INFO(
+            "The beamformer does not step all time-samples at a time (-T = {} != {}), so the filterbank output will be disabled.",
+            config.stepNumberOfTimeSamples, readerTotalTimeSteps
+        );
+    }
+
     indicators::ProgressBar bar{
         option::BarWidth{100},
         option::Start{" ["},
@@ -123,7 +172,7 @@ inline const Result ModeBS(const Config& config) {
         option::Lead{"█"},
         option::Remainder{"-"},
         option::End{"]"},
-        option::PrefixText{"Processing ATA::ModeB"},
+        option::PrefixText{"Processing ATA::ModeBS"},
         option::ForegroundColor{Color::cyan},
         option::ShowElapsedTime{true},
         option::ShowRemainingTime{true},
@@ -141,14 +190,20 @@ inline const Result ModeBS(const Config& config) {
     stepFrequencyChannelOffsetMap.reserve(config.numberOfWorkers);
 
     U64 stepCount = 0;
-    U64 stepIncrement = channelizeConfig.accumulateRate*beamformConfig.accumulateRate*searchConfig.accumulateRate;
     U64 callbackStep = 0;
     U64 workerId = 0;
+
+    BOOL writeComplete = !filterbankOutputEnabled;
+    BOOL searchComplete = false;
 
     while (Plan::Loop()) {
         readerRunner->enqueue([&](auto& worker){
             // Check if next runner has free slot.
             Plan::Available(channelizeRunner);
+
+            if (stepCount == reader.getNumberOfSteps()) {
+                BL_CHECK_THROW(Result::EXHAUSTED);
+            }
 
             // Read block of data.
             Plan::Compute(worker);
@@ -156,13 +211,8 @@ inline const Result ModeBS(const Config& config) {
             // Transfer output data from this pipeline to the next runner.
             Plan::Accumulate(channelizeRunner, readerRunner,
                             worker.getStepOutputBuffer());
-            stepCount += 1;
 
-            stepJulianDateMap.insert({stepCount, worker.getStepOutputJulianDate()});
-            stepDut1Map.insert({stepCount, worker.getStepOutputDut1()});
-            stepFrequencyChannelOffsetMap.insert({stepCount, worker.getStepOutputFrequencyChannelOffset()});
-
-            return stepCount;
+            return ++stepCount;
         });
 
         channelizeRunner->enqueue([&](auto& worker) {
@@ -170,20 +220,21 @@ inline const Result ModeBS(const Config& config) {
             Plan::Available(beamformRunner);
 
             // Try dequeue job from last runner. If unlucky, return.
-            Plan::Dequeue(readerRunner, &callbackStep);
+            Plan::Dequeue(readerRunner, &callbackStep, &workerId);
 
             // Increment progress bar.
-            bar.set_progress(static_cast<float>(stepCount) /
+            bar.set_progress(static_cast<float>(callbackStep) /
                     reader.getNumberOfSteps() * 100);
 
             // Compute input data.
             Plan::Compute(worker);
 
-            // Concatenate output data inside search pipeline.
+            auto& readerWorker = readerRunner->getWorker(workerId);
+            // Concatenate output data inside beamform pipeline.
             Plan::Accumulate(beamformRunner, channelizeRunner,
-                             stepJulianDateMap[callbackStep],
-                             stepDut1Map[callbackStep],
-                             stepFrequencyChannelOffsetMap[callbackStep],
+                             readerWorker.getStepOutputJulianDate(),
+                             readerWorker.getStepOutputDut1(),
+                             readerWorker.getStepOutputFrequencyChannelOffset(),
                              worker.getOutputBuffer());
 
             return callbackStep;
@@ -202,15 +253,35 @@ inline const Result ModeBS(const Config& config) {
             // Concatenate output data inside search pipeline.
             Plan::Accumulate(searchRunner, beamformRunner,
                              worker.getOutputBuffer());
+            if (filterbankOutputEnabled) {
+                Plan::Accumulate(filterbankWriterRunner, beamformRunner,
+                                worker.getOutputBuffer());
+            }
 
             return callbackStep;
         });
 
         searchRunner->enqueue([&](auto& worker){
             // Try dequeue job from last runner. If unlucky, return.
-            Plan::Dequeue(beamformRunner, &callbackStep);
+            Plan::Dequeue(beamformRunner, &callbackStep, &workerId);
+            
+            auto& beamformWorker = beamformRunner->getWorker(workerId);
+            
+            stepJulianDateMap.insert({callbackStep, beamformWorker.getBlockJulianDate()});
+            stepDut1Map.insert({callbackStep, beamformWorker.getBlockDut1()});
+            stepFrequencyChannelOffsetMap.insert({callbackStep, beamformWorker.getBlockFrequencyChannelOffset()});
 
-            // If accumulation complete, write data to disk.
+            if (filterbankOutputEnabled) {
+                // write out the input to the searchRunner
+                filterbankWriterRunner->enqueue([&](auto& worker){
+                    // If accumulation complete, write data to disk.
+                    Plan::Compute(worker);
+
+                    return callbackStep;
+                });
+            }
+
+            // If accumulation complete, dedoppler-search data.
             Plan::Compute(worker);
 
             return callbackStep;
@@ -218,13 +289,10 @@ inline const Result ModeBS(const Config& config) {
 
         // Try to dequeue job from the final runner.
         if (searchRunner->dequeue(&callbackStep, &workerId)) {
-            
-            // TODO reimplement a link between the beamform-input/output/frequencyChannelOffset
-            //  and the dedoppler output
-
             auto& searchWorker = searchRunner->getWorker(workerId);
             const std::vector<DedopplerHit>& hits = searchWorker.getOutputHits();
 
+            BL_INFO("{}: Search found {} hits", callbackStep, hits.size());
             if (hits.size() > 0) {
                 BL_INFO("{} Hits:\n\tChannel Offset: {}", hits.size(), stepFrequencyChannelOffsetMap[callbackStep][0]);
                 BL_INFO("\tJulian Date: {}", stepJulianDateMap[callbackStep][0]);
@@ -234,21 +302,37 @@ inline const Result ModeBS(const Config& config) {
                 }
             }
 
-            stepJulianDateMap.erase(callbackStep);
-            stepDut1Map.erase(callbackStep);
-            stepFrequencyChannelOffsetMap.erase(callbackStep);
-
-            if ((callbackStep + stepIncrement) == reader.getNumberOfSteps()) {
-                break;
+            if (callbackStep == reader.getNumberOfSteps()) {
+                searchComplete = true;
             }
+        }
+
+        if (filterbankOutputEnabled) {
+            // Try to dequeue job from the writer runner.
+            if (filterbankWriterRunner->dequeue(&callbackStep, &workerId)) {
+                BL_INFO("{}: Filterbank written, containing the input to the dedoppler search.", callbackStep);
+                stepJulianDateMap.erase(callbackStep);
+                stepDut1Map.erase(callbackStep);
+                stepFrequencyChannelOffsetMap.erase(callbackStep);
+
+                if (callbackStep == reader.getNumberOfSteps()) {
+                    writeComplete = true;
+                }
+            }
+        }
+
+        if (writeComplete && searchComplete) {
+            break;
         }
     }
 
     // Gracefully destroy runners.
 
     readerRunner.reset();
+    channelizeRunner.reset();
     beamformRunner.reset();
     searchRunner.reset();
+    filterbankWriterRunner.reset();
 
     return Result::SUCCESS;
 }
