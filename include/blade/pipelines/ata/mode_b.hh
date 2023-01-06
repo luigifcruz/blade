@@ -16,8 +16,6 @@
 
 namespace Blade::Pipelines::ATA {
 
-// TODO: Add input types.
-
 template<typename IT, typename OT>
 class BLADE_API ModeB : public Pipeline {
  public:
@@ -80,6 +78,18 @@ class BLADE_API ModeB : public Pipeline {
 
     constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
         return input;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getBlockJulianDate() const {
+        return blockJulianDate;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getBlockDut1() const {
+        return blockDut1;
+    }
+
+    constexpr const Vector<Device::CPU, U64>& getBlockFrequencyChannelOffset() const {
+        return blockFrequencyChannelOffset;
     }
 
     // Output 
