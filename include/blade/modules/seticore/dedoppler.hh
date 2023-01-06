@@ -23,6 +23,8 @@ class BLADE_API Dedoppler : public Module {
 
         F64 channelBandwidthHz;
         F64 channelTimespanS;
+        U64 coarseChannelRate;
+        BOOL lastBeamIsIncoherent = false;
 
         U64 blockSize = 512;
     };
@@ -32,6 +34,8 @@ class BLADE_API Dedoppler : public Module {
     }
 
     // Input
+
+    void setFrequencyOfFirstInputChannel(F64 hz);
 
     struct Input {
         const ArrayTensor<Device::CUDA, F32>& buf;
@@ -60,6 +64,7 @@ class BLADE_API Dedoppler : public Module {
     Output output;
 
     Dedopplerer dedopplerer;
+    FilterbankMetadata metadata;
 };
 
 } // namespace Blade::Modules::Seticore

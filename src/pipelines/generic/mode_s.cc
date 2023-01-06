@@ -21,9 +21,15 @@ ModeS::ModeS(const Config& config)
         .snrThreshold = config.searchSnrThreshold,
         .channelBandwidthHz = config.searchChannelBandwidthHz,
         .channelTimespanS = config.searchChannelTimespanS,
+        .coarseChannelRate = config.inputCoarseChannelRate,
+        .lastBeamIsIncoherent = config.inputLastBeamIsIncoherent,
     }, {
         .buf = this->input,
     });
+}
+
+void ModeS::setFrequencyOfFirstInputChannel(F64 hz) {
+    dedoppler->setFrequencyOfFirstInputChannel(hz);
 }
 
 const Result ModeS::accumulate(const ArrayTensor<Device::CUDA, F32>& data,

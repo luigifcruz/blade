@@ -110,6 +110,9 @@ inline const Result ModeBS(const Config& config) {
         .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
         .accumulateRate = 1,
 
+        .inputCoarseChannelRate = config.preBeamformerChannelizerRate,
+        .inputLastBeamIsIncoherent = false,
+
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,
         .searchMaximumDriftRate = 10.0,
@@ -280,6 +283,14 @@ inline const Result ModeBS(const Config& config) {
                     return callbackStep;
                 });
             }
+
+            worker.setFrequencyOfFirstInputChannel(
+                reader.getCenterFrequency()
+                + (
+                    beamformWorker.getBlockFrequencyChannelOffset()[0]
+                    - readerTotalOutputDims.numberOfFrequencyChannels() / 2
+                ) * reader.getChannelBandwidth()
+            );
 
             // If accumulation complete, dedoppler-search data.
             Plan::Compute(worker);

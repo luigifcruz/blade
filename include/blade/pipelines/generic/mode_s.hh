@@ -18,6 +18,9 @@ class BLADE_API ModeS : public Pipeline {
         ArrayDimensions inputDimensions;
         U64 accumulateRate;
 
+        U64 inputCoarseChannelRate = 1;
+        BOOL inputLastBeamIsIncoherent = false;
+
         BOOL searchMitigateDcSpike;
         F64 searchMinimumDriftRate = 0.0;
         F64 searchMaximumDriftRate;
@@ -30,6 +33,8 @@ class BLADE_API ModeS : public Pipeline {
     };
 
     // Input
+
+    void setFrequencyOfFirstInputChannel(F64 hz);
 
     const Result accumulate(const ArrayTensor<Device::CUDA, F32>& data,
                             const cudaStream_t& stream);
