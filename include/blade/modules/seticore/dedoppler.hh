@@ -39,7 +39,12 @@ class BLADE_API Dedoppler : public Module {
 
     struct Input {
         const ArrayTensor<Device::CUDA, F32>& buf;
+        const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset;
     };
+
+    constexpr const Vector<Device::CPU, U64>& getInputCoarseFrequencyChannelOffset() {
+        return this->input.coarseFrequencyChannelOffset;
+    }
 
     // Output
 

@@ -7,6 +7,7 @@
 #include "blade/pipeline.hh"
 
 #include "blade/modules/seticore/dedoppler.hh"
+#include "blade/modules/seticore/hits_writer.hh"
 
 namespace Blade::Pipelines::Generic {
 
@@ -15,8 +16,8 @@ class BLADE_API ModeS : public Pipeline {
     // Configuration 
 
     struct Config {
+        ArrayDimensions prebeamformerInputDimensions;
         ArrayDimensions inputDimensions;
-        U64 accumulateRate;
 
         U64 inputCoarseChannelRate = 1;
         BOOL inputLastBeamIsIncoherent = false;
@@ -28,6 +29,7 @@ class BLADE_API ModeS : public Pipeline {
 
         F64 searchChannelBandwidthHz;
         F64 searchChannelTimespanS;
+        std::string searchOutputFilepathStem;
 
         U64 dedopplerBlockSize = 512;
     };
@@ -37,11 +39,14 @@ class BLADE_API ModeS : public Pipeline {
     void setFrequencyOfFirstInputChannel(F64 hz);
 
     const Result accumulate(const ArrayTensor<Device::CUDA, F32>& data,
+                            const ArrayTensor<Device::CPU, CF32>& prebeamformerData,
+                            const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
                             const cudaStream_t& stream);
 
-    constexpr const ArrayTensor<Device::CUDA, F32>& getInputBuffer() const {
-        return input;
-    }
+    const Result accumulate(const ArrayTensor<Device::CUDA, F32>& data,
+                            const ArrayTensor<Device::CUDA, CF32>& prebeamformerData,
+                            const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
+                            const cudaStream_t& stream);
 
     // Output
 
@@ -57,8 +62,12 @@ class BLADE_API ModeS : public Pipeline {
     const Config config;
 
     ArrayTensor<Device::CUDA, F32> input;
+    ArrayTensor<Device::CPU, CF32> prebeamformerData;
+    Vector<Device::CPU, U64> coarseFrequencyChannelOffset;
 
     std::shared_ptr<Modules::Seticore::Dedoppler> dedoppler;
+    std::shared_ptr<Modules::Seticore::HitsWriter<CF32>> hitsWriter;
+
 };
 
 }  // namespace Blade::Pipelines::Generic

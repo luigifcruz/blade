@@ -5,15 +5,16 @@
 namespace Blade::Pipelines::Generic {
 
 ModeS::ModeS(const Config& config)
-     : Pipeline(config.accumulateRate, 1),
-       config(config) {
+     : Pipeline(1, 1),
+       config(config),
+       coarseFrequencyChannelOffset({1}) {
     BL_DEBUG("Initializing Pipeline Mode S.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    const auto accumulationFactor = ArrayDimensions{.A=1, .F=1, .T=config.accumulateRate, .P=1};
-    BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
+    BL_CHECK_THROW(this->input.resize(config.inputDimensions));
+    BL_CHECK_THROW(this->prebeamformerData.resize(config.prebeamformerInputDimensions));
 
-    BL_DEBUG("Instantiating dedoppler module.");
+    BL_DEBUG("Instantiating Dedoppler module.");
     this->connect(this->dedoppler, {
         .mitigateDcSpike = config.searchMitigateDcSpike,
         .minimumDriftRate = config.searchMinimumDriftRate,
@@ -25,7 +26,20 @@ ModeS::ModeS(const Config& config)
         .lastBeamIsIncoherent = config.inputLastBeamIsIncoherent,
     }, {
         .buf = this->input,
+        .coarseFrequencyChannelOffset = this->coarseFrequencyChannelOffset,
     });
+
+    BL_DEBUG("Instantiating HitsWriter module.");
+    this->connect(this->hitsWriter, {
+        .filepathPrefix = config.searchOutputFilepathStem,
+        .directio = true,
+        .channelBandwidthHz = config.searchChannelBandwidthHz,
+        .channelTimespanS = config.searchChannelTimespanS,
+    }, {
+        .buffer = this->prebeamformerData,
+        .hits = this->dedoppler->getOutputHits(),
+    });
+
 }
 
 void ModeS::setFrequencyOfFirstInputChannel(F64 hz) {
@@ -33,33 +47,51 @@ void ModeS::setFrequencyOfFirstInputChannel(F64 hz) {
 }
 
 const Result ModeS::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
+                               const ArrayTensor<Device::CPU, CF32>& prebeamformerData,
+                               const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
                                const cudaStream_t& stream) {
     // Accumulate ATPF in the time domain
     if (config.inputDimensions != data.dims()) {
-        BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, data.dims());
+        BL_FATAL("Configured for array of shape {}, cannot receive shape {}.", config.inputDimensions, data.dims());
         return Result::ASSERTION_ERROR;
     }
+    BL_CHECK(Memory::Copy(
+        this->coarseFrequencyChannelOffset,
+        coarseFrequencyChannelOffset
+    ));
+    BL_CHECK(Memory::Copy(
+        this->prebeamformerData,
+        prebeamformerData
+    ));
+    BL_CHECK(Memory::Copy(
+        this->input,
+        data
+    ));
 
-    const auto& inputHeight = config.inputDimensions.numberOfAspects();
-    const auto& inputWidth = data.size_bytes() / inputHeight;
+    return Result::SUCCESS;
+}
 
-    const auto& outputPitch = this->input.size_bytes() / inputHeight;
-
-    BL_CHECK(
-        Memory::Copy2D(
-            this->input,
-            outputPitch, // dstStride
-            inputWidth * this->getCurrentAccumulatorStep(), // dstOffset
-
-            data,
-            inputWidth,
-            0,
-
-            inputWidth,
-            inputHeight, 
-            stream
-        )
-    );
+const Result ModeS::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
+                               const ArrayTensor<Device::CUDA, CF32>& prebeamformerData,
+                               const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
+                               const cudaStream_t& stream) {
+    // Accumulate ATPF in the time domain
+    if (config.inputDimensions != data.dims()) {
+        BL_FATAL("Configured for array of shape {}, cannot receive shape {}.", config.inputDimensions, data.dims());
+        return Result::ASSERTION_ERROR;
+    }
+    BL_CHECK(Memory::Copy(
+        this->coarseFrequencyChannelOffset,
+        coarseFrequencyChannelOffset
+    ));
+    BL_CHECK(Memory::Copy(
+        this->prebeamformerData,
+        prebeamformerData
+    ));
+    BL_CHECK(Memory::Copy(
+        this->input,
+        data
+    ));
 
     return Result::SUCCESS;
 }

@@ -107,8 +107,8 @@ inline const Result ModeBS(const Config& config) {
     // Instantiate search pipeline and runner.
 
     typename Search::Config searchConfig = {
+        .prebeamformerInputDimensions = beamformRunner->getWorker().getInputBuffer().dims(),
         .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
-        .accumulateRate = 1,
 
         .inputCoarseChannelRate = config.preBeamformerChannelizerRate,
         .inputLastBeamIsIncoherent = false,
@@ -116,10 +116,11 @@ inline const Result ModeBS(const Config& config) {
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,
         .searchMaximumDriftRate = 10.0,
-        .searchSnrThreshold = 10.0,
+        .searchSnrThreshold = 30.0,
 
         .searchChannelBandwidthHz = reader.getChannelBandwidth(),
         .searchChannelTimespanS = 1.0 / reader.getChannelBandwidth(),
+        .searchOutputFilepathStem = config.outputFile,
     };
 
     auto searchRunner = Runner<Search>::New(config.numberOfWorkers, searchConfig, false);
@@ -255,7 +256,9 @@ inline const Result ModeBS(const Config& config) {
 
             // Concatenate output data inside search pipeline.
             Plan::Accumulate(searchRunner, beamformRunner,
-                             worker.getOutputBuffer());
+                             worker.getOutputBuffer(),
+                             worker.getInputBuffer(),
+                             worker.getBlockFrequencyChannelOffset());
             if (filterbankOutputEnabled) {
                 Plan::Accumulate(filterbankWriterRunner, beamformRunner,
                                 worker.getOutputBuffer());
@@ -300,19 +303,6 @@ inline const Result ModeBS(const Config& config) {
 
         // Try to dequeue job from the final runner.
         if (searchRunner->dequeue(&callbackStep, &workerId)) {
-            auto& searchWorker = searchRunner->getWorker(workerId);
-            const std::vector<DedopplerHit>& hits = searchWorker.getOutputHits();
-
-            BL_INFO("{}: Search found {} hits", callbackStep, hits.size());
-            if (hits.size() > 0) {
-                BL_INFO("{} Hits:\n\tChannel Offset: {}", hits.size(), stepFrequencyChannelOffsetMap[callbackStep][0]);
-                BL_INFO("\tJulian Date: {}", stepJulianDateMap[callbackStep][0]);
-
-                for (DedopplerHit hit : hits) {
-                    BL_INFO("\t{}", hit.toString());
-                }
-            }
-
             if (callbackStep == reader.getNumberOfSteps()) {
                 searchComplete = true;
             }

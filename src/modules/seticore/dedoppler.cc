@@ -22,6 +22,7 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
     this->metadata.coarse_channel_size = config.coarseChannelRate;
 
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
+    BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
     BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
     BL_INFO("Channel Timespan: {} s", this->config.channelTimespanS);
 }
@@ -33,23 +34,23 @@ void Dedoppler::setFrequencyOfFirstInputChannel(F64 hz) {
 const Result Dedoppler::process(const cudaStream_t& stream) {
     this->output.hits.clear();
     const auto inputDims = this->input.buf.dims();
-    FilterbankBuffer filterbankBuffer = FilterbankBuffer(inputDims.numberOfTimeSamples(), inputDims.numberOfFrequencyChannels(), this->input.buf.data());
 
     for (U64 beam = 0; beam < inputDims.numberOfAspects(); beam++) {
-        for (U64 channel = 0; channel < inputDims.numberOfFrequencyChannels(); channel++) {
-
-            dedopplerer.search(
-                filterbankBuffer,
-                this->metadata,
-                this->config.lastBeamIsIncoherent && beam + 1 == inputDims.numberOfAspects() ? -1 : beam,
-                channel,
-                this->config.maximumDriftRate,
-                this->config.minimumDriftRate,
-                this->config.snrThreshold,
-                &this->output.hits
-            );
-
-        }
+        FilterbankBuffer filterbankBuffer = FilterbankBuffer(
+            inputDims.numberOfTimeSamples(),
+            inputDims.numberOfFrequencyChannels(),
+            this->input.buf.data() + beam*this->input.buf.size_bytes() / inputDims.numberOfAspects()
+        );
+        dedopplerer.search(
+            filterbankBuffer,
+            this->metadata,
+            this->config.lastBeamIsIncoherent && beam + 1 == inputDims.numberOfAspects() ? -1 : beam,
+            this->input.coarseFrequencyChannelOffset[0],
+            this->config.maximumDriftRate,
+            this->config.minimumDriftRate,
+            this->config.snrThreshold,
+            &this->output.hits
+        );
     }
 
     return Result::SUCCESS;

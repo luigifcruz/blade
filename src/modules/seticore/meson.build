@@ -1,5 +1,7 @@
 deps = [
     'BLADE_LOADER_SETICORE',
+    'BLADE_LOADER_RADIOINTERFEROMETRY',
+    'BLADE_LOADER_GUPPIRAW',
 ]
 
 all_deps_found = true
@@ -10,13 +12,15 @@ endforeach
 if all_deps_found
     src_lst += files([
         'dedoppler.cc',
+        'hits_writer.cc',
     ])
 
     jit_lst += files([
         'dedoppler.cu',
+        'hits_writer.cu',
     ])
 endif
 
-sum_lst += {'SETICORE': all_deps_found}
+sum_lst += {'Seticore': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_SETICORE', all_deps_found)
