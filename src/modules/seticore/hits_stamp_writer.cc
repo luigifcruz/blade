@@ -36,8 +36,22 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         }
 
         // Extract the stamp
-        const int first_channel = max(0, top_hit.lowIndex() - (int) this->config.hitsGroupingMargin);
-        const int last_channel = min((int) inputDims.numberOfTimeSamples()-1, top_hit.highIndex() + (int)this->config.hitsGroupingMargin);
+        const int lowIndex = top_hit.lowIndex() - this->config.hitsGroupingMargin;
+        const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
+        const U64 highIndex = top_hit.highIndex() + (int)this->config.hitsGroupingMargin;
+        const U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
+        
+        BL_DEBUG("Top hit: {}", top_hit.toString());
+        BL_DEBUG(
+            "Extracting fine channels [{}, {}) from coarse channel {}",
+            first_channel,
+            last_channel,
+            top_hit.coarse_channel
+        );
+        if (first_channel > last_channel) {
+            BL_FATAL("First channel is larger than last: {} > {}", first_channel, last_channel);
+            return Result::ASSERTION_ERROR;
+        }
         const auto regionOfInterest = ArrayTensor<Device::CPU, IT>(
             getInputBuffer().data() + first_channel*frequencyChannelByteStride,
             {
@@ -48,14 +62,6 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
             }
         );
         const auto regionOfInterestDims = regionOfInterest.dims();
-        
-        BL_DEBUG("Top hit: {}", top_hit.toString());
-        BL_DEBUG(
-            "Extracting fine channels [{}, {}) from coarse channel {}",
-            first_channel,
-            last_channel,
-            top_hit.coarse_channel
-        );
         
         ::capnp::MallocMessageBuilder message;
         Stamp::Builder stamp = message.initRoot<Stamp>();

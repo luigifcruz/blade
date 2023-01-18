@@ -44,8 +44,11 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
             continue;
         }
         // Extract the stamp
-        const int first_channel = max(0, top_hit.lowIndex() - (int) this->config.hitsGroupingMargin);
-        const int last_channel = min((int) inputDims.numberOfTimeSamples()-1, top_hit.highIndex() + (int)this->config.hitsGroupingMargin);
+        const int lowIndex = top_hit.lowIndex() - this->config.hitsGroupingMargin;
+        const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
+        const U64 highIndex = top_hit.highIndex() + (int)this->config.hitsGroupingMargin;
+        const U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
+        
         
         BL_DEBUG("Top hit: {}", top_hit.toString());
         BL_DEBUG(

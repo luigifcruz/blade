@@ -11,7 +11,6 @@
 #include "hit_file_writer.h"
 #include "stamp_extractor.h"
 #include "dedoppler_hit_group.h"
-#include "util.h"
 
 #include <capnp/message.h>
 #include <capnp/serialize-packed.h>

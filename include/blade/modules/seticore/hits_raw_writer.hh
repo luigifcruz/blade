@@ -13,7 +13,6 @@ extern "C" {
 
 #include "dedoppler.h"
 #include "dedoppler_hit_group.h"
-#include "util.h"
 
 namespace Blade::Modules::Seticore {
 
