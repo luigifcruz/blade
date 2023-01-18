@@ -22,7 +22,7 @@ inline const Result ModeBS(const Config& config) {
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Channelize = Pipelines::Generic::ModeH<IT, CF32>;
     using Beamform = Pipelines::ATA::ModeB<CF32, F32>;
-    using Search = Pipelines::Generic::ModeS<Blade::Pipelines::Generic::HitsFormat::SETICORE_STAMP>;
+    using Search = Pipelines::Generic::ModeS<Blade::Pipelines::Generic::HitsFormat::GUPPI_RAW>;
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<F32>, Device::CPU, F32>;
     std::unique_ptr<Runner<FilterbankWriter>> filterbankWriterRunner;
 
@@ -88,7 +88,7 @@ inline const Result ModeBS(const Config& config) {
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
         .phasorAntennaCoefficientChannelRate = config.preBeamformerChannelizerRate,
 
-        .beamformerIncoherentBeam = false,
+        .beamformerIncoherentBeam = true,
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
@@ -119,7 +119,7 @@ inline const Result ModeBS(const Config& config) {
         .inputCoarseStartChannelIndex = 0,
         .inputJulianDateStart = reader.getJulianDateOfLastReadBlock(),
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
-        .inputLastBeamIsIncoherent = false,
+        .inputLastBeamIsIncoherent = true,
 
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,

@@ -34,23 +34,35 @@ void Dedoppler::setFrequencyOfFirstInputChannel(F64 hz) {
 const Result Dedoppler::process(const cudaStream_t& stream) {
     this->output.hits.clear();
     const auto inputDims = this->input.buf.dims();
+    const auto beamByteStride = this->input.buf.size_bytes() / inputDims.numberOfAspects();
 
-    for (U64 beam = 0; beam < inputDims.numberOfAspects(); beam++) {
+    const auto beamsToSearch = inputDims.numberOfAspects() - (this->config.lastBeamIsIncoherent ? 1 : 0);
+    for (U64 beam = 0; beam < beamsToSearch; beam++) {
         FilterbankBuffer filterbankBuffer = FilterbankBuffer(
             inputDims.numberOfTimeSamples(),
             inputDims.numberOfFrequencyChannels(),
-            this->input.buf.data() + beam*this->input.buf.size_bytes() / inputDims.numberOfAspects()
+            this->input.buf.data() + beam*beamByteStride
         );
         dedopplerer.search(
             filterbankBuffer,
             this->metadata,
-            this->config.lastBeamIsIncoherent && beam + 1 == inputDims.numberOfAspects() ? -1 : beam,
+            false,
             this->input.coarseFrequencyChannelOffset[0],
             this->config.maximumDriftRate,
             this->config.minimumDriftRate,
             this->config.snrThreshold,
             &this->output.hits
         );
+    }
+
+    if (this->config.lastBeamIsIncoherent) {
+        FilterbankBuffer filterbankBuffer = FilterbankBuffer(
+            inputDims.numberOfTimeSamples(),
+            inputDims.numberOfFrequencyChannels(),
+            this->input.buf.data() + (inputDims.numberOfAspects()-1)*beamByteStride
+        );
+        
+        dedopplerer.addIncoherentPower(filterbankBuffer, this->output.hits);
     }
 
     return Result::SUCCESS;
