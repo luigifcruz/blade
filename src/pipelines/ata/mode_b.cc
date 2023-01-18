@@ -102,6 +102,13 @@ ModeB<IT, OT>::ModeB(const Config& config)
 
         if (config.detectorTransposedATPFrevOutput) {
             BL_DEBUG("Instantiating transposer module.");
+            this->connect(transposerFReversed, {
+            }, {
+                .buf = detector->getOutputBuffer(),
+            } );
+        }
+        else if (config.detectorTransposedATPFOutput) {
+            BL_DEBUG("Instantiating transposer module.");
             this->connect(transposer, {
             }, {
                 .buf = detector->getOutputBuffer(),
@@ -110,11 +117,25 @@ ModeB<IT, OT>::ModeB(const Config& config)
 
         if constexpr (!std::is_same<OT, F32>::value) {
             BL_DEBUG("Instantiating output cast from F32 to {}.", TypeInfo<OT>::name);
-            this->connect(outputCast, {
-                .blockSize = config.castBlockSize,
-            }, {
-                .buf = config.detectorTransposedATPFrevOutput ? transposer->getOutputBuffer() : detector->getOutputBuffer(),
-            });
+            if (config.detectorTransposedATPFrevOutput) {
+                this->connect(outputCast, {
+                    .blockSize = config.castBlockSize,
+                }, {
+                    .buf = transposerFReversed->getOutputBuffer(),
+                });
+            } else if (config.detectorTransposedATPFOutput) {
+                this->connect(outputCast, {
+                    .blockSize = config.castBlockSize,
+                }, {
+                    .buf = transposer->getOutputBuffer(),
+                });
+            } else {
+                this->connect(outputCast, {
+                    .blockSize = config.castBlockSize,
+                }, {
+                    .buf = detector->getOutputBuffer(),
+                });
+            }
         }
     } else {
         if (config.detectorTransposedATPFrevOutput) {

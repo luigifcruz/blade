@@ -50,7 +50,6 @@ inline const Result ModeBS(const Config& config) {
 
         // will fully channelize each readerStepOutput (output.dims().T == 1)
         .accumulateRate = 1,
-        .channelizationRate = reader.getStepOutputDims().numberOfTimeSamples(),
 
         .polarizerConvertToCircular = false,
 
