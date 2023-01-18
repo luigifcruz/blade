@@ -52,7 +52,7 @@ class BLADE_API Dedoppler : public Module {
         std::vector<DedopplerHit> hits;
     };
 
-    constexpr const std::vector<DedopplerHit>& getOutputHits() const {
+    constexpr std::vector<DedopplerHit>& getOutputHits() {
         return this->output.hits;
     }
 

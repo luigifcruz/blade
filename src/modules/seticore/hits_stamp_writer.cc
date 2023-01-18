@@ -1,0 +1,106 @@
+#define BL_LOG_DOMAIN "M::SETICORE::HITS_STAMP_WRITER"
+
+#include "blade/modules/seticore/hits_stamp_writer.hh"
+
+#include "hits_writer.jit.hh"
+
+namespace Blade::Modules::Seticore {
+
+template<typename IT>
+HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
+        : Module(hits_writer_program),
+          config(config),
+          input(input),
+          fileId(0),
+          fileDescriptor(0) {
+
+    // Print configuration information.
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
+    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
+    BL_INFO("Output File Path: {}", config.filepathPrefix);
+}
+
+template<typename IT>
+const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
+    const auto inputDims = getInputBuffer().dims();
+    const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
+
+    vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
+    BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
+    for (const DedopplerHitGroup& group : groups) {
+        const DedopplerHit& top_hit = group.topHit();
+
+        if (top_hit.drift_steps == 0) {
+            // This is a vertical line. No drift = terrestrial. Skip it
+            continue;
+        }
+
+        // Extract the stamp
+        const int first_channel = max(0, top_hit.lowIndex() - (int) this->config.hitsGroupingMargin);
+        const int last_channel = min((int) inputDims.numberOfTimeSamples()-1, top_hit.highIndex() + (int)this->config.hitsGroupingMargin);
+        const auto regionOfInterest = ArrayTensor<Device::CPU, IT>(
+            getInputBuffer().data() + first_channel*frequencyChannelByteStride,
+            {
+                .A = inputDims.numberOfAspects(),
+                .F = (U64) (last_channel - first_channel),
+                .T = inputDims.numberOfTimeSamples(),
+                .P = inputDims.numberOfPolarizations(),
+            }
+        );
+        const auto regionOfInterestDims = regionOfInterest.dims();
+        
+        BL_DEBUG("Top hit: {}", top_hit.toString());
+        BL_DEBUG(
+            "Extracting fine channels [{}, {}) from coarse channel {}",
+            first_channel,
+            last_channel,
+            top_hit.coarse_channel
+        );
+        
+        ::capnp::MallocMessageBuilder message;
+        Stamp::Builder stamp = message.initRoot<Stamp>();
+        stamp.setSeticoreVersion("0.0.0.a");
+        stamp.setSourceName(this->config.sourceName);
+        stamp.setRa(this->config.rightAscension * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
+        stamp.setDec(this->config.declination * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
+        stamp.setFch1(this->input.frequencyOfFirstInputChannelHz[0]*1e-6); // MHz
+        stamp.setFoff(this->config.channelBandwidthHz*1e-6); // MHz
+        stamp.setTstart(this->config.julianDateStart); // TODO verify units
+        stamp.setTsamp(this->config.channelTimespanS);
+        stamp.setTelescopeId(this->config.telescopeId);
+        stamp.setNumTimesteps(regionOfInterestDims.numberOfTimeSamples());
+        stamp.setNumChannels(regionOfInterestDims.numberOfFrequencyChannels());
+        stamp.setNumPolarizations(regionOfInterestDims.numberOfPolarizations());
+        stamp.setNumAntennas(regionOfInterestDims.numberOfAspects());
+        stamp.initData(2 * regionOfInterest.size());
+        auto data = stamp.getData();
+
+        for (int i = 0; i < (int) regionOfInterest.size(); ++i) {
+            const auto value = regionOfInterest.data()[i];
+            data.set(2 * i, value.real());
+            data.set(2 * i + 1, value.imag());
+        }
+
+        stamp.setCoarseChannel(top_hit.coarse_channel);
+        stamp.setFftSize(this->config.coarseChannelRatio);
+        stamp.setStartChannel(top_hit.coarse_channel*this->config.coarseChannelRatio + first_channel);
+
+        buildSignal(top_hit, stamp.getSignal());
+
+        stamp.setSchan(this->config.coarseStartChannelIndex);
+        stamp.setObsid(this->config.observationIdentifier);
+        
+
+        auto filepath = fmt::format("{}.seticore.{:04}.stamp", this->config.filepathPrefix, this->fileId % 10000);
+        this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+        writeMessageToFd(this->fileDescriptor, message);
+    
+        close(this->fileDescriptor);
+    }
+
+    return Result::SUCCESS;
+}
+
+template class BLADE_API HitsStampWriter<CF32>;
+
+}  // namespace Blade::Modules::Seticore

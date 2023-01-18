@@ -12,7 +12,8 @@ endforeach
 if all_deps_found
     src_lst += files([
         'dedoppler.cc',
-        'hits_writer.cc',
+        'hits_raw_writer.cc',
+        'hits_stamp_writer.cc',
     ])
 
     jit_lst += files([

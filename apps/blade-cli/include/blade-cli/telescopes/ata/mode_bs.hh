@@ -22,7 +22,7 @@ inline const Result ModeBS(const Config& config) {
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Channelize = Pipelines::Generic::ModeH<IT, CF32>;
     using Beamform = Pipelines::ATA::ModeB<CF32, F32>;
-    using Search = Pipelines::Generic::ModeS;
+    using Search = Pipelines::Generic::ModeS<Blade::Pipelines::Generic::HitsFormat::SETICORE_STAMP>;
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<F32>, Device::CPU, F32>;
     std::unique_ptr<Runner<FilterbankWriter>> filterbankWriterRunner;
 
@@ -50,6 +50,7 @@ inline const Result ModeBS(const Config& config) {
 
         // will fully channelize each readerStepOutput (output.dims().T == 1)
         .accumulateRate = 1,
+        .channelizationRate = reader.getStepOutputDims().numberOfTimeSamples(),
 
         .polarizerConvertToCircular = false,
 
@@ -92,7 +93,7 @@ inline const Result ModeBS(const Config& config) {
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
         .detectorNumberOfOutputPolarizations = 1,
-        .detectorTransposedATPFrevOutput = true,
+        .detectorTransposedATPFOutput = true,
 
         // TODO: Review this calculation.
         .castBlockSize = 512,
@@ -110,7 +111,14 @@ inline const Result ModeBS(const Config& config) {
         .prebeamformerInputDimensions = beamformRunner->getWorker().getInputBuffer().dims(),
         .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
 
-        .inputCoarseChannelRate = config.preBeamformerChannelizerRate,
+        .inputTelescopeId = 0,
+        .inputSourceName = reader.getSourceName(),
+        .inputObservationIdentifier = "Unknown",
+        .inputRightAscension = 0.0,
+        .inputDeclination = 0.0,
+        .inputCoarseStartChannelIndex = 0,
+        .inputJulianDateStart = reader.getJulianDateOfLastReadBlock(),
+        .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
         .inputLastBeamIsIncoherent = false,
 
         .searchMitigateDcSpike = true,

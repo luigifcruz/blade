@@ -7,10 +7,29 @@
 #include "blade/pipeline.hh"
 
 #include "blade/modules/seticore/dedoppler.hh"
-#include "blade/modules/seticore/hits_writer.hh"
+#include "blade/modules/seticore/hits_raw_writer.hh"
+#include "blade/modules/seticore/hits_stamp_writer.hh"
 
 namespace Blade::Pipelines::Generic {
 
+enum class BLADE_API HitsFormat : uint8_t {
+    NONE            = 0,
+    GUPPI_RAW       = 1,
+    SETICORE_STAMP  = 2
+};
+
+constexpr const char* HitsFormatName(const HitsFormat order) {
+    switch (order) {
+        case HitsFormat::GUPPI_RAW:
+            return "GUPPI RAW";
+        case HitsFormat::SETICORE_STAMP:
+            return "SETICORE STAMP";
+        default:
+            return "None";
+    }
+}
+
+template<HitsFormat HT>
 class BLADE_API ModeS : public Pipeline {
  public:
     // Configuration 
@@ -19,7 +38,14 @@ class BLADE_API ModeS : public Pipeline {
         ArrayDimensions prebeamformerInputDimensions;
         ArrayDimensions inputDimensions;
 
-        U64 inputCoarseChannelRate = 1;
+        U64 inputTelescopeId;
+        std::string inputSourceName;
+        std::string inputObservationIdentifier;
+        F64 inputRightAscension;
+        F64 inputDeclination;
+        U64 inputCoarseStartChannelIndex;
+        F64 inputJulianDateStart;
+        U64 inputCoarseChannelRatio = 1;
         BOOL inputLastBeamIsIncoherent = false;
 
         BOOL searchMitigateDcSpike;
@@ -64,9 +90,11 @@ class BLADE_API ModeS : public Pipeline {
     ArrayTensor<Device::CUDA, F32> input;
     ArrayTensor<Device::CPU, CF32> prebeamformerData;
     Vector<Device::CPU, U64> coarseFrequencyChannelOffset;
+    Vector<Device::CPU, F64> frequencyOfFirstInputChannelHz;
 
     std::shared_ptr<Modules::Seticore::Dedoppler> dedoppler;
-    std::shared_ptr<Modules::Seticore::HitsWriter<CF32>> hitsWriter;
+    std::shared_ptr<Modules::Seticore::HitsRawWriter<CF32>> hitsRawWriter;
+    std::shared_ptr<Modules::Seticore::HitsStampWriter<CF32>> hitsStampWriter;
 
 };
 

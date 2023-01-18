@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULES_SETICORE_HITS_WRITER_HH
-#define BLADE_MODULES_SETICORE_HITS_WRITER_HH
+#ifndef BLADE_MODULES_SETICORE_HITS_RAW_WRITER_HH
+#define BLADE_MODULES_SETICORE_HITS_RAW_WRITER_HH
 
 #include <filesystem>
 #include <string>
@@ -12,11 +12,13 @@ extern "C" {
 }
 
 #include "dedoppler.h"
+#include "dedoppler_hit_group.h"
+#include "util.h"
 
 namespace Blade::Modules::Seticore {
 
 template<typename IT>
-class BLADE_API HitsWriter : public Module {
+class BLADE_API HitsRawWriter : public Module {
  public:
     // Configuration 
 
@@ -24,8 +26,17 @@ class BLADE_API HitsWriter : public Module {
         std::string filepathPrefix;
         bool directio = true;
 
+        U64 telescopeId;
+        std::string sourceName;
+        std::string observationIdentifier;
+        F64 rightAscension;
+        F64 declination;
+        U64 coarseStartChannelIndex;
+        U64 coarseChannelRatio;
         F64 channelBandwidthHz;
         F64 channelTimespanS;
+        F64 julianDateStart;
+        U64 hitsGroupingMargin = 30;
 
         U64 blockSize = 512;
     };
@@ -38,11 +49,16 @@ class BLADE_API HitsWriter : public Module {
 
     struct Input {
         const ArrayTensor<Device::CPU, IT>& buffer;
-        const std::vector<DedopplerHit>& hits;
+        std::vector<DedopplerHit>& hits;
+        const Vector<Device::CPU, F64>& frequencyOfFirstInputChannelHz;
     };
 
     constexpr const ArrayTensor<Device::CPU, IT>& getInputBuffer() const {
         return this->input.buffer;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getInputfrequencyOfFirstInputChannelHz() const {
+        return this->input.frequencyOfFirstInputChannelHz;
     }
 
     // Output
@@ -52,7 +68,7 @@ class BLADE_API HitsWriter : public Module {
 
     // Constructor & Processing
 
-    explicit HitsWriter(const Config& config, const Input& input);
+    explicit HitsRawWriter(const Config& config, const Input& input);
     const Result process(const cudaStream_t& stream = 0) final;
 
     // Miscellaneous
