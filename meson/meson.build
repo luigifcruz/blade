@@ -7,5 +7,6 @@ subdir('radiointerferometry')
 subdir('guppiraw')
 subdir('bfr5')
 subdir('cli11')
+subdir('benchmark')
 
 summary(ldr_lst, section: 'Dependency Loaders', bool_yn: true)

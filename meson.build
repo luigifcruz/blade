@@ -43,6 +43,7 @@ lib_blade_dep = declare_dependency(
 
 subdir('python')
 subdir('tests')
+subdir('benchmarks')
 subdir('docs')
 
 summary({'cpp_std': get_option('cpp_std'),

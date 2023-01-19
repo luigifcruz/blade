@@ -32,3 +32,4 @@
 #mesondefine BLADE_LOADER_GUPPIRAW
 #mesondefine BLADE_LOADER_BFR5
 #mesondefine BLADE_LOADER_CLI11
+#mesondefine BLADE_LOADER_BENCHMARK
