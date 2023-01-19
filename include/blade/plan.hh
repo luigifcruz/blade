@@ -2,6 +2,7 @@
 #define BLADE_PLAN_HH
 
 #include <deque>
+#include <thread>
 #include <vector>
 #include <memory>
 
@@ -50,7 +51,7 @@ class BLADE_API Plan {
 
     static bool Loop() {
         // Prevent memory clobber inside spin-loop.
-        __builtin_ia32_pause();
+        std::this_thread::yield();
 
         // Continue with the loop.
         return true;
