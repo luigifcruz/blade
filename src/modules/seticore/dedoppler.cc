@@ -18,8 +18,32 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
             config.mitigateDcSpike
           ) {
 
+    this->metadata.source_name = this->config.sourceName;
+    this->metadata.fch1 = 0.0; // MHz
+    this->metadata.foff = this->config.channelBandwidthHz*1e-6; // MHz
+    this->metadata.tsamp = this->config.channelTimespanS;
+    this->metadata.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
+    this->metadata.src_raj = this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // hours
+    this->metadata.src_dej = this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI; // degrees
+    this->metadata.num_timesteps = this->config.totalNumberOfTimeSamples;
+    this->metadata.num_channels = this->config.totalNumberOfFrequencyChannels;
+    this->metadata.telescope_id = this->config.telescopeId;
+    this->metadata.coarse_channel_size = this->config.coarseChannelRate;
+    this->metadata.num_coarse_channels = metadata.num_channels / metadata.coarse_channel_size;
+    this->metadata.source_names = this->config.aspectNames;
+    this->metadata.ras = std::vector<F64>();
+    this->metadata.decs = std::vector<F64>();
     this->metadata.has_dc_spike = config.mitigateDcSpike;
-    this->metadata.coarse_channel_size = config.coarseChannelRate;
+
+    for (const RA_DEC& coord : this->config.aspectCoordinates) {
+        this->metadata.ras.push_back(coord.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
+        this->metadata.decs.push_back(coord.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
+    }
+
+    string output_filename = fmt::format("{}.seticore.hits", config.filepathPrefix);
+    auto hfw = new HitFileWriter(output_filename, metadata);
+    hfw->verbose = false;
+    hit_recorder.reset(hfw);
 
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
     BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
@@ -37,6 +61,7 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
     const auto beamByteStride = this->input.buf.size_bytes() / inputDims.numberOfAspects();
 
     const auto beamsToSearch = inputDims.numberOfAspects() - (this->config.lastBeamIsIncoherent ? 1 : 0);
+    BL_DEBUG("processing {} beams", beamsToSearch);
     for (U64 beam = 0; beam < beamsToSearch; beam++) {
         FilterbankBuffer filterbankBuffer = FilterbankBuffer(
             inputDims.numberOfTimeSamples(),
@@ -63,6 +88,10 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
         );
         
         dedopplerer.addIncoherentPower(filterbankBuffer, this->output.hits);
+    }
+    
+    for (const DedopplerHit& hit : this->output.hits) {
+        hit_recorder->recordHit(hit, this->input.buf.data());
     }
 
     return Result::SUCCESS;

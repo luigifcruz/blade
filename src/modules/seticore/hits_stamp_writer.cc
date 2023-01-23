@@ -14,33 +14,6 @@ HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
           fileId(0),
           fileDescriptor(0) {
 
-    FilterbankMetadata metadata;
-    metadata.source_name = this->config.sourceName;
-    metadata.fch1 = this->input.frequencyOfFirstInputChannelHz[0]*1e-6; // MHz
-    metadata.foff = this->config.channelBandwidthHz*1e-6; // MHz
-    metadata.tsamp = this->config.channelTimespanS;
-    metadata.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
-    metadata.src_raj = this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // hours
-    metadata.src_dej = this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI; // degrees
-    metadata.num_timesteps = this->config.totalNumberOfTimeSamples;
-    metadata.num_channels = this->config.totalNumberOfFrequencyChannels;
-    metadata.telescope_id = this->config.telescopeId;
-    metadata.coarse_channel_size = this->config.coarseChannelRatio;
-    metadata.num_coarse_channels = metadata.num_channels / metadata.coarse_channel_size;
-    metadata.source_names = this->config.aspectNames;
-    metadata.ras = std::vector<F64>();
-    metadata.decs = std::vector<F64>();
-
-    for (const RA_DEC& coord : this->config.aspectCoordinates) {
-        metadata.ras.push_back(coord.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
-        metadata.decs.push_back(coord.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
-    }
-
-    string output_filename = fmt::format("{}.seticore.hits", config.filepathPrefix);
-    auto hfw = new HitFileWriter(output_filename, metadata);
-    hfw->verbose = false;
-    hit_recorder.reset(hfw);
-
     // Print configuration information.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");

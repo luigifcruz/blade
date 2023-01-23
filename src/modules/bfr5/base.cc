@@ -30,7 +30,7 @@ Reader::Reader(const Config& config, const Input& input)
         beamCoordinates[i].RA = this->bfr5.beam_info.ras[i];
         beamCoordinates[i].DEC = this->bfr5.beam_info.decs[i];
         beamSourceNames[i] = std::string(
-            (char*) this->bfr5.beam_info.src_names[i].p
+            this->bfr5.beam_info.src_names[i]
         );
     }
 

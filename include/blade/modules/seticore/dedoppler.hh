@@ -26,6 +26,18 @@ class BLADE_API Dedoppler : public Module {
         U64 coarseChannelRate;
         BOOL lastBeamIsIncoherent = false;
 
+        std::string filepathPrefix;
+        U64 telescopeId;
+        std::string sourceName;
+        std::string observationIdentifier;
+        RA_DEC phaseCenter;
+        U64 coarseStartChannelIndex;
+        F64 julianDateStart;
+        std::vector<std::string> aspectNames;
+        std::vector<RA_DEC> aspectCoordinates;
+        U64 totalNumberOfTimeSamples;
+        U64 totalNumberOfFrequencyChannels;
+
         U64 blockSize = 512;
     };
 
@@ -70,6 +82,7 @@ class BLADE_API Dedoppler : public Module {
 
     Dedopplerer dedopplerer;
     FilterbankMetadata metadata;
+    unique_ptr<HitFileWriter> hit_recorder;
 };
 
 } // namespace Blade::Modules::Seticore
