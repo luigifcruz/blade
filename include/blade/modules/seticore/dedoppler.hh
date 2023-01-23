@@ -76,6 +76,8 @@ class BLADE_API Dedoppler : public Module {
     private:
     // Variables
 
+    ArrayTensor<Device::CPU, F32> buf;
+
     const Config config;
     const Input input;
     Output output;

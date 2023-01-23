@@ -25,8 +25,8 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
     this->metadata.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
     this->metadata.src_raj = this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // hours
     this->metadata.src_dej = this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI; // degrees
-    this->metadata.num_timesteps = this->config.totalNumberOfTimeSamples;
-    this->metadata.num_channels = this->config.totalNumberOfFrequencyChannels;
+    this->metadata.num_timesteps = input.buf.dims().numberOfTimeSamples();
+    this->metadata.num_channels = input.buf.dims().numberOfFrequencyChannels();
     this->metadata.telescope_id = this->config.telescopeId;
     this->metadata.coarse_channel_size = this->config.coarseChannelRate;
     this->metadata.num_coarse_channels = metadata.num_channels / metadata.coarse_channel_size;
@@ -45,6 +45,8 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
     hfw->verbose = false;
     hit_recorder.reset(hfw);
 
+    this->buf.resize(this->input.buf.dims());
+
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
     BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
     BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
@@ -59,6 +61,8 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
     this->output.hits.clear();
     const auto inputDims = this->input.buf.dims();
     const auto beamByteStride = this->input.buf.size_bytes() / inputDims.numberOfAspects();
+
+    BL_CHECK(Memory::Copy(this->buf, this->input.buf, stream));
 
     const auto beamsToSearch = inputDims.numberOfAspects() - (this->config.lastBeamIsIncoherent ? 1 : 0);
     BL_DEBUG("processing {} beams", beamsToSearch);
@@ -89,9 +93,13 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
         
         dedopplerer.addIncoherentPower(filterbankBuffer, this->output.hits);
     }
+
+    BL_CUDA_CHECK(cudaStreamSynchronize(stream), [&]{
+        BL_FATAL("Failed to synchronize stream: {}", err);
+    });
     
     for (const DedopplerHit& hit : this->output.hits) {
-        hit_recorder->recordHit(hit, this->input.buf.data());
+        hit_recorder->recordHit(hit, this->buf.data());
     }
 
     return Result::SUCCESS;
