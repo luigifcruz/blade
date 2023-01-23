@@ -73,9 +73,9 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
         this->headerPut("SRC_NAME", config.sourceName);
         this->headerPut("TELESCID", config.telescopeId);
         this->headerPut("OBSID", config.observationIdentifier);
-        this->headerPut("RA_STR", config.rightAscension);
-        this->headerPut("DEC_STR", config.declination);
-        this->headerPut("OR_SCHAN", config.coarseStartChannelIndex);
+        this->headerPut("RA_STR", config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
+        this->headerPut("DEC_STR", config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
+        this->headerPut("SCHANORG", config.coarseStartChannelIndex);
         this->headerPut("FCH1", input.frequencyOfFirstInputChannelHz[0]);
         this->headerPut("CHAN_BW", config.channelBandwidthHz);
         this->headerPut("TBIN", config.channelTimespanS);

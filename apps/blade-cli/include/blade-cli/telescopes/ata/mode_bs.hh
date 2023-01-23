@@ -87,7 +87,7 @@ inline const Result ModeBS(const Config& config) {
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
         .phasorAntennaCoefficientChannelRate = config.preBeamformerChannelizerRate,
 
-        .beamformerIncoherentBeam = false,
+        .beamformerIncoherentBeam = true,
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
@@ -113,12 +113,15 @@ inline const Result ModeBS(const Config& config) {
         .inputTelescopeId = 0,
         .inputSourceName = reader.getSourceName(),
         .inputObservationIdentifier = "Unknown",
-        .inputRightAscension = 0.0,
-        .inputDeclination = 0.0,
-        .inputCoarseStartChannelIndex = 0,
+        .inputPhaseCenter = reader.getPhaseCenterCoordinates(),
+        .inputTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
+        .inputTotalNumberOfFrequencyChannels = readerTotalOutputDims.numberOfTimeSamples() / config.preBeamformerChannelizerRate,
+        .inputCoarseStartChannelIndex = reader.getChannelStartIndex(),
         .inputJulianDateStart = reader.getJulianDateOfLastReadBlock(),
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
-        .inputLastBeamIsIncoherent = false,
+        .inputLastBeamIsIncoherent = true,
+        .beamNames = reader.getBeamSourceNames(),
+        .beamCoordinates = reader.getBeamCoordinates(),
 
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,

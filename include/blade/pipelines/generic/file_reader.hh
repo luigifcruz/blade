@@ -136,6 +136,10 @@ class BLADE_API FileReader : public Pipeline {
         return bfr5->getBeamCoordinates();
     }
 
+    constexpr const std::vector<std::string>& getBeamSourceNames() const {
+        return bfr5->getBeamSourceNames();
+    }
+
     constexpr const PhasorDimensions getRecipeDims() const {
         return bfr5->getDims();
     }

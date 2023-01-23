@@ -73,6 +73,10 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
+    constexpr const std::vector<std::string>& getBeamSourceNames() const {
+        return this->beamSourceNames;
+    }
+
     std::vector<F64> getBeamAntennaDelays() const {
         return std::vector<F64>(this->bfr5.delay_info.delays, this->bfr5.delay_info.delays + this->bfr5.delay_info.delay_elements);
     }
@@ -104,6 +108,7 @@ class BLADE_API Reader : public Module {
     // TODO: Update from vector to ArrayTensor. 
     std::vector<XYZ> antennaPositions;
     std::vector<RA_DEC> beamCoordinates;
+    std::vector<std::string> beamSourceNames;
 };
 
 }  // namespace Blade::Modules

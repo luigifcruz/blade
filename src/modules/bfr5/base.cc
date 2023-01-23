@@ -21,13 +21,17 @@ Reader::Reader(const Config& config, const Input& input)
     BFR5read_all(&this->bfr5);
 
     // Resize data holders.
-    beamCoordinates.resize(this->bfr5.beam_info.ra_elements);
     antennaPositions.resize(getDims().numberOfAntennas());
+    beamCoordinates.resize(this->bfr5.beam_info.ra_elements);
+    beamSourceNames.resize(this->bfr5.beam_info.ra_elements);
      
     // Calculate beam coordinates.
     for (U64 i = 0; i < this->bfr5.beam_info.ra_elements; i++) {
         beamCoordinates[i].RA = this->bfr5.beam_info.ras[i];
         beamCoordinates[i].DEC = this->bfr5.beam_info.decs[i];
+        beamSourceNames[i] = std::string(
+            (char*) this->bfr5.beam_info.src_names[i].p
+        );
     }
 
     // Calculate antenna positions.

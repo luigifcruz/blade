@@ -30,13 +30,16 @@ class BLADE_API HitsStampWriter : public Module {
         U64 telescopeId;
         std::string sourceName;
         std::string observationIdentifier;
-        F64 rightAscension;
-        F64 declination;
+        RA_DEC phaseCenter;
+        U64 totalNumberOfTimeSamples;
+        U64 totalNumberOfFrequencyChannels;
         U64 coarseStartChannelIndex;
         U64 coarseChannelRatio;
         F64 channelBandwidthHz;
         F64 channelTimespanS;
         F64 julianDateStart;
+        std::vector<std::string> aspectNames;
+        std::vector<RA_DEC> aspectCoordinates;
         U64 hitsGroupingMargin = 30;
 
         U64 blockSize = 512;
@@ -84,6 +87,7 @@ class BLADE_API HitsStampWriter : public Module {
     U64 fileId;
     I32 fileDescriptor;
 
+    unique_ptr<HitFileWriter> hit_recorder;
 };
 
 }  // namespace Blade::Modules::Seticore

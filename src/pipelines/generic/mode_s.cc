@@ -39,8 +39,7 @@ ModeS<HT>::ModeS(const Config& config)
             .telescopeId = config.inputTelescopeId,
             .sourceName = config.inputSourceName,
             .observationIdentifier = config.inputObservationIdentifier,
-            .rightAscension = config.inputRightAscension,
-            .declination = config.inputDeclination,
+            .phaseCenter = config.inputPhaseCenter,
             .coarseStartChannelIndex = config.inputCoarseStartChannelIndex,
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
@@ -59,13 +58,16 @@ ModeS<HT>::ModeS(const Config& config)
             .telescopeId = config.inputTelescopeId,
             .sourceName = config.inputSourceName,
             .observationIdentifier = config.inputObservationIdentifier,
-            .rightAscension = config.inputRightAscension,
-            .declination = config.inputDeclination,
+            .phaseCenter = config.inputPhaseCenter,
+            .totalNumberOfTimeSamples = config.inputTotalNumberOfTimeSamples,
+            .totalNumberOfFrequencyChannels = config.inputTotalNumberOfFrequencyChannels,
             .coarseStartChannelIndex = config.inputCoarseStartChannelIndex,
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
             .channelTimespanS = config.searchChannelTimespanS,
             .julianDateStart = config.inputJulianDateStart,
+            .aspectNames = config.beamNames,
+            .aspectCoordinates = config.beamCoordinates,
         }, {
             .buffer = this->prebeamformerData,
             .hits = this->dedoppler->getOutputHits(),
@@ -103,6 +105,13 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
         data
     ));
 
+    BL_DEBUG(
+        "accumulate from CPU: {}/{}, {}/{}",
+        this->getCurrentAccumulatorStep(),
+        this->getAccumulatorNumberOfSteps(),
+        this->getCurrentComputeStep(),
+        this->getComputeNumberOfSteps()
+    );
     return Result::SUCCESS;
 }
 
@@ -129,6 +138,13 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
         data
     ));
 
+    BL_DEBUG(
+        "accumulate from CUDA: {}/{}, {}/{}",
+        this->getCurrentAccumulatorStep(),
+        this->getAccumulatorNumberOfSteps(),
+        this->getCurrentComputeStep(),
+        this->getComputeNumberOfSteps()
+    );
     return Result::SUCCESS;
 }
 

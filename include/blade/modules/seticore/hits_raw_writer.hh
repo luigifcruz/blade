@@ -28,8 +28,7 @@ class BLADE_API HitsRawWriter : public Module {
         U64 telescopeId;
         std::string sourceName;
         std::string observationIdentifier;
-        F64 rightAscension;
-        F64 declination;
+        RA_DEC phaseCenter;
         U64 coarseStartChannelIndex;
         U64 coarseChannelRatio;
         F64 channelBandwidthHz;

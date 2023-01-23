@@ -41,12 +41,16 @@ class BLADE_API ModeS : public Pipeline {
         U64 inputTelescopeId;
         std::string inputSourceName;
         std::string inputObservationIdentifier;
-        F64 inputRightAscension;
-        F64 inputDeclination;
+        RA_DEC inputPhaseCenter;
+        U64 inputTotalNumberOfTimeSamples;
+        U64 inputTotalNumberOfFrequencyChannels;
         U64 inputCoarseStartChannelIndex;
         F64 inputJulianDateStart;
         U64 inputCoarseChannelRatio = 1;
         BOOL inputLastBeamIsIncoherent = false;
+
+        std::vector<std::string> beamNames;
+        std::vector<RA_DEC> beamCoordinates;
 
         BOOL searchMitigateDcSpike;
         F64 searchMinimumDriftRate = 0.0;
