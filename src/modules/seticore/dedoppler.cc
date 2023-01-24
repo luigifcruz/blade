@@ -51,6 +51,13 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
     BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
     BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
     BL_INFO("Channel Timespan: {} s", this->config.channelTimespanS);
+
+    const auto t = input.buf.dims().numberOfTimeSamples();
+    const auto t_previousPowerOf2 = t == 0 ? 0 : (0x80000000 >> __builtin_clz(t));
+    if (t != t_previousPowerOf2) {
+        BL_FATAL("Dedoppler must be provided a power of 2 timesamples!");
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
 }
 
 void Dedoppler::setFrequencyOfFirstInputChannel(F64 hz) {
