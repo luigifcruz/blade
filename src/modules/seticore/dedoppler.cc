@@ -60,7 +60,7 @@ void Dedoppler::setFrequencyOfFirstInputChannel(F64 hz) {
 const Result Dedoppler::process(const cudaStream_t& stream) {
     this->output.hits.clear();
     const auto inputDims = this->input.buf.dims();
-    const auto beamByteStride = this->input.buf.size_bytes() / inputDims.numberOfAspects();
+    const auto beamByteStride = this->input.buf.size() / inputDims.numberOfAspects();
 
     BL_CHECK(Memory::Copy(this->buf, this->input.buf, stream));
 
@@ -75,7 +75,7 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
         dedopplerer.search(
             filterbankBuffer,
             this->metadata,
-            false,
+            beam,
             this->input.coarseFrequencyChannelOffset[0],
             this->config.maximumDriftRate,
             this->config.minimumDriftRate,
