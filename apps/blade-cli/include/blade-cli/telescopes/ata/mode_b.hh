@@ -7,6 +7,7 @@
 #include "blade/runner.hh"
 #include "blade/utils/indicators.hh"
 #include "blade/pipelines/ata/mode_b.hh"
+#include "blade/pipelines/generic/mode_h.hh"
 #include "blade/pipelines/generic/file_reader.hh"
 #include "blade/pipelines/generic/accumulator.hh"
 
@@ -18,7 +19,8 @@ template<typename IT, typename OT>
 inline const Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
-    using Compute = Pipelines::ATA::ModeB<IT, OT>;
+    using Channelize = Pipelines::Generic::ModeH<IT, CF32>;
+    using Compute = Pipelines::ATA::ModeB<CF32, OT>;
     using GuppiWriter = Pipelines::Generic::Accumulator<Modules::Guppi::Writer<OT>, Device::CPU, OT>;
     std::unique_ptr<Runner<GuppiWriter>> guppiWriterRunner;
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<OT>, Device::CPU, OT>;
@@ -29,8 +31,7 @@ inline const Result ModeB(const Config& config) {
     typename Reader::Config readerConfig = {
         .inputGuppiFile = config.inputGuppiFile,
         .inputBfr5File = config.inputBfr5File,
-        .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples * 
-                                   config.preBeamformerChannelizerRate,
+        .stepNumberOfTimeSamples = config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
     };
 
@@ -38,6 +39,26 @@ inline const Result ModeB(const Config& config) {
     const auto& reader = readerRunner->getWorker();
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
+
+    // Instantiate channelize pipeline and runner.
+
+    typename Channelize::Config channelizeConfig = {
+        .inputDimensions = reader.getStepOutputDims(),
+
+        .accumulateRate = 1,
+
+        .polarizerConvertToCircular = false,
+
+        .detectorIntegrationSize = 1,
+        .detectorNumberOfOutputPolarizations = 2,
+
+        .castBlockSize = 512,
+        .polarizerBlockSize = 512,
+        .channelizerBlockSize = 512,
+        .detectorBlockSize = 512,
+    };
+
+    auto channelizeRunner = Runner<Channelize>::New(config.numberOfWorkers, channelizeConfig, false);
 
     // Instantiate compute pipeline and runner.
 
@@ -50,11 +71,13 @@ inline const Result ModeB(const Config& config) {
     // TODO rectify this: seems the CUDA Graph takes up a lot of memory when the fine-channel count is high
     //  on account of the transposition being a `for(i : A*F)` loop of memcpy2D calls. Consider a kernel instead,
     //  or having the detector module output ATPF seeing as it is not inplace anyway.
-    const auto deviceTransposition = filterbankOutput && false;
+    const auto deviceTransposition = filterbankOutput && true;
 
     typename Compute::Config computeConfig = {
-        .inputDimensions = reader.getStepOutputDims(),
-        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
+        .inputDimensions = channelizeRunner->getWorker().getOutputBuffer().dims(),
+        .accumulateRate = config.stepNumberOfTimeSamples,
+
+        .preBeamformerChannelizerRate = 1,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
@@ -94,7 +117,7 @@ inline const Result ModeB(const Config& config) {
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
             .reconstituteBatchedDimensions = true,
-            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
+            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
         };
 
         guppiWriterRunner = Runner<GuppiWriter>::New(1, writerConfig, false);
@@ -132,7 +155,7 @@ inline const Result ModeB(const Config& config) {
             .inputIsATPFNotAFTP = deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
             .transposeATPF = ! deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
             .reconstituteBatchedDimensions = true, 
-            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
+            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
         };
 
         filterbankWriterRunner = Runner<FilterbankWriter>::New(1, writerConfig, false);
@@ -156,23 +179,50 @@ inline const Result ModeB(const Config& config) {
 
     U64 stepCount = 0;
     U64 callbackStep = 0;
+    U64 workerId = 0;
 
     while (Plan::Loop()) {
         readerRunner->enqueue([&](auto& worker){
             // Check if next runner has free slot.
-            Plan::Available(computeRunner);
+            Plan::Available(channelizeRunner);
+
+            if (stepCount == reader.getNumberOfSteps()) {
+                BL_CHECK_THROW(Result::EXHAUSTED);
+            }
 
             // Read block of data.
             Plan::Compute(worker);
-
+            
             // Transfer output data from this pipeline to the next runner.
-            Plan::TransferOut(computeRunner, readerRunner,
-                              worker.getStepOutputJulianDate(),
-                              worker.getStepOutputDut1(),
-                              worker.getStepOutputFrequencyChannelOffset(),
-                              worker.getStepOutputBuffer());
+            Plan::Accumulate(channelizeRunner, readerRunner,
+                            worker.getStepOutputBuffer());
 
-            return stepCount++;
+            return ++stepCount;
+        });
+
+        channelizeRunner->enqueue([&](auto& worker) {
+            // Check if next runner has free slot.
+            Plan::Available(computeRunner);
+
+            // Try dequeue job from last runner. If unlucky, return.
+            Plan::Dequeue(readerRunner, &callbackStep, &workerId);
+
+            // Increment progress bar.
+            bar.set_progress(static_cast<float>(stepCount) /
+                    reader.getNumberOfSteps() * 100);
+
+            // Compute input data.
+            Plan::Compute(worker);
+
+            auto& readerWorker = readerRunner->getWorker(workerId);
+            // Concatenate output data inside search pipeline.
+            Plan::Accumulate(computeRunner, channelizeRunner,
+                             readerWorker.getStepOutputJulianDate(),
+                             readerWorker.getStepOutputDut1(),
+                             readerWorker.getStepOutputFrequencyChannelOffset(),
+                             worker.getOutputBuffer());
+
+            return callbackStep;
         });
 
         computeRunner->enqueue([&](auto& worker) {
@@ -185,11 +235,7 @@ inline const Result ModeB(const Config& config) {
             }
 
             // Try dequeue job from last runner. If unlucky, return.
-            Plan::Dequeue(readerRunner, &callbackStep);
-
-            // Increment progress bar.
-            bar.set_progress(static_cast<float>(stepCount) / 
-                    reader.getNumberOfSteps() * 100);
+            Plan::Dequeue(channelizeRunner, &callbackStep);
 
             // Compute input data. 
             Plan::Compute(worker);
@@ -220,7 +266,7 @@ inline const Result ModeB(const Config& config) {
 
             // Try to dequeue job from writer runner.
             if (guppiWriterRunner->dequeue(&callbackStep)) {
-                if ((callbackStep + 1) == reader.getNumberOfSteps()) {
+                if (callbackStep == reader.getNumberOfSteps()) {
                     break;
                 }
             }    
@@ -238,7 +284,7 @@ inline const Result ModeB(const Config& config) {
 
             // Try to dequeue job from writer runner.
             if (filterbankWriterRunner->dequeue(&callbackStep)) {
-                if ((callbackStep + 1) == reader.getNumberOfSteps()) {
+                if (callbackStep == reader.getNumberOfSteps()) {
                     break;
                 }
             }
@@ -248,6 +294,7 @@ inline const Result ModeB(const Config& config) {
     // Gracefully destroy runners. 
 
     readerRunner.reset();
+    channelizeRunner.reset();
     computeRunner.reset();
     if constexpr (std::is_same<OT, CF32>::value || std::is_same<OT, CF16>::value) {
         guppiWriterRunner.reset();
