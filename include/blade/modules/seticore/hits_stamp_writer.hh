@@ -7,6 +7,10 @@
 #include "blade/base.hh"
 #include "blade/module.hh"
 
+extern "C" {
+#include "radiointerferometryc99.h"
+}
+
 #include "dedoppler.h"
 #include "hit_file_writer.h"
 #include "stamp_extractor.h"

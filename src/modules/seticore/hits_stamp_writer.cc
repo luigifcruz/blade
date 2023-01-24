@@ -71,7 +71,7 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.setDec(this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
         stamp.setFch1(this->input.frequencyOfFirstInputChannelHz[0]*1e-6); // MHz
         stamp.setFoff(this->config.channelBandwidthHz*1e-6); // MHz
-        stamp.setTstart(this->config.julianDateStart); // TODO verify units
+        stamp.setTstart(calc_unix_sec_from_julian_date(this->config.julianDateStart)); // JD -> Unix
         stamp.setTsamp(this->config.channelTimespanS);
         stamp.setTelescopeId(this->config.telescopeId);
         stamp.setNumTimesteps(regionOfInterestDims.numberOfTimeSamples());
@@ -81,10 +81,30 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.initData(2 * regionOfInterest.size());
         auto data = stamp.getData();
 
-        for (int i = 0; i < (int) regionOfInterest.size(); ++i) {
-            const auto value = regionOfInterest.data()[i];
-            data.set(2 * i, value.real());
-            data.set(2 * i + 1, value.imag());
+        // AFTP -> TFPA
+        int aftp_index = 0;
+        const auto stamp_timeStride = regionOfInterest.size()*2/regionOfInterestDims.numberOfTimeSamples();
+        const auto stamp_frequencyStride = stamp_timeStride/regionOfInterestDims.numberOfFrequencyChannels();
+        const auto stamp_polarizationStride = stamp_frequencyStride/regionOfInterestDims.numberOfPolarizations();
+        const auto stamp_aspectStride = stamp_polarizationStride/regionOfInterestDims.numberOfAspects();
+
+        for (int a = 0; a < (int) regionOfInterestDims.numberOfAspects(); a++) {
+            for (int f = 0; f < (int) regionOfInterestDims.numberOfFrequencyChannels(); f++) {
+                for (int t = 0; t < (int) regionOfInterestDims.numberOfTimeSamples(); t++) {
+                    for (int p = 0; p < (int) regionOfInterestDims.numberOfPolarizations(); p++) {
+                        const auto tfpa_index = (
+                            t*stamp_timeStride
+                            + f*stamp_frequencyStride
+                            + p*stamp_polarizationStride
+                            + a*stamp_aspectStride
+                        );
+                        const auto value = regionOfInterest.data()[aftp_index];
+                        data.set(tfpa_index + 0, value.real());
+                        data.set(tfpa_index + 1, value.imag());
+                        aftp_index += 1;
+                    }
+                }
+            }
         }
 
         stamp.setCoarseChannel(top_hit.coarse_channel);
