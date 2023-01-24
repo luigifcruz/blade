@@ -118,17 +118,20 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     // Print configuration information.
+    const auto stepDims = getStepOutputBufferDims();
+    const auto totalDims = getTotalOutputBufferDims();
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
-    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBufferDims());
+    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", stepDims);
     BL_INFO("Stepping {} First", gr_iterate.iterate_time_first_not_frequency_first ? "Time Samples" : "Frequency Channels");
-    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
+    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", totalDims);
+    BL_INFO("Steps in Dimensions [A, F, T, P]: {}", totalDims/stepDims);
     BL_INFO("Input File Path: {}", config.filepath);
     
     // Allocate output buffers.
     BL_CHECK_THROW(output.stepDut1.resize({1}));
     BL_CHECK_THROW(output.stepJulianDate.resize({1}));
     BL_CHECK_THROW(output.stepFrequencyChannelOffset.resize({1}));
-    BL_CHECK_THROW(output.stepBuffer.resize(getStepOutputBufferDims()));
+    BL_CHECK_THROW(output.stepBuffer.resize(stepDims));
 }
 
 template<typename OT>
