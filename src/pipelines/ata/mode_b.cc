@@ -5,7 +5,7 @@
 namespace Blade::Pipelines::ATA {
 
 template<typename OT>
-ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), blockDut1({1}) {
+ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), blockDut1({1}), blockFrequencyChannelOffset({1}) {
     BL_DEBUG("Initializing ATA Pipeline Mode B.");
 
     BL_DEBUG("Allocating pipeline buffers.");
@@ -52,13 +52,16 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
         .arrayReferencePosition = config.phasorArrayReferencePosition,
         .boresightCoordinate = config.phasorBoresightCoordinate,
         .antennaPositions = config.phasorAntennaPositions,
-        .antennaCalibrations = config.phasorAntennaCalibrations,
+        .antennaCoefficients = config.phasorAntennaCoefficients,
         .beamCoordinates = config.phasorBeamCoordinates,
+
+        .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .blockSize = config.phasorBlockSize,
     }, {
         .blockJulianDate = this->blockJulianDate,
         .blockDut1 = this->blockDut1,
+        .blockFrequencyChannelOffset = this->blockFrequencyChannelOffset,
     });
 
     BL_DEBUG("Instantiating beamformer module.");
@@ -106,11 +109,13 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 template<typename OT>
 const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
                                    const Vector<Device::CPU, F64>& blockDut1,
+                                   const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
                                    const ArrayTensor<Device::CPU, CI8>& input,
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
     BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
     BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
+    BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
     BL_CHECK(Memory::Copy(this->input, input, stream));
 
     // Print dynamic arguments on first run.

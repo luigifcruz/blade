@@ -55,25 +55,32 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input)
         : Generic<OT>(config, input) {
     // Check configuration values.
-    const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
-    const auto& calibrationNumberOfChannels = config.antennaCalibrations.dims().numberOfFrequencyChannels();
+    const auto fineStepDims = this->getConfigCoefficientsDims();
+    const auto coarseStepDims = fineStepDims / ArrayDimensions({
+        .A = 1,
+        .F = this->config.preBeamformerChannelizerRate,
+        .T = 1,
+        .P = 1,
+    });
     
-    // TODO: [NEXT] Add multi-step support.
-    if (calibrationNumberOfChannels != dataNumberOfChannels) {
-        BL_FATAL("Number of frequency channels ({}) has to be equal "
-                 "to the antenna calibrations frequency channels ({}).",
-                 dataNumberOfChannels, calibrationNumberOfChannels);
+    // Calculate the number of frequency-channels in the coefficients,
+    // it infers the total number of observation coarse frequency-channels
+    const auto coefficientNumberOfFrequencyChannels = config.antennaCoefficients.size() / (config.numberOfAntennas * config.numberOfPolarizations);
+    
+    if (config.antennaCoefficients.size() % coarseStepDims.size() != 0) {
+        BL_FATAL("Number of antenna coefficients ({}) is not the expected size ({}), nor an integer multiple (on the frequency axis).", 
+                config.antennaCoefficients.size(), coarseStepDims);
         BL_CHECK_THROW(Result::ERROR);
-    
     }
-    this->numberOfFrequencySteps = calibrationNumberOfChannels / dataNumberOfChannels;
 
-    if (this->getConfigCalibrationDims() != config.antennaCalibrations.dims()) {
-        BL_FATAL("Dimensions of antenna calibrations {} doesn't match with the expected dimensions {}.", 
-                config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
-        BL_CHECK_THROW(Result::ERROR);
-    }
-    
+    this->antennaCoefficients.resize({
+        .A = config.numberOfAntennas,
+        .F = coefficientNumberOfFrequencyChannels,
+        .T = 1,
+        .P = config.numberOfPolarizations,
+    });
+    BL_CHECK_THROW(Memory::Copy(this->antennaCoefficients, config.antennaCoefficients));
+
     //  Resizing array to the required length.
     antennasXyz.resize(this->config.numberOfAntennas);
     boresightUvw.resize(this->config.numberOfAntennas);
@@ -96,14 +103,15 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
 
     // Print configuration values.
-    BL_INFO("Phasors Dimensions [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
+    BL_INFO("Coefficient Dimensions [A, F, T, P]: {}", this->antennaCoefficients.dims());
+    BL_INFO("Phasors Dimensions [B, A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
     BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
-    BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
 
 template<typename OT>
 const Result ATA<OT>::preprocess(const cudaStream_t& stream,
                                  const U64& currentComputeCount) {
+
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
     eraASTROM astrom;
@@ -172,7 +180,6 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
         }
     }
 
-    // TODO: Implement frequency channel iterator.
     for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         const U64 beamOffset = (b * 
                                 this->config.numberOfAntennas * 
@@ -180,8 +187,11 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
                                 this->config.numberOfPolarizations); 
 
         for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
-            const U64 antennaOffset = (a *
+            const U64 antennaPhasorOffset = (a *
                                        this->config.numberOfFrequencyChannels *
+                                       this->config.numberOfPolarizations);
+            const U64 antennaCoeffOffset = (a *
+                                       this->antennaCoefficients.dims().numberOfFrequencyChannels() *
                                        this->config.numberOfPolarizations);
 
             const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
@@ -189,25 +199,24 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
             const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
-                const U64 frequencyOffset = (f * this->config.numberOfPolarizations);
+                const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
+                const U64 frequencyCoeffOffset = ((f + this->input.blockFrequencyChannelOffset[0]) / this->config.preBeamformerChannelizerRate) * this->config.numberOfPolarizations;
 
-                const F64 freq = (f + this->config.frequencyStartIndex) * this->config.channelBandwidthHz;
+                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + this->input.blockFrequencyChannelOffset[0]) * this->config.channelBandwidthHz / this->config.preBeamformerChannelizerRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 
                 for (U64 p = 0; p < this->config.numberOfPolarizations; p++) {
                     const U64 polarizationOffset = p;
 
-                    const U64 calibrationIndex = antennaOffset + frequencyOffset + polarizationOffset; 
-                    const U64 phasorsIndex = beamOffset + calibrationIndex;
+                    const U64 coefficientIndex = antennaCoeffOffset + frequencyCoeffOffset + polarizationOffset;
+                    const U64 phasorsIndex = beamOffset + antennaPhasorOffset + frequencyPhasorOffset + polarizationOffset;
 
-                    this->output.phasors[phasorsIndex] = phasor * this->config.antennaCalibrations[calibrationIndex];
+                    this->output.phasors[phasorsIndex] = phasor * this->antennaCoefficients[coefficientIndex];
                 }
             }
         }
     }
-    
-    this->currentFrequencyStep = (this->currentFrequencyStep + 1) % this->numberOfFrequencySteps;
 
     return Result::SUCCESS;
 }

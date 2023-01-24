@@ -25,6 +25,7 @@ class BLADE_API Reader : public Module {
         U64 stepNumberOfFrequencyChannels;
         U64 stepNumberOfAspects;
 
+        BOOL iterate_time_first_not_frequency = true;
         U64 blockSize = 512;
     };
 
@@ -43,10 +44,17 @@ class BLADE_API Reader : public Module {
         ArrayTensor<Device::CPU, OT> stepBuffer;
         Vector<Device::CPU, F64> stepJulianDate;
         Vector<Device::CPU, F64> stepDut1;
+        Vector<Device::CPU, U64> stepFrequencyChannelOffset;
     };
 
     constexpr const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() const {
         return this->output.stepBuffer;
+    }
+
+    F64 getUnixDateOfLastReadBlock();
+
+    constexpr F64 getJulianDateOfLastReadBlock() {
+        return calc_julian_date_from_unix_sec(this->getUnixDateOfLastReadBlock());
     }
 
     constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {
@@ -55,6 +63,10 @@ class BLADE_API Reader : public Module {
 
     constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() const {
         return this->output.stepDut1;
+    }
+
+    constexpr const Vector<Device::CPU, U64>& getStepOutputFrequencyChannelOffset() const {
+        return this->output.stepFrequencyChannelOffset;
     }
 
     const ArrayDimensions getTotalOutputBufferDims() const {
@@ -76,8 +88,8 @@ class BLADE_API Reader : public Module {
     }
 
     const U64 getNumberOfSteps() {
-        return this->getTotalOutputBufferDims().size() / 
-               this->getStepOutputBufferDims().size();
+        return (this->getTotalOutputBufferDims() / 
+               this->getStepOutputBufferDims()).size();
     }
 
     // Constructor & Processing
@@ -87,10 +99,16 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous 
 
-    const F64 getTotalBandwidth() const;
+    const F64 getObservationBandwidth() const;
     const F64 getChannelBandwidth() const;
     const U64 getChannelStartIndex() const;
     const F64 getObservationFrequency() const;
+    const F64 getCenterFrequency() const;
+    const F64 getBandwidth() const;
+    const F64 getAzimuthAngle() const;
+    const F64 getZenithAngle() const;
+    const std::string getSourceName() const;
+    const std::string getTelescopeName() const;
 
  private:
     // Variables 
@@ -99,7 +117,7 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    I32 lastread_block_index = -1;
+    I32 lastread_block_index = 0;
     U64 lastread_aspect_index;
     U64 lastread_channel_index;
     U64 lastread_time_index;

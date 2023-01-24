@@ -6,6 +6,7 @@ ldr_lst = {}
 subdir('radiointerferometry')
 subdir('guppiraw')
 subdir('bfr5')
+subdir('filterbank')
 subdir('cli11')
 
 summary(ldr_lst, section: 'Dependency Loaders', bool_yn: true)

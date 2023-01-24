@@ -58,8 +58,9 @@ inline void init_ata_phasor(const py::module& m) {
                       const LLA&,
                       const RA_DEC&,
                       const std::vector<XYZ>&,
-                      const ArrayTensor<Device::CPU, CF64>&,
+                      const std::vector<CF64>&,
                       const std::vector<RA_DEC>&,
+                      const U64&,
                       const U64&>(), py::arg("number_of_antennas"),
                                      py::arg("number_of_frequency_channels"),
                                      py::arg("number_of_polarizations"),
@@ -71,14 +72,17 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("array_reference_position"),
                                      py::arg("boresight_coordinate"),
                                      py::arg("antenna_positions"),
-                                     py::arg("antenna_calibrations"),
+                                     py::arg("antenna_coefficients"),
                                      py::arg("beam_coordinates"),
+                                     py::arg("preBeamformerChannelizerRate"),
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(phasor, "Input")
         .def(py::init<const Vector<Device::CPU, F64>&,
-                      const Vector<Device::CPU, F64>&>(), py::arg("block_julian_date"),
-                                                          py::arg("block_dut1"));
+                      const Vector<Device::CPU, F64>&,
+                      const Vector<Device::CPU, U64>&>(), py::arg("block_julian_date"),
+                                                          py::arg("block_dut1"),
+                                                          py::arg("block_frequency_channel_offset"));
 
     phasor
         .def(py::init<const Class::Config&,
