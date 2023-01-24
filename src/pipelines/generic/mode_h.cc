@@ -40,15 +40,38 @@ ModeH<IT, OT>::ModeH(const Config& config)
         .buf = channelizer->getOutputBuffer(),
     });
 
-    BL_DEBUG("Instantiating detector module.");
-    this->connect(detector, {
-        .integrationSize = config.detectorIntegrationSize,
-        .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
+    if constexpr (std::is_same<OT, F32>::value) {
+        BL_DEBUG("Instantiating detector module.");
+        this->connect(detector, {
+            .integrationSize = config.detectorIntegrationSize,
+            .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
-        .blockSize = config.detectorBlockSize,
-    }, {
-        .buf = polarizer->getOutputBuffer(),
-    });
+            .blockSize = config.detectorBlockSize,
+        }, {
+            .buf = polarizer->getOutputBuffer(),
+        });
+    }
+}
+
+template<typename IT, typename OT>
+const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CPU, IT>& data,
+                                       const cudaStream_t& stream) {
+    const auto& width = (config.inputDimensions.numberOfTimeSamples() * config.inputDimensions.numberOfPolarizations()) * sizeof(IT);
+    const auto& height = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
+
+    BL_CHECK(
+        Memory::Copy2D(
+            this->input,
+            width * this->getAccumulatorNumberOfSteps(),
+            width * this->getCurrentAccumulatorStep(),
+            data,
+            width,
+            0,
+            width,
+            height, 
+            stream));
+
+    return Result::SUCCESS;
 }
 
 template<typename IT, typename OT>
@@ -71,6 +94,8 @@ const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data
 
     return Result::SUCCESS;
 }
+
+template class BLADE_API ModeH<CI8, CF32>;
 
 template class BLADE_API ModeH<CF16, F32>;
 template class BLADE_API ModeH<CF32, F32>;

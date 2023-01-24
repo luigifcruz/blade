@@ -46,13 +46,16 @@ enum class ModeId : uint8_t {
     MODE_B,
     MODE_H,
     MODE_BH,
+    MODE_BS,
 };
 
 inline std::unordered_map<std::string, ModeId> ModeMap = {
     {"MODE_B",     ModeId::MODE_B}, 
+    {"MODE_BS",    ModeId::MODE_BS}, 
     {"MODE_H",     ModeId::MODE_H}, 
     {"MODE_BH",    ModeId::MODE_BH}, 
     {"B",          ModeId::MODE_B}, 
+    {"BS",         ModeId::MODE_BS}, 
     {"H",          ModeId::MODE_H}, 
     {"BH",         ModeId::MODE_BH}, 
 };
@@ -62,7 +65,7 @@ typedef struct {
     TelescopeId telescope;
     std::string inputGuppiFile;
     std::string inputBfr5File;
-    std::string outputGuppiFile;
+    std::string outputFile;
     TypeId inputType;
     TypeId outputType;
     U64 numberOfWorkers;

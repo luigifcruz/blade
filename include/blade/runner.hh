@@ -86,6 +86,7 @@ class BLADE_API Runner {
             jobs.push_back({
                 .id = jobFunc(*workers[head]),
                 .worker = workers[head],
+                .workerId = head,
             });
         } catch (const Result& err) {
             // Print user friendly error and issue fatal error.
@@ -135,7 +136,7 @@ class BLADE_API Runner {
         return true;
     }
 
-    bool dequeue(U64* id) {
+    bool dequeue(U64* id, U64* workerId = nullptr) {
         // Return if there are no jobs.
         if (jobs.size() == 0) {
             return false;
@@ -157,6 +158,10 @@ class BLADE_API Runner {
             *id = job.id;
         }
 
+        if (workerId != nullptr) {
+            *workerId = job.workerId;
+        }
+
         jobs.pop_front();
 
         return true;
@@ -166,6 +171,7 @@ class BLADE_API Runner {
     struct Job {
         U64 id;
         std::unique_ptr<Pipeline>& worker;
+        U64 workerId;
     };
 
     U64 head = 0;

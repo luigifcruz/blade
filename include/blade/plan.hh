@@ -28,11 +28,7 @@ class BLADE_API Plan {
         auto& pipeline = runner->getNextWorker();
 
         // Check if pipeline is not full.
-        if (pipeline.accumulationComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
-        }
-
-        if (pipeline.computeComplete()) {
+        if (pipeline.accumulationComplete() && pipeline.computeComplete()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
 
@@ -42,9 +38,9 @@ class BLADE_API Plan {
         }
     } 
 
-    static void Dequeue(auto& runner, U64* id) {
+    static void Dequeue(auto& runner, U64* id, U64* workerId = nullptr) {
         // Dequeue job from runner.
-        if (!runner->dequeue(id)) {
+        if (!runner->dequeue(id, workerId)) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_DEQUEUE);
         }
     }
@@ -91,7 +87,7 @@ class BLADE_API Plan {
     // TransferIn is used to the copy data to a pipeline.
     template<typename... Args>
     static void TransferIn(auto& pipeline, Args&... transfers) {
-        // Check if destionation pipeline is synchronized.
+        // Check if destination pipeline is synchronized.
         if (!pipeline.isSynchronized()) {
             pipeline.synchronize();
         }
@@ -150,7 +146,7 @@ class BLADE_API Plan {
             BL_CHECK_THROW(Result::PLAN_ERROR_NO_ACCUMULATOR);
         }
 
-        // Check if destionation pipeline is synchronized.
+        // Check if destination pipeline is synchronized.
         if (!destinationPipeline.isSynchronized()) {
             destinationPipeline.synchronize();
         }

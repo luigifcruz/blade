@@ -98,11 +98,11 @@ const Result Pipeline::compute() {
             this->state = State::GRAPH;
             break;
         case State::IDLE:
-            BL_DEBUG("Caching kernels ahead of CUDA Graph instantiation.");
+            // BL_DEBUG("Caching kernels ahead of CUDA Graph instantiation.");
             for (auto& module : this->modules) {
                 BL_CHECK(module->process(this->stream));
             }
-            this->state = State::CACHED;
+            // this->state = State::CACHED;
             break;
         default:
             BL_FATAL("Internal error.");

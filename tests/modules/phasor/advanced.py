@@ -16,8 +16,9 @@ class Test(bl.Pipeline):
         bl.Pipeline.__init__(self)
         self.block_julian_date = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
         self.block_dut1 = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
+        self.block_frequency_channel_offset = bl.vector.cpu.u64.Vector(bl.vector.Dimensions(1))
         _config = phasor_config
-        _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
+        _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1, self.block_frequency_channel_offset)
         self.phasor = self.connect(_config, _input)
 
     def output_dims(self):
@@ -25,9 +26,11 @@ class Test(bl.Pipeline):
 
     def run(self, block_julian_date: float,
                   block_dut1: float,
+                  block_frequency_channel_offset: int,
                   phasors: bl.vector.cpu.cf32):
         self.block_julian_date[0] = block_julian_date
         self.block_dut1[0] = block_dut1
+        self.block_frequency_channel_offset[0] = block_frequency_channel_offset
         self.compute()
         self.copy(phasors, self.phasor.phasors())
         self.synchronize()
@@ -38,11 +41,9 @@ if __name__ == "__main__":
     # Blade Implementation
     #
 
-    cal_shape = (20, 192, 1, 2)
-    calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
-    calibration = np.array(calibration, dtype=np.complex128)
-    bl_calibration = bl.vector.cpu.cf64.ArrayTensor(bl.vector.ArrayDimensions(*cal_shape))
-    np.copyto(np.array(bl_calibration, copy=False), calibration.flatten())
+    cal_shape = (20, 192, 2)
+    coefficient = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
+    coefficient = np.array(coefficient, dtype=np.complex128)
 
     phase_center_pos_rad = [0.64169, 1.079896295]
     beam1_pos_rad        = [0.63722, 1.07552424]
@@ -90,11 +91,12 @@ if __name__ == "__main__":
             bl.XYZ(-2523898.1150373477, -4123456.314794732, 4147860.3045849088),    # 4j 
             bl.XYZ(-2523824.598229116, -4123527.93080514, 4147833.98936114),        # 5b
         ],
-        antenna_calibrations = bl_calibration,
+        antenna_coefficients = coefficient.flatten(),
         beam_coordinates = [
             bl.RA_DEC(*beam1_pos_rad),
             bl.RA_DEC(*beam2_pos_rad)
         ],
+        preBeamformerChannelizerRate = 1,
 
         block_size = 512
     )
@@ -103,7 +105,7 @@ if __name__ == "__main__":
 
     bl_output = bl.vector.cpu.cf32.PhasorTensor(mod.output_dims())
 
-    mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, bl_output)
+    mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, 0, bl_output)
 
     bl_phasors = np.array(bl_output, copy=False)
     bl_phasors = bl_phasors.reshape((2, 20, 192, 2))
@@ -224,13 +226,13 @@ if __name__ == "__main__":
                 obsnchan, channelBandwidthHz)
         py_phasors[0, i, :] *= get_fringe_rate(delay1, rfFrequencyHz,
                 totalBandwidthHz)
-        py_phasors[0, i, :] *= calibration[i, :, 0, 0]
+        py_phasors[0, i, :] *= coefficient[i, :, 0]
 
         py_phasors[1, i, :] = create_delay_phasors(delay2, frequencyStartIndex,
                 obsnchan, channelBandwidthHz)
         py_phasors[1, i, :] *= get_fringe_rate(delay2, rfFrequencyHz,
                 totalBandwidthHz)
-        py_phasors[1, i, :] *= calibration[i, :, 0, 0]
+        py_phasors[1, i, :] *= coefficient[i, :, 0]
 
     #
     # Compare Results

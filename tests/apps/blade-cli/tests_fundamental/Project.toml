@@ -1,0 +1,4 @@
+[deps]
+BeamformerRecipes = "947ddd50-af71-4e5f-8796-398fc6122734"
+Blio = "87855aa7-8b24-49b4-b316-97c011f78d17"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"

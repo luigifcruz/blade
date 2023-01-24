@@ -16,7 +16,7 @@ using namespace Blade;
 using namespace Blade::Pipelines::ATA;
 using namespace Blade::Pipelines::Generic;
 
-using TestPipelineB = ModeB<CF32>;
+using TestPipelineB = ModeB<CI8, CF32>;
 using TestPipelineH = ModeH<CF32, F32>;
 
 static struct {
@@ -40,6 +40,7 @@ static struct {
 
 static Vector<Device::CPU, F64> dummyJulianDate({1});
 static Vector<Device::CPU, F64> dummyDut1({1});
+static Vector<Device::CPU, U64> dummyFrequencyChannelOffset({1});
 
 bool blade_pin_memory(void* buffer, U64 size) {
     return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
@@ -57,6 +58,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
 
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
+    dummyFrequencyChannelOffset[0] = 0;
 
     State.RunnersInstances.B = Runner<TestPipelineB>::New(numberOfWorkers, {
         .inputDimensions = {
@@ -104,16 +106,17 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114},        // 5b
         },
-        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>({
+        .phasorAntennaCoefficients = std::vector<CF64>(ArrayDimensions({
             BLADE_ATA_MODE_BH_NANT,
             BLADE_ATA_MODE_BH_NCHAN * BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
             1,
             BLADE_ATA_MODE_BH_NPOL,
-        }),
+        }).size()),
         .phasorBeamCoordinates = {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
+        .phasorAntennaCoefficientChannelRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
     });
 
     State.RunnersInstances.H = Runner<TestPipelineH>::New(numberOfWorkers, {
@@ -200,6 +203,7 @@ void blade_ata_bh_compute_step() {
         Plan::TransferIn(worker, 
                          dummyJulianDate,
                          dummyDut1,
+                         dummyFrequencyChannelOffset,
                          input);
 
         // Compute input data.

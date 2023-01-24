@@ -14,11 +14,12 @@ extern "C" {
 using namespace Blade;
 using namespace Blade::Pipelines::ATA;
 
-using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
+using TestPipeline = ModeB<CI8, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
 static Vector<Device::CPU, F64> dummyJulianDate({1});
 static Vector<Device::CPU, F64> dummyDut1({1});
+static Vector<Device::CPU, U64> dummyFrequencyChannelOffset({1});
 
 bool blade_use_device(int device_id) {
     return SetCudaDevice(device_id) == Result::SUCCESS;
@@ -32,6 +33,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
 
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
+    dummyFrequencyChannelOffset[0] = 0;
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, {
         .inputDimensions = {
@@ -79,12 +81,12 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {-2523898.1150373477, -4123456.314794732, 4147860.3045849088},    // 4j 
             {-2523824.598229116, -4123527.93080514, 4147833.98936114}         // 5b
         },
-        .phasorAntennaCalibrations = ArrayTensor<Device::CPU, CF64>({
+        .phasorAntennaCoefficients = std::vector<CF64>(ArrayDimensions({
             BLADE_ATA_MODE_B_NANT,
             BLADE_ATA_MODE_B_NCHAN * BLADE_ATA_MODE_B_CHANNELIZER_RATE,
             1,
             BLADE_ATA_MODE_B_NPOL,
-        }),
+        }).size()),
         .phasorBeamCoordinates = {
             {0.63722, 1.07552424},
             {0.64169, 1.079896295},
@@ -95,6 +97,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
             {0.64169, 1.079896295},
             {0.64169, 1.079896295},
         },
+        .phasorAntennaCoefficientChannelRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
         .beamformerIncoherentBeam = BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM,
 
@@ -138,7 +141,7 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
                 worker.getOutputBuffer().dims());
 
         // Transfer input data from CPU memory to the worker.
-        Plan::TransferIn(worker, dummyJulianDate, dummyDut1, input);
+        Plan::TransferIn(worker, dummyJulianDate, dummyDut1, dummyFrequencyChannelOffset, input);
 
         // Compute block.
         Plan::Compute(worker);

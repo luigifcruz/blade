@@ -20,7 +20,6 @@ class BLADE_API Reader : public Module {
 
     struct Config {
         std::string filepath;
-        U64 channelizerRate;
 
         U64 blockSize = 512;
     };
@@ -41,25 +40,25 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous
 
-    // TODO: This is the data size, right?
-    const ArrayDimensions getTotalDims() const {
+    const PhasorDimensions getDims() const {
         return {
-            .A = this->bfr5.dim_info.nbeams * this->bfr5.dim_info.nants,
+            .B = this->bfr5.dim_info.nbeams,
+            .A = this->bfr5.dim_info.nants,
             .F = this->bfr5.dim_info.nchan,
             .T = this->bfr5.dim_info.ntimes,
             .P = this->bfr5.dim_info.npol,
         };
     }
 
-    constexpr const LLA getReferencePosition() const {
+    const LLA getReferencePosition() const {
         return {
-            .LON = this->bfr5.tel_info.longitude,
-            .LAT = this->bfr5.tel_info.latitude,
+            .LON = calc_rad_from_degree(this->bfr5.tel_info.longitude),
+            .LAT = calc_rad_from_degree(this->bfr5.tel_info.latitude),
             .ALT = this->bfr5.tel_info.altitude,
         };
     }
 
-    constexpr const RA_DEC getBoresightCoordinates() const {
+    constexpr const RA_DEC getPhaseCenterCoordinates() const {
         return {
             .RA = this->bfr5.obs_info.phase_center_ra,
             .DEC = this->bfr5.obs_info.phase_center_dec
@@ -74,9 +73,28 @@ class BLADE_API Reader : public Module {
         return this->beamCoordinates;
     }
 
-    constexpr const ArrayTensor<Device::CPU, CF64>& getAntennaCalibrations() const {
-        return this->antennaCalibrations;
+    constexpr const std::vector<std::string>& getBeamSourceNames() const {
+        return this->beamSourceNames;
     }
+
+    std::vector<F64> getBeamAntennaDelays() const {
+        return std::vector<F64>(this->bfr5.delay_info.delays, this->bfr5.delay_info.delays + this->bfr5.delay_info.delay_elements);
+    }
+
+    std::vector<F64> getDelayTimes() const {
+        return std::vector<F64>(this->bfr5.delay_info.time_array, this->bfr5.delay_info.time_array + this->bfr5.delay_info.time_array_elements);
+    }
+
+    const ArrayDimensions getAntennaCoefficientsDims() const {
+        return {
+            .A = this->bfr5.cal_info.cal_all_dims[2],
+            .F = this->bfr5.cal_info.cal_all_dims[0],
+            .T = 1,
+            .P = this->bfr5.cal_info.cal_all_dims[1],
+        };
+    }
+
+    std::vector<CF64> getAntennaCoefficients(const U64& numberOfFrequencyChannels = 0, const U64& frequencyChannelStartIndex = 0);
 
  private:
     // Variables
@@ -90,16 +108,7 @@ class BLADE_API Reader : public Module {
     // TODO: Update from vector to ArrayTensor. 
     std::vector<XYZ> antennaPositions;
     std::vector<RA_DEC> beamCoordinates;
-    ArrayTensor<Device::CPU, CF64> antennaCalibrations;
-
-    const ArrayDimensions getAntennaCalibrationsDims() const{
-        return {
-            .A = getTotalDims().numberOfAspects(),
-            .F = getTotalDims().numberOfFrequencyChannels(), // * config.channelizerRate,
-            .T = 1,
-            .P = getTotalDims().numberOfPolarizations(),
-        };
-    }
+    std::vector<std::string> beamSourceNames;
 };
 
 }  // namespace Blade::Modules

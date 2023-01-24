@@ -8,6 +8,7 @@
 
 #include "blade/modules/cast.hh"
 #include "blade/modules/channelizer.hh"
+#include "blade/modules/transposer.hh"
 #include "blade/modules/beamformer/ata.hh"
 #include "blade/modules/phasor/ata.hh"
 #include "blade/modules/polarizer.hh"
@@ -15,15 +16,14 @@
 
 namespace Blade::Pipelines::ATA {
 
-// TODO: Add input types.
-
-template<typename OT>
+template<typename IT, typename OT>
 class BLADE_API ModeB : public Pipeline {
  public:
     // Configuration 
 
     struct Config {
         ArrayDimensions inputDimensions;
+        U64 accumulateRate = 1;
 
         U64 preBeamformerChannelizerRate;
 
@@ -37,14 +37,17 @@ class BLADE_API ModeB : public Pipeline {
         LLA phasorArrayReferencePosition; 
         RA_DEC phasorBoresightCoordinate;
         std::vector<XYZ> phasorAntennaPositions;
-        ArrayTensor<Device::CPU, CF64> phasorAntennaCalibrations; 
+        std::vector<CF64> phasorAntennaCoefficients; 
         std::vector<RA_DEC> phasorBeamCoordinates;
+        U64 phasorAntennaCoefficientChannelRate;
 
         BOOL beamformerIncoherentBeam = false;
 
         BOOL detectorEnable = false;
         U64 detectorIntegrationSize;
         U64 detectorNumberOfOutputPolarizations;
+        BOOL detectorTransposedATPFOutput = false;
+        BOOL detectorTransposedATPFrevOutput = false;
 
         U64 castBlockSize = 512;
         U64 channelizerBlockSize = 512;
@@ -58,11 +61,36 @@ class BLADE_API ModeB : public Pipeline {
 
     const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
                             const Vector<Device::CPU, F64>& blockDut1,
-                            const ArrayTensor<Device::CPU, CI8>& input,
+                            const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
+                            const ArrayTensor<Device::CPU, IT>& input,
                             const cudaStream_t& stream);
 
-    constexpr const ArrayTensor<Device::CUDA, CI8>& getInputBuffer() const {
+    const Result accumulate(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
+                            const ArrayTensor<Device::CPU, IT>& data,
+                            const cudaStream_t& stream);
+
+    const Result accumulate(const Vector<Device::CPU, F64>& blockJulianDate,
+                            const Vector<Device::CPU, F64>& blockDut1,
+                            const Vector<Device::CPU, U64>& blockFrequencyChannelOffset,
+                            const ArrayTensor<Device::CUDA, IT>& data,
+                            const cudaStream_t& stream);
+
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
         return input;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getBlockJulianDate() const {
+        return blockJulianDate;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getBlockDut1() const {
+        return blockDut1;
+    }
+
+    constexpr const Vector<Device::CPU, U64>& getBlockFrequencyChannelOffset() const {
+        return blockFrequencyChannelOffset;
     }
 
     // Output 
@@ -72,7 +100,13 @@ class BLADE_API ModeB : public Pipeline {
             if constexpr (!std::is_same<OT, F32>::value) {
                 return outputCast->getOutputBuffer();
             } else {
-                return detector->getOutputBuffer();
+                if (config.detectorTransposedATPFrevOutput) {
+                    return transposerFReversed->getOutputBuffer();
+                } else if (config.detectorTransposedATPFOutput) {
+                    return transposer->getOutputBuffer();
+                } else {
+                    return detector->getOutputBuffer();
+                }
             }
         } else {
             if constexpr (!std::is_same<OT, CF32>::value) {
@@ -90,11 +124,12 @@ class BLADE_API ModeB : public Pipeline {
  private:
     const Config config;
 
-    ArrayTensor<Device::CUDA, CI8> input;
+    ArrayTensor<Device::CUDA, IT> input;
     Vector<Device::CPU, F64> blockJulianDate;
     Vector<Device::CPU, F64> blockDut1;
+    Vector<Device::CPU, U64> blockFrequencyChannelOffset;
 
-    using InputCast = typename Modules::Cast<CI8, CF32>;
+    using InputCast = typename Modules::Cast<IT, CF32>;
     std::shared_ptr<InputCast> inputCast;
 
     using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
@@ -112,10 +147,22 @@ class BLADE_API ModeB : public Pipeline {
     using Detector = typename Modules::Detector<CF32, F32>;
     std::shared_ptr<Detector> detector;
 
+    // Transposition for path with Detector enabling output to match Filterbank dimensionality (ATPF)
+    std::shared_ptr<Modules::Transposer<Device::CUDA, F32, ArrayDimensionOrder::AFTP, ArrayDimensionOrder::ATPFrev>> transposerFReversed;
+    std::shared_ptr<Modules::Transposer<Device::CUDA, F32, ArrayDimensionOrder::AFTP, ArrayDimensionOrder::ATPF>> transposer;
+
     // Output Cast for path without Detector (CF32).
     std::shared_ptr<Modules::Cast<CF32, OT>> complexOutputCast;
     // Output Cast for path with Detector (F32).
     std::shared_ptr<Modules::Cast<F32, OT>> outputCast;
+
+    constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
+        if constexpr (!std::is_same<IT, CF32>::value) {
+            return inputCast->getOutputBuffer();
+        } else {
+            return input;
+        }
+    }
 };
 
 }  // namespace Blade::Pipelines::ATA

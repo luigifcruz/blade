@@ -13,27 +13,27 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
         .filepath = config.inputGuppiFile,
         .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples, 
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+        .stepTimeSamplesFirstNotFrequencyChannels = config.stepTimeSamplesFirstNotFrequencyChannels,
     }, {});
 
     BL_DEBUG("Instantiating BFR5 file reader.");
     this->connect(bfr5, {
         .filepath = config.inputBfr5File,
-        .channelizerRate = config.channelizerRate,
     }, {});
 
     // Checking file and recipe bounds.
-    const auto bfr5Dims = bfr5->getTotalDims();
+    const auto bfr5Dims = bfr5->getDims();
     const auto guppiDims = guppi->getTotalOutputBufferDims();
 
-    if (guppiDims.numberOfAspects() != bfr5Dims.numberOfAspects()) {
-        BL_FATAL("Number of aspects from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
-                guppiDims.numberOfAspects(), bfr5Dims.numberOfAspects());
+    if (guppiDims.numberOfAspects() != bfr5Dims.numberOfAntennas()) {
+        BL_FATAL("Number of antennas from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
+                guppiDims.numberOfAspects(), bfr5Dims.numberOfAntennas());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    if (guppiDims.numberOfFrequencyChannels() != bfr5Dims.numberOfFrequencyChannels()) {
-        BL_FATAL("Number of frequency channels from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 
-                guppiDims.numberOfFrequencyChannels(), bfr5Dims.numberOfFrequencyChannels());
+    if (guppi->getChannelStartIndex() + guppiDims.numberOfFrequencyChannels() > bfr5Dims.numberOfFrequencyChannels()) {
+        BL_FATAL("Number of frequency channels from GUPPI RAW ({} + {}) and BFR5 ({}) files mismatch.", 
+                guppi->getChannelStartIndex(), guppiDims.numberOfFrequencyChannels(), bfr5Dims.numberOfFrequencyChannels());
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
