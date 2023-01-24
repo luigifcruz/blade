@@ -26,6 +26,8 @@ inline const Result ModeBS(const Config& config) {
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<F32>, Device::CPU, F32>;
     std::unique_ptr<Runner<FilterbankWriter>> filterbankWriterRunner;
 
+    ArrayDimensions stepTailIncrementDims = {.A=1, .F=1, .T=1, .P=1};
+
     // Instantiate reader pipeline and runner.
     // lock timesteps to channelizerRate, as channelization is fastest when there is only 1 output timestep
     //  (the config.stepNumberOfTimeSamples is accumulated for the Search input)
@@ -41,7 +43,10 @@ inline const Result ModeBS(const Config& config) {
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
+    
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
+    const auto readerStepOutputDims = reader.getStepOutputDims();
+    const auto readerStepsInDims = readerTotalOutputDims/readerStepOutputDims;
 
     // Instantiate channelize pipeline and runner.
 
@@ -61,6 +66,15 @@ inline const Result ModeBS(const Config& config) {
         .channelizerBlockSize = 512,
         .detectorBlockSize = 512,
     };
+    stepTailIncrementDims.T *= channelizeConfig.accumulateRate;
+    if (readerStepsInDims.T < stepTailIncrementDims.T) {
+        BL_FATAL("Reader cannot provide enough steps in Time for channelizer to gather {}!", channelizeConfig.accumulateRate);
+        return Result::ASSERTION_ERROR;
+    }
+    if (readerStepsInDims.T % stepTailIncrementDims.T != 0) {
+        BL_WARN("Reader does not provide a whole multiple of steps in Time for channelizer to gather {}.", channelizeConfig.accumulateRate);
+    }
+    BL_INFO("Channelizer gathers T={}.", channelizeConfig.accumulateRate);
 
     auto channelizeRunner = Runner<Channelize>::New(config.numberOfWorkers, channelizeConfig, false);
 
@@ -101,6 +115,15 @@ inline const Result ModeBS(const Config& config) {
         .beamformerBlockSize = config.stepNumberOfTimeSamples,
         .detectorBlockSize = 512,
     };
+    stepTailIncrementDims.T *= beamformConfig.accumulateRate;
+    if (readerStepsInDims.T < stepTailIncrementDims.T) {
+        BL_FATAL("Reader cannot provide enough steps in Time for beamformer to gather {}!", beamformConfig.accumulateRate);
+        return Result::ASSERTION_ERROR;
+    }
+    if (readerStepsInDims.T % stepTailIncrementDims.T != 0) {
+        BL_WARN("Reader does not provide a whole multiple of steps in Time for beamformer to gather {}.", beamformConfig.accumulateRate);
+    }
+    BL_INFO("Beamformer gathers T={}.", beamformConfig.accumulateRate);
 
     auto beamformRunner = Runner<Beamform>::New(config.numberOfWorkers, beamformConfig, false);
 
@@ -132,6 +155,7 @@ inline const Result ModeBS(const Config& config) {
         .searchChannelTimespanS = config.preBeamformerChannelizerRate / reader.getChannelBandwidth(),
         .searchOutputFilepathStem = config.outputFile,
     };
+    // searchConfig.accumulateRate;
 
     auto searchRunner = Runner<Search>::New(config.numberOfWorkers, searchConfig, false);
 
@@ -171,6 +195,16 @@ inline const Result ModeBS(const Config& config) {
             "The beamformer steps all time-samples at a time (-T = {} == {}), so the filterbank output is enabled.",
             config.stepNumberOfTimeSamples, readerTotalTimeSteps
         );
+        // stepTailIncrementDims.F *= writerConfig.accumulateRate;
+        // if (readerStepsInDims.F < stepTailIncrementDims.F) {
+        //     BL_FATAL("Reader cannot provide enough steps in Frequency for writer to gather {}!", writerConfig.accumulateRate);
+        //     return Result::ASSERTION_ERROR;
+        // }
+        // if (readerStepsInDims.F % stepTailIncrementDims.F != 0) {
+        //     BL_WARN("Reader does not provide a whole multiple of steps in Frequency for writer to gather {}.", writerConfig.accumulateRate);
+        // }
+        // BL_INFO("Writer gathers F={}.", writerConfig.accumulateRate);
+
         filterbankWriterRunner = Runner<FilterbankWriter>::New(1, writerConfig, false);
     } else {
         BL_INFO(
@@ -204,6 +238,10 @@ inline const Result ModeBS(const Config& config) {
     stepFrequencyChannelOffsetMap.reserve(config.numberOfWorkers);
 
     U64 stepCount = 0;
+    const U64 stepSearchIncrement = stepTailIncrementDims.size();
+    BL_DEBUG("Tail increments require {} steps ({}).", stepSearchIncrement, stepTailIncrementDims);
+    stepTailIncrementDims.F *= writerConfig.accumulateRate;
+    const U64 stepFilterbankIncrement = stepTailIncrementDims.size();
     U64 callbackStep = 0;
     U64 workerId = 0;
 
@@ -313,7 +351,7 @@ inline const Result ModeBS(const Config& config) {
 
         // Try to dequeue job from the final runner.
         if (searchRunner->dequeue(&callbackStep, &workerId)) {
-            if (callbackStep == reader.getNumberOfSteps()) {
+            if (callbackStep + stepSearchIncrement > reader.getNumberOfSteps()) {
                 searchComplete = true;
             }
         }
@@ -326,7 +364,7 @@ inline const Result ModeBS(const Config& config) {
                 stepDut1Map.erase(callbackStep);
                 stepFrequencyChannelOffsetMap.erase(callbackStep);
 
-                if (callbackStep == reader.getNumberOfSteps()) {
+                if (callbackStep + stepFilterbankIncrement > reader.getNumberOfSteps()) {
                     writeComplete = true;
                 }
             }

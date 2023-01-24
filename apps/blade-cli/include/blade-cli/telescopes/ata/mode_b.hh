@@ -26,6 +26,8 @@ inline const Result ModeB(const Config& config) {
     using FilterbankWriter = Pipelines::Generic::Accumulator<Modules::Filterbank::Writer<OT>, Device::CPU, OT>;
     std::unique_ptr<Runner<FilterbankWriter>> filterbankWriterRunner;
 
+    ArrayDimensions stepTailIncrementDims = {.A=1, .F=1, .T=1, .P=1};
+
     // Instantiate reader pipeline and runner.
 
     typename Reader::Config readerConfig = {
@@ -39,11 +41,13 @@ inline const Result ModeB(const Config& config) {
     const auto& reader = readerRunner->getWorker();
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
+    const auto readerStepOutputDims = reader.getStepOutputDims();
+    const auto readerStepsInDims = readerTotalOutputDims/readerStepOutputDims;
 
     // Instantiate channelize pipeline and runner.
 
     typename Channelize::Config channelizeConfig = {
-        .inputDimensions = reader.getStepOutputDims(),
+        .inputDimensions = readerStepOutputDims,
 
         .accumulateRate = 1,
 
@@ -57,6 +61,15 @@ inline const Result ModeB(const Config& config) {
         .channelizerBlockSize = 512,
         .detectorBlockSize = 512,
     };
+    stepTailIncrementDims.T *= channelizeConfig.accumulateRate;
+    if (readerStepsInDims.T < stepTailIncrementDims.T) {
+        BL_FATAL("Reader cannot provide enough steps in Time for channelizer to gather {}!", channelizeConfig.accumulateRate);
+        return Result::ASSERTION_ERROR;
+    }
+    if (readerStepsInDims.T % stepTailIncrementDims.T != 0) {
+        BL_WARN("Reader does not provide a whole multiple of steps in Time for channelizer to gather {}.", channelizeConfig.accumulateRate);
+    }
+    BL_INFO("Channelizer gathers T={}.", channelizeConfig.accumulateRate);
 
     auto channelizeRunner = Runner<Channelize>::New(config.numberOfWorkers, channelizeConfig, false);
 
@@ -105,6 +118,16 @@ inline const Result ModeB(const Config& config) {
         .beamformerBlockSize = timeRelatedBlockSize,
         .detectorBlockSize = 32,
     };
+    stepTailIncrementDims.T *= computeConfig.accumulateRate;
+    if (readerStepsInDims.T < stepTailIncrementDims.T) {
+        BL_FATAL("Reader cannot provide enough steps in Time for beamformer to gather {}!", computeConfig.accumulateRate);
+        return Result::ASSERTION_ERROR;
+    }
+    if (readerStepsInDims.T % stepTailIncrementDims.T != 0) {
+        BL_WARN("Reader does not provide a whole multiple of steps in Time for beamformer to gather {}.", computeConfig.accumulateRate);
+    }
+    BL_INFO("Beamformer gathers T={}.", computeConfig.accumulateRate);
+    
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
     
@@ -117,8 +140,17 @@ inline const Result ModeB(const Config& config) {
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
             .reconstituteBatchedDimensions = true,
-            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
+            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / readerStepOutputDims.numberOfFrequencyChannels(),
         };
+        stepTailIncrementDims.F *= writerConfig.accumulateRate;
+        if (readerStepsInDims.F < stepTailIncrementDims.F) {
+            BL_FATAL("Reader cannot provide enough steps in Frequency for writer to gather {}!", writerConfig.accumulateRate);
+            return Result::ASSERTION_ERROR;
+        }
+        if (readerStepsInDims.F % stepTailIncrementDims.F != 0) {
+            BL_WARN("Reader does not provide a whole multiple of steps in Frequency for writer to gather {}.", writerConfig.accumulateRate);
+        }
+        BL_INFO("Writer gathers F={}.", writerConfig.accumulateRate);
 
         guppiWriterRunner = Runner<GuppiWriter>::New(1, writerConfig, false);
         auto& writer = guppiWriterRunner->getWorker();
@@ -155,8 +187,17 @@ inline const Result ModeB(const Config& config) {
             .inputIsATPFNotAFTP = deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
             .transposeATPF = ! deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
             .reconstituteBatchedDimensions = true, 
-            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
+            .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / readerStepOutputDims.numberOfFrequencyChannels(),
         };
+        stepTailIncrementDims.F *= writerConfig.accumulateRate;
+        if (readerStepsInDims.F < stepTailIncrementDims.F) {
+            BL_FATAL("Reader cannot provide enough steps in Frequency for writer to gather {}!", writerConfig.accumulateRate);
+            return Result::ASSERTION_ERROR;
+        }
+        if (readerStepsInDims.F % stepTailIncrementDims.F != 0) {
+            BL_WARN("Reader does not provide a whole multiple of steps in Frequency for writer to gather {}.", writerConfig.accumulateRate);
+        }
+        BL_INFO("Writer gathers F={}.", writerConfig.accumulateRate);
 
         filterbankWriterRunner = Runner<FilterbankWriter>::New(1, writerConfig, false);
     }
@@ -178,6 +219,8 @@ inline const Result ModeB(const Config& config) {
     // Run main processing loop.
 
     U64 stepCount = 0;
+    const U64 stepTailIncrement = stepTailIncrementDims.size();
+    BL_DEBUG("Tail increments require {} steps ({}).", stepTailIncrement, stepTailIncrementDims);
     U64 callbackStep = 0;
     U64 workerId = 0;
 
@@ -250,6 +293,7 @@ inline const Result ModeB(const Config& config) {
                                 worker.getOutputBuffer());
             }
 
+            BL_DEBUG("Compute callbackStep: {}", callbackStep);
             return callbackStep;
         });
 
@@ -261,12 +305,14 @@ inline const Result ModeB(const Config& config) {
                 // If accumulation complete, write data to disk.
                 Plan::Compute(worker);
 
+                BL_DEBUG("Writer callbackStep: {}", callbackStep);
                 return callbackStep;
             });
 
             // Try to dequeue job from writer runner.
             if (guppiWriterRunner->dequeue(&callbackStep)) {
-                if (callbackStep == reader.getNumberOfSteps()) {
+                BL_DEBUG("callbackStep: {}/{} ({})", callbackStep, reader.getNumberOfSteps(), stepTailIncrement);
+                if (callbackStep + stepTailIncrement > reader.getNumberOfSteps()) {
                     break;
                 }
             }    
@@ -279,12 +325,14 @@ inline const Result ModeB(const Config& config) {
                 // If accumulation complete, write data to disk.
                 Plan::Compute(worker);
 
+                BL_DEBUG("Writer callbackStep: {}", callbackStep);
                 return callbackStep;
             });
 
             // Try to dequeue job from writer runner.
             if (filterbankWriterRunner->dequeue(&callbackStep)) {
-                if (callbackStep == reader.getNumberOfSteps()) {
+                BL_DEBUG("callbackStep: {}/{} ({})", callbackStep, reader.getNumberOfSteps(), stepTailIncrement);
+                if (callbackStep + stepTailIncrement > reader.getNumberOfSteps()) {
                     break;
                 }
             }
