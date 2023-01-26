@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <typeindex>
+#include <unordered_map>
 
 #include "blade/types.hh"
 #include "blade/logger.hh"

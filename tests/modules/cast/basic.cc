@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "blade/modules/cast.hh"
 #include "blade/pipeline.hh"
 #include "blade/memory/base.hh"
