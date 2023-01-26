@@ -23,6 +23,14 @@
 
 #define BL_LOG_HEAD_SEPR fmt::format(BL_LOG_HEAD_DECR, "| ")
 
+#ifndef BL_DISABLE_PRINT
+#define BL_DISABLE_PRINT() std::cout.setstate(std::ios_base::failbit);
+#endif
+
+#ifndef BL_ENABLE_PRINT
+#define BL_ENABLE_PRINT() std::cout.clear();
+#endif
+
 #if defined(BL_LOG_DOMAIN)
 #define BL_LOG_DOMAIN_STR fmt::format(BL_LOG_HEAD_DECR, "[{}] ", BL_LOG_DOMAIN)
 #else

@@ -41,14 +41,6 @@ static struct {
 static Vector<Device::CPU, F64> dummyJulianDate({1});
 static Vector<Device::CPU, F64> dummyDut1({1});
 
-bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
-}
-
-bool blade_use_device(int device_id) {
-    return SetCudaDevice(device_id) == Result::SUCCESS;
-}
-
 bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     if (State.RunnersInstances.B || State.RunnersInstances.H) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");

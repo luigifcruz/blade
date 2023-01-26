@@ -67,4 +67,6 @@ template class BLADE_API Cast<F32, F16>;
 template class BLADE_API Cast<F32, CF32>;
 template class BLADE_API Cast<F32, CF16>;
 
+template class BLADE_API Cast<CF32, CF32>;
+
 }  // namespace Blade::Modules

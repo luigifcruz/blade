@@ -1,9 +1,4 @@
 if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
-    test('channelizer', executable(
-        'blade-channelizer', 'advanced.cc',
-        dependencies: lib_blade_dep,
-    ), is_parallel: false, timeout: 0)
-
     if has_python
         test(
             'blade-channelize-hires-python',
