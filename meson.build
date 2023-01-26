@@ -35,6 +35,7 @@ lib_blade = library(
     include_directories: inc_lst,
     dependencies: dep_lst + static_dep_lst,
     gnu_symbol_visibility: 'hidden',
+    cuda_args: ['-dc'],
     install: true,
 )
 
