@@ -1,6 +1,6 @@
 #define BL_LOG_DOMAIN "M::CHANNELIZER"
 
-#include "blade/modules/channelizer.hh"
+#include "blade/modules/channelizer/base.hh"
 
 #include "channelizer.jit.hh"
 
@@ -78,6 +78,9 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
                       inembed, istride, idist,
                       onembed, ostride, odist,
                       CUFFT_C2C, batch);
+
+        // Install callbacks.
+        callback = std::make_unique<Internal::Callback>(plan);
 
         // Perform FFT shift before cuFFT.
         BL_CHECK_THROW(

@@ -8,7 +8,7 @@
 #endif
 
 #ifdef BLADE_MODULE_CHANNELIZER
-#include "blade/modules/channelizer.hh"
+#include "blade/modules/channelizer/base.hh"
 #endif
 
 #ifdef BLADE_MODULE_DETECTOR

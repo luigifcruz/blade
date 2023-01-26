@@ -1,4 +1,4 @@
-#include "blade/modules/channelizer.hh"
+#include "blade/modules/channelizer/base.hh"
 
 #include "./generic.hh"
 
