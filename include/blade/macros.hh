@@ -62,6 +62,16 @@ enum class Result : uint8_t {
 }
 #endif
 
+#ifndef BL_CUDA_CHECK_KERNEL_THROW
+#define BL_CUDA_CHECK_KERNEL_THROW(callback) { \
+    cudaError_t val; \
+    if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
+        auto err = cudaGetErrorString(val); \
+        throw callback(); \
+    } \
+}
+#endif
+
 #ifndef BL_CUDA_CHECK
 #define BL_CUDA_CHECK(x, callback) { \
     cudaError_t val = (x); \
