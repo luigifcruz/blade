@@ -7,11 +7,11 @@
 #include <string.h>
 
 #define BLADE_ATA_MODE_B_NANT 20
-#define BLADE_ATA_MODE_B_NBEAM 8
 #define BLADE_ATA_MODE_B_NCHAN 192
 #define BLADE_ATA_MODE_B_NTIME 8192
 #define BLADE_ATA_MODE_B_NPOL 2
-#define BLADE_ATA_MODE_B_CHANNELIZER_RATE 4 
+#define BLADE_ATA_MODE_B_NBEAM 2
+#define BLADE_ATA_MODE_B_CHANNELIZER_RATE 1 
 #define BLADE_ATA_MODE_B_ENABLE_INCOHERENT_BEAM true
 #define BLADE_ATA_MODE_B_DETECTOR_ENABLED true
 #define BLADE_ATA_MODE_B_DETECTOR_INTEGRATION 1
@@ -33,9 +33,6 @@
         #define BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T CF16
     #endif
 #endif
-
-bool blade_use_device(int device_id);
-bool blade_pin_memory(void* buffer, size_t size);
 
 bool blade_ata_b_initialize(size_t numberOfWorkers);
 size_t blade_ata_b_get_input_size();

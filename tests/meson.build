@@ -1,2 +1,1 @@
 subdir('modules')
-subdir('pipelines')

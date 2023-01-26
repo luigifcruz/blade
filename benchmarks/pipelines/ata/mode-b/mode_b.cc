@@ -20,10 +20,6 @@ static std::unique_ptr<Runner<TestPipeline>> runner;
 static Vector<Device::CPU, F64> dummyJulianDate({1});
 static Vector<Device::CPU, F64> dummyDut1({1});
 
-bool blade_use_device(int device_id) {
-    return SetCudaDevice(device_id) == Result::SUCCESS;
-}
-
 bool blade_ata_b_initialize(U64 numberOfWorkers) {
     if (runner) {
         BL_FATAL("Can't initialize because Blade Runner is already initialized.");
@@ -122,10 +118,6 @@ U64 blade_ata_b_get_input_size() {
 U64 blade_ata_b_get_output_size() {
     assert(runner);
     return runner->getWorker().getOutputBuffer().size();
-}
-
-bool blade_pin_memory(void* buffer, U64 size) {
-    return Memory::PageLock(Vector<Device::CPU, U8>(buffer, {size})) == Result::SUCCESS;
 }
 
 bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {

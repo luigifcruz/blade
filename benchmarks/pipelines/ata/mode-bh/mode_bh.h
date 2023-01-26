@@ -15,16 +15,12 @@
 #define BLADE_ATA_MODE_BH_ACCUMULATE_RATE 64
 #define BLADE_ATA_MODE_BH_INTEGRATION_SIZE 2
 #define BLADE_ATA_MODE_BH_INPUT_NCOMPLEX_BYTES 2
-#define BLADE_ATA_MODE_BH_ITERATIONS 512
 #define BLADE_ATA_MODE_BH_NUMBER_OF_WORKERS 2
 
 typedef bool (blade_input_buffer_fetch_cb)(void*, void**);
 typedef void (blade_input_buffer_ready_cb)(void*, const void*);
 typedef bool (blade_output_buffer_fetch_cb)(void*, void**);
 typedef void (blade_output_buffer_ready_cb)(void*, const void*);
-
-bool blade_use_device(int device_id);
-bool blade_pin_memory(void* buffer, size_t size);
 
 void blade_ata_bh_register_user_data(void* user_data);
 void blade_ata_bh_register_input_buffer_fetch_cb(blade_input_buffer_fetch_cb*  f);
