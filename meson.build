@@ -1,7 +1,7 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '0.7.7',
+    version: '0.7.8',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
@@ -12,8 +12,11 @@ project(
 cfg_lst = configuration_data()
 src_lst = []
 dep_lst = [
-    dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'cufft']),
+    dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'culibos']),
     dependency('fmt'),
+]
+static_dep_lst = [
+    dependency('cuda', version : '>=11', modules : ['cufft_static']),
 ]
 inc_lst = [
     include_directories('include'),
@@ -30,7 +33,7 @@ lib_blade = library(
     'blade',
     src_lst,
     include_directories: inc_lst,
-    dependencies: dep_lst,
+    dependencies: dep_lst + static_dep_lst,
     gnu_symbol_visibility: 'hidden',
     install: true,
 )
