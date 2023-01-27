@@ -60,7 +60,7 @@ inline const Result ModeB(const Config& config) {
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
-        .detectorNumberOfOutputPolarizations = 1,
+        .detectorKernel = DetectorKernel::AFTP_1pol,
 
         // TODO: Review this calculation.
         .castBlockSize = 32,
@@ -95,7 +95,7 @@ inline const Result ModeB(const Config& config) {
             .numberOfInputFrequencyChannelBatches = 1, // Accumulate pipeline set to reconstituteBatchedDimensions.
         },
         .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-        .transposeATPF = true,
+        .inputIsATPFNotAFTP = true,
         .reconstituteBatchedDimensions = true,
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / computeConfig.inputDimensions.numberOfFrequencyChannels(),
     };

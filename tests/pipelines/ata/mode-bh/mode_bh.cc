@@ -125,7 +125,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
         .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
 
         .detectorIntegrationSize = BLADE_ATA_MODE_BH_INTEGRATION_SIZE,
-        .detectorNumberOfOutputPolarizations = 1,
+        .detectorKernel = DetectorKernel::AFTP_1pol,
     });
 
     State.InputPointerMap.reserve(numberOfWorkers);

@@ -93,55 +93,22 @@ ModeB<IT, OT>::ModeB(const Config& config)
         BL_DEBUG("Instantiating detector module.");
         this->connect(detector, {
             .integrationSize = config.detectorIntegrationSize,
-            .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
+            .kernel = config.detectorKernel,
 
             .blockSize = config.detectorBlockSize,
         }, {
             .buf = beamformer->getOutputBuffer(),
         });
 
-        if (config.detectorTransposedATPFrevOutput) {
-            BL_DEBUG("Instantiating transposer module.");
-            this->connect(transposerFReversed, {
-            }, {
-                .buf = detector->getOutputBuffer(),
-            } );
-        }
-        else if (config.detectorTransposedATPFOutput) {
-            BL_DEBUG("Instantiating transposer module.");
-            this->connect(transposer, {
-            }, {
-                .buf = detector->getOutputBuffer(),
-            } );
-        }
-
         if constexpr (!std::is_same<OT, F32>::value) {
             BL_DEBUG("Instantiating output cast from F32 to {}.", TypeInfo<OT>::name);
-            if (config.detectorTransposedATPFrevOutput) {
-                this->connect(outputCast, {
-                    .blockSize = config.castBlockSize,
-                }, {
-                    .buf = transposerFReversed->getOutputBuffer(),
-                });
-            } else if (config.detectorTransposedATPFOutput) {
-                this->connect(outputCast, {
-                    .blockSize = config.castBlockSize,
-                }, {
-                    .buf = transposer->getOutputBuffer(),
-                });
-            } else {
-                this->connect(outputCast, {
-                    .blockSize = config.castBlockSize,
-                }, {
-                    .buf = detector->getOutputBuffer(),
-                });
-            }
+            this->connect(outputCast, {
+                .blockSize = config.castBlockSize,
+            }, {
+                .buf = detector->getOutputBuffer(),
+            });
         }
     } else {
-        if (config.detectorTransposedATPFrevOutput) {
-            BL_WARN("Transposition will not be enabled as the detector module is disabled.");
-        }
-
         if constexpr (!std::is_same<OT, CF32>::value) {
             BL_DEBUG("Instantiating output cast from CF32 to {}.", TypeInfo<OT>::name);
             this->connect(complexOutputCast, {

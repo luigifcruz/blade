@@ -58,8 +58,9 @@ inline const Result ModeBS(const Config& config) {
 
         .polarizerConvertToCircular = false,
 
+        // Detector is disabled if OT != F32|F16
         .detectorIntegrationSize = 1,
-        .detectorNumberOfOutputPolarizations = 1,
+        .detectorKernel = DetectorKernel::AFTP_4pol,
 
         .castBlockSize = 512,
         .polarizerBlockSize = 512,
@@ -105,8 +106,7 @@ inline const Result ModeBS(const Config& config) {
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
-        .detectorNumberOfOutputPolarizations = 1,
-        .detectorTransposedATPFOutput = true,
+        .detectorKernel = DetectorKernel::ATPF_1pol,
 
         // TODO: Review this calculation.
         .castBlockSize = 512,
@@ -183,7 +183,6 @@ inline const Result ModeBS(const Config& config) {
         },
         .inputDimensions = beamformRunner->getWorker().getOutputBuffer().dims(),
         .inputIsATPFNotAFTP = true, // ModeB.detectorTransposedATPFOutput is enabled
-        .transposeATPF = false, // ModeB.detectorTransposedATPFOutput is enabled
         .reconstituteBatchedDimensions = true,
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
     };

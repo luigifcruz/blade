@@ -42,12 +42,28 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
 
     // Configure kernel instantiation.
     std::string kernel_key;
-    switch (config.numberOfOutputPolarizations) {
-        case 4: kernel_key = "detector_4pol"; break;
-        case 1: kernel_key = "detector_1pol"; break;
+    switch (config.kernel) {
+        case DetectorKernel::AFTP_4pol:
+            kernel_key = "detector_4pol_AFTP";
+            break;
+        case DetectorKernel::AFTP_1pol:
+            kernel_key = "detector_1pol_AFTP";
+            break;
+        case DetectorKernel::ATPF_4pol:
+            kernel_key = "detector_4pol_ATPF";
+            break;
+        case DetectorKernel::ATPF_1pol:
+            kernel_key = "detector_1pol_ATPF";
+            break;
+        case DetectorKernel::ATPFrev_4pol:
+            kernel_key = "detector_4pol_ATPFrev";
+            break;
+        case DetectorKernel::ATPFrev_1pol:
+            kernel_key = "detector_1pol_ATPFrev";
+            break;
         default:
-            BL_FATAL("Number of output polarizations ({}) not supported.", 
-                config.numberOfOutputPolarizations);
+            BL_FATAL("Detector kernel enumeration ({}) not supported.", 
+                (int) config.kernel);
             BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -72,7 +88,9 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
             ),
             config.blockSize,
             // Kernel templates.
-            getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations(),
+            getInputBuffer().dims().numberOfAspects(),
+            getInputBuffer().dims().numberOfFrequencyChannels(),
+            getInputBuffer().dims().numberOfTimeSamples(),
             apparentIntegrationSize
         )
     );
@@ -88,7 +106,7 @@ Detector<IT, OT>::Detector(const Config& config, const Input& input)
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("Integration Size: {}", config.integrationSize);
-    BL_INFO("Number of Output Polarizations: {}", config.numberOfOutputPolarizations);
+    BL_INFO("Kernel operation: {}", DetectorKernelName(config.kernel));
 }
 
 template<typename IT, typename OT>

@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     detector_config = bl.Detector.Config(
         integration_size = TFACT,
-        number_of_output_polarizations = OUTPOLS,
+        kernel = bl.DetectorKernel.AFTP_1pol,
         
         block_size = 512
     )

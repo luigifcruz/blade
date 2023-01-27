@@ -26,7 +26,7 @@ class BLADE_API ModeH : public Pipeline {
         BOOL polarizerConvertToCircular = false;
 
         U64 detectorIntegrationSize;
-        U64 detectorNumberOfOutputPolarizations;
+        DetectorKernel detectorKernel;
 
         U64 castBlockSize = 512;
         U64 polarizerBlockSize = 512;

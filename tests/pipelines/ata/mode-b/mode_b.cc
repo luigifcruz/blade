@@ -103,7 +103,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
 
         .detectorEnable = BLADE_ATA_MODE_B_DETECTOR_ENABLED,
         .detectorIntegrationSize = BLADE_ATA_MODE_B_DETECTOR_INTEGRATION,
-        .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
+        .detectorKernel = BLADE_ATA_MODE_B_DETECTOR_POLS == 1 ? DetectorKernel::AFTP_1pol : DetectorKernel::AFTP_4pol,
     });
 
     return true;

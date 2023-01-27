@@ -128,9 +128,9 @@ inline void init_detector(const py::module& m) {
 
     py::class_<Class::Config>(detector, "Config")
         .def(py::init<const U64&,
-                      const U64&,
+                      const DetectorKernel&,
                       const U64&>(), py::arg("integration_size"),
-                                     py::arg("number_of_output_polarizations"),
+                                     py::arg("kernel"),
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(detector, "Input")

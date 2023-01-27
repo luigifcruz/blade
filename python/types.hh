@@ -1,6 +1,7 @@
 #include "base.hh"
 
 #include <blade/base.hh>
+#include <blade/modules/detector.hh>
 
 using namespace Blade;
 namespace py = pybind11;
@@ -11,6 +12,16 @@ inline void init_types_result(const py::module& m) {
         .value("ERROR", Result::ERROR)
         .value("CUDA_ERROR", Result::CUDA_ERROR)
         .value("ASSERTION_ERROR", Result::ASSERTION_ERROR);
+}
+
+inline void init_types_detector_kernel(const py::module& m) {
+    py::enum_<DetectorKernel>(m, "DetectorKernel")
+        .value("AFTP_1pol", DetectorKernel::AFTP_1pol)
+        .value("AFTP_4pol", DetectorKernel::AFTP_4pol)
+        .value("ATPF_1pol", DetectorKernel::ATPF_1pol)
+        .value("ATPF_4pol", DetectorKernel::ATPF_4pol)
+        .value("ATPFrev_1pol", DetectorKernel::ATPFrev_1pol)
+        .value("ATPFrev_4pol", DetectorKernel::ATPFrev_4pol);
 }
 
 inline void init_types_xyz(const py::module& m) {
@@ -59,6 +70,7 @@ inline void init_types_ha_dec(const py::module& m) {
 
 inline void init_types(const py::module& m) {
     init_types_result(m);
+    init_types_detector_kernel(m);
     init_types_xyz(m);
     init_types_uvw(m);
     init_types_lla(m);

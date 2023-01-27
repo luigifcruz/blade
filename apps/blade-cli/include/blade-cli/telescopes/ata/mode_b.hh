@@ -53,8 +53,9 @@ inline const Result ModeB(const Config& config) {
 
         .polarizerConvertToCircular = false,
 
+        // detector is enabled if OT == F32
         .detectorIntegrationSize = 1,
-        .detectorNumberOfOutputPolarizations = 2,
+        .detectorKernel = DetectorKernel::ATPF_4pol,
 
         .castBlockSize = 512,
         .polarizerBlockSize = 512,
@@ -80,12 +81,6 @@ inline const Result ModeB(const Config& config) {
 
     const auto filterbankOutput = config.outputType == TypeId::F16 || config.outputType == TypeId::F32;
 
-    // Device (CUDA) transposition is faster, but uses way too much CUDA memory.
-    // TODO rectify this: seems the CUDA Graph takes up a lot of memory when the fine-channel count is high
-    //  on account of the transposition being a `for(i : A*F)` loop of memcpy2D calls. Consider a kernel instead,
-    //  or having the detector module output ATPF seeing as it is not inplace anyway.
-    const auto deviceTransposition = filterbankOutput && true;
-
     typename Compute::Config computeConfig = {
         .inputDimensions = channelizeRunner->getWorker().getOutputBuffer().dims(),
         .accumulateRate = config.stepNumberOfTimeSamples,
@@ -108,15 +103,14 @@ inline const Result ModeB(const Config& config) {
 
         .detectorEnable = filterbankOutput,
         .detectorIntegrationSize = 1,
-        .detectorNumberOfOutputPolarizations = 1,
-        .detectorTransposedATPFrevOutput = deviceTransposition,
+        .detectorKernel = DetectorKernel::ATPFrev_1pol,
 
         // TODO: Review this calculation.
-        .castBlockSize = 32,
+        .castBlockSize = 512,
         .channelizerBlockSize = timeRelatedBlockSize,
-        .phasorBlockSize = 32,
+        .phasorBlockSize = 512,
         .beamformerBlockSize = timeRelatedBlockSize,
-        .detectorBlockSize = 32,
+        .detectorBlockSize = 512,
     };
     stepTailIncrementDims.T *= computeConfig.accumulateRate;
     if (readerStepsInDims.T < stepTailIncrementDims.T) {
@@ -184,8 +178,7 @@ inline const Result ModeB(const Config& config) {
                 .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
-            .inputIsATPFNotAFTP = deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
-            .transposeATPF = ! deviceTransposition, // ModeB.detectorTransposedATPFOutput is enabled
+            .inputIsATPFNotAFTP = true,
             .reconstituteBatchedDimensions = true, 
             .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / readerStepOutputDims.numberOfFrequencyChannels(),
         };
