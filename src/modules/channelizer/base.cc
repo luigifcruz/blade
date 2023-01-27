@@ -186,7 +186,7 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     if (config.rate != 4) {
         cufftSetStream(plan, stream);
 
-        cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+        cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
         cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
 
         if (config.rate == getInputBuffer().dims().numberOfTimeSamples()) {
@@ -203,6 +203,11 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     } else {
         BL_CHECK(runKernel("internal", stream, input.buf.data(), output.buf.data()));
     }
+
+    BL_CUDA_CHECK_KERNEL([&]{
+        BL_FATAL("Module failed to execute: {}", err);
+        return Result::CUDA_ERROR;
+    });
 
     return Result::SUCCESS;
 }
