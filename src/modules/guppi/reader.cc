@@ -103,8 +103,6 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
-    gr_iterate.iterate_time_first_not_frequency_first = this->config.stepTimeSamplesFirstNotFrequencyChannels;
-
     if (getBlockMeta(&gr_iterate)->piperblk == 0) {
         getBlockMeta(&gr_iterate)->piperblk = this->getDatashape()->n_time;
     }
@@ -122,7 +120,18 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     const auto totalDims = getTotalOutputBufferDims();
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
     BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", stepDims);
-    BL_INFO("Stepping {} First", gr_iterate.iterate_time_first_not_frequency_first ? "Time Samples" : "Frequency Channels");
+    if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep == 0) {
+        BL_INFO("Stepping Time Samples First");
+        gr_iterate.iterate_time_first_not_channel_first = true;
+    }
+    else if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep == 1) {
+        BL_INFO("Stepping Frequency Channels First");
+        gr_iterate.iterate_time_first_not_channel_first = false;
+    }
+    else {
+        BL_INFO("Stepping Frequency Channels after every {} steps in Time Samples", config.numberOfTimeSampleStepsBeforeFrequencyChannelStep);
+        gr_iterate.iterate_time_first_not_channel_first = true;
+    }
     BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", totalDims);
     BL_INFO("Steps in Dimensions [A, F, T, P]: {}", totalDims/stepDims);
     BL_INFO("Input File Path: {}", config.filepath);
@@ -132,6 +141,9 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_CHECK_THROW(output.stepJulianDate.resize({1}));
     BL_CHECK_THROW(output.stepFrequencyChannelOffset.resize({1}));
     BL_CHECK_THROW(output.stepBuffer.resize(stepDims));
+
+    output.stepJulianDate[0] = getJulianDateOfLastReadBlock();
+    BL_INFO("Starting Julian Date: {}", output.stepJulianDate[0]);
 }
 
 template<typename OT>
@@ -207,24 +219,9 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
         return Result::EXHAUSTED;
     }
 
-    this->lastread_block_index = gr_iterate.block_index;
-    this->lastread_aspect_index = gr_iterate.aspect_index;
-    this->lastread_channel_index = gr_iterate.chan_index;
-    this->lastread_time_index = gr_iterate.time_index;
-
-    // Query internal library Unix Date, converting to Julian Date.
-    const auto unixDate = this->getUnixDateOfLastReadBlock();
-    this->output.stepJulianDate[0] = calc_julian_date_from_unix_sec(unixDate);
-
-    // Query internal library DUT1 value.
-    this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
-
-    // Stow frequency-channel offset
-    this->output.stepFrequencyChannelOffset[0] = this->lastread_channel_index;
-
     // Run library internal read method.
-    const I64 bytes_read =
-        guppiraw_iterate_read(&this->gr_iterate,
+    const I64 bytes_read = 
+        guppiraw_iterate_peek(&this->gr_iterate,
                               this->getStepOutputBufferDims().numberOfTimeSamples(),
                               this->getStepOutputBufferDims().numberOfFrequencyChannels(),
                               this->getStepOutputBufferDims().numberOfAspects(),
@@ -233,6 +230,59 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     if (bytes_read <= 0) {
         BL_FATAL("File reader couldn't read bytes.");
         return Result::ERROR;
+    }
+
+    this->lastread_block_index = gr_iterate.block_index;
+    this->lastread_channel_index = gr_iterate.chan_index;
+    this->lastread_time_index = gr_iterate.time_index;
+
+    // Query internal library Unix Date, converting to Julian Date.
+    this->output.stepJulianDate[0] = this->getJulianDateOfLastReadBlock();
+
+    // Query internal library DUT1 value.
+    this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
+
+    // Stow frequency-channel offset
+    this->output.stepFrequencyChannelOffset[0] = this->lastread_channel_index;
+
+    
+    if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 1) {
+        gr_iterate.iterate_time_first_not_channel_first = true;
+
+        if (current_time_sample_step + 1 == config.numberOfTimeSampleStepsBeforeFrequencyChannelStep) {
+            // have to increment channel instead on occasion
+            gr_iterate.iterate_time_first_not_channel_first = false;
+        }
+    }
+
+    bool fastestDimensionExhausted = guppiraw_iterate_increment(&this->gr_iterate,
+                            this->getStepOutputBufferDims().numberOfTimeSamples(),
+                            this->getStepOutputBufferDims().numberOfFrequencyChannels(),
+                            this->getStepOutputBufferDims().numberOfAspects());
+
+    
+    if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 1) {
+        if (gr_iterate.iterate_time_first_not_channel_first) {
+            current_time_sample_step += 1;
+        }
+        else {
+            // just incremented channel instead
+            current_time_sample_step = 0;
+
+            if (fastestDimensionExhausted) {
+                // wrapped on channel increment, so incremented time too
+                // current time is checkpoint
+                checkpoint_block_index = gr_iterate.block_index;
+                checkpoint_time_index = gr_iterate.time_index;
+            }
+            else {
+                // incremented channel, without wrapping
+                // need to reset time to checkpoint for this
+                // new channel
+                guppiraw_iterate_set_time_index(&this->gr_iterate, checkpoint_block_index, checkpoint_time_index);
+            }
+        }
+        
     }
 
     return Result::SUCCESS;

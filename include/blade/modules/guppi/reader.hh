@@ -24,7 +24,7 @@ class BLADE_API Reader : public Module {
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
 
-        BOOL stepTimeSamplesFirstNotFrequencyChannels = false;
+        U64 numberOfTimeSampleStepsBeforeFrequencyChannelStep = 1;
         U64 blockSize = 512;
     };
 
@@ -116,10 +116,13 @@ class BLADE_API Reader : public Module {
     const Input input;
     Output output;
 
-    I32 lastread_block_index = 0;
-    U64 lastread_aspect_index;
-    U64 lastread_channel_index;
-    U64 lastread_time_index;
+    U64 lastread_channel_index = 0;
+    U64 lastread_block_index = 0;
+    U64 lastread_time_index = 0;
+
+    U64 current_time_sample_step = 0;
+    U64 checkpoint_block_index = 0;
+    U64 checkpoint_time_index = 0;
 
     guppiraw_iterate_info_t gr_iterate = {0};
 

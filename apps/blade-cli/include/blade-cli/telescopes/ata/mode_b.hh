@@ -35,6 +35,7 @@ inline const Result ModeB(const Config& config) {
         .inputBfr5File = config.inputBfr5File,
         .stepNumberOfTimeSamples = config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
+        .numberOfTimeSampleStepsBeforeFrequencyChannelStep = config.stepNumberOfTimeSamples,
     };
 
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);

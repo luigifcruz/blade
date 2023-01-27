@@ -20,7 +20,7 @@ class BLADE_API FileReader : public Pipeline {
 
         U64 stepNumberOfTimeSamples;
         U64 stepNumberOfFrequencyChannels;
-        BOOL stepTimeSamplesFirstNotFrequencyChannels = false;
+        U64 numberOfTimeSampleStepsBeforeFrequencyChannelStep = 1;
     };
 
     explicit FileReader(const Config& config);
