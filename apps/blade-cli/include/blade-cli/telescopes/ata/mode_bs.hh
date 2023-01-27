@@ -16,7 +16,7 @@ using namespace indicators;
 
 namespace Blade::CLI::Telescopes::ATA {
 
-template<typename IT>
+template<typename IT, typename OT>
 inline const Result ModeBS(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
@@ -187,29 +187,10 @@ inline const Result ModeBS(const Config& config) {
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / reader.getStepOutputDims().numberOfFrequencyChannels(),
     };
 
-    const auto readerTotalTimeSteps = readerTotalOutputDims.numberOfTimeSamples() / reader.getStepOutputDims().numberOfTimeSamples();
-    const auto filterbankOutputEnabled = readerTotalTimeSteps == config.stepNumberOfTimeSamples;
+    const auto filterbankOutputEnabled = std::is_same<OT, F32>::value;
     if (filterbankOutputEnabled) {
-        BL_INFO(
-            "The beamformer steps all time-samples at a time (-T = {} == {}), so the filterbank output is enabled.",
-            config.stepNumberOfTimeSamples, readerTotalTimeSteps
-        );
-        // stepTailIncrementDims.F *= writerConfig.accumulateRate;
-        // if (readerStepsInDims.F < stepTailIncrementDims.F) {
-        //     BL_FATAL("Reader cannot provide enough steps in Frequency for writer to gather {}!", writerConfig.accumulateRate);
-        //     return Result::ASSERTION_ERROR;
-        // }
-        // if (readerStepsInDims.F % stepTailIncrementDims.F != 0) {
-        //     BL_WARN("Reader does not provide a whole multiple of steps in Frequency for writer to gather {}.", writerConfig.accumulateRate);
-        // }
-        // BL_INFO("Writer gathers F={}.", writerConfig.accumulateRate);
-
+        BL_WARN("The filterbank output will only show the first step in time-samples!");
         filterbankWriterRunner = Runner<FilterbankWriter>::New(1, writerConfig, false);
-    } else {
-        BL_INFO(
-            "The beamformer does not step all time-samples at a time (-T = {} != {}), so the filterbank output will be disabled.",
-            config.stepNumberOfTimeSamples, readerTotalTimeSteps
-        );
     }
 
     indicators::ProgressBar bar{
@@ -263,6 +244,12 @@ inline const Result ModeBS(const Config& config) {
             Plan::Accumulate(channelizeRunner, readerRunner,
                             worker.getStepOutputBuffer());
 
+            if (stepCount % stepSearchIncrement == 0) {
+                const auto index = stepCount+1*stepSearchIncrement;
+                stepJulianDateMap.insert({index, worker.getStepOutputJulianDate()});
+                stepDut1Map.insert({index, worker.getStepOutputDut1()});
+                stepFrequencyChannelOffsetMap.insert({index, worker.getStepOutputFrequencyChannelOffset()});
+            }
             return ++stepCount;
         });
 
@@ -317,14 +304,9 @@ inline const Result ModeBS(const Config& config) {
         searchRunner->enqueue([&](auto& worker){
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(beamformRunner, &callbackStep, &workerId);
-            
-            auto& beamformWorker = beamformRunner->getWorker(workerId);
-            
-            stepJulianDateMap.insert({callbackStep, beamformWorker.getBlockJulianDate()});
-            stepDut1Map.insert({callbackStep, beamformWorker.getBlockDut1()});
-            stepFrequencyChannelOffsetMap.insert({callbackStep, beamformWorker.getBlockFrequencyChannelOffset()});
 
-            if (filterbankOutputEnabled) {
+            BL_DEBUG("stepJulianDate: {} vs {}", stepJulianDateMap[callbackStep][0], writerConfig.moduleConfig.julianDateStart);
+            if (filterbankOutputEnabled && stepJulianDateMap[callbackStep][0] == writerConfig.moduleConfig.julianDateStart) {
                 // write out the input to the searchRunner
                 filterbankWriterRunner->enqueue([&](auto& worker){
                     // If accumulation complete, write data to disk.
@@ -337,7 +319,7 @@ inline const Result ModeBS(const Config& config) {
             worker.setFrequencyOfFirstInputChannel(
                 reader.getCenterFrequency()
                 + (
-                    beamformWorker.getBlockFrequencyChannelOffset()[0]
+                    stepFrequencyChannelOffsetMap[callbackStep][0]
                     - readerTotalOutputDims.numberOfFrequencyChannels() / 2
                 ) * reader.getChannelBandwidth()
             );
