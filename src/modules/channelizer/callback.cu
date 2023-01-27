@@ -14,17 +14,11 @@ __device__ cufftComplex CB_ConvertInputC(void *dataIn, size_t offset, void *call
     return element;
 }
 
-__device__ cufftCallbackLoadC d_loadCallbackPtr = CB_ConvertInputC; 
+__managed__ __device__ cufftCallbackLoadC d_loadCallbackPtr = CB_ConvertInputC; 
 
 Callback::Callback(cufftHandle& plan) {
-    BL_CUDA_CHECK_THROW(cudaMemcpyFromSymbol(&h_loadCallbackPtr, 
-                                             d_loadCallbackPtr, 
-                                             sizeof(h_loadCallbackPtr)), [&]{
-        BL_FATAL("The allocation of an cuFFT callback failed: {}", err);
-    });
-
     BL_CUFFT_CHECK_THROW(cufftXtSetCallback(plan, 
-                                            (void**)&h_loadCallbackPtr, 
+                                            (void**)&d_loadCallbackPtr, 
                                             CUFFT_CB_LD_COMPLEX,
                                             0), [&]{
         BL_FATAL("The configuration of an cuFFT callback failed: {0:#x}", err);
