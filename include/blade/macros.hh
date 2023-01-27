@@ -94,6 +94,26 @@ enum class Result : uint8_t {
 }
 #endif
 
+#ifndef BL_CUFFT_CHECK
+#define BL_CUFFT_CHECK(x, callback) { \
+    cufftResult err = (x); \
+    if (err != CUFFT_SUCCESS) { \
+        callback(); \
+        return Result::CUDA_ERROR; \
+    } \
+}
+#endif
+
+#ifndef BL_CUFFT_CHECK_THROW
+#define BL_CUFFT_CHECK_THROW(x, callback) { \
+    cufftResult err = (x); \
+    if (err != CUFFT_SUCCESS) { \
+        callback(); \
+        throw Result::CUDA_ERROR; \
+    } \
+}
+#endif
+
 #ifndef BL_CHECK
 #define BL_CHECK(x) { \
     Result val = (x); \

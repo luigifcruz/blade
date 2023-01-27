@@ -23,14 +23,12 @@ Callback::Callback(cufftHandle& plan) {
         BL_FATAL("The allocation of an cuFFT callback failed: {}", err);
     });
 
-    cufftResult status = cufftXtSetCallback(plan, 
+    BL_CUFFT_CHECK_THROW(cufftXtSetCallback(plan, 
                                             (void**)&h_loadCallbackPtr, 
                                             CUFFT_CB_LD_COMPLEX,
-                                            0);
-    if (status != CUFFT_SUCCESS) {
-        BL_FATAL("The configuration of an cuFFT callback failed: {0:#x}", status);
-        BL_CHECK_THROW(Result::CUDA_ERROR);
-    }
+                                            0), [&]{
+        BL_FATAL("The configuration of an cuFFT callback failed: {0:#x}", err);
+    });
 
     BL_CUDA_CHECK_KERNEL_THROW([&]{
         BL_FATAL("Callbacks failed to install: {}", err);
