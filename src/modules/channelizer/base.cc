@@ -11,7 +11,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         : Module(channelizer_program),
           config(config),
           input(input),
-          pre_block(config.blockSize),
           post_block(config.blockSize) {
     // Check configuration values.
     if ((getInputBuffer().dims().numberOfTimeSamples() % config.rate) != 0) {
@@ -74,6 +73,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
         int batch = (getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) / config.rate; 
 
         // Create cuFFT plan.
+        cufftCreate(&plan);
         cufftPlanMany(&plan, rank, n, 
                       inembed, istride, idist,
                       onembed, ostride, odist,
@@ -81,25 +81,6 @@ Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
 
         // Install callbacks.
         callback = std::make_unique<Internal::Callback>(plan);
-
-        // Perform FFT shift before cuFFT.
-        BL_CHECK_THROW(
-            createKernel(
-                // Kernel name.
-                "pre",
-                // Kernel function key.
-                "shifter",
-                // Kernel grid & block size.
-                PadGridSize(
-                    getInputBuffer().size(), 
-                    config.blockSize
-                ), 
-                config.blockSize,
-                // Kernel templates.
-                getInputBuffer().size(),
-                getInputBuffer().dims().numberOfPolarizations()
-            )
-        );
 
         if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
             BL_WARN("Using a slow FFT implementation because channelization "
@@ -205,16 +186,14 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     if (config.rate != 4) {
         cufftSetStream(plan, stream);
 
-        BL_CHECK(runKernel("pre", stream, input.buf.data(), output.buf.data()));
+        cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+        cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
+
+        if (config.rate == getInputBuffer().dims().numberOfTimeSamples()) {
+            output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
+        }
 
         for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
-            cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
-            cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
-
-            if (config.rate == getInputBuffer().dims().numberOfTimeSamples()) {
-                output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
-            }
-
             cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD);
         }
 

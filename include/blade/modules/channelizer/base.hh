@@ -59,9 +59,6 @@ class BLADE_API Channelizer : public Module {
     const Input input;
     Output output;
 
-    std::string pre_kernel;
-    dim3 pre_grid, pre_block;
-
     std::string post_kernel;
     dim3 post_grid, post_block;
 
