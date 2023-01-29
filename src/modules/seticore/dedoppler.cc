@@ -71,7 +71,8 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
 
     BL_CHECK(Memory::Copy(this->buf, this->input.buf, stream));
 
-    const auto beamsToSearch = inputDims.numberOfAspects() - (this->config.lastBeamIsIncoherent ? 1 : 0);
+    const auto skipLastBeam = this->config.lastBeamIsIncoherent & (!this->config.searchIncoherentBeam);
+    const auto beamsToSearch = inputDims.numberOfAspects() - (skipLastBeam ? 1 : 0);
     BL_DEBUG("processing {} beams", beamsToSearch);
     for (U64 beam = 0; beam < beamsToSearch; beam++) {
         FilterbankBuffer filterbankBuffer = FilterbankBuffer(

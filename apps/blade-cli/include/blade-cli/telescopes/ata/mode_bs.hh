@@ -149,7 +149,8 @@ inline const Result ModeBS(const Config& config) {
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,
         .searchMaximumDriftRate = 10.0,
-        .searchSnrThreshold = 30.0,
+        .searchSnrThreshold = 50.0,
+        .searchIncoherentBeam = true,
 
         .searchChannelBandwidthHz = reader.getChannelBandwidth() / config.preBeamformerChannelizerRate,
         .searchChannelTimespanS = config.preBeamformerChannelizerRate / reader.getChannelBandwidth(),

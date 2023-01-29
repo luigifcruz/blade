@@ -26,6 +26,7 @@ ModeS<HT>::ModeS(const Config& config)
         .channelTimespanS = config.searchChannelTimespanS,
         .coarseChannelRate = config.inputCoarseChannelRatio,
         .lastBeamIsIncoherent = config.inputLastBeamIsIncoherent,
+        .searchIncoherentBeam = config.searchIncoherentBeam,
 
         // hits writer requirements -_-
         .filepathPrefix = config.searchOutputFilepathStem,

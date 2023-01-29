@@ -25,6 +25,7 @@ class BLADE_API Dedoppler : public Module {
         F64 channelTimespanS;
         U64 coarseChannelRate;
         BOOL lastBeamIsIncoherent = false;
+        BOOL searchIncoherentBeam = true;
 
         std::string filepathPrefix;
         U64 telescopeId;
