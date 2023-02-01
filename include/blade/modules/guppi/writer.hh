@@ -46,6 +46,12 @@ class BLADE_API Writer : public Module {
     struct Output {
     };
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::CONSUMER; 
+    }
+
     // Constructor & Processing
 
     explicit Writer(const Config& config, const Input& input);

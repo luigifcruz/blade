@@ -39,6 +39,13 @@ class BLADE_API Cast : public Module {
         return this->output.buf;
     }
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::CONSUMER |
+               MemoryTaint::PRODUCER;
+    }
+
     // Constructor & Processing
 
     explicit Cast(const Config& config, const Input& input);

@@ -45,6 +45,12 @@ class BLADE_API Polarizer : public Module {
         return this->output.buf;
     }
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::MODIFIER;
+    }
+
     // Constructor & Processing
 
     explicit Polarizer(const Config& config, const Input& input);
