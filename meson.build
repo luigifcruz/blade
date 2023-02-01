@@ -1,7 +1,7 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '0.7.8',
+    version: '0.8.0',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
