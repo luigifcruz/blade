@@ -125,6 +125,11 @@ inline const Result ModeBS(const Config& config) {
     }
     BL_INFO("Beamformer gathers T={}.", beamformConfig.accumulateRate);
 
+    std::vector<std::string> beamSourceNames = reader.getBeamSourceNames();
+    beamSourceNames.push_back("Incoherent");
+    std::vector<RA_DEC> beamCoordinates = reader.getBeamCoordinates();
+    beamCoordinates.push_back(reader.getPhaseCenterCoordinates());
+
     auto beamformRunner = Runner<Beamform>::New(config.numberOfWorkers, beamformConfig, false);
 
     // Instantiate search pipeline and runner.
@@ -143,8 +148,8 @@ inline const Result ModeBS(const Config& config) {
         .inputJulianDateStart = reader.getJulianDateOfLastReadBlock(),
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
         .inputLastBeamIsIncoherent = true,
-        .beamNames = reader.getBeamSourceNames(),
-        .beamCoordinates = reader.getBeamCoordinates(),
+        .beamNames = beamSourceNames,
+        .beamCoordinates = beamCoordinates,
 
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,
@@ -177,8 +182,8 @@ inline const Result ModeBS(const Config& config) {
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .sourceDataFilename = config.inputGuppiFile,
-            .beamNames = reader.getBeamSourceNames(),
-            .beamCoordinates = reader.getBeamCoordinates(),
+            .beamNames = beamSourceNames,
+            .beamCoordinates = beamCoordinates,
 
             .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
         },
