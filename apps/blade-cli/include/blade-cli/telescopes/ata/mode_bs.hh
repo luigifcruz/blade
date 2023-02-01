@@ -106,7 +106,7 @@ inline const Result ModeBS(const Config& config) {
 
         .detectorEnable = true,
         .detectorIntegrationSize = 1,
-        .detectorKernel = DetectorKernel::ATPF_1pol,
+        .detectorKernel = DetectorKernel::ATPFrev_1pol,
 
         // TODO: Review this calculation.
         .castBlockSize = 512,
@@ -152,7 +152,7 @@ inline const Result ModeBS(const Config& config) {
         .searchSnrThreshold = 50.0,
         .searchIncoherentBeam = true,
 
-        .searchChannelBandwidthHz = reader.getChannelBandwidth() / config.preBeamformerChannelizerRate,
+        .searchChannelBandwidthHz = -1*reader.getChannelBandwidth() / config.preBeamformerChannelizerRate, // Negated as frequencies are descending 
         .searchChannelTimespanS = config.preBeamformerChannelizerRate / reader.getChannelBandwidth(),
         .searchOutputFilepathStem = config.outputFile,
     };
@@ -170,15 +170,15 @@ inline const Result ModeBS(const Config& config) {
             .telescopeName = reader.getTelescopeName(),
             .baryCentric = 1,
             .pulsarCentric = 1,
-            .sourceCoordinate = reader.getPhaseCenterCoordinates(),
             .azimuthStart = reader.getAzimuthAngle(),
             .zenithStart = reader.getZenithAngle(),
             .centerFrequencyHz = reader.getCenterFrequency(),
-            .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are reversed
+            .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending 
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
-            .sourceName = reader.getSourceName(),
             .sourceDataFilename = config.inputGuppiFile,
+            .beamNames = reader.getBeamSourceNames(),
+            .beamCoordinates = reader.getBeamCoordinates(),
 
             .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
         },
@@ -247,6 +247,7 @@ inline const Result ModeBS(const Config& config) {
 
             if (stepCount % stepSearchIncrement == 0) {
                 const auto index = stepCount+1*stepSearchIncrement;
+                BL_DEBUG("Inserting {}", index);
                 stepJulianDateMap.insert({index, worker.getStepOutputJulianDate()});
                 stepDut1Map.insert({index, worker.getStepOutputDut1()});
                 stepFrequencyChannelOffsetMap.insert({index, worker.getStepOutputFrequencyChannelOffset()});

@@ -12,7 +12,23 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
           config(config),
           input(input) {
 
+
     const auto inputDims = this->input.buffer.dims();
+    if (config.beamNames.size() != inputDims.numberOfAspects()) {
+        BL_FATAL(
+            "Number of beam names does not match the number of beams: {} != {}",
+            config.beamNames.size(), inputDims.numberOfAspects()
+        );
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
+    if (config.beamCoordinates.size() != inputDims.numberOfAspects()) {
+        BL_FATAL(
+            "Number of beam co-ordinates does not match the number of beams: {} != {}",
+            config.beamCoordinates.size(), inputDims.numberOfAspects()
+        );
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
+
     this->fileDescriptors.resize(inputDims.numberOfAspects());
 
     this->filterbank_header.machine_id = this->config.machineId;
@@ -20,8 +36,6 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.data_type = 1;
     this->filterbank_header.barycentric = this->config.baryCentric;
     this->filterbank_header.pulsarcentric = this->config.pulsarCentric;
-    this->filterbank_header.src_raj = this->config.sourceCoordinate.RA * 12.0/BL_PHYSICAL_CONSTANT_PI; // from radians to hours
-    this->filterbank_header.src_dej = this->config.sourceCoordinate.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI;
     this->filterbank_header.az_start = this->config.azimuthStart;
     this->filterbank_header.za_start = this->config.zenithStart;
     this->filterbank_header.fch1 = 1e-6 * (this->config.centerFrequencyHz - this->config.bandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels()));
@@ -33,10 +47,14 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
     this->filterbank_header.tsamp = abs(1.0/(this->config.bandwidthHz / inputDims.numberOfFrequencyChannels())); // time always moves forward
     this->filterbank_header.nifs = this->config.numberOfIfChannels;
-    strncpy(this->filterbank_header.source_name, this->config.sourceName.c_str(), 80);
     strncpy(this->filterbank_header.rawdatafile, this->config.sourceDataFilename.c_str(), 80);
 
     this->openFilesWriteHeaders();
+
+    BL_DEBUG("Recorded Center Frequency: {}", this->config.centerFrequencyHz);
+    BL_DEBUG("Recorded Bandwidth: {}", this->config.bandwidthHz);
+    BL_DEBUG("Fch1: {}", this->filterbank_header.fch1);
+    BL_DEBUG("Fch center: {}", this->filterbank_header.fch1 + this->filterbank_header.foff*this->filterbank_header.nchans/2);
 
     // Print configuration buffers.
     BL_INFO("Output File Path: {}", config.filepath);
@@ -55,6 +73,10 @@ void Writer<InputType>::openFilesWriteHeaders() {
             BL_CHECK_THROW(Result::ERROR);
         }
         this->filterbank_header.ibeam = i;
+
+        this->filterbank_header.src_raj = this->config.beamCoordinates[i].RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // from radians to hours
+        this->filterbank_header.src_dej = this->config.beamCoordinates[i].DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI;
+        strncpy(this->filterbank_header.source_name, this->config.beamNames[i].c_str(), 80);
 
         filterbank_fd_write_header(this->fileDescriptors[i], &this->filterbank_header);
     }

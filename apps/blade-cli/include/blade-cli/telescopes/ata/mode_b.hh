@@ -166,15 +166,15 @@ inline const Result ModeB(const Config& config) {
                 .telescopeName = reader.getTelescopeName(),
                 .baryCentric = 1,
                 .pulsarCentric = 1,
-                .sourceCoordinate = reader.getPhaseCenterCoordinates(),
                 .azimuthStart = reader.getAzimuthAngle(),
                 .zenithStart = reader.getZenithAngle(),
                 .centerFrequencyHz = reader.getCenterFrequency(),
-                .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are reversed
+                .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
-                .sourceName = reader.getSourceName(),
                 .sourceDataFilename = config.inputGuppiFile,
+                .beamNames = reader.getBeamSourceNames(),
+                .beamCoordinates = reader.getBeamCoordinates(),
 
                 .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
             },

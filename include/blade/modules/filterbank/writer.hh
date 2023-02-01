@@ -28,15 +28,15 @@ class BLADE_API Writer : public Module {
         std::string telescopeName;
         int baryCentric;
         int pulsarCentric;
-        RA_DEC sourceCoordinate;
         double azimuthStart;
         double zenithStart;
         double centerFrequencyHz;
         double bandwidthHz;
         double julianDateStart;
         int numberOfIfChannels;
-        std::string sourceName;
         std::string sourceDataFilename;
+        std::vector<std::string> beamNames;
+        std::vector<RA_DEC> beamCoordinates;
 
         U64 numberOfInputFrequencyChannelBatches = 1;
         U64 blockSize = 512;
