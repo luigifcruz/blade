@@ -37,7 +37,7 @@ inline const Result ModeBS(const Config& config) {
         .inputBfr5File = config.inputBfr5File,
         .stepNumberOfTimeSamples = config.preBeamformerChannelizerRate,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
-        .numberOfTimeSampleStepsBeforeFrequencyChannelStep = 0, // exhaust time before channels
+        .numberOfTimeSampleStepsBeforeFrequencyChannelStep = config.stepNumberOfTimeSamples,
     };
 
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
@@ -228,6 +228,7 @@ inline const Result ModeBS(const Config& config) {
     BL_DEBUG("Tail increments require {} steps ({}).", stepSearchIncrement, stepTailIncrementDims);
     stepTailIncrementDims.F *= writerConfig.accumulateRate;
     const U64 stepFilterbankIncrement = stepTailIncrementDims.size();
+    BL_DEBUG("Filterbank steps {}.", stepFilterbankIncrement);
     U64 callbackStep = 0;
     U64 workerId = 0;
 
@@ -300,7 +301,8 @@ inline const Result ModeBS(const Config& config) {
                              worker.getOutputBuffer(),
                              worker.getInputBuffer(),
                              worker.getBlockFrequencyChannelOffset());
-            if (filterbankOutputEnabled && worker.getBlockJulianDate()[0] == writerConfig.moduleConfig.julianDateStart) {
+
+            if (filterbankOutputEnabled && stepJulianDateMap[callbackStep][0] == writerConfig.moduleConfig.julianDateStart) {
                 Plan::Accumulate(filterbankWriterRunner, beamformRunner,
                                 worker.getOutputBuffer());
             }
@@ -312,7 +314,6 @@ inline const Result ModeBS(const Config& config) {
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(beamformRunner, &callbackStep, &workerId);
 
-            BL_DEBUG("stepJulianDate: {} vs {}", stepJulianDateMap[callbackStep][0], writerConfig.moduleConfig.julianDateStart);
             if (filterbankOutputEnabled && stepJulianDateMap[callbackStep][0] == writerConfig.moduleConfig.julianDateStart) {
                 // write out the input to the searchRunner
                 filterbankWriterRunner->enqueue([&](auto& worker){
