@@ -21,6 +21,10 @@ class Module {
         : cache(100, *program) {};
     virtual ~Module() = default;
 
+    virtual constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::NONE; 
+    }
+
     virtual constexpr const Result preprocess(const cudaStream_t& stream, 
                                               const U64& currentComputeCount) {
         return Result::SUCCESS;

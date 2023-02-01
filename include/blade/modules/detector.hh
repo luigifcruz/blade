@@ -44,6 +44,13 @@ class BLADE_API Detector : public Module {
         return this->output.buf;
     }
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::CONSUMER | 
+               MemoryTaint::PRODUCER;
+    }
+
     // Constructor & Processing
 
     explicit Detector(const Config& config, const Input& input);
