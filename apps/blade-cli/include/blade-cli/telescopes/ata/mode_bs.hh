@@ -300,7 +300,7 @@ inline const Result ModeBS(const Config& config) {
                              worker.getOutputBuffer(),
                              worker.getInputBuffer(),
                              worker.getBlockFrequencyChannelOffset());
-            if (filterbankOutputEnabled) {
+            if (filterbankOutputEnabled && worker.getBlockJulianDate()[0] == writerConfig.moduleConfig.julianDateStart) {
                 Plan::Accumulate(filterbankWriterRunner, beamformRunner,
                                 worker.getOutputBuffer());
             }
