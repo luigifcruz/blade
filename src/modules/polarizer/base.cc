@@ -34,6 +34,15 @@ Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
         )
     );
 
+    if constexpr (!std::is_same<IT, OT>::value) {
+        BL_FATAL("This module requires the type of the input "
+                 "({}) and output ({}) to be the same.",
+                 TypeInfo<IT>::name, TypeInfo<OT>::name); 
+        BL_INFO("Contact the maintainer if this"
+                "functionality is required.");
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
     // Link output buffers.
     if (config.mode == Mode::BYPASS) {
         BL_INFO("Bypass: Enabled");
