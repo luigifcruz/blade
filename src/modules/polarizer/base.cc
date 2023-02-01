@@ -34,13 +34,11 @@ Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
         )
     );
 
-    // Allocate output buffers.
+    // Link output buffers.
     if (config.mode == Mode::BYPASS) {
         BL_INFO("Bypass: Enabled");
-        BL_CHECK_THROW(output.buf.link(input.buf));
-    } else {
-        BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
     }
+    BL_CHECK_THROW(output.buf.link(input.buf));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
