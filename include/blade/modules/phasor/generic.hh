@@ -65,6 +65,13 @@ class BLADE_API Generic : public Module {
         return this->output.phasors;
     } 
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::CONSUMER |
+               MemoryTaint::PRODUCER; 
+    }
+
     // Constructor & Processing
 
     explicit Generic(const Config& config, const Input& input);

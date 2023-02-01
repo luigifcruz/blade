@@ -80,6 +80,12 @@ class BLADE_API Reader : public Module {
                this->getStepOutputBufferDims().size();
     }
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::PRODUCER; 
+    }
+
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input);

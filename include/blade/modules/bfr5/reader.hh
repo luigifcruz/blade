@@ -35,6 +35,12 @@ class BLADE_API Reader : public Module {
     struct Output {
     };
 
+    // Taint Registers
+
+    constexpr const MemoryTaint getMemoryTaint() {
+        return MemoryTaint::NONE; 
+    }
+
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input);
