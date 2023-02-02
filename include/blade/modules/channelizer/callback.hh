@@ -5,7 +5,6 @@
 #include <cufft.h>
 #include <cufftXt.h>
 
-#include "blade/memory/types.hh"
 #include "blade/logger.hh"
 #include "blade/macros.hh"
 
@@ -14,12 +13,12 @@ namespace Internal {
 
 class Callback {
  public:
-    Callback(cufftHandle& plan, const U64& numberOfPolarizations);
-    ~Callback();
+   Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations);
+   ~Callback();
 
  private:
-    cufftCallbackLoadC h_loadCallbackPtr;
-    U64* callerInfo;
+   cufftCallbackLoadC h_loadCallbackPtr;
+   uint64_t* callerInfo;
 };
 
 }  // namespace Internal

@@ -30,7 +30,7 @@ __device__ cufftComplex CB_ConvertInputC_1POL(void *dataIn, size_t offset, void 
 __managed__ __device__ cufftCallbackLoadC d_1POL_loadCallbackPtr = CB_ConvertInputC_1POL; 
 
 __device__ cufftComplex CB_ConvertInputC(void *dataIn, size_t offset, void *callerInfo, void *sharedPtr) {
-    const auto& inverseStride = static_cast<U64*>(callerInfo)[0];
+    const auto& inverseStride = static_cast<uint64_t*>(callerInfo)[0];
     auto element = static_cast<cufftComplex*>(dataIn)[offset];
 
     if ((offset % inverseStride) != 0){
@@ -43,7 +43,7 @@ __device__ cufftComplex CB_ConvertInputC(void *dataIn, size_t offset, void *call
 
 __managed__ __device__ cufftCallbackLoadC d_loadCallbackPtr = CB_ConvertInputC; 
 
-Callback::Callback(cufftHandle& plan, const U64& numberOfPolarizations) {
+Callback::Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations) {
     void** callerInfoPtr = nullptr;
     void** callbackPointer = nullptr;
 
@@ -52,10 +52,10 @@ Callback::Callback(cufftHandle& plan, const U64& numberOfPolarizations) {
     } else if (numberOfPolarizations == 2) {
         callbackPointer = (void**)&d_2POL_loadCallbackPtr;
     } else {
-        BL_CUDA_CHECK_THROW(cudaMallocManaged(&callerInfo, sizeof(U64)), [&]{
+        BL_CUDA_CHECK_THROW(cudaMallocManaged(&callerInfo, sizeof(uint64_t)), [&]{
             BL_FATAL("Can't allocate CUDA memory: {}", err);
         });
-        this->callerInfo[0] = static_cast<U64>(numberOfPolarizations) * 2;
+        this->callerInfo[0] = static_cast<uint64_t>(numberOfPolarizations) * 2;
 
         callerInfoPtr = (void**)&callerInfo;
         callbackPointer = (void**)&d_loadCallbackPtr;
