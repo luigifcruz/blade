@@ -13,7 +13,7 @@ enum class MemoryTaint : uint8_t {
     MODIFIER = 1 << 2,
 };
 
-inline const MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
+inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
     return static_cast<MemoryTaint>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
 }
 
