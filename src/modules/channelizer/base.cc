@@ -32,152 +32,63 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
         throw Result::ERROR;
     }
 
-    // Allocate output buffer or link input with output.
-    if (config.rate == 1) {
-        BL_CHECK_THROW(output.buf.link(input.buf));
-    } else {
-        BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
-    }
+    // Link output buffer or link input with output.
+    BL_CHECK_THROW(output.buf.link(input.buf, getOutputBufferDims()));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
     BL_INFO("FFT Size: {}", config.rate);
+    BL_INFO("FFT Backend: cuFFT Callbacks");
 
+    // Check FFT rate.
     if (config.rate == 1) {
-        BL_INFO("FFT Backend: Bypass");
         return;
     }
 
-    // Configure FFT chain.
-    if (config.rate != 4) {
-        BL_INFO("FFT Backend: cuFFT");
-
-        // Setup cuFFT stream.
-        cufftSetStream(plan, stream);
-
-        // FFT dimension (1D, 2D, ...).
-        int rank = 1;
-
-        // FFT size for each dimension.
-        int n[] = { static_cast<int>(config.rate) }; 
-
-        // Distance between successive input element and output element.
-        int istride = getInputBuffer().dims().numberOfPolarizations();
-        int ostride = getInputBuffer().dims().numberOfPolarizations();
-
-        // Distance between input batches and output batches.
-        int idist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
-        int odist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
-
-        // Input size with pitch, this is ignored for 1D tansformations.
-        int inembed[] = { 0 }; 
-        int onembed[] = { 0 };
-
-        // Number of batched FFTs.
-        int batch = (getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) / config.rate; 
-
-        // Create cuFFT plan.
-        cufftCreate(&plan);
-        cufftPlanMany(&plan, rank, n, 
-                      inembed, istride, idist,
-                      onembed, ostride, odist,
-                      CUFFT_C2C, batch);
-
-        // Install callbacks.
-        callback = std::make_unique<Internal::Callback>(plan);
-
-        if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
-            BL_WARN("Using a slow FFT implementation because channelization "
-                    "rate is different than number of time samples.");
-
-            BL_CHECK_THROW(buffer.resize(getInputBuffer().dims()));
-            BL_CHECK_THROW(indices.resize(getInputBuffer().dims()));
-
-            // Generate post-FFT indices.
-            // This really should be calculated on the GPU, 
-            // but this is faster to write and it probably
-            // won't be used much. Please rewrite this if
-            // used regurlarly.
-            U64 i = 0;
-            U64 numberOfAspects = getInputBuffer().dims().numberOfAspects();
-            U64 numberOfFrequencyChannels = getInputBuffer().dims().numberOfFrequencyChannels();
-            U64 numberOfTimeSamples = getInputBuffer().dims().numberOfTimeSamples();
-            U64 numberOfPolarizations = getInputBuffer().dims().numberOfPolarizations();
-
-            for (U64 a = 0; a < numberOfAspects; a++) {
-                const U64 a_off = a * 
-                                  numberOfFrequencyChannels * 
-                                  numberOfTimeSamples * 
-                                  numberOfPolarizations; 
-
-                for (U64 c = 0; c < numberOfFrequencyChannels; c++) {
-                    const U64 c_off = c * 
-                                      numberOfTimeSamples * 
-                                      numberOfPolarizations; 
-
-                    for (U64 r = 0; r < config.rate; r++) {
-                        const U64 r_off = r * numberOfPolarizations;
-
-                        for (U64 o = 0; o < (numberOfTimeSamples / config.rate); o++) {
-                            const U64 o_off = o * config.rate * numberOfPolarizations;
-
-                            for (U64 p = 0; p < numberOfPolarizations; p++) {
-                                indices[i++] = a_off + c_off + o_off + r_off + p;
-                            }
-                        }
-                    }
-                }
-            }
-
-            BL_CHECK_THROW(
-                createKernel(
-                    // Kernel name.
-                    "post",
-                    // Kernel function key.
-                    "shuffler",
-                    // Kernel grid & block size.
-                    PadGridSize(
-                        getInputBuffer().size(),
-                        config.blockSize\
-                    ), 
-                    config.blockSize,
-                    // Kernel templates.
-                    getInputBuffer().size()
-                )
-            );
-        }
-    } else {
-        BL_INFO("FFT Backend: Internal");
-
-        BL_CHECK_THROW(
-            createKernel(
-                // Kernel name.
-                "internal",
-                // Kernel function key.
-                "fft_4pnt",
-                // Kernel grid & block size.
-                PadGridSize(
-                    getInputBuffer().size() / 
-                        config.rate /
-                        getInputBuffer().dims().numberOfPolarizations(), 
-                    config.blockSize
-                ),
-                config.blockSize,
-                // Kernel templates.
-                getInputBuffer().size(),
-                config.rate,
-                getInputBuffer().dims().numberOfPolarizations(),
-                getInputBuffer().dims().numberOfTimeSamples(),
-                getInputBuffer().dims().numberOfFrequencyChannels()
-            )
-        );
+    if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
+        BL_FATAL("Due to performance reasons, channelization with rates "
+                 "different than the number of time samples are not "
+                 "supported anymore.");
+        BL_CHECK_THROW(Result::ERROR);
     }
+
+    // FFT dimension (1D, 2D, ...).
+    int rank = 1;
+
+    // FFT size for each dimension.
+    int n[] = { static_cast<int>(config.rate) }; 
+
+    // Distance between successive input element and output element.
+    int istride = getInputBuffer().dims().numberOfPolarizations();
+    int ostride = getInputBuffer().dims().numberOfPolarizations();
+
+    // Distance between input batches and output batches.
+    int idist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
+    int odist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
+
+    // Input size with pitch, this is ignored for 1D tansformations.
+    int inembed[] = { 0 }; 
+    int onembed[] = { 0 };
+
+    // Number of batched FFTs.
+    int batch = (getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) / config.rate;
+
+    // Create cuFFT plan.
+    cufftCreate(&plan);
+    cufftPlanMany(&plan, rank, n,
+                  inembed, istride, idist,
+                  onembed, ostride, odist,
+                  CUFFT_C2C, batch);
+    cufftSetStream(plan, stream);
+
+    // Install callbacks.
+    callback = std::make_unique<Internal::Callback>(plan, input.buf.dims().numberOfPolarizations());
 }
 
 template<typename IT, typename OT>
 Channelizer<IT, OT>::~Channelizer() {
-    if (config.rate != 4 && config.rate != 1) {
+    if (config.rate != 1) {
         cufftDestroy(plan);
     }
 }
@@ -188,25 +99,13 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
         return Result::SUCCESS;
     } 
 
-    if (config.rate != 4) {
-        cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
-        cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
+    cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+    cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
 
-        if (config.rate == getInputBuffer().dims().numberOfTimeSamples()) {
-            output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
-        }
-
-        for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
-            BL_CUFFT_CHECK(cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD), [&]{
-                BL_FATAL("cuFFT failed to execute: {0:#x}", err);
-            });
-        }
-
-        if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
-            BL_CHECK(runKernel("post", stream, buffer.data(), indices.data(), output.buf.data()));
-        }
-    } else {
-        BL_CHECK(runKernel("internal", stream, input.buf.data(), output.buf.data()));
+    for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
+        BL_CUFFT_CHECK(cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD), [&]{
+            BL_FATAL("cuFFT failed to execute: {0:#x}", err);
+        });
     }
 
     BL_CUDA_CHECK_KERNEL([&]{
