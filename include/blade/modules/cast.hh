@@ -48,7 +48,8 @@ class BLADE_API Cast : public Module {
 
     // Constructor & Processing
 
-    explicit Cast(const Config& config, const Input& input);
+    explicit Cast(const Config& config, const Input& input, 
+                  const cudaStream_t& stream);
     const Result process(const cudaStream_t& stream) final;
 
  private:

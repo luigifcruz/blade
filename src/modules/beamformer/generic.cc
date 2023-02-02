@@ -7,7 +7,9 @@
 namespace Blade::Modules::Beamformer {
 
 template<typename IT, typename OT>
-Generic<IT, OT>::Generic(const Config& config, const Input& input)
+Generic<IT, OT>::Generic(const Config& config, 
+                         const Input& input,
+                         const cudaStream_t& stream)
         : Module(beamformer_program),
           config(config),
           input(input) {

@@ -6,7 +6,9 @@
 
 namespace Blade::Modules::Bfr5 {
 
-Reader::Reader(const Config& config, const Input& input) 
+Reader::Reader(const Config& config,
+               const Input& input,
+               const cudaStream_t& stream) 
         : Module(bfr5_program),
           config(config),
           input(input) {

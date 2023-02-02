@@ -10,7 +10,9 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
+Polarizer<IT, OT>::Polarizer(const Config& config, 
+                             const Input& input, 
+                             const cudaStream_t& stream)
         : Module(polarizer_program),
           config(config),
           input(input) {

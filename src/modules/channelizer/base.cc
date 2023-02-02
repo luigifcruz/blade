@@ -7,7 +7,9 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Channelizer<IT, OT>::Channelizer(const Config& config, const Input& input)
+Channelizer<IT, OT>::Channelizer(const Config& config, 
+                                 const Input& input,
+                                 const cudaStream_t& stream)
         : Module(channelizer_program),
           config(config),
           input(input),

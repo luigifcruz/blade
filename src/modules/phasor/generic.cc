@@ -9,7 +9,9 @@
 namespace Blade::Modules::Phasor {
 
 template<typename OT>
-Generic<OT>::Generic(const Config& config, const Input& input)
+Generic<OT>::Generic(const Config& config, 
+                     const Input& input,
+                     const cudaStream_t& stream)
         : Module(phasor_program),
           config(config),
           input(input),

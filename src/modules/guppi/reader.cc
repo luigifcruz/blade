@@ -48,7 +48,9 @@ inline guppiraw_block_meta_t* getBlockMeta(const guppiraw_iterate_info_t* gr_ite
 }
 
 template<typename OT>
-Reader<OT>::Reader(const Config& config, const Input& input)
+Reader<OT>::Reader(const Config& config,
+                   const Input& input,
+                   const cudaStream_t& stream)
         : Module(guppi_program),
           config(config),
           input(input) {

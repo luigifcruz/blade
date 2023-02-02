@@ -7,7 +7,9 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Detector<IT, OT>::Detector(const Config& config, const Input& input)
+Detector<IT, OT>::Detector(const Config& config,
+                           const Input& input,
+                           const cudaStream_t& stream)
         : Module(detector_program),
           config(config),
           input(input),

@@ -6,8 +6,9 @@ namespace Blade::Modules::Beamformer {
 
 template<typename IT, typename OT>
 MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
-                         const typename Generic<IT, OT>::Input& input)
-        : Generic<IT, OT>(config, input) {
+                         const typename Generic<IT, OT>::Input& input, 
+                         const cudaStream_t& stream)
+        : Generic<IT, OT>(config, input, stream) {
     // Configure kernels.
     BL_CHECK_THROW(
         this->createKernel(

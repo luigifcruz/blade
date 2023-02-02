@@ -10,7 +10,9 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Cast<IT, OT>::Cast(const Config& config, const Input& input)
+Cast<IT, OT>::Cast(const Config& config,
+                   const Input& input,
+                   const cudaStream_t& stream)
         : Module(cast_program),
           config(config),
           input(input) {

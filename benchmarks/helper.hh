@@ -44,8 +44,9 @@ class CudaBenchmark {
     template<typename Block>
     static void Create(std::shared_ptr<Block>& module,
                        const typename Block::Config& config,
-                       const typename Block::Input& input) {
-        module = std::make_unique<Block>(config, input);
+                       const typename Block::Input& input, 
+                       const cudaStream_t& stream) {
+        module = std::make_unique<Block>(config, input, stream);
     }
 
  private:
