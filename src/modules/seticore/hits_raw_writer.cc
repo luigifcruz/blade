@@ -97,7 +97,7 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
         if (bytesWritten <= 0) {
             return Result::ERROR;
         }
-        fileId += 1;
+        this->fileId += 1;
     }
 
     return Result::SUCCESS;

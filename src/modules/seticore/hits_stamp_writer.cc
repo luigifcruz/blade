@@ -122,6 +122,7 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         writeMessageToFd(this->fileDescriptor, message);
     
         close(this->fileDescriptor);
+        this->fileId += 1;
     }
 
     return Result::SUCCESS;
