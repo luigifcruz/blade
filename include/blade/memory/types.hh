@@ -23,7 +23,7 @@ enum class BLADE_API Device : uint8_t {
     VULKAN  = 1 << 3,
 };
 
-inline const Device operator|(Device lhs, Device rhs) {
+inline constexpr const Device operator|(Device lhs, Device rhs) {
     return static_cast<Device>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
 }
 
