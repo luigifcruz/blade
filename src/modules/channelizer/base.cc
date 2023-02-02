@@ -53,6 +53,9 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     if (config.rate != 4) {
         BL_INFO("FFT Backend: cuFFT");
 
+        // Setup cuFFT stream.
+        cufftSetStream(plan, stream);
+
         // FFT dimension (1D, 2D, ...).
         int rank = 1;
 
@@ -186,8 +189,6 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     } 
 
     if (config.rate != 4) {
-        cufftSetStream(plan, stream);
-
         cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
         cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(buffer.data()); 
 
