@@ -90,7 +90,7 @@ class VectorImpl {
         return container.end();
     }
 
-    const Result link(const VectorImpl<Type, Dims>& src) {
+    const Result link(const VectorImpl<Type, Dims>& src, Dims dstDims) {
         if (src.empty()) {
             BL_FATAL("Source can't be empty while linking.");
             return Result::ERROR;
@@ -101,11 +101,21 @@ class VectorImpl {
             return Result::ERROR;
         }
 
+        if (src.dims().size() != dstDims.size()) { 
+            BL_FATAL("Dimensions mismatch. The number of elements of "
+                     "the source and destination has to be the same.");
+            return Result::ERROR;
+        }
+
         this->managed = false;
         this->container = src.span();
-        this->dimensions = src.dims();
+        this->dimensions = dstDims;
 
         return Result::SUCCESS;
+    }
+
+    const Result link(const VectorImpl<Type, Dims>& src) {
+        return link(src, src.dims());
     }
 
     virtual const Result resize(const Dims& dims) = 0;

@@ -6,7 +6,7 @@
 
 #include "blade/pipeline.hh"
 
-#include "blade/modules/channelizer.hh"
+#include "blade/modules/channelizer/base.hh"
 #include "blade/modules/detector.hh"
 #include "blade/modules/cast.hh"
 #include "blade/modules/polarizer.hh"

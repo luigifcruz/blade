@@ -10,7 +10,9 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
+Polarizer<IT, OT>::Polarizer(const Config& config, 
+                             const Input& input, 
+                             const cudaStream_t& stream)
         : Module(polarizer_program),
           config(config),
           input(input) {
@@ -38,7 +40,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config, const Input& input)
         BL_FATAL("This module requires the type of the input "
                  "({}) and output ({}) to be the same.",
                  TypeInfo<IT>::name, TypeInfo<OT>::name); 
-        BL_INFO("Contact the maintainer if this"
+        BL_INFO("Contact the maintainer if this "
                 "functionality is required.");
         BL_CHECK_THROW(Result::ERROR);
     }

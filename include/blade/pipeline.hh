@@ -49,7 +49,7 @@ class BLADE_API Pipeline {
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,
                  const typename Block::Input& input) {
-        module = std::make_unique<Block>(config, input);
+        module = std::make_unique<Block>(config, input, stream);
         this->modules.push_back(module);
     }
 

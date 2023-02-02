@@ -1,11 +1,13 @@
-#ifndef BLADE_MODULES_CHANNELIZER_HH
-#define BLADE_MODULES_CHANNELIZER_HH
+#ifndef BLADE_MODULES_CHANNELIZER_BASE_HH
+#define BLADE_MODULES_CHANNELIZER_BASE_HH
 
 #include <string>
 #include <cufft.h>
 
 #include "blade/base.hh"
 #include "blade/module.hh"
+
+#include "blade/modules/channelizer/callback.hh"
 
 namespace Blade::Modules {
 
@@ -53,7 +55,8 @@ class BLADE_API Channelizer : public Module {
 
     // Constructor & Processing
 
-    explicit Channelizer(const Config& config, const Input& input);
+    explicit Channelizer(const Config& config, const Input& input, 
+                         const cudaStream_t& stream);
     const Result process(const cudaStream_t& stream) final;
     ~Channelizer();
 
@@ -64,9 +67,6 @@ class BLADE_API Channelizer : public Module {
     const Input input;
     Output output;
 
-    std::string pre_kernel;
-    dim3 pre_grid, pre_block;
-
     std::string post_kernel;
     dim3 post_grid, post_block;
 
@@ -75,6 +75,7 @@ class BLADE_API Channelizer : public Module {
 
     cufftHandle plan;
     std::string kernel_key;
+    std::unique_ptr<Internal::Callback> callback;
 
     // Expected Dimensions
 

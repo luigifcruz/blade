@@ -53,7 +53,8 @@ class BLADE_API Detector : public Module {
 
     // Constructor & Processing
 
-    explicit Detector(const Config& config, const Input& input);
+    explicit Detector(const Config& config, const Input& input, 
+                      const cudaStream_t& stream);
     const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
     const Result process(const cudaStream_t& stream) final;
 

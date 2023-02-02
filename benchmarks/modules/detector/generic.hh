@@ -113,7 +113,7 @@ protected:
         BL_DISABLE_PRINT();
         Create(module, config, {
             .buf = deviceInputBuf, 
-        });
+        }, this->getStream());
         BL_ENABLE_PRINT();
 
         return Result::SUCCESS;

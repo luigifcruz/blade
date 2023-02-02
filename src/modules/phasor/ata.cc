@@ -52,8 +52,9 @@ namespace Blade::Modules::Phasor {
 
 template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
-             const typename Generic<OT>::Input& input)
-        : Generic<OT>(config, input) {
+             const typename Generic<OT>::Input& input,
+             const cudaStream_t& stream)
+        : Generic<OT>(config, input, stream) {
     // Check configuration values.
     const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
     const auto& calibrationNumberOfChannels = config.antennaCalibrations.dims().numberOfFrequencyChannels();

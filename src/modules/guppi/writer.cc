@@ -7,7 +7,9 @@
 namespace Blade::Modules::Guppi {
 
 template<typename IT>
-Writer<IT>::Writer(const Config& config, const Input& input)
+Writer<IT>::Writer(const Config& config, 
+                   const Input& input,
+                   const cudaStream_t& stream)
         : Module(guppi_program),
           config(config),
           input(input),

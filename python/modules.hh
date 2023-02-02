@@ -29,9 +29,6 @@ inline void init_ata_beamformer(const py::module& m) {
                                                                   py::arg("phasors"));
 
     beamformer
-        .def(py::init<const Class::Config&,
-                      const Class::Input&>(), py::arg("config"),
-                                              py::arg("input"))
         .def("input", &Class::getInputBuffer, py::return_value_policy::reference)
         .def("phasors", &Class::getInputPhasors, py::return_value_policy::reference)
         .def("output", &Class::getOutputBuffer, py::return_value_policy::reference);
@@ -81,9 +78,6 @@ inline void init_ata_phasor(const py::module& m) {
                                                           py::arg("block_dut1"));
 
     phasor
-        .def(py::init<const Class::Config&,
-                      const Class::Input&>(), py::arg("config"),
-                                              py::arg("input"))
         .def("delays", &Class::getOutputDelays, py::return_value_policy::reference)
         .def("phasors", &Class::getOutputPhasors, py::return_value_policy::reference);
 }
@@ -106,9 +100,6 @@ inline void init_channelizer(const py::module& m) {
         .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
 
     channelizer
-        .def(py::init<const Class::Config&,
-                      const Class::Input&>(), py::arg("config"),
-                                              py::arg("input"))
         .def("input", &Class::getInputBuffer, py::return_value_policy::reference)
         .def("output", &Class::getOutputBuffer, py::return_value_policy::reference);
 }
@@ -133,9 +124,6 @@ inline void init_detector(const py::module& m) {
         .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
         
     detector
-        .def(py::init<const Class::Config&,
-                      const Class::Input&>(), py::arg("config"),
-                                              py::arg("input"))
         .def("input", &Class::getInputBuffer, py::return_value_policy::reference)
         .def("output", &Class::getOutputBuffer, py::return_value_policy::reference);
 }
@@ -163,9 +151,6 @@ inline void init_polarizer(const py::module& m) {
         .def(py::init<const ArrayTensor<Device::CUDA, CF32>&>(), py::arg("buf"));
         
     polarizer
-        .def(py::init<const Class::Config&,
-                      const Class::Input&>(), py::arg("config"),
-                                              py::arg("input"))
         .def("input", &Class::getInputBuffer, py::return_value_policy::reference)
         .def("output", &Class::getOutputBuffer, py::return_value_policy::reference);
 }

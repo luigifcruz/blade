@@ -9,7 +9,8 @@ template<typename OT>
 class BLADE_API ATA : public Generic<OT> {
  public:
     explicit ATA(const typename Generic<OT>::Config& config,
-                 const typename Generic<OT>::Input& input);
+                 const typename Generic<OT>::Input& input,
+                 const cudaStream_t& stream);
 
     const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 

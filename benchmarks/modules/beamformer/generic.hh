@@ -135,7 +135,7 @@ protected:
         Create(module, config, {
             .buf = deviceInputBuf, 
             .phasors = deviceInputPhasors,
-        });
+        }, this->getStream());
         BL_ENABLE_PRINT();
 
         return Result::SUCCESS;

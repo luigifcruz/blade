@@ -53,7 +53,8 @@ class BLADE_API Polarizer : public Module {
 
     // Constructor & Processing
 
-    explicit Polarizer(const Config& config, const Input& input);
+    explicit Polarizer(const Config& config, const Input& input,
+                       const cudaStream_t& stream);
     const Result process(const cudaStream_t& stream) final;
 
  private:

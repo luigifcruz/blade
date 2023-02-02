@@ -6,8 +6,9 @@ namespace Blade::Modules::Beamformer {
 
 template<typename IT, typename OT>
 ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
-                 const typename Generic<IT, OT>::Input& input)
-        : Generic<IT, OT>(config, input) {
+                 const typename Generic<IT, OT>::Input& input,
+                 const cudaStream_t& stream)
+        : Generic<IT, OT>(config, input, stream) {
     // Check configuration values.
     if (this->getInputPhasors().dims().numberOfBeams() > config.blockSize) {
         BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
