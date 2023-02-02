@@ -76,10 +76,10 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
         this->headerPut("RA_STR", config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
         this->headerPut("DEC_STR", config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
         this->headerPut("SCHANORG", config.coarseStartChannelIndex);
-        this->headerPut("FCH1", input.frequencyOfFirstInputChannelHz[0]);
+        this->headerPut("FCH1", input.frequencyOfFirstChannelHz[0]);
         this->headerPut("CHAN_BW", config.channelBandwidthHz);
         this->headerPut("TBIN", config.channelTimespanS);
-        const auto mjd = this->config.julianDateStart - 2400000.5; // from JD to MJD
+        const auto mjd = this->input.julianDateStart[0] - 2400000.5; // from JD to MJD
         const auto imjd = (U64) mjd;
         const auto smjd = (U64)((mjd - imjd) * 86400.0);
         const auto smjd_frac = ((mjd - imjd) * 86400.0) - smjd;

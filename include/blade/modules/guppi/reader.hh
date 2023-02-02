@@ -86,6 +86,15 @@ class BLADE_API Reader : public Module {
         };
     }
 
+    const ArrayDimensions getNumberOfStepsInDimensions() const {
+        auto dimensionSteps = this->getTotalOutputBufferDims() / this->getStepOutputBufferDims();
+        if (this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 0) {
+            dimensionSteps.T /= this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep;
+            dimensionSteps.T *= this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep;
+        }
+        return dimensionSteps;
+    }
+
     const U64 getNumberOfSteps() {
         return (this->getTotalOutputBufferDims() / 
                this->getStepOutputBufferDims()).size();
@@ -106,6 +115,10 @@ class BLADE_API Reader : public Module {
     const F64 getBandwidth() const;
     const F64 getAzimuthAngle() const;
     const F64 getZenithAngle() const;
+    const F64 getRightAscension() const;
+    const F64 getDeclination() const;
+    const F64 getPhaseRightAscension() const;
+    const F64 getPhaseDeclination() const;
     const std::string getSourceName() const;
     const std::string getTelescopeName() const;
 

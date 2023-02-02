@@ -19,6 +19,7 @@ class BLADE_API Accumulator : public Pipeline {
 
         ArrayDimensions inputDimensions; // TODO break away from implicit Array restriction
         BOOL inputIsATPFNotAFTP = false; // TODO put this in the template
+        BOOL frequencyIsDescendingNotAscending = false; 
         BOOL reconstituteBatchedDimensions = false;
         U64 accumulateRate = 1;
     };

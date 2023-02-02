@@ -19,10 +19,10 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
           ) {
 
     this->metadata.source_name = this->config.sourceName;
-    this->metadata.fch1 = 0.0; // MHz
+    this->metadata.fch1 = 0.0; // MHz, dynamically set
     this->metadata.foff = this->config.channelBandwidthHz*1e-6; // MHz
     this->metadata.tsamp = this->config.channelTimespanS;
-    this->metadata.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
+    this->metadata.tstart = 0.0; // from MJD, dynamically set
     this->metadata.src_raj = this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // hours
     this->metadata.src_dej = this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI; // degrees
     this->metadata.num_timesteps = input.buf.dims().numberOfTimeSamples();
@@ -47,6 +47,11 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
 
     this->buf.resize(this->input.buf.dims());
 
+    BL_INFO("num_timesteps: {}",  this->metadata.num_timesteps);
+    BL_INFO("num_channels: {}",  this->metadata.num_channels);
+    BL_INFO("coarse_channel_size: {}",  this->metadata.coarse_channel_size);
+    BL_INFO("num_coarse_channels: {}",  this->metadata.num_coarse_channels);
+
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
     BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
     BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
@@ -60,28 +65,26 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
     }
 }
 
-void Dedoppler::setFrequencyOfFirstInputChannel(F64 hz) {
-    this->metadata.fch1 = 1e-6 * hz;
-}
-
 const Result Dedoppler::process(const cudaStream_t& stream) {
     this->output.hits.clear();
     const auto inputDims = this->input.buf.dims();
     const auto beamByteStride = this->input.buf.size() / inputDims.numberOfAspects();
 
     BL_CHECK(Memory::Copy(this->buf, this->input.buf, stream));
+    this->metadata.fch1 = this->input.frequencyOfFirstChannel[0] * 1e-6; // Hz to MHz
+    this->metadata.tstart = this->input.julianDate[0] - 2400000.5; // from JD to MJD
 
     const auto skipLastBeam = this->config.lastBeamIsIncoherent & (!this->config.searchIncoherentBeam);
     const auto beamsToSearch = inputDims.numberOfAspects() - (skipLastBeam ? 1 : 0);
     BL_DEBUG("processing {} beams", beamsToSearch);
     for (U64 beam = 0; beam < beamsToSearch; beam++) {
-        FilterbankBuffer filterbankBuffer = FilterbankBuffer(
+        FilterbankBuffer beamFilterbankBuffer = FilterbankBuffer(
             inputDims.numberOfTimeSamples(),
             inputDims.numberOfFrequencyChannels(),
             this->input.buf.data() + beam*beamByteStride
         );
         dedopplerer.search(
-            filterbankBuffer,
+            beamFilterbankBuffer,
             this->metadata,
             beam,
             this->input.coarseFrequencyChannelOffset[0],
@@ -92,21 +95,21 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
         );
     }
 
+    BL_CUDA_CHECK(cudaStreamSynchronize(stream), [&]{
+        BL_FATAL("Failed to synchronize stream: {}", err);
+    });
+
     if (this->config.lastBeamIsIncoherent) {
-        FilterbankBuffer filterbankBuffer = FilterbankBuffer(
+        FilterbankBuffer incohFilterbankBuffer = FilterbankBuffer(
             inputDims.numberOfTimeSamples(),
             inputDims.numberOfFrequencyChannels(),
             this->input.buf.data() + (inputDims.numberOfAspects()-1)*beamByteStride
         );
-        
-        dedopplerer.addIncoherentPower(filterbankBuffer, this->output.hits);
+        dedopplerer.addIncoherentPower(incohFilterbankBuffer, this->output.hits);
     }
 
-    BL_CUDA_CHECK(cudaStreamSynchronize(stream), [&]{
-        BL_FATAL("Failed to synchronize stream: {}", err);
-    });
-    
     for (const DedopplerHit& hit : this->output.hits) {
+        BL_DEBUG("Hit: {}", hit.toString());
         hit_recorder->recordHit(hit, this->buf.data());
     }
 

@@ -78,6 +78,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
+    constexpr const ArrayDimensions getNumberOfStepsInDimensions() const {
+        return guppi->getNumberOfStepsInDimensions();
+    }
+
     constexpr const ArrayDimensions getTotalOutputDims() const {
         return guppi->getTotalOutputBufferDims();
     }

@@ -44,8 +44,8 @@ class BLADE_API ModeS : public Pipeline {
         RA_DEC inputPhaseCenter;
         U64 inputTotalNumberOfTimeSamples;
         U64 inputTotalNumberOfFrequencyChannels;
+        F64 inputFrequencyOfFirstChannelHz;
         U64 inputCoarseStartChannelIndex;
-        F64 inputJulianDateStart;
         U64 inputCoarseChannelRatio = 1;
         BOOL inputLastBeamIsIncoherent = false;
 
@@ -67,17 +67,25 @@ class BLADE_API ModeS : public Pipeline {
 
     // Input
 
-    void setFrequencyOfFirstInputChannel(F64 hz);
-
     const Result accumulate(const ArrayTensor<Device::CUDA, F32>& data,
                             const ArrayTensor<Device::CPU, CF32>& prebeamformerData,
                             const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
+                            const Vector<Device::CPU, F64>& julianDateStart,
                             const cudaStream_t& stream);
 
     const Result accumulate(const ArrayTensor<Device::CUDA, F32>& data,
                             const ArrayTensor<Device::CUDA, CF32>& prebeamformerData,
                             const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset,
+                            const Vector<Device::CPU, F64>& julianDateStart,
                             const cudaStream_t& stream);
+
+    constexpr const Vector<Device::CPU, F64>& getInputFrequencyOfFirstChannelHz() {
+        return this->frequencyOfFirstChannelHz;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getInputJulianDate() {
+        return this->julianDateStart;
+    }
 
     // Output
 
@@ -95,7 +103,8 @@ class BLADE_API ModeS : public Pipeline {
     ArrayTensor<Device::CUDA, F32> input;
     ArrayTensor<Device::CPU, CF32> prebeamformerData;
     Vector<Device::CPU, U64> coarseFrequencyChannelOffset;
-    Vector<Device::CPU, F64> frequencyOfFirstInputChannelHz;
+    Vector<Device::CPU, F64> frequencyOfFirstChannelHz;
+    Vector<Device::CPU, F64> julianDateStart;
 
     std::shared_ptr<Modules::Seticore::Dedoppler> dedoppler;
     std::shared_ptr<Modules::Seticore::HitsRawWriter<CF32>> hitsRawWriter;

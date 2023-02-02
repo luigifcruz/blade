@@ -52,7 +52,9 @@ const Result Accumulator<ModuleType, Dev, InputType>::accumulate(const ArrayTens
         const U64 inputByteStrideT = inputByteStrideA / stepInputDims.numberOfTimeSamples();
         const U64 inputByteStrideP = inputByteStrideT / stepInputDims.numberOfPolarizations();
 
-        const auto frequencyChannelBatchIndex = (this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep());
+        const auto frequencyChannelBatchIndex = this->config.frequencyIsDescendingNotAscending
+            ? this->getAccumulatorNumberOfSteps()-1 - this->getCurrentAccumulatorStep()
+            : this->getCurrentAccumulatorStep();
         const auto outputFrequencyChannelByteOffset = frequencyChannelBatchIndex*stepInputDims.numberOfFrequencyChannels()*outputByteStrideF;
 
         for(U64 a = 0; a < stepInputDims.numberOfAspects(); a++) {

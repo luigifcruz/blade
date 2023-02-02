@@ -32,8 +32,6 @@ class BLADE_API Dedoppler : public Module {
         std::string sourceName;
         std::string observationIdentifier;
         RA_DEC phaseCenter;
-        U64 coarseStartChannelIndex;
-        F64 julianDateStart;
         std::vector<std::string> aspectNames;
         std::vector<RA_DEC> aspectCoordinates;
         U64 totalNumberOfTimeSamples;
@@ -48,15 +46,23 @@ class BLADE_API Dedoppler : public Module {
 
     // Input
 
-    void setFrequencyOfFirstInputChannel(F64 hz);
-
     struct Input {
         const ArrayTensor<Device::CUDA, F32>& buf;
         const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset;
+        const Vector<Device::CPU, F64>& frequencyOfFirstChannel;
+        const Vector<Device::CPU, F64>& julianDate;
     };
 
     constexpr const Vector<Device::CPU, U64>& getInputCoarseFrequencyChannelOffset() {
         return this->input.coarseFrequencyChannelOffset;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getFrequencyOfFirstChannel() {
+        return this->input.frequencyOfFirstChannel;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getJulianDateOfInput() {
+        return this->input.julianDate;
     }
 
     // Output

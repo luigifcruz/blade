@@ -43,7 +43,7 @@ inline const Result ModeB(const Config& config) {
 
     const auto readerTotalOutputDims = reader.getTotalOutputDims();
     const auto readerStepOutputDims = reader.getStepOutputDims();
-    const auto readerStepsInDims = readerTotalOutputDims/readerStepOutputDims;
+    const auto readerStepsInDims = reader.getNumberOfStepsInDimensions();
 
     // Instantiate channelize pipeline and runner.
 
@@ -180,6 +180,7 @@ inline const Result ModeB(const Config& config) {
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
             .inputIsATPFNotAFTP = true,
+            .frequencyIsDescendingNotAscending = true,
             .reconstituteBatchedDimensions = true, 
             .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / readerStepOutputDims.numberOfFrequencyChannels(),
         };
@@ -212,9 +213,9 @@ inline const Result ModeB(const Config& config) {
 
     // Run main processing loop.
 
+    const auto readerNumberOfSteps = readerStepsInDims.size(); // this accounts for numberOfTimeSampleStepsBeforeFrequencyChannelStep
     U64 stepCount = 0;
     const U64 stepTailIncrement = stepTailIncrementDims.size();
-    BL_DEBUG("Tail increments require {} steps ({}).", stepTailIncrement, stepTailIncrementDims);
     U64 callbackStep = 0;
     U64 workerId = 0;
 
@@ -223,7 +224,7 @@ inline const Result ModeB(const Config& config) {
             // Check if next runner has free slot.
             Plan::Available(channelizeRunner);
 
-            if (stepCount == reader.getNumberOfSteps()) {
+            if (stepCount == readerNumberOfSteps) {
                 BL_CHECK_THROW(Result::EXHAUSTED);
             }
 
@@ -246,7 +247,7 @@ inline const Result ModeB(const Config& config) {
 
             // Increment progress bar.
             bar.set_progress(static_cast<float>(stepCount) /
-                    reader.getNumberOfSteps() * 100);
+                    readerNumberOfSteps * 100);
 
             // Compute input data.
             Plan::Compute(worker);
@@ -287,7 +288,6 @@ inline const Result ModeB(const Config& config) {
                                 worker.getOutputBuffer());
             }
 
-            BL_DEBUG("Compute callbackStep: {}", callbackStep);
             return callbackStep;
         });
 
@@ -299,14 +299,12 @@ inline const Result ModeB(const Config& config) {
                 // If accumulation complete, write data to disk.
                 Plan::Compute(worker);
 
-                BL_DEBUG("Writer callbackStep: {}", callbackStep);
                 return callbackStep;
             });
 
             // Try to dequeue job from writer runner.
             if (guppiWriterRunner->dequeue(&callbackStep)) {
-                BL_DEBUG("callbackStep: {}/{} ({})", callbackStep, reader.getNumberOfSteps(), stepTailIncrement);
-                if (callbackStep + stepTailIncrement > reader.getNumberOfSteps()) {
+                if (callbackStep + stepTailIncrement > readerNumberOfSteps) {
                     break;
                 }
             }    
@@ -319,14 +317,12 @@ inline const Result ModeB(const Config& config) {
                 // If accumulation complete, write data to disk.
                 Plan::Compute(worker);
 
-                BL_DEBUG("Writer callbackStep: {}", callbackStep);
                 return callbackStep;
             });
 
             // Try to dequeue job from writer runner.
             if (filterbankWriterRunner->dequeue(&callbackStep)) {
-                BL_DEBUG("callbackStep: {}/{} ({})", callbackStep, reader.getNumberOfSteps(), stepTailIncrement);
-                if (callbackStep + stepTailIncrement > reader.getNumberOfSteps()) {
+                if (callbackStep + stepTailIncrement > readerNumberOfSteps) {
                     break;
                 }
             }

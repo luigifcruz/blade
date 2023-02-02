@@ -69,9 +69,9 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.setSourceName(this->config.sourceName);
         stamp.setRa(this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
         stamp.setDec(this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
-        stamp.setFch1(this->input.frequencyOfFirstInputChannelHz[0]*1e-6); // MHz
+        stamp.setFch1(this->input.frequencyOfFirstChannelHz[0]*1e-6); // MHz
         stamp.setFoff(this->config.channelBandwidthHz*1e-6); // MHz
-        stamp.setTstart(calc_unix_sec_from_julian_date(this->config.julianDateStart)); // JD -> Unix
+        stamp.setTstart(calc_unix_sec_from_julian_date(this->input.julianDateStart[0])); // JD -> Unix
         stamp.setTsamp(this->config.channelTimespanS);
         stamp.setTelescopeId(this->config.telescopeId);
         stamp.setNumTimesteps(regionOfInterestDims.numberOfTimeSamples());

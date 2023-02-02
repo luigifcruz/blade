@@ -18,6 +18,10 @@ typedef struct {
     F64 dut1;
     F64 az;
     F64 el;
+    F64 ra_hour;
+    F64 dec_deg;
+    F64 ra_phase_hour;
+    F64 dec_phase_deg;
     char src_name[72];
     char telescope_id[72];
 } guppiraw_block_meta_t;
@@ -32,6 +36,10 @@ const U64 KEY_UINT64_PKTIDX = GUPPI_RAW_KEY_UINT64_ID_LE('P','K','T','I','D','X'
 const U64 KEY_UINT64_DUT1 = GUPPI_RAW_KEY_UINT64_ID_LE('D','U','T','1',' ',' ',' ',' ');
 const U64 KEY_UINT64_AZ = GUPPI_RAW_KEY_UINT64_ID_LE('A','Z',' ',' ',' ',' ',' ',' ');
 const U64 KEY_UINT64_EL = GUPPI_RAW_KEY_UINT64_ID_LE('E','L',' ',' ',' ',' ',' ',' ');
+const U64 KEY_UINT64_RA = GUPPI_RAW_KEY_UINT64_ID_LE('R','A','_','S','T','R',' ',' ');
+const U64 KEY_UINT64_DEC = GUPPI_RAW_KEY_UINT64_ID_LE('D','E','C','_','S','T','R',' ');
+const U64 KEY_UINT64_RA_PHASE = GUPPI_RAW_KEY_UINT64_ID_LE('R','A','_','P','H','A','S',' ');
+const U64 KEY_UINT64_DEC_PHASE = GUPPI_RAW_KEY_UINT64_ID_LE('D','E','C','_','P','H','A','S');
 const U64 KEY_UINT64_SRC_NAME = GUPPI_RAW_KEY_UINT64_ID_LE('S','R','C','_','N','A','M','E');
 const U64 KEY_UINT64_TELESCOP = GUPPI_RAW_KEY_UINT64_ID_LE('T','E','L','E','S','C','O','P');
 
@@ -56,6 +64,14 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
         hgetr8(entry, "AZ", &((guppiraw_block_meta_t*)block_meta)->az);
     } else if (((U64*)entry)[0] == KEY_UINT64_EL) {
         hgetr8(entry, "EL", &((guppiraw_block_meta_t*)block_meta)->el);
+    } else if (((U64*)entry)[0] == KEY_UINT64_RA) {
+        hgetr8(entry, "RA_STR", &((guppiraw_block_meta_t*)block_meta)->ra_hour);
+    } else if (((U64*)entry)[0] == KEY_UINT64_DEC) {
+        hgetr8(entry, "DEC_STR", &((guppiraw_block_meta_t*)block_meta)->dec_deg);
+    } else if (((U64*)entry)[0] == KEY_UINT64_RA_PHASE) {
+        hgetr8(entry, "RA_PHASE", &((guppiraw_block_meta_t*)block_meta)->ra_phase_hour);
+    } else if (((U64*)entry)[0] == KEY_UINT64_DEC_PHASE) {
+        hgetr8(entry, "DEC_PHASE", &((guppiraw_block_meta_t*)block_meta)->dec_phase_deg);
     } else if (((U64*)entry)[0] == KEY_UINT64_SRC_NAME) {
         hgets(entry, "SRC_NAME", 72, ((guppiraw_block_meta_t*)block_meta)->src_name);
     } else if (((U64*)entry)[0] == KEY_UINT64_TELESCOP) {
@@ -116,8 +132,8 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     }
 
     // Print configuration information.
-    const auto stepDims = getStepOutputBufferDims();
     const auto totalDims = getTotalOutputBufferDims();
+    auto stepDims = getStepOutputBufferDims();
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
     BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", stepDims);
     if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep == 0) {
@@ -133,7 +149,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
         gr_iterate.iterate_time_first_not_channel_first = true;
     }
     BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", totalDims);
-    BL_INFO("Steps in Dimensions [A, F, T, P]: {}", totalDims/stepDims);
+    BL_INFO("Steps in Dimensions [A, F, T, P]: {}", getNumberOfStepsInDimensions());
     BL_INFO("Input File Path: {}", config.filepath);
     
     // Allocate output buffers.
@@ -203,6 +219,26 @@ const F64 Reader<OT>::getZenithAngle() const {
 }
 
 template<typename OT>
+const F64 Reader<OT>::getRightAscension() const {
+    return getBlockMeta(&gr_iterate)->ra_hour * BL_PHYSICAL_CONSTANT_PI / 12.0;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getDeclination() const {
+    return getBlockMeta(&gr_iterate)->dec_deg *BL_PHYSICAL_CONSTANT_PI / 180.0;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getPhaseRightAscension() const {
+    return getBlockMeta(&gr_iterate)->ra_phase_hour * BL_PHYSICAL_CONSTANT_PI / 12.0;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getPhaseDeclination() const {
+    return getBlockMeta(&gr_iterate)->dec_phase_deg *BL_PHYSICAL_CONSTANT_PI / 180.0;
+}
+
+template<typename OT>
 const std::string Reader<OT>::getSourceName() const {
     return std::string(getBlockMeta(&gr_iterate)->src_name);
 }
@@ -264,6 +300,9 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 1) {
         if (gr_iterate.iterate_time_first_not_channel_first) {
             current_time_sample_step += 1;
+            if (fastestDimensionExhausted) {
+                BL_WARN("Time exhausted...");
+            }
         }
         else {
             // just incremented channel instead

@@ -39,7 +39,6 @@ class BLADE_API HitsStampWriter : public Module {
         U64 coarseChannelRatio;
         F64 channelBandwidthHz;
         F64 channelTimespanS;
-        F64 julianDateStart;
         U64 hitsGroupingMargin = 30;
 
         U64 blockSize = 512;
@@ -54,15 +53,20 @@ class BLADE_API HitsStampWriter : public Module {
     struct Input {
         const ArrayTensor<Device::CPU, IT>& buffer;
         std::vector<DedopplerHit>& hits;
-        const Vector<Device::CPU, F64>& frequencyOfFirstInputChannelHz;
+        const Vector<Device::CPU, F64>& frequencyOfFirstChannelHz;
+        const Vector<Device::CPU, F64>& julianDateStart;
     };
 
     constexpr const ArrayTensor<Device::CPU, IT>& getInputBuffer() const {
         return this->input.buffer;
     }
 
-    constexpr const Vector<Device::CPU, F64>& getInputfrequencyOfFirstInputChannelHz() const {
-        return this->input.frequencyOfFirstInputChannelHz;
+    constexpr const Vector<Device::CPU, F64>& getInputFrequencyOfFirstChannelHz() const {
+        return this->input.frequencyOfFirstChannelHz;
+    }
+
+    constexpr const Vector<Device::CPU, F64>& getInputJulianDateStart() const {
+        return this->input.julianDateStart;
     }
 
     // Output

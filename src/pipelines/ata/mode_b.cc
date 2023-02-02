@@ -152,9 +152,21 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
                                    const ArrayTensor<Device::CPU, IT>& data,
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
-    BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
-    BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
-    BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+    if (this->getCurrentAccumulatorStep() == 0) {
+        BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
+        BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
+        BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+    }
+    else if (this->blockFrequencyChannelOffset[0] != blockFrequencyChannelOffset[0]) {
+        BL_FATAL(
+            "Accumulating ({}/{}) in time but FrequencyChannelOffset has changed: {} -> {}.",
+            this->getCurrentAccumulatorStep(),
+            this->getAccumulatorNumberOfSteps(),
+            this->blockFrequencyChannelOffset[0],
+            blockFrequencyChannelOffset[0]
+        );
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
 
     if (config.inputDimensions != data.dims()) {
         BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
@@ -198,9 +210,21 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
                                    const ArrayTensor<Device::CUDA, IT>& data,
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
-    BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
-    BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
-    BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+    if (this->getCurrentAccumulatorStep() == 0) {
+        BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
+        BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
+        BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
+    }
+    else if (this->blockFrequencyChannelOffset[0] != blockFrequencyChannelOffset[0]) {
+        BL_FATAL(
+            "Accumulating ({}/{}) in time but FrequencyChannelOffset has changed: {} -> {}.",
+            this->getCurrentAccumulatorStep(),
+            this->getAccumulatorNumberOfSteps(),
+            this->blockFrequencyChannelOffset[0],
+            blockFrequencyChannelOffset[0]
+        );
+        BL_CHECK_THROW(Result::ASSERTION_ERROR);
+    }
 
     if (config.inputDimensions != data.dims()) {
         BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
