@@ -2,6 +2,7 @@
 #define BLADE_CLI_TELESCOPES_ATA_MODE_BS_HH
 
 #include "blade-cli/types.hh"
+#include "blade-cli/telescopes/ata/config.hh"
 
 #include "blade/plan.hh"
 #include "blade/runner.hh"
@@ -151,8 +152,8 @@ inline const Result ModeBS(const Config& config) {
 
         .searchMitigateDcSpike = true,
         .searchMinimumDriftRate = 0.0,
-        .searchMaximumDriftRate = 50.0,
-        .searchSnrThreshold = 6.0,
+        .searchMaximumDriftRate = config.driftRateMaximum,
+        .searchSnrThreshold = config.snrThreshold,
         .searchIncoherentBeam = true,
 
         .searchChannelBandwidthHz = reader.getChannelBandwidth() / config.preBeamformerChannelizerRate,

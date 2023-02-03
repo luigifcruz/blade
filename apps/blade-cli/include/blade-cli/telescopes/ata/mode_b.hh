@@ -2,6 +2,7 @@
 #define BLADE_CLI_TELESCOPES_ATA_MODE_B_HH
 
 #include "blade-cli/types.hh"
+#include "blade-cli/telescopes/ata/config.hh"
 
 #include "blade/plan.hh"
 #include "blade/runner.hh"

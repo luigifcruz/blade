@@ -12,8 +12,8 @@ namespace Blade::CLI {
 
 const Result Start(int argc, char **argv);
 const Result CollectUserInput(int argc, char **argv, Config& config);
-const Result SetupProcessingPipeline(const Config& config);
-const Result SetupTelescope(const Config& config);
+const Result SetupProcessingPipeline(int argc, char **argv, const Config& config);
+const Result SetupTelescope(int argc, char **argv, const Config& config);
 
 }  // namespace Blade::CLI
 
