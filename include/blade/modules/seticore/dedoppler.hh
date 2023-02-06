@@ -21,6 +21,7 @@ class BLADE_API Dedoppler : public Module {
         F64 maximumDriftRate;
         F64 snrThreshold;
 
+        F64 frequencyOfFirstChannelHz;
         F64 channelBandwidthHz;
         F64 channelTimespanS;
         U64 coarseChannelRate;
@@ -49,16 +50,11 @@ class BLADE_API Dedoppler : public Module {
     struct Input {
         const ArrayTensor<Device::CUDA, F32>& buf;
         const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset;
-        const Vector<Device::CPU, F64>& frequencyOfFirstChannel;
         const Vector<Device::CPU, F64>& julianDate;
     };
 
     constexpr const Vector<Device::CPU, U64>& getInputCoarseFrequencyChannelOffset() {
         return this->input.coarseFrequencyChannelOffset;
-    }
-
-    constexpr const Vector<Device::CPU, F64>& getFrequencyOfFirstChannel() {
-        return this->input.frequencyOfFirstChannel;
     }
 
     constexpr const Vector<Device::CPU, F64>& getJulianDateOfInput() {

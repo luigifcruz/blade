@@ -19,7 +19,7 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
           ) {
 
     this->metadata.source_name = this->config.sourceName;
-    this->metadata.fch1 = 0.0; // MHz, dynamically set
+    this->metadata.fch1 = this->config.frequencyOfFirstChannelHz*1e-6; // MHz
     this->metadata.foff = this->config.channelBandwidthHz*1e-6; // MHz
     this->metadata.tsamp = this->config.channelTimespanS;
     this->metadata.tstart = 0.0; // from MJD, dynamically set
@@ -71,7 +71,6 @@ const Result Dedoppler::process(const cudaStream_t& stream) {
     const auto beamByteStride = this->input.buf.size() / inputDims.numberOfAspects();
 
     BL_CHECK(Memory::Copy(this->buf, this->input.buf, stream));
-    this->metadata.fch1 = this->input.frequencyOfFirstChannel[0] * 1e-6; // Hz to MHz
     this->metadata.tstart = this->input.julianDate[0] - 2400000.5; // from JD to MJD
 
     const auto skipLastBeam = this->config.lastBeamIsIncoherent & (!this->config.searchIncoherentBeam);

@@ -23,6 +23,7 @@ ModeS<HT>::ModeS(const Config& config)
         .minimumDriftRate = config.searchMinimumDriftRate,
         .maximumDriftRate = config.searchMaximumDriftRate,
         .snrThreshold = config.searchSnrThreshold,
+        .frequencyOfFirstChannelHz = config.inputFrequencyOfFirstChannelHz,
         .channelBandwidthHz = config.searchChannelBandwidthHz,
         .channelTimespanS = config.searchChannelTimespanS,
         .coarseChannelRate = config.inputCoarseChannelRatio,
@@ -42,7 +43,6 @@ ModeS<HT>::ModeS(const Config& config)
     }, {
         .buf = this->input,
         .coarseFrequencyChannelOffset = this->coarseFrequencyChannelOffset,
-        .frequencyOfFirstChannel = this->frequencyOfFirstChannelHz,
         .julianDate = this->julianDateStart,
     });
 
@@ -105,7 +105,7 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
         ));
         this->frequencyOfFirstChannelHz[0] =
             this->config.inputFrequencyOfFirstChannelHz
-            + coarseFrequencyChannelOffset[0] * this->config.searchChannelBandwidthHz;
+            + coarseFrequencyChannelOffset[0] * this->config.searchChannelBandwidthHz*this->config.inputCoarseChannelRatio;
 
         BL_CHECK(Memory::Copy(
             this->julianDateStart,
@@ -150,7 +150,7 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
         ));
         this->frequencyOfFirstChannelHz[0] =
             this->config.inputFrequencyOfFirstChannelHz
-            + coarseFrequencyChannelOffset[0] * this->config.searchChannelBandwidthHz;
+            + coarseFrequencyChannelOffset[0] * this->config.searchChannelBandwidthHz*this->config.inputCoarseChannelRatio;
 
         BL_CHECK(Memory::Copy(
             this->julianDateStart,
