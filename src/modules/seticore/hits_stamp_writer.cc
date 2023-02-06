@@ -11,6 +11,7 @@ HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
         : Module(hits_writer_program),
           config(config),
           input(input),
+          stampsWritten(0),
           fileId(0),
           fileDescriptor(0) {
 
@@ -21,7 +22,16 @@ HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
 }
 
 template<typename IT>
+HitsStampWriter<IT>::~HitsStampWriter() {
+    if (this->stampsWritten > 0) {
+        close(this->fileDescriptor);
+    }
+    BL_DEBUG("Wrote {} stamp(s).", this->stampsWritten);
+}
+
+template<typename IT>
 const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
+
     const auto inputDims = getInputBuffer().dims();
     const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
 
@@ -30,10 +40,10 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
     for (const DedopplerHitGroup& group : groups) {
         const DedopplerHit& top_hit = group.topHit();
 
-        if (top_hit.drift_steps == 0) {
-            // This is a vertical line. No drift = terrestrial. Skip it
-            continue;
-        }
+        // if (top_hit.drift_steps == 0) {
+        //     // This is a vertical line. No drift = terrestrial. Skip it
+        //     continue;
+        // }
 
         // Extract the stamp
         const int lowIndex = top_hit.lowIndex() - this->config.hitsGroupingMargin;
@@ -116,13 +126,20 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.setSchan(this->config.coarseStartChannelIndex);
         stamp.setObsid(this->config.observationIdentifier);
         
+        if (this->stampsWritten == 0) {
+            auto filepath = fmt::format("{}.seticore.{:04}.stamps", this->config.filepathPrefix, this->fileId);
+            this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+        }
+        else if (this->stampsWritten % 500 == 0) {
+            close(this->fileDescriptor);
 
-        auto filepath = fmt::format("{}.seticore.{:04}.stamp", this->config.filepathPrefix, this->fileId % 10000);
-        this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+            this->fileId += 1;
+            auto filepath = fmt::format("{}.seticore.{:04}.stamps", this->config.filepathPrefix, this->fileId);
+            this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT, 0644);
+        }
+
         writeMessageToFd(this->fileDescriptor, message);
-    
-        close(this->fileDescriptor);
-        this->fileId += 1;
+        this->stampsWritten += 1;
     }
 
     return Result::SUCCESS;

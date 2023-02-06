@@ -77,6 +77,8 @@ class BLADE_API HitsStampWriter : public Module {
     // Constructor & Processing
 
     explicit HitsStampWriter(const Config& config, const Input& input);
+    ~HitsStampWriter();
+    
     const Result process(const cudaStream_t& stream = 0) final;
 
     // Miscellaneous
@@ -88,6 +90,7 @@ class BLADE_API HitsStampWriter : public Module {
     Input input;
     Output output;
     
+    U64 stampsWritten;
     U64 fileId;
     I32 fileDescriptor;
 };
