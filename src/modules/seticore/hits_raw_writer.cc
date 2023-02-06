@@ -34,19 +34,17 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
     const auto inputDims = getInputBuffer().dims();
     const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
     
+    const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
+
     vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
     BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
     for (const DedopplerHitGroup& group : groups) {
         const DedopplerHit& top_hit = group.topHit();
 
-        if (top_hit.drift_steps == 0) {
-            // This is a vertical line. No drift = terrestrial. Skip it
-            continue;
-        }
         // Extract the stamp
-        const int lowIndex = top_hit.lowIndex() - this->config.hitsGroupingMargin;
+        const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;
         const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
-        const U64 highIndex = top_hit.highIndex() + (int)this->config.hitsGroupingMargin;
+        const U64 highIndex = top_hit.highIndex() + hitStampFrequencyMargin;
         const U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
         
         
@@ -76,7 +74,7 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
         this->headerPut("RA_STR", config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
         this->headerPut("DEC_STR", config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
         this->headerPut("SCHANORG", config.coarseStartChannelIndex);
-        this->headerPut("FCH1", input.frequencyOfFirstChannelHz[0]);
+        this->headerPut("FCH1", input.frequencyOfFirstChannelHz[0] + config.channelBandwidthHz*first_channel);
         this->headerPut("CHAN_BW", config.channelBandwidthHz);
         this->headerPut("TBIN", config.channelTimespanS);
         const auto mjd = this->input.julianDateStart[0] - 2400000.5; // from JD to MJD

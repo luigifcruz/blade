@@ -31,24 +31,24 @@ HitsStampWriter<IT>::~HitsStampWriter() {
 
 template<typename IT>
 const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
+    if (input.hits.size() == 0) {
+        return Result::SUCCESS;
+    }
 
     const auto inputDims = getInputBuffer().dims();
     const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
+
+    const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
 
     vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
     BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
     for (const DedopplerHitGroup& group : groups) {
         const DedopplerHit& top_hit = group.topHit();
 
-        // if (top_hit.drift_steps == 0) {
-        //     // This is a vertical line. No drift = terrestrial. Skip it
-        //     continue;
-        // }
-
         // Extract the stamp
-        const int lowIndex = top_hit.lowIndex() - this->config.hitsGroupingMargin;
+        const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;
         const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
-        const U64 highIndex = top_hit.highIndex() + (int)this->config.hitsGroupingMargin;
+        const U64 highIndex = top_hit.highIndex() + hitStampFrequencyMargin;
         const U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
         
         BL_DEBUG("Top hit: {}", top_hit.toString());
@@ -79,7 +79,13 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.setSourceName(this->config.sourceName);
         stamp.setRa(this->config.phaseCenter.RA * 12.0 / BL_PHYSICAL_CONSTANT_PI); // hours
         stamp.setDec(this->config.phaseCenter.DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI); // degrees
-        stamp.setFch1(this->input.frequencyOfFirstChannelHz[0]*1e-6); // MHz
+        stamp.setFch1(
+            (
+                this->input.frequencyOfFirstChannelHz[0]
+                + first_channel*this->config.channelBandwidthHz
+            )
+            * 1e-6
+        ); // MHz
         stamp.setFoff(this->config.channelBandwidthHz*1e-6); // MHz
         stamp.setTstart(calc_unix_sec_from_julian_date(this->input.julianDateStart[0])); // JD -> Unix
         stamp.setTsamp(this->config.channelTimespanS);
@@ -93,24 +99,20 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
 
         // AFTP -> TFPA
         int aftp_index = 0;
-        const auto stamp_timeStride = regionOfInterest.size()*2/regionOfInterestDims.numberOfTimeSamples();
-        const auto stamp_frequencyStride = stamp_timeStride/regionOfInterestDims.numberOfFrequencyChannels();
-        const auto stamp_polarizationStride = stamp_frequencyStride/regionOfInterestDims.numberOfPolarizations();
-        const auto stamp_aspectStride = stamp_polarizationStride/regionOfInterestDims.numberOfAspects();
 
         for (int a = 0; a < (int) regionOfInterestDims.numberOfAspects(); a++) {
             for (int f = 0; f < (int) regionOfInterestDims.numberOfFrequencyChannels(); f++) {
                 for (int t = 0; t < (int) regionOfInterestDims.numberOfTimeSamples(); t++) {
                     for (int p = 0; p < (int) regionOfInterestDims.numberOfPolarizations(); p++) {
                         const auto tfpa_index = (
-                            t*stamp_timeStride
-                            + f*stamp_frequencyStride
-                            + p*stamp_polarizationStride
-                            + a*stamp_aspectStride
+                            ((
+                            t*regionOfInterestDims.numberOfFrequencyChannels() + f
+                            )*regionOfInterestDims.numberOfPolarizations() + p
+                            )*regionOfInterestDims.numberOfAspects() + a
                         );
                         const auto value = regionOfInterest.data()[aftp_index];
-                        data.set(tfpa_index + 0, value.real());
-                        data.set(tfpa_index + 1, value.imag());
+                        data.set(tfpa_index*2 + 0, value.real());
+                        data.set(tfpa_index*2 + 1, value.imag());
                         aftp_index += 1;
                     }
                 }
@@ -119,7 +121,7 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
 
         stamp.setCoarseChannel(top_hit.coarse_channel);
         stamp.setFftSize(this->config.coarseChannelRatio);
-        stamp.setStartChannel(top_hit.coarse_channel*this->config.coarseChannelRatio + first_channel);
+        stamp.setStartChannel(first_channel);
 
         buildSignal(top_hit, stamp.getSignal());
 
