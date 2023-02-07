@@ -32,7 +32,7 @@ HitsRawWriter<IT>::HitsRawWriter(const Config& config, const Input& input)
 template<typename IT>
 const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
     const auto inputDims = getInputBuffer().dims();
-    const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
+    const auto frequencyChannelStride = getInputBuffer().size() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
     
     const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
 
@@ -85,10 +85,11 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
         this->headerPut("STT_SMJD", smjd);
         this->headerPut("STT_OFFS", smjd_frac);
 
+        // TODO fix this, have to stride aspects due to the channel selection
         const auto& bytesWritten = guppiraw_write_block(
             this->fileDescriptor,
             &this->gr_header,
-            this->input.buffer.data() + first_channel*frequencyChannelByteStride
+            this->input.buffer.data() + first_channel*frequencyChannelStride
         );
 
         close(this->fileDescriptor);

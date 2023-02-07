@@ -36,7 +36,6 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
     }
 
     const auto inputDims = getInputBuffer().dims();
-    const auto frequencyChannelByteStride = getInputBuffer().size_bytes() / (inputDims.numberOfAspects()*inputDims.numberOfFrequencyChannels());
 
     const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
 
@@ -62,16 +61,12 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
             BL_FATAL("First channel is larger than last: {} > {}", first_channel, last_channel);
             return Result::ASSERTION_ERROR;
         }
-        const auto regionOfInterest = ArrayTensor<Device::CPU, IT>(
-            getInputBuffer().data() + first_channel*frequencyChannelByteStride,
-            {
-                .A = inputDims.numberOfAspects(),
-                .F = (U64) (last_channel - first_channel),
-                .T = inputDims.numberOfTimeSamples(),
-                .P = inputDims.numberOfPolarizations(),
-            }
-        );
-        const auto regionOfInterestDims = regionOfInterest.dims();
+        const ArrayDimensions regionOfInterestDims = {
+            .A = inputDims.numberOfAspects(),
+            .F = (U64) (last_channel - first_channel),
+            .T = inputDims.numberOfTimeSamples(),
+            .P = inputDims.numberOfPolarizations(),
+        };
         
         ::capnp::MallocMessageBuilder message;
         Stamp::Builder stamp = message.initRoot<Stamp>();
@@ -94,12 +89,10 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
         stamp.setNumChannels(regionOfInterestDims.numberOfFrequencyChannels());
         stamp.setNumPolarizations(regionOfInterestDims.numberOfPolarizations());
         stamp.setNumAntennas(regionOfInterestDims.numberOfAspects());
-        stamp.initData(2 * regionOfInterest.size());
+        stamp.initData(2 * regionOfInterestDims.size());
         auto data = stamp.getData();
 
         // AFTP -> TFPA
-        int aftp_index = 0;
-
         for (int a = 0; a < (int) regionOfInterestDims.numberOfAspects(); a++) {
             for (int f = 0; f < (int) regionOfInterestDims.numberOfFrequencyChannels(); f++) {
                 for (int t = 0; t < (int) regionOfInterestDims.numberOfTimeSamples(); t++) {
@@ -110,10 +103,14 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
                             )*regionOfInterestDims.numberOfPolarizations() + p
                             )*regionOfInterestDims.numberOfAspects() + a
                         );
-                        const auto value = regionOfInterest.data()[aftp_index];
+                        const auto value = getInputBuffer().data()[
+                            ((
+                            a*inputDims.numberOfFrequencyChannels() + f + first_channel
+                            )*inputDims.numberOfTimeSamples() + t
+                            )*inputDims.numberOfPolarizations() + p
+                        ];
                         data.set(tfpa_index*2 + 0, value.real());
                         data.set(tfpa_index*2 + 1, value.imag());
-                        aftp_index += 1;
                     }
                 }
             }
