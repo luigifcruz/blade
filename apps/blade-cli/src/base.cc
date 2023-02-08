@@ -45,6 +45,7 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     ::CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) - Command Line Tool");
 
     app.allow_extras();
+    app.remove_option(app.get_help_ptr());
 
     // Read target telescope. 
     app
