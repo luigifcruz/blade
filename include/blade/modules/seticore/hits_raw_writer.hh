@@ -34,6 +34,7 @@ class BLADE_API HitsRawWriter : public Module {
         F64 channelBandwidthHz;
         F64 channelTimespanS;
         U64 hitsGroupingMargin = 30;
+        BOOL excludeDriftRateZero = false;
 
         U64 blockSize = 512;
     };

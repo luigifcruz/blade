@@ -118,11 +118,18 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
                 "SETI search SNR threshold")
             ->default_val(6.0);
 
-    // Read target SNR Threshold.
+    // Read target drift rate range.
     app
-        .add_option("-d,--search-drift-rate-maximum", config.driftRateMaximum,
+        .add_option("-d,--search-drift-rate-minimum", config.driftRateMinimum,
+                "SETI search drift rate minimum")
+            ->default_val(0.0);
+    app
+        .add_option("-D,--search-drift-rate-maximum", config.driftRateMaximum,
                 "SETI search drift rate maximum")
             ->default_val(50.0);
+    app
+        .add_flag("-Z,--search-drift-rate-exclude-zero", config.driftRateZeroExcluded,
+                "SETI search exclude hits with drift rate of zero");
 
     try {
         app.parse(argc, argv);

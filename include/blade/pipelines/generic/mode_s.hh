@@ -53,6 +53,7 @@ class BLADE_API ModeS : public Pipeline {
         std::vector<RA_DEC> beamCoordinates;
 
         BOOL searchMitigateDcSpike;
+        BOOL searchDriftRateZeroExcluded = false;
         F64 searchMinimumDriftRate = 0.0;
         F64 searchMaximumDriftRate;
         F64 searchSnrThreshold;

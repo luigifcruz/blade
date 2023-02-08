@@ -47,15 +47,12 @@ Dedoppler::Dedoppler(const Config& config, const Input& input)
 
     this->buf.resize(this->input.buf.dims());
 
-    BL_INFO("num_timesteps: {}",  this->metadata.num_timesteps);
-    BL_INFO("num_channels: {}",  this->metadata.num_channels);
-    BL_INFO("coarse_channel_size: {}",  this->metadata.coarse_channel_size);
-    BL_INFO("num_coarse_channels: {}",  this->metadata.num_coarse_channels);
-
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", this->input.buf.dims(), "N/A");
     BL_INFO("Coarse Channel Rate: {}", this->config.coarseChannelRate);
     BL_INFO("Channel Bandwidth: {} Hz", this->config.channelBandwidthHz);
     BL_INFO("Channel Timespan: {} s", this->config.channelTimespanS);
+    BL_INFO("Drift Rate Range: [{}, {}] Hz/s", this->config.minimumDriftRate, this->config.maximumDriftRate);
+    BL_INFO("SNR Threshold: {}", this->config.snrThreshold);
 
     const auto t = input.buf.dims().numberOfTimeSamples();
     const auto t_previousPowerOf2 = t == 0 ? 0 : (0x80000000 >> __builtin_clz(t));

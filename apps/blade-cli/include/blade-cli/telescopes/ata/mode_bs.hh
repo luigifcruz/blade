@@ -151,7 +151,8 @@ inline const Result ModeBS(const Config& config) {
         .beamCoordinates = beamCoordinates,
 
         .searchMitigateDcSpike = true,
-        .searchMinimumDriftRate = 0.0,
+        .searchDriftRateZeroExcluded = config.driftRateZeroExcluded,
+        .searchMinimumDriftRate = config.driftRateMinimum,
         .searchMaximumDriftRate = config.driftRateMaximum,
         .searchSnrThreshold = config.snrThreshold,
         .searchIncoherentBeam = true,

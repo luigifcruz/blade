@@ -19,6 +19,7 @@ HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
     BL_INFO("Output File Path: {}", config.filepathPrefix);
+    BL_INFO("Excluding Zero Drift Rate Hits: {}", config.excludeDriftRateZero ? "YES" : "NO");
 }
 
 template<typename IT>
@@ -43,6 +44,10 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
     BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
     for (const DedopplerHitGroup& group : groups) {
         const DedopplerHit& top_hit = group.topHit();
+
+        if (this->config.excludeDriftRateZero && top_hit.drift_steps == 0) {
+            continue;
+        }
 
         // Extract the stamp
         const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;

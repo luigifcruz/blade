@@ -50,7 +50,9 @@ typedef struct {
     U64 stepNumberOfTimeSamples;
     U64 stepNumberOfFrequencyChannels;
     F64 snrThreshold;
+    F64 driftRateMinimum;
     F64 driftRateMaximum;
+    BOOL driftRateZeroExcluded;
 } Config;
 
 }  // namespace Blade::CLI::Telecopes::ATA

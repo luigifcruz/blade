@@ -59,6 +59,7 @@ ModeS<HT>::ModeS(const Config& config)
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
             .channelTimespanS = config.searchChannelTimespanS,
+            .excludeDriftRateZero = config.searchDriftRateZeroExcluded,
         }, {
             .buffer = this->prebeamformerData,
             .hits = this->dedoppler->getOutputHits(),
@@ -78,6 +79,7 @@ ModeS<HT>::ModeS(const Config& config)
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
             .channelTimespanS = config.searchChannelTimespanS,
+            .excludeDriftRateZero = config.searchDriftRateZeroExcluded,
         }, {
             .buffer = this->prebeamformerData,
             .hits = this->dedoppler->getOutputHits(),

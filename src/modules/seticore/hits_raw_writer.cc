@@ -27,6 +27,7 @@ HitsRawWriter<IT>::HitsRawWriter(const Config& config, const Input& input)
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
     BL_INFO("Output File Path: {}", config.filepathPrefix);
     BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO");
+    BL_INFO("Excluding Zero Drift Rate Hits: {}", config.excludeDriftRateZero ? "YES" : "NO");
 }
 
 template<typename IT>
@@ -40,6 +41,10 @@ const Result HitsRawWriter<IT>::process(const cudaStream_t& stream) {
     BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
     for (const DedopplerHitGroup& group : groups) {
         const DedopplerHit& top_hit = group.topHit();
+
+        if (this->config.excludeDriftRateZero && top_hit.drift_steps == 0) {
+            continue;
+        }
 
         // Extract the stamp
         const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;
