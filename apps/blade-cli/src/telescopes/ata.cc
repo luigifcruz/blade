@@ -127,8 +127,10 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
         .add_option("-D,--search-drift-rate-maximum", config.driftRateMaximum,
                 "SETI search drift rate maximum")
             ->default_val(50.0);
+    
+    config.driftRateZeroExcluded = false;
     app
-        .add_flag("-Z,--search-drift-rate-exclude-zero", config.driftRateZeroExcluded,
+        .add_flag("-Z,--search-drift-rate-exclude-zero,!-z,!--search-drift-rate-include-zero", config.driftRateZeroExcluded,
                 "SETI search exclude hits with drift rate of zero");
 
     try {

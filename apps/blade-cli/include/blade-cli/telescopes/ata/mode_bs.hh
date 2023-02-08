@@ -305,13 +305,15 @@ inline const Result ModeBS(const Config& config) {
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(beamformRunner, &callbackStep, &workerId);
 
-            // write out the input to the searchRunner
-            filterbankWriterRunner->enqueue([&](auto& worker){
-                // If accumulation complete, write data to disk.
-                Plan::Compute(worker);
+            if (filterbankOutputEnabled) {
+                // write out the input to the searchRunner
+                filterbankWriterRunner->enqueue([&](auto& worker){
+                    // If accumulation complete, write data to disk.
+                    Plan::Compute(worker);
 
-                return callbackStep;
-            });
+                    return callbackStep;
+                });
+            }
 
             // If accumulation complete, dedoppler-search data.
             Plan::Compute(worker);
