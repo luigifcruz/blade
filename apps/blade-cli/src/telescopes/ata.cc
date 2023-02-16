@@ -130,8 +130,14 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     
     config.driftRateZeroExcluded = false;
     app
-        .add_flag("-Z,--search-drift-rate-exclude-zero,!-z,!--search-drift-rate-include-zero", config.driftRateZeroExcluded,
+        .add_flag("-Z,--search-drift-rate-exclude-zero", config.driftRateZeroExcluded,
                 "SETI search exclude hits with drift rate of zero");
+    
+    // Read incoherent beam enable.
+    config.incoherentBeamEnabled = false;
+    app
+        .add_flag("-I,--incoherent-beam-enable", config.incoherentBeamEnabled,
+                "Beamform the incoherent beam");
 
     try {
         app.parse(argc, argv);

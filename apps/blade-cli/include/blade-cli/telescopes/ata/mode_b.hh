@@ -101,7 +101,7 @@ inline const Result ModeB(const Config& config) {
         .phasorBeamCoordinates = reader.getBeamCoordinates(),
         .phasorAntennaCoefficientChannelRate = config.preBeamformerChannelizerRate,
 
-        .beamformerIncoherentBeam = false,
+        .beamformerIncoherentBeam = config.incoherentBeamEnabled,
 
         .detectorEnable = filterbankOutput,
         .detectorIntegrationSize = 1,

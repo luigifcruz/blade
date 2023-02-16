@@ -53,6 +53,7 @@ typedef struct {
     F64 driftRateMinimum;
     F64 driftRateMaximum;
     BOOL driftRateZeroExcluded;
+    BOOL incoherentBeamEnabled;
 } Config;
 
 }  // namespace Blade::CLI::Telecopes::ATA
