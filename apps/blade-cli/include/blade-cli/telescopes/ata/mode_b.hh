@@ -127,6 +127,13 @@ inline const Result ModeB(const Config& config) {
 
     auto computeRunner = Runner<Compute>::New(config.numberOfWorkers, computeConfig, false);
     
+    auto beamNames = reader.getBeamSourceNames();
+    auto beamCoordinates = reader.getBeamCoordinates();
+    if (config.incoherentBeamEnabled) {
+        beamNames.push_back("Incoherent");
+        beamCoordinates.push_back(reader.getPhaseCenterCoordinates());
+    }
+
     if constexpr (std::is_same<OT, CF32>::value || std::is_same<OT, CF16>::value) {
         typename GuppiWriter::Config writerConfig = {
             .moduleConfig = {
@@ -174,8 +181,8 @@ inline const Result ModeB(const Config& config) {
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
                 .sourceDataFilename = config.inputGuppiFile,
-                .beamNames = reader.getBeamSourceNames(),
-                .beamCoordinates = reader.getBeamCoordinates(),
+                .beamNames = beamNames,
+                .beamCoordinates = beamCoordinates,
 
                 .numberOfInputFrequencyChannelBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
             },
