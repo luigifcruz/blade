@@ -204,7 +204,7 @@ template<typename OT>
 const F64 Reader<OT>::getObservationFrequency() const {
     return getCenterFrequency() +
     (-((double)getChannelStartIndex()) - (((double)this->getDatashape()->n_aspectchan) / 2.0)
-        + (((double)getBlockMeta(&gr_iterate)->fenchan) / 2.0) + 0.5
+        + (((double)getBlockMeta(&gr_iterate)->fenchan) / 2.0)
     ) * getChannelBandwidth();
 }
 

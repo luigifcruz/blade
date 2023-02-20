@@ -89,7 +89,7 @@ inline const Result ModeB(const Config& config) {
 
         .preBeamformerChannelizerRate = 1,
 
-        .phasorObservationFrequencyHz = reader.getObservationFrequency(),
+        .phasorObservationFrequencyHz = reader.getObservationFrequency() - 0.5*reader.getChannelBandwidth(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
         .phasorTotalBandwidthHz = reader.getObservationBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
@@ -261,7 +261,7 @@ inline const Result ModeB(const Config& config) {
             Plan::Compute(worker);
 
             auto& readerWorker = readerRunner->getWorker(workerId);
-            // Concatenate output data inside search pipeline.
+            // Concatenate output data inside beamformer pipeline.
             Plan::Accumulate(computeRunner, channelizeRunner,
                              readerWorker.getStepOutputJulianDate(),
                              readerWorker.getStepOutputDut1(),
