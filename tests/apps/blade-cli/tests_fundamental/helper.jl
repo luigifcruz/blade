@@ -54,7 +54,7 @@ function createBeamformerRecipe(
 	beamInfo = BeamInfo()
 	beamInfo.ras = zeros(Float64, (dimInfo.nbeams))
 	beamInfo.decs = zeros(Float64, (dimInfo.nbeams))
-	beamInfo.src_names = repeat(["X"], dimInfo.nbeams)
+	beamInfo.src_names = ["X"^i for i in 1:dimInfo.nbeams]
 
 	calInfo = CalInfo()
 	calInfo.refant = "ant00"

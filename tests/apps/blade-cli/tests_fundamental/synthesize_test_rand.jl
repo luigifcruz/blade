@@ -7,6 +7,7 @@ using ATA_BFR5_Genie # https://github.com/MydonSolutions/ata_bfr5_genie
 # Complex-Exponential Signal repeated throughout RAW data
 
 now_unix = floor(datetime2unix(now()))
+n_time_per_block= 16384
 n_blocks = 32
 observation_frequency_center_Mhz = 1500
 channel_bandwidth_Mhz = 0.5
@@ -21,18 +22,18 @@ generateTestInputs(
 		
 		recipe.telinfo.antenna_positions = rand(Float64, (3, recipe.diminfo.nants)) .* 10000.0
 		
-		recipe.beaminfo.ras = rand(Float64, (recipe.diminfo.nbeams)) .* 0.01
-		recipe.beaminfo.decs = rand(Float64, (recipe.diminfo.nbeams)) .* 0.01
+		recipe.beaminfo.ras = rand(Float64, (recipe.diminfo.nbeams)) .* 0.05 .+ (0.25*pi)
+		recipe.beaminfo.decs = rand(Float64, (recipe.diminfo.nbeams)) .* 0.05 .+ (0.25*pi)
 
-		chan0_Mhz = observation_frequency_center_Mhz - (recipe.diminfo.nchan/2)*channel_bandwidth_Mhz
+		chan0_Mhz = observation_frequency_center_Mhz - (recipe.diminfo.nchan/2 + 0.5)*channel_bandwidth_Mhz
 		recipe.obsinfo.freq_array = collect(0:recipe.diminfo.nchan-1) .* channel_bandwidth_Mhz*1e6 .+ chan0_Mhz*1e6
 		recipe.obsinfo.freq_array /= 1e9 # stored in GHz
-		recipe.obsinfo.phase_center_ra = recipe.beaminfo.ras[1] - rand(Float64)*0.01
-		recipe.obsinfo.phase_center_dec = recipe.beaminfo.decs[1] - rand(Float64)*0.01
+		recipe.obsinfo.phase_center_ra = recipe.beaminfo.ras[1]
+		recipe.obsinfo.phase_center_dec = recipe.beaminfo.decs[1]
 
 		recipe.delayinfo.time_array = collect(0:n_blocks-1)
-		recipe.delayinfo.time_array .*= n_time
-		recipe.delayinfo.time_array .+= floor(0.5 * n_time)
+		recipe.delayinfo.time_array .*= n_time_per_block
+		recipe.delayinfo.time_array .+= floor(0.5 * n_time_per_block)
 		recipe.delayinfo.time_array ./= 1e6*channel_bandwidth_Mhz
 		recipe.delayinfo.time_array .+= fill(now_unix, (n_blocks))
 
@@ -51,7 +52,7 @@ generateTestInputs(
 					hcat(recipe.beaminfo.ras, recipe.beaminfo.decs)',
 					recipe.telinfo.longitude, recipe.telinfo.latitude, recipe.telinfo.altitude,
 					unix, recipe.delayinfo.dut1
-				)
+				)*1e9
 				for unix in recipe.delayinfo.time_array
 			)...
 			;
@@ -75,5 +76,7 @@ generateTestInputs(
 	end,
 	directory = "/mnt/buf1/mydonsol_blade/basics",
 	iterateRawcallback = true,
+	n_beam = 3,
+	n_time = n_time_per_block,
 	n_blocks = n_blocks
 )

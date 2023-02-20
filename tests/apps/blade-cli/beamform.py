@@ -1,7 +1,7 @@
-import os, sys, re, argparse
+import os, re, argparse
 import numpy
 import pyproj
-from guppi.guppi import Guppi # https://github.com/MydonSolutions/guppi/tree/write
+import time
 
 import astropy.constants as const
 from astropy.coordinates import SkyCoord
@@ -112,7 +112,7 @@ def _compute_uvw(ts, source, ant_coordinates, lla, dut1=0.0):
         ts: array of Times to compute the coordinates
         source: source SkyCoord
         ant_coordinates: numpy.ndarray
-            Antenna ECEF coordinates. This is indexed as (antenna_number, xyz)
+            Antenna XYZ coordinates, relative to reference position. This is indexed as (antenna_number, xyz)
         lla: tuple Reference Coordinates (radians)
             Longitude, Latitude, Altitude. The antenna_coordinates must have
             this component in them.
@@ -177,7 +177,7 @@ def phasors(
     """
     Return
     ------
-        phasors (B, A, F, T, P), delays (T, A, B)
+        phasors (B, A, F, T, P), delays_ns (T, B, A)
 
     """
 
@@ -191,10 +191,11 @@ def phasors(
         calibrationCoefficients.shape[1]
     )
     calibrationCoeffFreqRatio = frequencies.shape[0] // calibrationCoefficients.shape[0]
+    calibrationCoefficients = numpy.repeat(calibrationCoefficients, calibrationCoeffFreqRatio, axis=0) # repeat frequencies
 
     phasors = numpy.zeros(phasorDims, dtype=numpy.complex128)
     
-    delays = numpy.zeros(
+    delays_ns = numpy.zeros(
         (
             times.shape[0],
             beamCoordinates.shape[0],
@@ -203,6 +204,22 @@ def phasors(
         dtype=numpy.float64
     )
 
+    
+    # TODO don't go back and forth... we're mimicing BLADE directly, but it shouldn't either
+    transformer = pyproj.Proj.from_proj(
+        pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84'),
+        pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84'),
+    )
+    referenceXyz = transformer.transform(
+        lla[0] * 180.0 / numpy.pi,
+        lla[1] * 180.0 / numpy.pi,
+        lla[2],
+    )
+    for i in range(antennaPositions.shape[0]):
+        antennaPositions[i, :] -= referenceXyz
+
+    index = 0
+    t_start = time.time()
     for t, tval in enumerate(times):
         ts = Time(tval, format='unix')
         boresightUvw = _compute_uvw(
@@ -223,23 +240,32 @@ def phasors(
             )
             beamUvw -= beamUvw[referenceAntennaIndex:referenceAntennaIndex+1, :]
 
-            delays[t, b, :] = (beamUvw[:,2] - boresightUvw[:,2]) / const.c.value
-            for a, delay in enumerate(delays[t, b, :]):
+            delays_ns[t, b, :] = (beamUvw[:,2] - boresightUvw[:,2]) * (1e9 / const.c.value)
+            for a, delay in enumerate(delays_ns[t, b, :]):
                 delay_factors = _create_delay_phasors(
-                    delay,
+                    delay*1e-9,
                     frequencies - frequencies[0]
                 )
                 fringe_factor = _get_fringe_rate(
-                    delay,
+                    delay*1e-9,
                     frequencies[0]
                 )
 
+                
                 phasor = numpy.exp(delay_factors+fringe_factor)
-                for p in range(phasorDims[-1]):
-                    for c in range(calibrationCoeffFreqRatio):
-                        fine_slice = range(c, frequencies.shape[0], calibrationCoeffFreqRatio)
-                        phasors[b, a, fine_slice, t, p] = phasor[fine_slice] * calibrationCoefficients[:, p, a]
-    return phasors, delays
+                # for f in range(frequencies.shape[0]):
+                #     if t == 0 and (f < 3 or f >= frequencies.shape[0] - 3):
+                #         # print(f"Phasor [b={b}, a={a}, f={f}] @ {phasor_frequencies[f]}: {phasor[f]}")
+                #         print(f"[b={b}, a={a}, f={f}]: delay {delay} (factor {delay_factors[f]}), fringe {frequencies[0]} (factor {fringe_factor}), freq {frequencies[f]}")
+                phasors[b, a, :, t, :] = numpy.reshape(numpy.repeat(phasor, 2), (len(phasor), 2)) * calibrationCoefficients[:, :, a]
+                
+                index += 1
+                elapsed = time.time() - t_start
+                completion = index/len(delays_ns)
+                print(f"Phasor creation: {100*completion:0.2f}% ({elapsed:0.1f}/{(elapsed/completion):0.1f})", end="\r")
+    print()
+
+    return phasors, delays_ns
 
 
 def beamform(
@@ -275,7 +301,7 @@ def guppiheader_get_unix_midblock(guppiheader):
     pktidx = guppiheader.get('PKTIDX', 0)
     tbin = guppiheader.get('TBIN', 1.0/guppiheader.get("CHAN_BW", 0.0))
     piperblk = guppiheader.get('PIPERBLK', ntime)
-    return synctime + pktidx * ((tbin * ntime)/piperblk)
+    return synctime + (pktidx + piperblk) * ((tbin * ntime)/piperblk)
 
 def index_of_time(times, t):
     for i, ti in enumerate(times):
@@ -290,6 +316,7 @@ def index_of_time(times, t):
 
 if __name__ == "__main__":
     import h5py
+    from guppi.guppi import Guppi # https://github.com/MydonSolutions/guppi/tree/write
 
     parser = argparse.ArgumentParser(
         description='Generate a (RAW, BFR5):(Filterbank) input:output pair of beamforming',
@@ -299,17 +326,19 @@ if __name__ == "__main__":
     parser.add_argument('guppi', type=str)
 
     parser.add_argument('-u', '--upchannelization-rate', type=int, default=1,)
+    parser.add_argument('-P', '--postbeamform-upchannelize', action='store_true', help="As opposed to pre-beamformation upchannelization")
     parser.add_argument('-o', '--output-directory', type=str, default=None,)
 
     args = parser.parse_args()
     bfr5 = h5py.File(args.bfr5, 'r')
     gfile = Guppi(args.guppi)
+    hdr, data = gfile.read_next_block()
 
     guppi_stem = re.match(r"(.*)\.\d{4}.raw", os.path.basename(args.guppi)).group(1)
     if args.output_directory is None:
         args.output_directory = os.path.dirname(args.guppi)
     
-    datablockDims = (
+    bfr5Dims = (
         bfr5['diminfo']['nants'][()],
         bfr5['diminfo']['nchan'][()],
         bfr5['diminfo']['ntimes'][()],
@@ -331,10 +360,12 @@ if __name__ == "__main__":
     )
 
     antennaPositions = bfr5['telinfo']['antenna_positions'][:]
-    antennaPositionFrame = bfr5['telinfo']['antenna_position_frame'][()]
+    antennaPositionFrame = bfr5['telinfo']['antenna_position_frame'][()].decode()
 
-    # convert from antennaPositionFrame to 'xyz'
-    if antennaPositionFrame == 'ecef':
+    # convert from antennaPositionFrame to 'ecef'
+    assert antennaPositionFrame != 'enu'
+    if antennaPositionFrame == 'xyz':
+        print("Converting to ECEF from XYZ")
         transformer = pyproj.Proj.from_proj(
             pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84'),
             pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84'),
@@ -344,10 +375,10 @@ if __name__ == "__main__":
             bfr5['telinfo']['latitude'][()],
             bfr5['telinfo']['altitude'][()],
         )
-        telescopeCenterXyz = transformer.transform(*lla)
-        print(f"Subtracting Telescope center from ECEF antenna-positions: {telescopeCenterXyz}")
+        referenceXyz = transformer.transform(*lla)
+        print(f"Adding reference position to XYZ antenna-positions: {referenceXyz}")
         for i in range(antennaPositions.shape[0]):
-            antennaPositions[i, :] -= telescopeCenterXyz
+            antennaPositions[i, :] += referenceXyz
 
     print("ECEF Antenna Positions (X, Y, Z):")
     for i in range(antennaPositions.shape[0]):
@@ -360,19 +391,25 @@ if __name__ == "__main__":
 
     frequencies = bfr5['obsinfo']['freq_array'][:] * 1e9
     times = bfr5['delayinfo']['time_array'][:]
+    times_jd = bfr5['delayinfo']['jds'][:]
 
-    upchan_frequencies = upchannelize_frequencies(
-        frequencies,
-        args.upchannelization_rate
-    )
+    if args.postbeamform_upchannelize:
+        phasor_frequencies = frequencies
+    else:
+        phasor_frequencies = upchannelize_frequencies(
+            frequencies,
+            args.upchannelization_rate
+        )
 
+    print(f"Generating Phasors...")
+    print(phasor_frequencies*1e-9)
     phasorCoeffs, delays = phasors(
         antennaPositions, # [Antenna, XYZ]
         boresightCoordinate, # degrees
         beamCoordinates, #  degrees
         times, # [unix]
-        upchan_frequencies, # [channel-frequencies] Hz
-        bfr5['calinfo']['cal_all'][:], # [Antenna, Frequency-channel, Polarization]
+        phasor_frequencies, # [channel-frequencies] Hz
+        bfr5['calinfo']['cal_all'][hdr['SCHAN']:hdr['SCHAN']+hdr['OBSNCHAN']//hdr['NANTS']], # [Antenna, Frequency-channel, Polarization]
         referenceAntennaIndex = 0,
         lla = (
             numpy.pi * bfr5['telinfo']['longitude'][()] / 180.0,
@@ -381,16 +418,29 @@ if __name__ == "__main__":
         )
     )
 
+    # for b in range(delays.shape[1]):
+    #     for a in range(delays.shape[2]):
+    #         print(f"Delay [b={b}, a={a}, t={times_jd[0]}: {delays[0, b, a]} ns")
+    # for b in range(phasorCoeffs.shape[0]):
+    #     for a in range(phasorCoeffs.shape[1]):
+    #         for f in range(phasorCoeffs.shape[2]):
+    #             if f >= 3 and f < phasorCoeffs.shape[2]-3:
+    #                 continue
+    #             for p in range(phasorCoeffs.shape[4]):
+    #                 print(f"Phasor [b={b}, a={a}, f={f}, p={p}] @ {times_jd[0]} @ {phasor_frequencies[f]}: {phasorCoeffs[b,a,f,0,p]}")
+
     bfr5_delays = bfr5['delayinfo']['delays'][:]
     recipe_delays_agreeable = numpy.isclose(bfr5_delays, delays, atol=0.0001)
+    # recipe_delays_agreeable = bfr5_delays == delays
     if not recipe_delays_agreeable.all():
         print(f"The delays in the provided recipe file do not match the calculated delays:\n{recipe_delays_agreeable}")
+        # exit(1)
         print(f"Using calculated delays:\n{delays}")
         print(f"Not given delays:\n{bfr5_delays}")
     else:
         print("The recipe file's delays match the calculated delays.")
 
-    hdr, data = gfile.read_next_block()
+
     block_index = 1
     block_times_index = 0
     file_open_mode = 'wb'
@@ -398,12 +448,17 @@ if __name__ == "__main__":
         if hdr is None:
             break
 
-        assert datablockDims == guppiheader_get_blockdims(hdr), f"#{block_index}: {datablockDims} != {guppiheader_get_blockdims(hdr)}"
+        blockdims = guppiheader_get_blockdims(hdr)
+        for dim in [0,2,3]:
+            assert bfr5Dims[dim] == blockdims[dim], f"#{block_index}: {bfr5Dims} != {blockdims}"
 
-        upchan_data = upchannelize(
-            data,
-            args.upchannelization_rate
-        )
+        if args.postbeamform_upchannelize:
+            beam_inputdata = data
+        else:
+            beam_inputdata = upchannelize(
+                data,
+                args.upchannelization_rate
+            )
 
         try:
             block_times_index = index_of_time(
@@ -413,20 +468,25 @@ if __name__ == "__main__":
         except:
             pass
         beams = beamform(
-            upchan_data,
+            beam_inputdata,
             phasorCoeffs[:, :, :, block_times_index:block_times_index+1, :]
         )
+
+        if args.postbeamform_upchannelize:
+            beams = upchannelize(
+                beams,
+                args.upchannelization_rate
+            )
         
         hdr["DATATYPE"] = "FLOAT"
         hdr["TBIN"] *= args.upchannelization_rate
         hdr["CHAN_BW"] /= args.upchannelization_rate
-        for beam in range(beams.shape[0]):
-            Guppi.write_to_file(
-                os.path.join(args.output_directory, f"{guppi_stem}-beam{beam:03d}.0000.raw"),
-                hdr,
-                beams[beam:beam+1, ...].astype(numpy.complex64),
-                file_open_mode=file_open_mode
-            )
+        Guppi.write_to_file(
+            os.path.join(args.output_directory, f"{guppi_stem}-beamformed.raw"),
+            hdr,
+            beams.astype(numpy.complex64),
+            file_open_mode=file_open_mode
+        )
         file_open_mode = 'ab'
         hdr, data = gfile.read_next_block()
         block_index += 1
