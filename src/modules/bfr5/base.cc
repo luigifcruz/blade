@@ -39,24 +39,33 @@ Reader::Reader(const Config& config, const Input& input)
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
+    LLA referencePosition = this->getReferencePosition();
 
     if (antFrame != "ecef" && antFrame != "ECEF") {
         if (antFrame == "xyz" || antFrame == "XYZ") {
+            BL_DEBUG("Translating antenna positions from XYZ to ECEF.")
+
             calc_position_to_ecef_frame_from_xyz(
                 reinterpret_cast<F64*>(antennaPositions.data()),
                 antennaPositions.size(),
-                this->bfr5.tel_info.latitude,
-                this->bfr5.tel_info.longitude,
-                this->bfr5.tel_info.altitude);
+                referencePosition.LON,
+                referencePosition.LAT,
+                referencePosition.ALT);
         }
 
-        if (antFrame == "enu" || antFrame == "ENU") {
+        else if (antFrame == "enu" || antFrame == "ENU") {
+            BL_DEBUG("Translating antenna positions from ENU to ECEF.")
             calc_position_to_ecef_frame_from_enu(
                 reinterpret_cast<F64*>(antennaPositions.data()),
                 antennaPositions.size(),
-                this->bfr5.tel_info.latitude,
-                this->bfr5.tel_info.longitude,
-                this->bfr5.tel_info.altitude);
+                referencePosition.LON,
+                referencePosition.LAT,
+                referencePosition.ALT);
+        }
+
+        else {
+            BL_FATAL("Unknown antenna position frame '{}'. Expecting ECEF, XYZ or ENU.", antFrame);
+            BL_CHECK_THROW(Result::ASSERTION_ERROR);
         }
     }
 
@@ -77,7 +86,7 @@ std::vector<CF64> Reader::getAntennaCoefficients(const U64& numberOfFrequencyCha
         .P = this->bfr5.cal_info.cal_all_dims[1],
     });
     if (frequencyChannelStartIndex + coefficientDims.numberOfFrequencyChannels() > this->bfr5.cal_info.cal_all_dims[0]) {
-        BL_FATAL("Requested frequency-channel range [{}, {}) exceeeds dimensions of BFR5 contents ({}).", frequencyChannelStartIndex, frequencyChannelStartIndex + coefficientDims.numberOfFrequencyChannels(), this->bfr5.cal_info.cal_all_dims[0]);
+        BL_FATAL("Requested frequency-channel range [{}, {}) exceeds dimensions of BFR5 contents ({}).", frequencyChannelStartIndex, frequencyChannelStartIndex + coefficientDims.numberOfFrequencyChannels(), this->bfr5.cal_info.cal_all_dims[0]);
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
     antennaCoefficients.resize(coefficientDims.size());
