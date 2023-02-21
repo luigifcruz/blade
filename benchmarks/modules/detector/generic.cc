@@ -31,6 +31,13 @@ BENCHMARK(BM_Detector_Compute)
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 
+BENCHMARK(BM_Detector_Compute)
+    ->Iterations(2<<13)
+    ->Args({2,  64, 1})
+    ->Args({16, 64, 1})
+    ->UseManualTime()
+    ->Unit(bm::kMillisecond);
+
 static void BM_Detector_Transfer(bm::State& state) {
     ModuleUnderTest<Modules::Detector, CF32, F32> mud;
     BL_CHECK_THROW(mud.runTransferBenchmark(state));
