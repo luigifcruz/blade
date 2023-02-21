@@ -9,7 +9,11 @@ project(
     ]
 )
 
-cfg_lst = configuration_data()
+cfg_lst = configuration_data(
+    {
+        'commit': run_command('git', 'describe', '--always', '--dirty', '--abbrev=9', check: true).stdout().strip()
+    }
+)
 src_lst = []
 dep_lst = [
     dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'culibos']),
