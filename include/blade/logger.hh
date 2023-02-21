@@ -79,14 +79,14 @@ inline void BL_LOG_PRINT_ET() {
     BL_INFO(R"(
 
 Welcome to BLADE (Breakthrough Listen Accelerated DSP Engine)!
-Version {} | Build Type: {}
+Version {} | Build Type: {} | Commit: {}
                    .-.
     .-""`""-.    |(0 0)
  _/`oOoOoOoOo`\_ \ \-/
 '.-=-=-=-=-=-=-.' \/ \
   `-=.=-.-=.=-'    \ /\
      ^  ^  ^       _H_ \ art by jgs
-    )", BLADE_VERSION_STR, BLADE_BUILD_TYPE);
+    )", BLADE_VERSION_STR, BLADE_BUILD_TYPE, BLADE_COMMIT_STR);
 }
 
 #endif
