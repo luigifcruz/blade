@@ -80,7 +80,7 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     // Read number of workers.
     app
         .add_option("-N,--number-of-workers", config.numberOfWorkers, "Number of workers")
-            ->default_val(2);
+            ->default_val(1);
 
     // Read target pre-beamformer channelizer rate.
     app
