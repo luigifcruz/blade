@@ -9,7 +9,7 @@ __global__ void polarizer(const IT* input, OT* output) {
     if (tid < (N * 2)) {
         // The complex multiplication below can be simplified because
         // the real part of the phasor is 0.0. Boring implementation:
-        // const IT yPol90 = cuCmulf(yPol, makeuFloatComplex(0.0, 1.0));
+        // const IT yPol90 = cuCmulf(yPol, make_cuFloatComplex(0.0, 1.0));
 
         const OT& yPol = input[tid + 1];
         const float x = -cuCimagf(yPol);
