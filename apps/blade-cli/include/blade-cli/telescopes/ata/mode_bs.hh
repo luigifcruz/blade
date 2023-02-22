@@ -108,11 +108,10 @@ inline const Result ModeBS(const Config& config) {
         .detectorIntegrationSize = 1,
         .detectorKernel = DetectorKernel::ATPF_1pol,
 
-        // TODO: Review this calculation.
         .castBlockSize = 512,
         .channelizerBlockSize = 512,
         .phasorBlockSize = 512,
-        .beamformerBlockSize = config.stepNumberOfTimeSamples,
+        .beamformerBlockSize = 512,
         .detectorBlockSize = 512,
     };
     stepTailIncrementDims.T *= beamformConfig.accumulateRate;
