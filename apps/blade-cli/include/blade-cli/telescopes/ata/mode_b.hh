@@ -78,6 +78,9 @@ inline const Result ModeB(const Config& config) {
 
     // Instantiate compute pipeline and runner.
 
+    // TODO: less static hardware limit `512`
+    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 512 ? 512 : config.stepNumberOfTimeSamples;
+
     const auto filterbankOutput = config.outputType == TypeId::F16 || config.outputType == TypeId::F32;
 
     typename Compute::Config computeConfig = {
@@ -106,9 +109,9 @@ inline const Result ModeB(const Config& config) {
 
         // TODO: Review this calculation.
         .castBlockSize = 512,
-        .channelizerBlockSize = 512,
+        .channelizerBlockSize = timeRelatedBlockSize,
         .phasorBlockSize = 512,
-        .beamformerBlockSize = 512,
+        .beamformerBlockSize = timeRelatedBlockSize,
         .detectorBlockSize = 512,
     };
     stepTailIncrementDims.T *= computeConfig.accumulateRate;

@@ -9,11 +9,11 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input)
         : Generic<IT, OT>(config, input) {
     // Check configuration values.
-    if (this->getInputPhasors().dims().numberOfBeams() > config.blockSize) {
-        BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
-                config.blockSize, this->getInputPhasors().dims().numberOfBeams());
-        BL_CHECK_THROW(Result::ERROR);
-    }
+    // if (this->getInputPhasors().dims().numberOfBeams() > config.blockSize) {
+    //     BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
+    //             config.blockSize, this->getInputPhasors().dims().numberOfBeams());
+    //     BL_CHECK_THROW(Result::ERROR);
+    // }
 
     if (this->getInputPhasors().dims().numberOfFrequencyChannels() != 
         this->getInputBuffer().dims().numberOfFrequencyChannels()) {

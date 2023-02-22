@@ -80,6 +80,7 @@ inline const Result ModeBS(const Config& config) {
     auto channelizeRunner = Runner<Channelize>::New(config.numberOfWorkers, channelizeConfig, false);
 
     // Instantiate beamform pipeline and runner.
+    const auto timeRelatedBlockSize = config.stepNumberOfTimeSamples > 512 ? 512 : config.stepNumberOfTimeSamples;
 
     typename Beamform::Config beamformConfig = {
         .inputDimensions = channelizeRunner->getWorker().getOutputBuffer().dims(),
@@ -109,9 +110,9 @@ inline const Result ModeBS(const Config& config) {
         .detectorKernel = DetectorKernel::ATPF_1pol,
 
         .castBlockSize = 512,
-        .channelizerBlockSize = 512,
+        .channelizerBlockSize = timeRelatedBlockSize,
         .phasorBlockSize = 512,
-        .beamformerBlockSize = 512,
+        .beamformerBlockSize = timeRelatedBlockSize,
         .detectorBlockSize = 512,
     };
     stepTailIncrementDims.T *= beamformConfig.accumulateRate;
