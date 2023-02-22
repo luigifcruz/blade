@@ -18,12 +18,12 @@ __global__ void detector_4pol(const cuFloatComplex* input,
     if (tid < N) {
         const float4 sample = reinterpret_cast<const float4*>(input)[tid];
         
-        cuFloatComplex sample_X = make_cuFloatComplex(sample.x, sample.y);
-        cuFloatComplex sample_Y = make_cuFloatComplex(sample.z, sample.w);
+        const cuFloatComplex sample_X = make_cuFloatComplex(sample.x, sample.y);
+        const cuFloatComplex sample_Y = make_cuFloatComplex(sample.z, sample.w);
 
-        cuFloatComplex X = cuCmulf(sample_X, cuConjf(sample_X));
-        cuFloatComplex Y = cuCmulf(sample_Y, cuConjf(sample_Y));
-        cuFloatComplex Z = cuCmulf(sample_X, cuConjf(sample_Y));
+        const cuFloatComplex X = cuCmulf(sample_X, cuConjf(sample_X));
+        const cuFloatComplex Y = cuCmulf(sample_Y, cuConjf(sample_Y));
+        const cuFloatComplex Z = cuCmulf(sample_X, cuConjf(sample_Y));
 
         const uint64_t oid = (tid / INTG) * 4;
         atomicAdd(output + oid + 0, X.x);
