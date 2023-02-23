@@ -70,9 +70,6 @@ class BLADE_API Channelizer : public Module {
     std::string post_kernel;
     dim3 post_grid, post_block;
 
-    ArrayTensor<Device::CUDA, OT> buffer;
-    ArrayTensor<Device::CPU | Device::CUDA, U64> indices;
-
     cufftHandle plan;
     std::string kernel_key;
     std::unique_ptr<Internal::Callback> callback;
