@@ -38,7 +38,7 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.pulsarcentric = this->config.pulsarCentric;
     this->filterbank_header.az_start = this->config.azimuthStart;
     this->filterbank_header.za_start = this->config.zenithStart;
-    this->filterbank_header.fch1 = 1e-6 * (this->config.centerFrequencyHz - this->config.bandwidthHz * (inputDims.numberOfFrequencyChannels()-1)/(2*inputDims.numberOfFrequencyChannels()));
+    this->filterbank_header.fch1 = 1e-6 * (this->config.firstChannelFrequencyHz);
     this->filterbank_header.foff = 1e-6 * (this->config.bandwidthHz / inputDims.numberOfFrequencyChannels());
     this->filterbank_header.nchans = (I32) inputDims.numberOfFrequencyChannels();
     this->filterbank_header.nbeams = (I32) inputDims.numberOfAspects();
@@ -51,7 +51,6 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
 
     this->openFilesWriteHeaders();
 
-    BL_DEBUG("Recorded Center Frequency: {}", this->config.centerFrequencyHz);
     BL_DEBUG("Recorded Bandwidth: {}", this->config.bandwidthHz);
     BL_DEBUG("Fch1: {}", this->filterbank_header.fch1);
     BL_DEBUG("Fch center: {}", this->filterbank_header.fch1 + this->filterbank_header.foff*this->filterbank_header.nchans/2);
