@@ -110,8 +110,12 @@ class BLADE_API Reader : public Module {
     const F64 getObservationBandwidth() const;
     const F64 getChannelBandwidth() const;
     const U64 getChannelStartIndex() const;
-    const F64 getObservationFrequency() const;
+    const F64 getObservationCenterFrequency() const;
     const F64 getCenterFrequency() const;
+    const F64 getObservationBottomFrequency() const;
+    const F64 getBottomFrequency() const;
+    const F64 getObservationTopFrequency() const;
+    const F64 getTopFrequency() const;
     const F64 getBandwidth() const;
     const F64 getAzimuthAngle() const;
     const F64 getZenithAngle() const;

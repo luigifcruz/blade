@@ -201,12 +201,46 @@ const F64 Reader<OT>::getCenterFrequency() const {
 }
 
 template<typename OT>
-const F64 Reader<OT>::getObservationFrequency() const {
+const F64 Reader<OT>::getObservationCenterFrequency() const {
     return getCenterFrequency() + (
         -((double)getChannelStartIndex())
         - (((double)this->getDatashape()->n_aspectchan) / 2.0)
         + (((double)getBlockMeta(&gr_iterate)->fenchan) / 2.0)
+    ) * getChannelBandwidth();
+}
+
+template<typename OT>
+const F64 Reader<OT>::getObservationBottomFrequency() const {
+    return getCenterFrequency() + (
+        -((double)getChannelStartIndex())
+        - (((double)this->getDatashape()->n_aspectchan) / 2.0)
         - 0.5
+    ) * getChannelBandwidth();
+}
+
+template<typename OT>
+const F64 Reader<OT>::getBottomFrequency() const {
+    return getCenterFrequency() + (
+        - (((double)this->getDatashape()->n_aspectchan) / 2.0)
+        - 0.5
+    ) * getChannelBandwidth();
+}
+
+template<typename OT>
+const F64 Reader<OT>::getObservationTopFrequency() const {
+    return getCenterFrequency() + (
+        -((double)getChannelStartIndex())
+        - (((double)this->getDatashape()->n_aspectchan) / 2.0)
+        + ((double)getBlockMeta(&gr_iterate)->fenchan)
+        - 0.5 // subtract as the offset is to nchan (not nchan-1)
+    ) * getChannelBandwidth();
+}
+
+template<typename OT>
+const F64 Reader<OT>::getTopFrequency() const {
+    return getCenterFrequency() + (
+        + (((double)this->getDatashape()->n_aspectchan) / 2.0)
+        - 0.5 // subtract as the offset is to nchan (not nchan-1)
     ) * getChannelBandwidth();
 }
 

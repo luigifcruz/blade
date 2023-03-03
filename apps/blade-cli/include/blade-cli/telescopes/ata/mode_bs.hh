@@ -88,7 +88,7 @@ inline const Result ModeBS(const Config& config) {
 
         .preBeamformerChannelizerRate = 1,
 
-        .phasorObservationFrequencyHz = reader.getObservationFrequency(),
+        .phasorObservationFrequencyHz = reader.getObservationCenterFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
         .phasorTotalBandwidthHz = reader.getObservationBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
@@ -144,7 +144,7 @@ inline const Result ModeBS(const Config& config) {
         .inputPhaseCenter = reader.getPhaseCenterCoordinates(),
         .inputTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
         .inputTotalNumberOfFrequencyChannels = readerTotalOutputDims.numberOfTimeSamples() / config.preBeamformerChannelizerRate,
-        .inputFrequencyOfFirstChannelHz = reader.getCenterFrequency() - readerTotalOutputDims.numberOfFrequencyChannels() * reader.getChannelBandwidth() / 2,
+        .inputFrequencyOfFirstChannelHz = reader.getBottomFrequency(),
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
         .inputLastBeamIsIncoherent = true,
         .beamNames = beamSourceNames,
@@ -177,7 +177,7 @@ inline const Result ModeBS(const Config& config) {
             .pulsarCentric = 1,
             .azimuthStart = reader.getAzimuthAngle(),
             .zenithStart = reader.getZenithAngle(),
-            .firstChannelFrequencyHz = reader.getObservationFrequency(),
+            .firstChannelFrequencyHz = reader.getBottomFrequency(),
             .bandwidthHz = reader.getBandwidth(),
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),

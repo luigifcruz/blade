@@ -89,7 +89,7 @@ inline const Result ModeB(const Config& config) {
 
         .preBeamformerChannelizerRate = 1,
 
-        .phasorObservationFrequencyHz = reader.getObservationFrequency(),
+        .phasorObservationFrequencyHz = reader.getObservationCenterFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
         .phasorTotalBandwidthHz = reader.getObservationBandwidth(),
         .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
@@ -176,7 +176,7 @@ inline const Result ModeB(const Config& config) {
                 .pulsarCentric = 1,
                 .azimuthStart = reader.getAzimuthAngle(),
                 .zenithStart = reader.getZenithAngle(),
-                .firstChannelFrequencyHz = reader.getObservationFrequency(),
+                .firstChannelFrequencyHz = reader.getTopFrequency(), // Top channel as the frequencies are descending
                 .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
