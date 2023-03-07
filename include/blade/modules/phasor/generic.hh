@@ -16,10 +16,8 @@ class BLADE_API Generic : public Module {
         U64 numberOfFrequencyChannels;
         U64 numberOfPolarizations;
 
-        F64 observationFrequencyHz;
+        F64 bottomFrequencyHz;
         F64 channelBandwidthHz;
-        F64 totalBandwidthHz;
-        U64 frequencyStartIndex;
 
         U64 referenceAntennaIndex;
         LLA arrayReferencePosition; 

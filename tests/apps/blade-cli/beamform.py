@@ -156,13 +156,6 @@ def _compute_uvw(ts, source, ant_coordinates, lla, dut1=0.0):
         
     return uvws
 
-def _create_delay_phasors(delay, frequencies):
-    return -1.0j*2.0*numpy.pi*delay*frequencies
-
-
-def _get_fringe_rate(delay, fringeFrequency):
-    return -1.0j*2.0*numpy.pi*delay*fringeFrequency
-
 
 def phasors(
     antennaPositions: numpy.ndarray, # [Antenna, XYZ]
@@ -228,10 +221,9 @@ def phasors(
             antennaPositions,
             lla
         )
+        # UVWs are relative to reference antenna, 
         boresightUvw -= boresightUvw[referenceAntennaIndex:referenceAntennaIndex+1, :]
         for b in range(phasorDims[0]):
-            # These UVWs are centred at the reference antenna, 
-            # i.e. UVW_irefant = [0, 0, 0]
             beamUvw = _compute_uvw( # [Antenna, UVW]
                 ts,
                 beamCoordinates[b], 
@@ -241,29 +233,18 @@ def phasors(
             beamUvw -= beamUvw[referenceAntennaIndex:referenceAntennaIndex+1, :]
 
             delays_ns[t, b, :] = (beamUvw[:,2] - boresightUvw[:,2]) * (1e9 / const.c.value)
-            for a, delay in enumerate(delays_ns[t, b, :]):
-                delay_factors = _create_delay_phasors(
-                    delay*1e-9,
-                    frequencies - frequencies[0]
-                )
-                fringe_factor = _get_fringe_rate(
-                    delay*1e-9,
-                    frequencies[0]
+            for a, delay in enumerate(delays_ns[t, b, :]):                
+                phasor = numpy.exp(
+                    -1.0j*2.0*numpy.pi
+                    *delay*1e-9
+                    *frequencies
                 )
 
-                
-                phasor = numpy.exp(delay_factors+fringe_factor)
-                # for f in range(frequencies.shape[0]):
-                #     if t == 0 and (f < 3 or f >= frequencies.shape[0] - 3):
-                #         # print(f"Phasor [b={b}, a={a}, f={f}] @ {phasor_frequencies[f]}: {phasor[f]}")
-                #         print(f"[b={b}, a={a}, f={f}]: delay {delay} (factor {delay_factors[f]}), fringe {frequencies[0]} (factor {fringe_factor}), freq {frequencies[f]}")
                 phasors[b, a, :, t, :] = numpy.reshape(numpy.repeat(phasor, 2), (len(phasor), 2)) * calibrationCoefficients[:, :, a]
                 
                 index += 1
                 elapsed = time.time() - t_start
                 completion = index/len(delays_ns)
-                print(f"Phasor creation: {100*completion:0.2f}% ({elapsed:0.1f}/{(elapsed/completion):0.1f})", end="\r")
-    print()
 
     return phasors, delays_ns
 
@@ -389,7 +370,7 @@ if __name__ == "__main__":
         print(f"\t{i}: ({', '.join(beamCoordinates[i].to_string(unit='rad').split(' '))})")
 
 
-    frequencies = bfr5['obsinfo']['freq_array'][:] * 1e9
+    frequencies = bfr5['obsinfo']['freq_array'][hdr['SCHAN']:] * 1e9
     times = bfr5['delayinfo']['time_array'][:]
     times_jd = bfr5['delayinfo']['jds'][:]
 
@@ -400,6 +381,8 @@ if __name__ == "__main__":
             frequencies,
             args.upchannelization_rate
         )
+    
+    phasor_frequencies += (phasor_frequencies[2] - phasor_frequencies[1])/2
 
     print(f"Generating Phasors...")
     print(phasor_frequencies*1e-9)

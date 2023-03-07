@@ -59,7 +59,7 @@ i_fio = open(ARGS[1], "r")
     o_data = Array(o_grheader)
     read!(o_fio, o_data)
 
-    atol = 1
+    atol = 0.75
     println(@sprintf("Shapes: %s, %s", size(i_data), size(o_data)))
     println("\n", compare(i_data, o_data, atol))
 

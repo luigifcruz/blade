@@ -29,10 +29,8 @@ class BLADE_API ModeB : public Pipeline {
 
         BOOL preBeamformerPolarizerConvertToCircular = false;
 
-        F64 phasorObservationFrequencyHz;
+        F64 phasorBottomFrequencyHz;
         F64 phasorChannelBandwidthHz;
-        F64 phasorTotalBandwidthHz;
-        U64 phasorFrequencyStartIndex;
         U64 phasorReferenceAntennaIndex;
         LLA phasorArrayReferencePosition; 
         RA_DEC phasorBoresightCoordinate;

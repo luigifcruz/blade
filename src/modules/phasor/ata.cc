@@ -174,19 +174,15 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
             this->output.delays.data() + (b * this->config.numberOfAntennas)
         );
 
-        //  Subtract boresight (TPi = ((WPi - WPr) / C) - Ti).
-        for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
-            this->output.delays[(b * this->config.numberOfAntennas) + a] -= boresightDelay[a];
-        }
-    }
-
-    for (U64 b = 0; b < this->config.beamCoordinates.size(); b++) {
         const U64 beamOffset = (b * 
                                 this->config.numberOfAntennas * 
                                 this->config.numberOfFrequencyChannels * 
                                 this->config.numberOfPolarizations); 
 
         for (U64 a = 0; a < this->config.numberOfAntennas; a++) {
+            //  Subtract boresight (TPi = ((WPi - WPr) / C) - Ti).
+            this->output.delays[(b * this->config.numberOfAntennas) + a] -= boresightDelay[a];
+
             const U64 antennaPhasorOffset = (a *
                                        this->config.numberOfFrequencyChannels *
                                        this->config.numberOfPolarizations);
@@ -195,14 +191,14 @@ const Result ATA<OT>::preprocess(const cudaStream_t& stream,
                                        this->config.numberOfPolarizations);
 
             const F64 delay = this->output.delays[(b * this->config.numberOfAntennas) + a];
-            const F64 fringe = this->config.observationFrequencyHz - (this->config.totalBandwidthHz / 2.0);
-            const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * fringe); 
+            const CF64 fringeRateExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * (this->config.bottomFrequencyHz + this->input.blockFrequencyChannelOffset[0] * this->config.channelBandwidthHz)); 
+
 
             for (U64 f = 0; f < this->config.numberOfFrequencyChannels; f++) {
                 const U64 frequencyPhasorOffset = (f * this->config.numberOfPolarizations);
-                const U64 frequencyCoeffOffset = ((f + this->input.blockFrequencyChannelOffset[0]) / this->config.antennaCoefficientChannelRate) * this->config.numberOfPolarizations;
+                const U64 frequencyCoeffOffset = (this->input.blockFrequencyChannelOffset[0] + (f / this->config.antennaCoefficientChannelRate)) * this->config.numberOfPolarizations;
 
-                const F64 freq = this->config.frequencyStartIndex * this->config.channelBandwidthHz + (f + this->input.blockFrequencyChannelOffset[0]) * this->config.channelBandwidthHz / this->config.antennaCoefficientChannelRate;
+                const F64 freq = (f + 0.5) * this->config.channelBandwidthHz / this->config.antennaCoefficientChannelRate;
                 const CF64 phasorsExp(0, -2 * BL_PHYSICAL_CONSTANT_PI * delay * freq); 
                 const CF64 phasor = std::exp(phasorsExp + fringeRateExp);
 

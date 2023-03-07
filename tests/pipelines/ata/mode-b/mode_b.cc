@@ -45,10 +45,8 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
 
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
-        .phasorObservationFrequencyHz = 6500.125*1e6,
+        .phasorBottomFrequencyHz = 5500.125*1e6,
         .phasorChannelBandwidthHz = 0.5e6,
-        .phasorTotalBandwidthHz = 1.024e9,
-        .phasorFrequencyStartIndex = 352,
         .phasorReferenceAntennaIndex = 0,
         .phasorArrayReferencePosition = {
             .LON = BL_DEG_TO_RAD(-121.470733), 

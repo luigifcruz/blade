@@ -88,10 +88,8 @@ inline const Result ModeBS(const Config& config) {
 
         .preBeamformerChannelizerRate = 1,
 
-        .phasorObservationFrequencyHz = reader.getObservationCenterFrequency(),
+        .phasorBottomFrequencyHz = reader.getBottomFrequency(),
         .phasorChannelBandwidthHz = reader.getChannelBandwidth(),
-        .phasorTotalBandwidthHz = reader.getObservationBandwidth(),
-        .phasorFrequencyStartIndex = reader.getChannelStartIndex(),
         .phasorReferenceAntennaIndex = 0,
         .phasorArrayReferencePosition = reader.getReferencePosition(),
         .phasorBoresightCoordinate = reader.getPhaseCenterCoordinates(),

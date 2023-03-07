@@ -57,10 +57,8 @@ ModeB<IT, OT>::ModeB(const Config& config)
         .numberOfFrequencyChannels = channelizer->getOutputBuffer().dims().numberOfFrequencyChannels(),
         .numberOfPolarizations = channelizer->getOutputBuffer().dims().numberOfPolarizations(),
 
-        .observationFrequencyHz = config.phasorObservationFrequencyHz,
+        .bottomFrequencyHz = config.phasorBottomFrequencyHz,
         .channelBandwidthHz = config.phasorChannelBandwidthHz,
-        .totalBandwidthHz = config.phasorTotalBandwidthHz,
-        .frequencyStartIndex = config.phasorFrequencyStartIndex,
 
         .referenceAntennaIndex = config.phasorReferenceAntennaIndex,
         .arrayReferencePosition = config.phasorArrayReferencePosition,
@@ -195,10 +193,10 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
     );
 
     // Print dynamic arguments on first run.
-    if (this->getCurrentComputeCount() == 0) {
-        BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
-        BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
-    }
+    // if (this->getCurrentComputeCount() == 0) {
+    //     BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
+    //     BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
+    // }
 
     return Result::SUCCESS;
 }
@@ -254,10 +252,10 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
     );
 
     // Print dynamic arguments on first run.
-    if (this->getCurrentComputeCount() == 0) {
-        BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
-        BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
-    }
+    // if (this->getCurrentComputeCount() == 0) {
+    //     BL_DEBUG("Block Julian Date: {}", this->blockJulianDate[0]);
+    //     BL_DEBUG("Block DUT1: {}", this->blockDut1[0]);
+    // }
 
     return Result::SUCCESS;
 }
