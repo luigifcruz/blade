@@ -50,10 +50,10 @@ class BLADE_API Reader : public Module {
         return this->output.stepBuffer;
     }
 
-    F64 getUnixDateOfLastReadBlock();
+    F64 getUnixDateOfLastReadBlock(const U64 timesamplesOffset = 0);
 
-    constexpr F64 getJulianDateOfLastReadBlock() {
-        return calc_julian_date_from_unix_sec(this->getUnixDateOfLastReadBlock());
+    constexpr F64 getJulianDateOfLastReadBlock(const U64 timesamplesOffset = 0) {
+        return calc_julian_date_from_unix_sec(this->getUnixDateOfLastReadBlock(timesamplesOffset));
     }
 
     constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {

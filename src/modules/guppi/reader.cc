@@ -158,20 +158,20 @@ Reader<OT>::Reader(const Config& config, const Input& input)
     BL_CHECK_THROW(output.stepFrequencyChannelOffset.resize({1}));
     BL_CHECK_THROW(output.stepBuffer.resize(stepDims));
 
-    output.stepJulianDate[0] = getJulianDateOfLastReadBlock();
+    output.stepJulianDate[0] = getJulianDateOfLastReadBlock(this->config.stepNumberOfTimeSamples/2);
     BL_INFO("Starting Julian Date: {}", output.stepJulianDate[0]);
 }
 
 template<typename OT>
-F64 Reader<OT>::getUnixDateOfLastReadBlock() {
+F64 Reader<OT>::getUnixDateOfLastReadBlock(const U64 timesamplesOffset) {
     return guppiraw_calc_unix_date(
         1.0 / this->getChannelBandwidth(),
         this->getDatashape()->n_time,
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
-        getBlockMeta(&gr_iterate)->pktidx +
-            ((F64)this->lastread_block_index + 0.5)
-            * getBlockMeta(&gr_iterate)->piperblk
+        getBlockMeta(&gr_iterate)->pktidx // timesample index of first sample
+        + this->lastread_block_index * getBlockMeta(&gr_iterate)->piperblk
+        + timesamplesOffset
     );
 }
 
@@ -309,7 +309,7 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     this->lastread_time_index = gr_iterate.time_index;
 
     // Query internal library Unix Date, converting to Julian Date.
-    this->output.stepJulianDate[0] = this->getJulianDateOfLastReadBlock();
+    this->output.stepJulianDate[0] = this->getJulianDateOfLastReadBlock(this->config.stepNumberOfTimeSamples/2);
 
     // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;
