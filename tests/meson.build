@@ -1,1 +1,2 @@
+subdir('memory')
 subdir('modules')
