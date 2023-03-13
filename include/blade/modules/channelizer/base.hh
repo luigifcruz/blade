@@ -74,15 +74,15 @@ class BLADE_API Channelizer : public Module {
     std::string kernel_key;
     std::unique_ptr<Internal::Callback> callback;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    const ArrayDimensions getOutputBufferDims() const {
-        return {
-            .A = getInputBuffer().dims().numberOfAspects(),
-            .F = getInputBuffer().dims().numberOfFrequencyChannels() * config.rate,
-            .T = getInputBuffer().dims().numberOfTimeSamples() / config.rate,
-            .P = getInputBuffer().dims().numberOfPolarizations(),
-        };
+    const ArrayShape getOutputBufferShape() const {
+        return ArrayShape({
+            getInputBuffer().numberOfAspects(),
+            getInputBuffer().numberOfFrequencyChannels() * config.rate,
+            getInputBuffer().numberOfTimeSamples() / config.rate,
+            getInputBuffer().numberOfPolarizations(),
+        });
     }
 };
 

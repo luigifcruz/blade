@@ -38,15 +38,15 @@ class BLADE_API Generic : public Module {
     // Input 
 
     struct Input {
-        const Vector<Device::CPU, F64>& blockJulianDate;
-        const Vector<Device::CPU, F64>& blockDut1;
+        const Tensor<Device::CPU, F64>& blockJulianDate;
+        const Tensor<Device::CPU, F64>& blockDut1;
     };
 
-    constexpr const Vector<Device::CPU, F64>& getInputJulianDate() const {
+    constexpr const Tensor<Device::CPU, F64>& getInputJulianDate() const {
         return this->input.blockJulianDate;
     }
 
-    constexpr const Vector<Device::CPU, F64>& getInputDut1() const {
+    constexpr const Tensor<Device::CPU, F64>& getInputDut1() const {
         return this->input.blockDut1;
     }
 
@@ -54,14 +54,14 @@ class BLADE_API Generic : public Module {
 
     struct Output {
         DelayTensor<Device::CPU, F64> delays;
-        PhasorTensor<Device::CPU | Device::CUDA, OT> phasors;
+        PhasorTensor<Device::CUDA, OT> phasors;
     };
 
     constexpr const DelayTensor<Device::CPU, F64>& getOutputDelays() const {
         return this->output.delays;
     } 
 
-    constexpr const PhasorTensor<Device::CPU | Device::CUDA, OT>& getOutputPhasors() const {
+    constexpr const PhasorTensor<Device::CUDA, OT>& getOutputPhasors() const {
         return this->output.phasors;
     } 
 
@@ -86,11 +86,11 @@ class BLADE_API Generic : public Module {
     const Input input;
     Output output;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    virtual const DelayDimensions getOutputDelaysDims() const = 0;
-    virtual const PhasorDimensions getOutputPhasorsDims() const = 0;
-    virtual const ArrayDimensions getConfigCalibrationDims() const = 0;
+    virtual const DelayShape getOutputDelaysShape() const = 0;
+    virtual const PhasorShape getOutputPhasorsShape() const = 0;
+    virtual const ArrayShape getConfigCalibrationShape() const = 0;
 
     // Miscellaneous
 

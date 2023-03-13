@@ -21,8 +21,8 @@ class Test(bl.Pipeline):
         self.synchronize()
 
 def trial(A, F, T, P, C):
-    input_dims = bl.vector.ArrayDimensions(A, F, T, P)
-    output_dims = bl.vector.ArrayDimensions(A, F * C, T // C, P)
+    input_dims = bl.vector.ArrayShape(A, F, T, P)
+    output_dims = bl.vector.ArrayShape(A, F * C, T // C, P)
 
     # Initialize Blade pipeline.
     mod = Test(input_dims, C)

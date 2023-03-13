@@ -1,146 +1,173 @@
 #ifndef BLADE_MEMORY_VECTOR_HH
 #define BLADE_MEMORY_VECTOR_HH
 
+#include <span>
+
+#include "blade/macros.hh"
 #include "blade/memory/types.hh"
+#include "blade/memory/shape.hh"
 
 namespace Blade {
 
-template <typename T>
-concept IsDimensions = 
-requires(T t) {
-    { t.size() } -> std::same_as<U64>;
-    { t == t } -> std::same_as<BOOL>;
-};
-
-template<typename Type, typename Dims>
-requires IsDimensions<Dims>
-class VectorImpl {
+template<Device DeviceId, typename DataType, typename ShapeClass>
+struct Vector : public ShapeClass {
  public:
-    VectorImpl()
-             : dimensions(),
-               container(),
-               managed(true) {}
-    explicit VectorImpl(const std::span<Type>& other, const Dims& dims)
-             : dimensions(dims),
-               container(other),
-               managed(false) {
-        if (dims.size() != other.size()) {
-            BL_FATAL("Container size ({}) doesn't match dimensions size ({})",
-                     other.size(), dims.size());
+    Vector()
+             : ShapeClass(),
+               managed(false),
+               _data(nullptr) {
+        BL_TRACE("Empty vector created.");
+    }
+
+    Vector(Vector& vector)
+             : ShapeClass(vector.shape()),
+               managed(false),
+               _data(vector.data()) {
+        BL_TRACE("Vector copied.");
+    }
+
+    Vector(const Vector& vector)
+             : ShapeClass(vector.shape()), 
+               managed(false), 
+               _data(vector.data()) {
+        BL_TRACE("Vector const copied.");
+    }
+
+    Vector(DataType* ptr,
+           const typename ShapeClass::Type& shape)
+             : ShapeClass(shape), 
+               managed(false),
+               _data(ptr) {
+        BL_TRACE("Vector created.");
+    }
+
+    Vector(void* ptr,
+           const typename ShapeClass::Type& shape)
+             : ShapeClass(shape), 
+               managed(false),
+               _data(static_cast<DataType*>(ptr)) {
+        BL_TRACE("Vector created.");
+    }
+
+    Vector(const ShapeClass& shape, const bool& unified = false)
+             : ShapeClass(shape.shape()),
+               managed(true) {
+        BL_TRACE("Vector allocated and created.");
+        BL_CHECK_THROW(this->allocate(unified));
+    }
+
+    Vector(const typename ShapeClass::Type& shape, const bool& unified = false)
+             : ShapeClass(shape),
+               managed(true) {
+        BL_TRACE("Vector allocated and created.");
+        BL_CHECK_THROW(this->allocate(unified));
+    }
+
+    Vector& operator=(Vector&& other) {
+        if (!empty()) {
+            BL_FATAL("Can't move contents to a managed vector.");
             BL_CHECK_THROW(Result::ERROR);
         }
-    }
-    explicit VectorImpl(const std::span<Type>& other)
-             : dimensions({other.size()}),
-               container(other),
-               managed(false) {}
-    explicit VectorImpl(Type* ptr, const Dims& dims)
-             : dimensions(dims),
-               container(ptr, dims.size()),
-               managed(false) {}
-    explicit VectorImpl(void* ptr, const Dims& dims)
-             : dimensions(dims),
-               container(static_cast<Type*>(ptr), dims.size()),
-               managed(false) {}
 
-    VectorImpl(const VectorImpl&) = delete;
-    VectorImpl(const VectorImpl&&) = delete;
-    bool operator==(const VectorImpl&) = delete;
-    VectorImpl& operator=(const VectorImpl&) = delete;
+        std::swap(this->_shape, other._shape);
+        std::swap(_data, other._data);
+        std::swap(managed, other.managed);
 
-    virtual ~VectorImpl() {}
-
-    constexpr Type* data() const noexcept {
-        return container.data();
+        return *this;
     }
 
-    constexpr const U64 size() const noexcept {
-        return container.size();
+    Vector& operator=(Vector&) = delete;
+    bool operator==(const Vector&) = delete;
+
+    ~Vector() {
+        BL_TRACE("Deleting vector.")
+
+        if (!managed || !_data) {
+            BL_TRACE("Vector isn't managed.");
+            return;
+        }
+
+        if constexpr (DeviceId == Device::CPU) {
+            if (cudaFreeHost(_data) != cudaSuccess) {
+                BL_FATAL("Failed to deallocate host memory.");
+            }
+        }
+
+        if constexpr (DeviceId == Device::CUDA) {
+            if (cudaFree(_data) != cudaSuccess) {
+                BL_FATAL("Failed to deallocate CUDA memory.");
+            }
+        }
+    }
+
+    constexpr DataType* data() const noexcept {
+        return _data;
     }
 
     constexpr const U64 size_bytes() const noexcept {
-        return container.size_bytes();
+        return this->size() * sizeof(DataType);
+    }
+
+    constexpr DataType& operator[](const typename ShapeClass::Type& shape) {
+        return _data[this->shapeToOffset(shape)];
+    }
+
+    constexpr const DataType& operator[](const typename ShapeClass::Type shape) const {
+        return this[shape];
     }
 
     [[nodiscard]] constexpr const bool empty() const noexcept {
-        return container.empty();
+        return (managed == false) && (_data == nullptr);
     }
 
-    constexpr Type& operator[](U64 idx) {
-        return container[idx];
+    constexpr DataType& operator[](U64 idx) {
+        return _data[idx];
     }
 
-    constexpr const Type& operator[](U64 idx) const {
-        return container[idx];
+    constexpr const DataType& operator[](U64 idx) const {
+        return _data[idx];
     }
 
     constexpr auto begin() {
-        return container.begin();
+        return _data;
     }
 
     constexpr auto end() {
-        return container.end();
+        return _data + size_bytes();
     }
 
     constexpr const auto begin() const {
-        return container.begin();
+        return _data;
     }
 
     constexpr const auto end() const {
-        return container.end();
+        return _data + size_bytes();
     }
 
-    const Result link(const VectorImpl<Type, Dims>& src, Dims dstDims) {
-        if (src.empty()) {
-            BL_FATAL("Source can't be empty while linking.");
-            return Result::ERROR;
+ private:
+    bool managed;
+    DataType* _data;
+
+    const Result allocate(const bool& unified = false) {
+        if constexpr (DeviceId == Device::CPU) {
+            BL_CUDA_CHECK(cudaMallocHost(&_data, size_bytes()), [&]{
+                BL_FATAL("Failed to allocate pinned host memory: {}", err);
+            });
         }
 
-        if (!this->empty()) {
-            BL_FATAL("Destination has to be empty while linking.");
-            return Result::ERROR;
+        if constexpr (DeviceId == Device::CUDA) {
+            if (unified) {
+                BL_CUDA_CHECK(cudaMallocManaged(&_data, size_bytes()), [&]{
+                    BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
+                });
+            } else {
+                BL_CUDA_CHECK(cudaMalloc(&_data, size_bytes()), [&]{
+                    BL_FATAL("Failed to allocate CUDA memory: {}", err);
+                });
+            }
         }
-
-        if (src.dims().size() != dstDims.size()) { 
-            BL_FATAL("Dimensions mismatch. The number of elements of "
-                     "the source and destination has to be the same.");
-            return Result::ERROR;
-        }
-
-        this->managed = false;
-        this->container = src.span();
-        this->dimensions = dstDims;
 
         return Result::SUCCESS;
-    }
-
-    const Result link(const VectorImpl<Type, Dims>& src) {
-        return link(src, src.dims());
-    }
-
-    virtual const Result resize(const Dims& dims) = 0;
-
-    constexpr const Dims& dims() const {
-        return dimensions;
-    }
-
- protected:
-    Dims dimensions;
-    std::span<Type> container;
-    bool managed;
-
-    explicit VectorImpl(const Dims& dims)
-             : dimensions(dims),
-               container(),
-               managed(true) {
-        if (dims.size() <= 0) {
-            BL_FATAL("Dimensions ({}) equals to invalid size ({}).", dims, dims.size());
-            BL_CHECK_THROW(Result::ERROR);
-        }
-    }
-
-    constexpr const std::span<Type>& span() const {
-        return container;
     }
 };
 

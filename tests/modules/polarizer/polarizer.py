@@ -27,8 +27,8 @@ if __name__ == "__main__":
     NTIME = 8750
     NPOLS = 2
 
-    input_dims = bl.vector.ArrayDimensions(NBEAMS, NCHANS, NTIME, NPOLS)
-    output_dims = bl.vector.ArrayDimensions(NBEAMS, NCHANS, NTIME, NPOLS)
+    input_dims = bl.vector.ArrayShape(NBEAMS, NCHANS, NTIME, NPOLS)
+    output_dims = bl.vector.ArrayShape(NBEAMS, NCHANS, NTIME, NPOLS)
 
     #
     # Blade Implementation

@@ -11,8 +11,8 @@ ModeH<IT, OT>::ModeH(const Config& config)
     BL_DEBUG("Initializing Pipeline Mode H.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    const auto accumulationFactor = ArrayDimensions{1, 1, config.accumulateRate, 1};
-    BL_CHECK_THROW(this->input.resize(config.inputDimensions * accumulationFactor));
+    const auto accumulationFactor = ArrayShape({1, 1, config.accumulateRate, 1});
+    this->input = ArrayTensor<Device::CUDA, IT>(config.inputShape * accumulationFactor);
 
     if constexpr (!std::is_same<IT, CF32>::value) {
         BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
@@ -23,10 +23,10 @@ ModeH<IT, OT>::ModeH(const Config& config)
         });
     }
 
-    BL_DEBUG("Instantiating channelizer with rate {}.", config.inputDimensions.numberOfTimeSamples() *  
+    BL_DEBUG("Instantiating channelizer with rate {}.", config.inputShape.numberOfTimeSamples() *  
                                                         config.accumulateRate);
     this->connect(channelizer, {
-        .rate = config.inputDimensions.numberOfTimeSamples() * config.accumulateRate,
+        .rate = config.inputShape.numberOfTimeSamples() * config.accumulateRate,
         .blockSize = config.channelizerBlockSize,
     }, {
         .buf = this->getChannelizerInput(),
@@ -54,8 +54,8 @@ ModeH<IT, OT>::ModeH(const Config& config)
 template<typename IT, typename OT>
 const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
                                        const cudaStream_t& stream) {
-    const auto& width = (config.inputDimensions.numberOfTimeSamples() * config.inputDimensions.numberOfPolarizations()) * sizeof(IT);
-    const auto& height = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
+    const auto& width = (config.inputShape.numberOfTimeSamples() * config.inputShape.numberOfPolarizations()) * sizeof(IT);
+    const auto& height = config.inputShape.numberOfAspects() * config.inputShape.numberOfFrequencyChannels();
 
     BL_CHECK(
         Memory::Copy2D(

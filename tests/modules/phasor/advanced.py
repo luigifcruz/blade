@@ -14,14 +14,14 @@ class Test(bl.Pipeline):
 
     def __init__(self, phasor_config: bl.Phasor.Config):
         bl.Pipeline.__init__(self)
-        self.block_julian_date = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
-        self.block_dut1 = bl.vector.cpu.f64.Vector(bl.vector.Dimensions(1))
+        self.block_julian_date = bl.vector.cpu.f64.Vector(bl.vector.Shape(1))
+        self.block_dut1 = bl.vector.cpu.f64.Vector(bl.vector.Shape(1))
         _config = phasor_config
         _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
         self.phasor = self.connect(_config, _input)
 
     def output_dims(self):
-        return self.phasor.phasors().dims()
+        return self.phasor.phasors().shape()
 
     def run(self, block_julian_date: float,
                   block_dut1: float,
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     cal_shape = (20, 192, 1, 2)
     calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
     calibration = np.array(calibration, dtype=np.complex128)
-    bl_calibration = bl.vector.cpu.cf64.ArrayTensor(bl.vector.ArrayDimensions(*cal_shape))
+    bl_calibration = bl.vector.cpu.cf64.ArrayTensor(bl.vector.ArrayShape(*cal_shape))
     np.copyto(np.array(bl_calibration, copy=False), calibration.flatten())
 
     phase_center_pos_rad = [0.64169, 1.079896295]

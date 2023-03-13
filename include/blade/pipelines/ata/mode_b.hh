@@ -23,7 +23,7 @@ class BLADE_API ModeB : public Pipeline {
     // Configuration 
 
     struct Config {
-        ArrayDimensions inputDimensions;
+        ArrayShape inputShape;
 
         U64 preBeamformerChannelizerRate;
 
@@ -56,8 +56,8 @@ class BLADE_API ModeB : public Pipeline {
 
     // Input
 
-    const Result transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
-                            const Vector<Device::CPU, F64>& blockDut1,
+    const Result transferIn(const Tensor<Device::CPU, F64>& blockJulianDate,
+                            const Tensor<Device::CPU, F64>& blockDut1,
                             const ArrayTensor<Device::CPU, CI8>& input,
                             const cudaStream_t& stream);
 
@@ -91,8 +91,8 @@ class BLADE_API ModeB : public Pipeline {
     const Config config;
 
     ArrayTensor<Device::CUDA, CI8> input;
-    Vector<Device::CPU, F64> blockJulianDate;
-    Vector<Device::CPU, F64> blockDut1;
+    Tensor<Device::CPU, F64> blockJulianDate;
+    Tensor<Device::CPU, F64> blockDut1;
 
     using InputCast = typename Modules::Cast<CI8, CF32>;
     std::shared_ptr<InputCast> inputCast;

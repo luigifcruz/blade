@@ -25,9 +25,9 @@ class Test(bl.Pipeline):
 
 if __name__ == "__main__":
     # Specify dimension of array.
-    inputDims = bl.vector.ArrayDimensions(2, 192, 512, 2)
-    phasorDims = bl.vector.PhasorDimensions(1, 2, 192, 1, 2)
-    outputDims = bl.vector.ArrayDimensions(2, 192, 512, 2)
+    inputDims = bl.vector.ArrayShape(2, 192, 512, 2)
+    phasorDims = bl.vector.PhasorShape(1, 2, 192, 1, 2)
+    outputDims = bl.vector.ArrayShape(2, 192, 512, 2)
 
     # Initialize Blade pipeline.
     mod = Test(inputDims, phasorDims)

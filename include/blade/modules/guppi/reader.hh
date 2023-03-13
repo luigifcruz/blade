@@ -41,43 +41,43 @@ class BLADE_API Reader : public Module {
 
     struct Output {
         ArrayTensor<Device::CPU, OT> stepBuffer;
-        Vector<Device::CPU, F64> stepJulianDate;
-        Vector<Device::CPU, F64> stepDut1;
+        Tensor<Device::CPU, F64> stepJulianDate;
+        Tensor<Device::CPU, F64> stepDut1;
     };
 
     constexpr const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() const {
         return this->output.stepBuffer;
     }
 
-    constexpr const Vector<Device::CPU, F64>& getStepOutputJulianDate() const {
+    constexpr const Tensor<Device::CPU, F64>& getStepOutputJulianDate() const {
         return this->output.stepJulianDate;
     }
 
-    constexpr const Vector<Device::CPU, F64>& getStepOutputDut1() const {
+    constexpr const Tensor<Device::CPU, F64>& getStepOutputDut1() const {
         return this->output.stepDut1;
     }
 
-    const ArrayDimensions getTotalOutputBufferDims() const {
-        return {
-            .A = this->getDatashape()->n_aspect,
-            .F = this->getDatashape()->n_aspectchan,
-            .T = this->getDatashape()->n_time * this->gr_iterate.n_block,
-            .P = this->getDatashape()->n_pol,
-        };
+    const ArrayShape getTotalOutputBufferShape() const {
+        return ArrayShape({
+            this->getDatashape()->n_aspect,
+            this->getDatashape()->n_aspectchan,
+            this->getDatashape()->n_time * this->gr_iterate.n_block,
+            this->getDatashape()->n_pol,
+        });
     }
 
-    const ArrayDimensions getStepOutputBufferDims() const {
-        return {
-            .A = this->config.stepNumberOfAspects,
-            .F = this->config.stepNumberOfFrequencyChannels,
-            .T = this->config.stepNumberOfTimeSamples,
-            .P = this->getDatashape()->n_pol,
-        };
+    const ArrayShape getStepOutputBufferShape() const {
+        return ArrayShape({
+            this->config.stepNumberOfAspects,
+            this->config.stepNumberOfFrequencyChannels,
+            this->config.stepNumberOfTimeSamples,
+            this->getDatashape()->n_pol,
+        });
     }
 
     const U64 getNumberOfSteps() {
-        return this->getTotalOutputBufferDims().size() / 
-               this->getStepOutputBufferDims().size();
+        return this->getTotalOutputBufferShape().size() / 
+               this->getStepOutputBufferShape().size();
     }
 
     // Taint Registers

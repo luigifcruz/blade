@@ -10,15 +10,15 @@ FileWriter<IT>::FileWriter(const Config& config)
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 
-    this->writerBuffer.resize(ArrayDimensions({
-        .A = config.inputDimensions.numberOfAspects(),
-        .F = config.inputDimensions.numberOfFrequencyChannels() * config.accumulateRate,
-        .T = config.inputDimensions.numberOfTimeSamples(),
-        .P = config.inputDimensions.numberOfPolarizations(),
-    }));
+    this->writerBuffer = ArrayTensor<Device::CUDA, IT>({
+        config.inputShape.numberOfAspects(),
+        config.inputShape.numberOfFrequencyChannels() * config.accumulateRate,
+        config.inputShape.numberOfTimeSamples(),
+        config.inputShape.numberOfPolarizations(),
+    });
 
-    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", config.inputDimensions, "N/A");
-    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", this->writerBuffer.dims(), "N/A");
+    BL_INFO("Step Shape [A, F, T, P]: {} -> {}", config.inputShape, "N/A");
+    BL_INFO("Total Shape [A, F, T, P]: {} -> {}", this->writerBuffer.shape(), "N/A");
 
     BL_DEBUG("Instantiating GUPPI RAW file writer.");
     this->connect(guppi, {
@@ -44,7 +44,7 @@ const Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& dat
     }
 
     const auto offset = this->getCurrentAccumulatorStep() * stepInputBufferSize;
-    auto input = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, data.dims());
+    auto input = ArrayTensor<Device::CPU, IT>(writerBuffer.data() + offset, data.shape());
     BL_CHECK(Memory::Copy(input, data, stream));
 
     return Result::SUCCESS;

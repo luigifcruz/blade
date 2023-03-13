@@ -17,7 +17,7 @@ class BLADE_API FileWriter : public Pipeline {
         std::string outputGuppiFile;
         bool directio;
 
-        ArrayDimensions inputDimensions;
+        ArrayShape inputShape;
         U64 accumulateRate;
 
         U64 writerBlockSize = 512;
@@ -46,11 +46,11 @@ class BLADE_API FileWriter : public Pipeline {
     }
 
     constexpr const U64 getStepInputBufferSize() const {
-        return this->config.inputDimensions.size();
+        return this->config.inputShape.size();
     }
 
     constexpr const U64 getTotalInputBufferSize() const {
-        return this->writerBuffer.dims().size();
+        return this->writerBuffer.size();
     }
 
     constexpr const Config& getConfig() const {

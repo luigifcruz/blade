@@ -15,31 +15,31 @@ class BLADE_API ATA : public Generic<OT> {
     const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 
  protected:
-    const PhasorDimensions getOutputPhasorsDims() const {
-        return {
-            .B = this->config.beamCoordinates.size(),
-            .A = this->config.numberOfAntennas,
-            .F = this->config.numberOfFrequencyChannels,
-            .T = 1,
-            .P = this->config.numberOfPolarizations,
-        };
+    const PhasorShape getOutputPhasorsShape() const {
+        return PhasorShape({
+            this->config.beamCoordinates.size(),
+            this->config.numberOfAntennas,
+            this->config.numberOfFrequencyChannels,
+            1,
+            this->config.numberOfPolarizations,
+        });
     }
 
-    const DelayDimensions getOutputDelaysDims() const {
-        return {
-            .B = this->config.beamCoordinates.size(),
-            .A = this->config.numberOfAntennas,
-        };
+    const DelayShape getOutputDelaysShape() const {
+        return DelayShape({
+            this->config.beamCoordinates.size(),
+            this->config.numberOfAntennas,
+        });
     }
 
-    const ArrayDimensions getConfigCalibrationDims() const {
-        return {
-            .A = this->config.numberOfAntennas,
-            .F = this->config.numberOfFrequencyChannels *
+    const ArrayShape getConfigCalibrationShape() const {
+        return ArrayShape({
+            this->config.numberOfAntennas,
+            this->config.numberOfFrequencyChannels *
                  this->numberOfFrequencySteps,
-            .T = 1,
-            .P = this->config.numberOfPolarizations,
-        };
+            1,
+            this->config.numberOfPolarizations,
+        });
     }
 
  private:

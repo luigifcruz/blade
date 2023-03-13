@@ -10,7 +10,7 @@ template<typename IT, typename OT>
 class Test : public Pipeline {
  public:
     explicit Test(const U64& inputSize) {
-        BL_CHECK_THROW(input.resize({inputSize, 1, 1, 1}));
+        input = ArrayTensor<Device::CUDA, IT>({inputSize, 1, 1, 1});
         this->connect(cast, {512}, {input});
     }
 

@@ -38,8 +38,8 @@ static struct {
     } Callbacks;
 } State;
 
-static Vector<Device::CPU, F64> dummyJulianDate({1});
-static Vector<Device::CPU, F64> dummyDut1({1});
+static Tensor<Device::CPU, F64> dummyJulianDate({1});
+static Tensor<Device::CPU, F64> dummyDut1({1});
 
 bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     if (State.RunnersInstances.B || State.RunnersInstances.H) {
@@ -51,12 +51,12 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     dummyDut1[0] = 0.0;
 
     State.RunnersInstances.B = Runner<TestPipelineB>::New(numberOfWorkers, {
-        .inputDimensions = {
-            .A = BLADE_ATA_MODE_BH_NANT,
-            .F = BLADE_ATA_MODE_BH_NCHAN,
-            .T = BLADE_ATA_MODE_BH_NTIME,
-            .P = BLADE_ATA_MODE_BH_NPOL,
-        },
+        .inputShape = ArrayShape({
+            BLADE_ATA_MODE_BH_NANT,
+            BLADE_ATA_MODE_BH_NCHAN,
+            BLADE_ATA_MODE_BH_NTIME,
+            BLADE_ATA_MODE_BH_NPOL,
+        }),
 
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_BH_CHANNELIZER_RATE,
 
@@ -109,7 +109,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     });
 
     State.RunnersInstances.H = Runner<TestPipelineH>::New(numberOfWorkers, {
-        .inputDimensions = State.RunnersInstances.B->getWorker().getOutputBuffer().dims(),
+        .inputShape = State.RunnersInstances.B->getWorker().getOutputBuffer().shape(),
 
         .accumulateRate = BLADE_ATA_MODE_BH_ACCUMULATE_RATE, 
 
@@ -185,8 +185,8 @@ void blade_ata_bh_compute_step() {
         // Keeps track of pointer for "ready" callback.
         State.InputPointerMap.insert({State.StepCount, externalBuffer});
 
-        // Create Memory::Vector from RAW pointer.
-        auto input = ArrayTensor<Device::CPU, CI8>(externalBuffer, worker.getInputBuffer().dims());
+        // Create Vector from RAW pointer.
+        auto input = ArrayTensor<Device::CPU, CI8>(externalBuffer, worker.getInputBuffer().shape());
 
         // Transfer input memory to the pipeline.
         Plan::TransferIn(worker, 
@@ -224,8 +224,8 @@ void blade_ata_bh_compute_step() {
         // Keeps track of pointer for "ready" callback.
         State.OutputPointerMap.insert({callbackStep, externalBuffer});
 
-        // Create Memory::Vector from RAW pointer.
-        auto output = ArrayTensor<Device::CPU, F32>(externalBuffer, worker.getOutputBuffer().dims());
+        // Create Vector from RAW pointer.
+        auto output = ArrayTensor<Device::CPU, F32>(externalBuffer, worker.getOutputBuffer().shape());
 
         // Copy worker output to external output buffer.
         Plan::TransferOut(output, worker.getOutputBuffer(), worker);

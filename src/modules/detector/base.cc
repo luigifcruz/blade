@@ -20,25 +20,25 @@ Detector<IT, OT>::Detector(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInputBuffer().dims().numberOfTimeSamples() > 1) {
-        if ((getInputBuffer().dims().numberOfTimeSamples() % apparentIntegrationSize) != 0) {
+    if (getInputBuffer().numberOfTimeSamples() > 1) {
+        if ((getInputBuffer().numberOfTimeSamples() % apparentIntegrationSize) != 0) {
             BL_FATAL("The number of time samples ({}) should be divisable "
                      "by the integration size ({}).",
-                     getInputBuffer().dims().numberOfTimeSamples(),
+                     getInputBuffer().numberOfTimeSamples(),
                      apparentIntegrationSize);
             BL_CHECK_THROW(Result::ERROR);
         }
     }
 
-    if (getInputBuffer().dims().numberOfPolarizations() != 2) {
+    if (getInputBuffer().numberOfPolarizations() != 2) {
         BL_FATAL("Number of polarizations ({}) should be two (2).", 
-                 getInputBuffer().dims().numberOfPolarizations());
+                 getInputBuffer().numberOfPolarizations());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInputBuffer().dims().numberOfAspects() <= 0) {
+    if (getInputBuffer().numberOfAspects() <= 0) {
         BL_FATAL("Number of aspects ({}) should be more than zero.", 
-                 getInputBuffer().dims().numberOfAspects());
+                 getInputBuffer().numberOfAspects());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -53,7 +53,7 @@ Detector<IT, OT>::Detector(const Config& config,
             BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInputBuffer().dims().numberOfTimeSamples() < config.integrationSize) {
+    if (getInputBuffer().numberOfTimeSamples() < config.integrationSize) {
         apparentIntegrationSize = 1;
         BL_INFO("Integration Procedure: Stepped");
     } else {
@@ -69,26 +69,26 @@ Detector<IT, OT>::Detector(const Config& config,
             // Kernel grid & block size.
             PadGridSize(
                 getInputBuffer().size() / 
-                    getInputBuffer().dims().numberOfPolarizations(),
+                    getInputBuffer().numberOfPolarizations(),
                 config.blockSize
             ),
             config.blockSize,
             // Kernel templates.
-            getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations(),
+            getInputBuffer().size() / getInputBuffer().numberOfPolarizations(),
             apparentIntegrationSize
         )
     );
 
     // Allocate output buffers.
-    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
-    BL_CHECK_THROW(ctrlResetTensor.resize({1}));
+    output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
+    ctrlResetTensor = Tensor<Device::CUDA, BOOL>({1}, true);
 
     // Set default values.
     ctrlResetTensor[0] = true;
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
+    BL_INFO("Shape [A, F, T, P]: {} -> {}", getInputBuffer().shape(), getOutputBuffer().shape());
     BL_INFO("Integration Size: {}", config.integrationSize);
     BL_INFO("Number of Output Polarizations: {}", config.numberOfOutputPolarizations);
 }

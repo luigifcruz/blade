@@ -78,11 +78,11 @@ Reader<OT>::Reader(const Config& config,
     }
 
     if (this->config.stepNumberOfAspects == 0) {
-        this->config.stepNumberOfAspects = getTotalOutputBufferDims().numberOfAspects();
+        this->config.stepNumberOfAspects = getTotalOutputBufferShape().numberOfAspects();
     }
 
     if (this->config.stepNumberOfFrequencyChannels == 0) {
-        this->config.stepNumberOfFrequencyChannels = getTotalOutputBufferDims().numberOfFrequencyChannels();
+        this->config.stepNumberOfFrequencyChannels = getTotalOutputBufferShape().numberOfFrequencyChannels();
     }
 
     if (this->config.stepNumberOfTimeSamples == 0) {
@@ -90,14 +90,14 @@ Reader<OT>::Reader(const Config& config,
     }
 
     // Allocate output buffers.
-    BL_CHECK_THROW(output.stepDut1.resize({1}));
-    BL_CHECK_THROW(output.stepJulianDate.resize({1}));
-    BL_CHECK_THROW(output.stepBuffer.resize(getStepOutputBufferDims()));
+    output.stepDut1 = Tensor<Device::CPU, F64>({1});
+    output.stepJulianDate = Tensor<Device::CPU, F64>({1});
+    output.stepBuffer = ArrayTensor<Device::CPU, OT>(getStepOutputBufferShape());
 
     // Print configuration information.
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
-    BL_INFO("Step Dimensions [A, F, T, P]: {} -> {}", "N/A", getStepOutputBuffer().dims());
-    BL_INFO("Total Dimensions [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferDims());
+    BL_INFO("Step Shape [A, F, T, P]: {} -> {}", "N/A", getStepOutputBuffer().shape());
+    BL_INFO("Total Shape [A, F, T, P]: {} -> {}", "N/A", getTotalOutputBufferShape());
     BL_INFO("Input File Path: {}", config.filepath);
 }
 
@@ -108,7 +108,7 @@ const F64 Reader<OT>::getChannelBandwidth() const {
 
 template<typename OT>
 const F64 Reader<OT>::getTotalBandwidth() const {
-    return getChannelBandwidth() * getStepOutputBufferDims().numberOfFrequencyChannels();
+    return getChannelBandwidth() * getStepOutputBufferShape().numberOfFrequencyChannels();
 }
 
 template<typename OT>
@@ -153,9 +153,9 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     // Run library internal read method.
     const I64 bytes_read = 
         guppiraw_iterate_read(&this->gr_iterate,
-                              this->getStepOutputBufferDims().numberOfTimeSamples(),
-                              this->getStepOutputBufferDims().numberOfFrequencyChannels(),
-                              this->getStepOutputBufferDims().numberOfAspects(),
+                              this->getStepOutputBufferShape().numberOfTimeSamples(),
+                              this->getStepOutputBufferShape().numberOfFrequencyChannels(),
+                              this->getStepOutputBufferShape().numberOfAspects(),
                               this->output.stepBuffer.data());
 
     if (bytes_read <= 0) {

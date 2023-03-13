@@ -15,9 +15,9 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
           input(input),
           post_block(config.blockSize) {
     // Check configuration values.
-    if ((getInputBuffer().dims().numberOfTimeSamples() % config.rate) != 0) {
+    if ((getInputBuffer().numberOfTimeSamples() % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the channelizer rate ({}).", getInputBuffer().dims().numberOfTimeSamples(),
+                "by the channelizer rate ({}).", getInputBuffer().numberOfTimeSamples(),
                 config.rate);
         BL_CHECK_THROW(Result::ERROR);
     }
@@ -33,11 +33,11 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     }
 
     // Link output buffer or link input with output.
-    BL_CHECK_THROW(output.buf.link(input.buf, getOutputBufferDims()));
+    BL_CHECK_THROW(Memory::Link(output.buf, input.buf, getOutputBufferShape()));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), getOutputBuffer().dims());
+    BL_INFO("Shape [A, F, T, P]: {} -> {}", getInputBuffer().shape(), getOutputBuffer().shape());
     BL_INFO("FFT Size: {}", config.rate);
     BL_INFO("FFT Backend: cuFFT Callbacks");
 
@@ -46,7 +46,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
         return;
     }
 
-    if (config.rate != getInputBuffer().dims().numberOfTimeSamples()) {
+    if (config.rate != getInputBuffer().numberOfTimeSamples()) {
         BL_FATAL("Due to performance reasons, channelization with rates "
                  "different than the number of time samples are not "
                  "supported anymore.");
@@ -60,19 +60,19 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     int n[] = { static_cast<int>(config.rate) }; 
 
     // Distance between successive input element and output element.
-    int istride = getInputBuffer().dims().numberOfPolarizations();
-    int ostride = getInputBuffer().dims().numberOfPolarizations();
+    int istride = getInputBuffer().numberOfPolarizations();
+    int ostride = getInputBuffer().numberOfPolarizations();
 
     // Distance between input batches and output batches.
-    int idist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
-    int odist = (config.rate * getInputBuffer().dims().numberOfPolarizations());
+    int idist = (config.rate * getInputBuffer().numberOfPolarizations());
+    int odist = (config.rate * getInputBuffer().numberOfPolarizations());
 
     // Input size with pitch, this is ignored for 1D tansformations.
     int inembed[] = { 0 }; 
     int onembed[] = { 0 };
 
     // Number of batched FFTs.
-    int batch = (getInputBuffer().size() / getInputBuffer().dims().numberOfPolarizations()) / config.rate;
+    int batch = (getInputBuffer().size() / getInputBuffer().numberOfPolarizations()) / config.rate;
 
     // Create cuFFT plan.
     cufftCreate(&plan);
@@ -83,7 +83,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     cufftSetStream(plan, stream);
 
     // Install callbacks.
-    callback = std::make_unique<Internal::Callback>(plan, input.buf.dims().numberOfPolarizations());
+    callback = std::make_unique<Internal::Callback>(plan, input.buf.numberOfPolarizations());
 }
 
 template<typename IT, typename OT>
@@ -102,7 +102,7 @@ const Result Channelizer<IT, OT>::process(const cudaStream_t& stream) {
     cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
     cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
 
-    for (U64 pol = 0; pol < getInputBuffer().dims().numberOfPolarizations(); pol++) {
+    for (U64 pol = 0; pol < getInputBuffer().numberOfPolarizations(); pol++) {
         BL_CUFFT_CHECK(cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD), [&]{
             BL_FATAL("cuFFT failed to execute: {0:#x}", err);
         });

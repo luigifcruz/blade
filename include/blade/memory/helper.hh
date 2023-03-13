@@ -1,5 +1,5 @@
-#ifndef BLADE_MEMORY_CUDA_HELPER_HH
-#define BLADE_MEMORY_CUDA_HELPER_HH
+#ifndef BLADE_MEMORY_HELPER_HH
+#define BLADE_MEMORY_HELPER_HH
 
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
@@ -28,6 +28,24 @@ static const Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
         BL_FATAL("Failed to register CPU memory: {}", err);
     });
 
+    return Result::SUCCESS;
+}
+
+template<Device DeviceId, typename Type, typename Shape>
+static const Result Link(const Vector<DeviceId, Type, Shape>& left,
+                         const Vector<DeviceId, Type, Shape>& right) {
+    // TODO: Implement this.
+    BL_DEBUG("IMPLEMENT THIS");
+
+    return Result::SUCCESS;
+}
+
+template<Device DeviceId, typename Type, typename LeftShape, typename RightShape>
+static const Result Link(const Vector<DeviceId, Type, LeftShape>& left,
+                         const Vector<DeviceId, Type, RightShape>& right,
+                         const LeftShape newShape) {
+    // TODO: Implement this.
+    BL_DEBUG("IMPLEMENT THIS");
     return Result::SUCCESS;
 }
 

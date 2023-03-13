@@ -93,39 +93,15 @@ protected:
     }
 
     const Result allocateDeviceMemory(const U64& A, const U64& B) {
-        BL_CHECK(deviceInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
-
-        BL_CHECK(deviceInputPhasors.resize({
-            .B = B,
-            .A = A,
-            .F = 192,
-            .T = 1,
-            .P = 2,
-        }));
+        deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
+        deviceInputPhasors = PhasorTensor<Device::CUDA, IT>({B, A, 192, 1, 2});
 
         return Result::SUCCESS;
     }
 
     const Result allocateHostMemory(const U64& A, const U64& B) {
-        BL_CHECK(hostInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
-
-        BL_CHECK(hostInputPhasors.resize({
-            .B = B,
-            .A = A,
-            .F = 192,
-            .T = 1,
-            .P = 2,
-        }));
+        hostInputBuf = ArrayTensor<Device::CPU, IT>({A, 192, 8192, 2});
+        hostInputPhasors = PhasorTensor<Device::CPU, IT>({B, A, 192, 1, 2});
 
         return Result::SUCCESS;
     }

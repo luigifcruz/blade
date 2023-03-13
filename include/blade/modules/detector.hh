@@ -66,17 +66,17 @@ class BLADE_API Detector : public Module {
     Output output;
 
     U64 apparentIntegrationSize;
-    Vector<Device::CUDA | Device::CPU, BOOL> ctrlResetTensor;
+    Tensor<Device::CUDA, BOOL> ctrlResetTensor;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    const ArrayDimensions getOutputBufferDims() const {
-        return {
-            .A = getInputBuffer().dims().numberOfAspects(),
-            .F = getInputBuffer().dims().numberOfFrequencyChannels(),
-            .T = getInputBuffer().dims().numberOfTimeSamples() / apparentIntegrationSize,
-            .P = config.numberOfOutputPolarizations,
-        }; 
+    const ArrayShape getOutputBufferShape() const {
+        return ArrayShape({
+            getInputBuffer().numberOfAspects(),
+            getInputBuffer().numberOfFrequencyChannels(),
+            getInputBuffer().numberOfTimeSamples() / apparentIntegrationSize,
+            config.numberOfOutputPolarizations,
+        });
     }
 };
 

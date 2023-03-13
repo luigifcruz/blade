@@ -35,12 +35,12 @@ inline const Result ModeB(const Config& config) {
     auto readerRunner = Runner<Reader>::New(1, readerConfig, false);
     const auto& reader = readerRunner->getWorker();
 
-    const auto readerTotalOutputDims = reader.getTotalOutputDims();
+    const auto readerTotalOutputDims = reader.getTotalOutputShape();
 
     // Instantiate compute pipeline and runner.
 
     typename Compute::Config computeConfig = {
-        .inputDimensions = reader.getStepOutputDims(),
+        .inputShape = reader.getStepOutputShape(),
         .preBeamformerChannelizerRate = config.preBeamformerChannelizerRate,
 
         .phasorObservationFrequencyHz = reader.getObservationFrequency(),
@@ -75,9 +75,9 @@ inline const Result ModeB(const Config& config) {
     typename Writer::Config writerConfig = {
         .outputGuppiFile = config.outputGuppiFile,
         .directio = true,
-        .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
+        .inputShape = computeRunner->getWorker().getOutputBuffer().shape(),
         .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / 
-                          computeConfig.inputDimensions.numberOfFrequencyChannels()
+                          computeConfig.inputShape.numberOfFrequencyChannels()
     };
 
     auto writerRunner = Runner<Writer>::New(1, writerConfig, false);

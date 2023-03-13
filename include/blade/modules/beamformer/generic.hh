@@ -70,9 +70,9 @@ class BLADE_API Generic : public Module {
     const Input input;
     Output output;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    virtual const ArrayDimensions getOutputBufferDims() const = 0;
+    virtual const ArrayShape getOutputBufferShape() const = 0;
 };
 
 }  // namespace Blade::Modules::Beamformer

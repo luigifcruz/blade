@@ -1,6 +1,7 @@
 #ifndef BLADE_MEMORY_TYPES_HH
 #define BLADE_MEMORY_TYPES_HH
 
+// TODO: Check these imports.
 #include <cuda_runtime.h>
 #include <cuComplex.h>
 #include <cuda_fp16.h>
@@ -22,10 +23,6 @@ enum class BLADE_API Device : uint8_t {
     METAL   = 1 << 2,
     VULKAN  = 1 << 3,
 };
-
-inline constexpr Device operator|(Device lhs, Device rhs) {
-    return static_cast<Device>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
-}
 
 typedef __half   F16;
 typedef float    F32;
@@ -284,22 +281,6 @@ struct BLADE_API TypeInfo<CU64> {
     inline static const std::size_t cudaSize = 2;
     inline static const std::string cudaName = "NonSupported";
 };
-
-class Dimensions : public std::vector<U64> {
- public:
-    using std::vector<U64>::vector;
-
-    U64 size() const {
-        U64 size = 1;
-        for (const auto& n : *this) {
-            size *= n;
-        }
-        return size; 
-    }
-};
-
-template<Device Dev, typename Type, typename Dims = Dimensions>
-class Vector;
 
 }  // namespace Blade
 

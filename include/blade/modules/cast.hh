@@ -59,10 +59,10 @@ class BLADE_API Cast : public Module {
     const Input input;
     Output output;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    const ArrayDimensions getOutputBufferDims() const {
-        return getInputBuffer().dims();
+    const ArrayShape getOutputBufferShape() const {
+        return getInputBuffer().shape();
     }
 };
 

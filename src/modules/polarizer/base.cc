@@ -49,12 +49,14 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
     if (config.mode == Mode::BYPASS) {
         BL_INFO("Bypass: Enabled");
     }
-    BL_CHECK_THROW(output.buf.link(input.buf));
+
+    // Link output buffer or link input with output.
+    BL_CHECK_THROW(Memory::Link(output.buf, input.buf));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), 
-                                                 getOutputBuffer().dims());
+    BL_INFO("Shape [A, F, T, P]: {} -> {}", getInputBuffer().shape(), 
+                                            getOutputBuffer().shape());
 }
 
 template<typename IT, typename OT>

@@ -82,23 +82,13 @@ protected:
     }
 
     const Result allocateDeviceMemory(const U64& A) {
-        BL_CHECK(deviceInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
+        deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }
 
     const Result allocateHostMemory(const U64& A) {
-        BL_CHECK(hostInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
+        hostInputBuf = ArrayTensor<Device::CPU, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }
