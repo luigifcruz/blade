@@ -1,7 +1,7 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '0.8.3',
+    version: '0.9.0',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
@@ -49,7 +49,8 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-subdir('python')
+has_python = false
+# subdir('python')
 subdir('tests')
 subdir('benchmarks')
 subdir('docs')
