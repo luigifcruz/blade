@@ -1,7 +1,7 @@
 #ifndef BLADE_MEMORY_FMT_HH
 #define BLADE_MEMORY_FMT_HH
 
-#include <array>
+#include <fmt/ranges.h>
 
 #include "blade/memory/custom.hh"
 

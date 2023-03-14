@@ -12,7 +12,7 @@ struct Shape {
  public:
     using Type = std::array<U64, Dimensions>;
 
-    Shape() {};
+    Shape() : _shape({0}) {};
     Shape(const Type& shape) : _shape(shape) {}
 
     constexpr const Type& shape() const {

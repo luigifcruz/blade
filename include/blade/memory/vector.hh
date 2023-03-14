@@ -1,8 +1,6 @@
 #ifndef BLADE_MEMORY_VECTOR_HH
 #define BLADE_MEMORY_VECTOR_HH
 
-#include <span>
-
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
 #include "blade/memory/shape.hh"
@@ -110,8 +108,11 @@ struct Vector : public ShapeClass {
         return _data;
     }
 
-    constexpr const U64* refs() const noexcept {
-        return _refs;
+    constexpr const U64 refs() const noexcept {
+        if (!_refs) {
+            return 0;
+        }
+        return *_refs;
     }
 
     constexpr const U64 hash() const noexcept {

@@ -1,14 +1,10 @@
 #ifndef BLADE_MEMORY_TYPES_HH
 #define BLADE_MEMORY_TYPES_HH
 
-// TODO: Check these imports.
 #include <cuda_runtime.h>
 #include <cuComplex.h>
 #include <cuda_fp16.h>
-#include <fmt/ranges.h>
 
-#include <span>
-#include <vector>
 #include <string>
 #include <complex>
 
