@@ -1,7 +1,6 @@
 #ifndef BLADE_MEMORY_BASE_HH
 #define BLADE_MEMORY_BASE_HH
 
-#include "blade/memory/fmt.hh"
 #include "blade/memory/types.hh"
 #include "blade/memory/custom.hh"
 #include "blade/memory/helper.hh"

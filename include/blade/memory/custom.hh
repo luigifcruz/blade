@@ -35,6 +35,14 @@ struct ArrayShape : public Shape<4> {
     ArrayShape operator/(const ArrayShape& other) const {
         return ArrayShape(Shape::operator/(other).shape());
     }
+
+    const std::string str() const {
+        return fmt::format("[A: {}, F: {}, T: {}, P: {}]", 
+                           numberOfAspects(),
+                           numberOfFrequencyChannels(),
+                           numberOfTimeSamples(),
+                           numberOfPolarizations()); 
+    }
 };
 
 template<Device DeviceId, typename DataType>
@@ -71,6 +79,15 @@ struct PhasorShape : public Shape<5> {
     PhasorShape operator/(const PhasorShape& other) const {
         return PhasorShape(Shape::operator/(other).shape());
     }
+
+    const std::string str() const {
+        return fmt::format("[B: {}, A: {}, F: {}, T: {}, P: {}]", 
+                           numberOfBeams(), 
+                           numberOfAntennas(),
+                           numberOfFrequencyChannels(),
+                           numberOfTimeSamples(),
+                           numberOfPolarizations()); 
+    }
 };
 
 template<Device DeviceId, typename DataType>
@@ -94,6 +111,12 @@ struct DelayShape : public Shape<5> {
 
     DelayShape operator/(const DelayShape& other) const {
         return DelayShape(Shape::operator/(other).shape());
+    }
+
+    const std::string str() const {
+        return fmt::format("[B: {}, A: {}]", 
+                           numberOfBeams(), 
+                           numberOfAntennas()); 
     }
 };
 

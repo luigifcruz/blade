@@ -22,7 +22,7 @@ Generic<IT, OT>::Generic(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Phasors Shape [B, A, F, T, P]: {}", getInputPhasors().shape());
+    BL_INFO("Phasors Shape: {}", getInputPhasors().str());
     BL_INFO("Enable Incoherent Beam: {}", config.enableIncoherentBeam ? "YES" : "NO");
     BL_INFO("Enable Incoherent Beam Square Root: {}", config.enableIncoherentBeamSqrt ? "YES" : "NO");
 }

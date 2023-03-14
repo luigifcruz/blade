@@ -71,6 +71,10 @@ struct Shape {
         return _shape;
     }
 
+    const std::string str() const {
+        return fmt::format("[{}]", _shape);
+    };
+
  protected:
     Type _shape;
 };

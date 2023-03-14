@@ -17,8 +17,8 @@ FileWriter<IT>::FileWriter(const Config& config)
         config.inputShape.numberOfPolarizations(),
     });
 
-    BL_INFO("Step Shape [A, F, T, P]: {} -> {}", config.inputShape, "N/A");
-    BL_INFO("Total Shape [A, F, T, P]: {} -> {}", this->writerBuffer.shape(), "N/A");
+    BL_INFO("Step Shape: {} -> {}", config.inputShape.str(), "N/A");
+    BL_INFO("Total Shape: {} -> {}", this->writerBuffer.str(), "N/A");
 
     BL_DEBUG("Instantiating GUPPI RAW file writer.");
     this->connect(guppi, {

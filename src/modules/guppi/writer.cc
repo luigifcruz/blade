@@ -39,7 +39,7 @@ Writer<IT>::Writer(const Config& config,
 
     // Print configuration information.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
-    BL_INFO("Shape [A, F, T, P]: {} -> {}", getInputBuffer().shape(), "N/A");
+    BL_INFO("Shape: {} -> {}", getInputBuffer().str(), "N/A");
     BL_INFO("Output File Path: {}", config.filepath);
     BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO");
 }

@@ -55,8 +55,8 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape [A, F, T, P]: {} -> {}", getInputBuffer().shape(), 
-                                            getOutputBuffer().shape());
+    BL_INFO("Shape: {} -> {}", getInputBuffer().str(), 
+                               getOutputBuffer().str());
 }
 
 template<typename IT, typename OT>

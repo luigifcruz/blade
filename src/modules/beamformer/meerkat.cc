@@ -36,8 +36,8 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
     this->output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
-    BL_INFO("Shape [A, F, T, P]: {} -> {}", this->getInputBuffer().shape(), 
-                                            this->getOutputBuffer().shape());
+    BL_INFO("Shape: {} -> {}", this->getInputBuffer().str(), 
+                               this->getOutputBuffer().str());
 }
 
 template class BLADE_API MeerKAT<CF32, CF32>;

@@ -71,7 +71,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 
     if (this->getConfigCalibrationShape() != config.antennaCalibrations.shape()) {
         BL_FATAL("Shape of antenna calibrations {} doesn't match with the expected dimensions {}.", 
-                config.antennaCalibrations.shape(), this->getConfigCalibrationShape());
+                config.antennaCalibrations.shape(), this->getConfigCalibrationShape().str());
         BL_CHECK_THROW(Result::ERROR);
     }
     
@@ -97,8 +97,8 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     this->output.delays = DelayTensor<Device::CPU, F64>(getOutputDelaysShape());
 
     // Print configuration values.
-    BL_INFO("Phasors Shape [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().shape());
-    BL_INFO("Delays Shape [B, A]: {} -> {}", "N/A", this->getOutputDelays().shape());
+    BL_INFO("Phasors Shape: {} -> {}", "N/A", this->getOutputPhasors().str());
+    BL_INFO("Delays Shape: {} -> {}", "N/A", this->getOutputDelays().str());
     BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
 
