@@ -67,6 +67,10 @@ struct Shape {
         return result;
     }
 
+    operator Type() const {
+        return _shape;
+    }
+
  protected:
     Type _shape;
 };
