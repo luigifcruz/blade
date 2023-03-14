@@ -93,8 +93,8 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.ALT);
 
     // Allocate output buffers.
-    this->output.phasors = PhasorTensor<Device::CUDA, CF64>(getOutputPhasorsShape(), true);
-    this->output.delays = DelayTensor<Device::CUDA, F64>(getOutputDelaysShape());
+    this->output.phasors = PhasorTensor<Device::CUDA, OT>(getOutputPhasorsShape(), true);
+    this->output.delays = DelayTensor<Device::CPU, F64>(getOutputDelaysShape());
 
     // Print configuration values.
     BL_INFO("Phasors Shape [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().shape());

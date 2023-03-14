@@ -10,7 +10,7 @@ FileWriter<IT>::FileWriter(const Config& config)
        config(config) {
     BL_DEBUG("Initializing CLI File Writer Pipeline.");
 
-    this->writerBuffer = ArrayTensor<Device::CUDA, IT>({
+    this->writerBuffer = ArrayTensor<Device::CPU, IT>({
         config.inputShape.numberOfAspects(),
         config.inputShape.numberOfFrequencyChannels() * config.accumulateRate,
         config.inputShape.numberOfTimeSamples(),
