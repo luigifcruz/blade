@@ -56,7 +56,7 @@ struct Vector : public ShapeClass {
         }
     }
 
-    explicit Vector(Vector& other)
+    Vector(const Vector& other)
              : ShapeClass(other._shape),
                _data(other._data),
                _refs(other._refs) {
@@ -65,7 +65,7 @@ struct Vector : public ShapeClass {
         increaseRefCount();
     }
 
-    explicit Vector(Vector&& other)
+    Vector(Vector&& other)
              : ShapeClass(),
                _data(nullptr),
                _refs(nullptr) { 

@@ -154,5 +154,55 @@ int main() {
         BL_INFO("Vector move test successful!");
     }
 
+    BL_INFO("---------------------------------------------");
+
+    {
+        struct Test {
+            ArrayTensor<Device::CPU, U64> pickles;
+        };
+
+        Test test = Test{
+            .pickles = ArrayTensor<Device::CPU, U64>({1, 2, 3, 4}),
+        };
+
+        PrintVarDebug("test.pickles", test.pickles);
+        assert(test.pickles.size() == 24);
+        assert(test.pickles.refs() == 1);
+        assert(test.pickles.data() != nullptr);
+
+        BL_INFO("Vector struct test successful!");
+    }
+
+    BL_INFO("---------------------------------------------");
+
+    {
+        struct Test {
+            ArrayTensor<Device::CPU, U64> pickles;
+        };
+
+        auto pickles = ArrayTensor<Device::CPU, U64>({1, 2, 3, 4});
+
+        PrintVarDebug("picles", pickles);
+        assert(pickles.size() == 24);
+        assert(pickles.refs() == 1);
+        assert(pickles.data() != nullptr);
+
+        Test test = Test{
+            .pickles = pickles,
+        };
+
+        PrintVarDebug("test.picles", test.pickles);
+        assert(test.pickles.size() == 24);
+        assert(test.pickles.refs() == 2);
+        assert(test.pickles.data() == pickles.data());
+
+        PrintVarDebug("picles", pickles);
+        assert(pickles.size() == 24);
+        assert(pickles.refs() == 2);
+        assert(pickles.data() != nullptr);
+
+        BL_INFO("Vector initializer struct test successful!");
+    }
+
     return 0;
 }
