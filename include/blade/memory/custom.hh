@@ -13,27 +13,27 @@ struct ArrayShape : public Shape<4> {
     using Shape::Shape;
 
     constexpr const U64& numberOfAspects() const {
-        return this->shape()[0];
+        return this->_shape[0];
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->shape()[1];
+        return this->_shape[1];
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->shape()[2];
+        return this->_shape[2];
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->shape()[3];
+        return this->_shape[3];
     }
 
     ArrayShape operator*(const ArrayShape& other) const {
-        return ArrayShape(Shape::operator*(other).shape());
+        return ArrayShape(Shape::operator*(other));
     }
 
     ArrayShape operator/(const ArrayShape& other) const {
-        return ArrayShape(Shape::operator/(other).shape());
+        return ArrayShape(Shape::operator/(other));
     }
 
     const std::string str() const {
@@ -53,31 +53,31 @@ struct PhasorShape : public Shape<5> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->shape()[0];
+        return this->_shape[0];
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->shape()[1];
+        return this->_shape[1];
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->shape()[2];
+        return this->_shape[2];
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->shape()[3];
+        return this->_shape[3];
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->shape()[4];
+        return this->_shape[4];
     }
 
     PhasorShape operator*(const PhasorShape& other) const {
-        return PhasorShape(Shape::operator*(other).shape());
+        return PhasorShape(Shape::operator*(other));
     }
 
     PhasorShape operator/(const PhasorShape& other) const {
-        return PhasorShape(Shape::operator/(other).shape());
+        return PhasorShape(Shape::operator/(other));
     }
 
     const std::string str() const {
@@ -98,19 +98,19 @@ struct DelayShape : public Shape<5> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->shape()[0];
+        return this->_shape[0];
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->shape()[1];
+        return this->_shape[1];
     }
 
     DelayShape operator*(const DelayShape& other) const {
-        return DelayShape(Shape::operator*(other).shape());
+        return DelayShape(Shape::operator*(other));
     }
 
     DelayShape operator/(const DelayShape& other) const {
-        return DelayShape(Shape::operator/(other).shape());
+        return DelayShape(Shape::operator/(other));
     }
 
     const std::string str() const {

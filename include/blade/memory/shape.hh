@@ -15,10 +15,6 @@ struct Shape {
     Shape() : _shape({0}) {};
     Shape(const Type& shape) : _shape(shape) {}
 
-    constexpr const Type& shape() const {
-        return _shape;
-    }
-
     const Result reshape(const Type& shape) {
         if (shape.size() != _shape.size()) {
             return Result::ERROR;

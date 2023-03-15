@@ -25,7 +25,7 @@ struct Vector : public ShapeClass {
         BL_TRACE("Vector created.");
     }
 
-    Vector(const typename ShapeClass::Type& shape, const bool& unified = false)
+    explicit Vector(const typename ShapeClass::Type& shape, const bool& unified = false)
              : ShapeClass(shape),
                _data(nullptr),
                _refs(nullptr) {
@@ -56,7 +56,7 @@ struct Vector : public ShapeClass {
         }
     }
 
-    explicit Vector(const Vector& other)
+    explicit Vector(Vector& other)
              : ShapeClass(other._shape),
                _data(other._data),
                _refs(other._refs) {
@@ -157,6 +157,10 @@ struct Vector : public ShapeClass {
 
     constexpr const auto end() const {
         return _data + size_bytes();
+    }
+
+    constexpr const typename ShapeClass::Type& shape() const {
+        return this->_shape;
     }
 
  private:
