@@ -47,7 +47,7 @@ Writer<InputType>::Writer(const Config& config, const Input& input)
     this->filterbank_header.tstart = this->config.julianDateStart - 2400000.5; // from JD to MJD
     this->filterbank_header.tsamp = abs(1.0/(this->config.bandwidthHz / inputDims.numberOfFrequencyChannels())); // time always moves forward
     this->filterbank_header.nifs = this->config.numberOfIfChannels;
-    strncpy(this->filterbank_header.rawdatafile, this->config.sourceDataFilename.c_str(), 80);
+    strncpy(this->filterbank_header.rawdatafile, this->config.sourceDataFilename.c_str(), 79);
 
     this->openFilesWriteHeaders();
 
@@ -75,7 +75,7 @@ void Writer<InputType>::openFilesWriteHeaders() {
 
         this->filterbank_header.src_raj = this->config.beamCoordinates[i].RA * 12.0 / BL_PHYSICAL_CONSTANT_PI; // from radians to hours
         this->filterbank_header.src_dej = this->config.beamCoordinates[i].DEC * 180.0 / BL_PHYSICAL_CONSTANT_PI;
-        strncpy(this->filterbank_header.source_name, this->config.beamNames[i].c_str(), 80);
+        strncpy(this->filterbank_header.source_name, this->config.beamNames[i].c_str(), 79);
 
         filterbank_fd_write_header(this->fileDescriptors[i], &this->filterbank_header);
     }
