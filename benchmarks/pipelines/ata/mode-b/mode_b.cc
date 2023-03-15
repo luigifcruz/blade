@@ -29,7 +29,7 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     dummyJulianDate[0] = (1649366473.0 / 86400) + 2440587.5;
     dummyDut1[0] = 0.0;
 
-    runner = Runner<TestPipeline>::New(numberOfWorkers, Pipelines::ATA::ModeB<float>::Config{
+    runner = Runner<TestPipeline>::New(numberOfWorkers, {
         .inputShape = ArrayShape({
             BLADE_ATA_MODE_B_NANT,
             BLADE_ATA_MODE_B_NCHAN,
