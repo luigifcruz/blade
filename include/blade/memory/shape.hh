@@ -19,9 +19,18 @@ struct Shape {
         return _shape;
     }
 
+    const Result reshape(const Type& shape) {
+        if (shape.size() != _shape.size()) {
+            return Result::ERROR;
+        }
+        _shape = shape;
+
+        return Result::SUCCESS;
+    }
+
     __host__ __device__ const U64 size() const {
         U64 size = 1;
-        for (const auto& n : shape()) {
+        for (const auto& n : _shape) {
             size *= n;
         }
         return size; 
@@ -34,7 +43,7 @@ struct Shape {
             U64 product = index[i];
 
             for (U64 j = i + 1; j < index.size(); j++) {
-                product *= shape()[j];
+                product *= _shape[j];
             }
             
             offset += product;
@@ -44,25 +53,30 @@ struct Shape {
     }
 
     __host__ __device__ const bool operator==(const Shape& other) const {
-        bool result = false;
-        for (U64 i = 0; i < shape().size(); i++) {
-            result &= (shape()[i] == other.shape()[i]);
+        return operator==(other.shape());
+    }
+
+    __host__ __device__ const bool operator==(const Type& other) const {
+        bool result = true;
+        for (U64 i = 0; i < _shape.size(); i++) {
+            result &= (_shape[i] == other[i]);
         }
+        BL_TRACE("{} {} {}", other, _shape, result);
         return result;
     }
 
     Shape operator*(const Shape& other) const {
-        Type result = shape();
-        for (U64 i = 0; i < shape().size(); i++) {
-            result[i] *= other.shape()[i];
+        Type result = _shape;
+        for (U64 i = 0; i < _shape.size(); i++) {
+            result[i] *= other._shape[i];
         }
         return result;
     }
 
     Shape operator/(const Shape& other) const {
-        Type result = shape();
-        for (U64 i = 0; i < shape().size(); i++) {
-            result[i] /= other.shape()[i];
+        Type result = _shape;
+        for (U64 i = 0; i < _shape.size(); i++) {
+            result[i] /= other._shape[i];
         }
         return result;
     }

@@ -76,7 +76,7 @@ struct Vector : public ShapeClass {
         std::swap(this->_shape, other._shape);
     }
 
-    Vector& operator=(Vector& other) {
+    Vector& operator=(const Vector& other) {
         BL_TRACE("Vector copied to existing.");
 
         decreaseRefCount();
@@ -195,11 +195,12 @@ struct Vector : public ShapeClass {
     }
 
     void increaseRefCount() {
-        BL_TRACE("Increasing reference counter ({}).", *_refs);
-
-        if (_refs) {
-            *_refs += 1;
+        if (!_refs) {
+            return;
         }
+
+        BL_TRACE("Increasing reference counter ({}).", *_refs);
+        *_refs += 1;
     }
 
     void reset() {

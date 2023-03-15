@@ -32,20 +32,18 @@ static const Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
 }
 
 template<Device DeviceId, typename Type, typename Shape>
-static const Result Link(const Vector<DeviceId, Type, Shape>& left,
-                         const Vector<DeviceId, Type, Shape>& right) {
-    // TODO: Implement this.
-    BL_DEBUG("IMPLEMENT THIS");
-
+static const Result Link(Vector<DeviceId, Type, Shape>& dst,
+                         const Vector<DeviceId, Type, Shape>& src) {
+    dst = src;
     return Result::SUCCESS;
 }
 
-template<Device DeviceId, typename Type, typename LeftShape, typename RightShape>
-static const Result Link(const Vector<DeviceId, Type, LeftShape>& left,
-                         const Vector<DeviceId, Type, RightShape>& right,
-                         const LeftShape newShape) {
-    // TODO: Implement this.
-    BL_DEBUG("IMPLEMENT THIS");
+template<Device DeviceId, typename Type, typename Shape>
+static const Result Link(Vector<DeviceId, Type, Shape>& dst,
+                         const Vector<DeviceId, Type, Shape>& src,
+                         const Shape dstShape) {
+    dst = src;
+    return dst.reshape(dstShape);
     return Result::SUCCESS;
 }
 

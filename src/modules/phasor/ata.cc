@@ -71,7 +71,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 
     if (this->getConfigCalibrationShape() != config.antennaCalibrations.shape()) {
         BL_FATAL("Shape of antenna calibrations {} doesn't match with the expected dimensions {}.", 
-                config.antennaCalibrations.shape(), this->getConfigCalibrationShape().str());
+                config.antennaCalibrations.str(), this->getConfigCalibrationShape().str());
         BL_CHECK_THROW(Result::ERROR);
     }
     

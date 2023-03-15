@@ -67,7 +67,7 @@ class BLADE_API Polarizer : public Module {
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {
-        return getInputBuffer().shape();
+        return getInputBuffer();
     }
 };
 
