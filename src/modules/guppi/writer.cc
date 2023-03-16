@@ -25,21 +25,21 @@ Writer<IT>::Writer(const Config& config,
     }
 
     // Add expected metadata to the header.
-    this->gr_header.metadata.datashape.n_aspect = getInputBuffer().numberOfAspects();
-    this->gr_header.metadata.datashape.n_aspectchan = getInputBuffer().numberOfFrequencyChannels();
-    this->gr_header.metadata.datashape.n_time = getInputBuffer().numberOfTimeSamples();
-    this->gr_header.metadata.datashape.n_pol = getInputBuffer().numberOfPolarizations();
+    this->gr_header.metadata.datashape.n_aspect = getInputBuffer().shape().numberOfAspects();
+    this->gr_header.metadata.datashape.n_aspectchan = getInputBuffer().shape().numberOfFrequencyChannels();
+    this->gr_header.metadata.datashape.n_time = getInputBuffer().shape().numberOfTimeSamples();
+    this->gr_header.metadata.datashape.n_pol = getInputBuffer().shape().numberOfPolarizations();
     this->gr_header.metadata.datashape.n_bit = sizeof(IT) * 8 / 2;
     this->gr_header.metadata.directio = this->config.directio ? 1 : 0;
     guppiraw_header_put_metadata(&this->gr_header);
 
     // Add custom metadata to the header.
-    this->headerPut("NBEAM", getInputBuffer().numberOfAspects());
+    this->headerPut("NBEAM", getInputBuffer().shape().numberOfAspects());
     this->headerPut("DATATYPE", "FLOAT");
 
     // Print configuration information.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
-    BL_INFO("Shape: {} -> {}", getInputBuffer().str(), "N/A");
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), "N/A");
     BL_INFO("Output File Path: {}", config.filepath);
     BL_INFO("Direct I/O: {}", config.directio ? "YES" : "NO");
 }
@@ -58,7 +58,7 @@ const Result Writer<IT>::preprocess(const cudaStream_t& stream,
         return Result::ERROR;
     }
 
-    this->headerPut("PKTIDX", getInputBuffer().numberOfTimeSamples() * writeCounter++);
+    this->headerPut("PKTIDX", getInputBuffer().shape().numberOfTimeSamples() * writeCounter++);
 
     return Result::SUCCESS;
 }

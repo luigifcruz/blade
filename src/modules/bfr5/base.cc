@@ -90,8 +90,8 @@ Reader::Reader(const Config& config,
 
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Calibrations Shape: {} -> {}", "N/A", getAntennaCalibrationsShape().str());
-    BL_INFO("Data Shape: {} -> {}", "N/A", getTotalShape().str());
+    BL_INFO("Calibrations Shape: {} -> {}", "N/A", getAntennaCalibrationsShape());
+    BL_INFO("Data Shape: {} -> {}", "N/A", getTotalShape());
     BL_INFO("Channelizer Rate: {}", config.channelizerRate);
 }
 

@@ -18,7 +18,7 @@ static const Result Copy(Vector<DstDeviceId, Type, Dims>& dst,
 
     if (dst.shape() != src.shape()) {
         BL_FATAL("Shape mismatch between source ({}) and destination ({}).",
-                src.str(), dst.str());
+                src.shape(), dst.shape());
     }
 
     BL_CUDA_CHECK(cudaMemcpyAsync(dst.data(), src.data(), src.size_bytes(),

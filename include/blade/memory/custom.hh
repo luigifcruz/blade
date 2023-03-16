@@ -3,6 +3,9 @@
 
 #include <array>
 
+#include <fmt/ostream.h>
+#include <fmt/core.h>
+
 #include "blade/memory/vector.hh"
 #include "blade/memory/shape.hh"
 
@@ -13,19 +16,19 @@ struct ArrayShape : public Shape<4> {
     using Shape::Shape;
 
     constexpr const U64& numberOfAspects() const {
-        return this->_shape[0];
+        return this->at(0);
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->_shape[1];
+        return this->at(1);
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->_shape[2];
+        return this->at(2);
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->_shape[3];
+        return this->at(3);
     }
 
     ArrayShape operator*(const ArrayShape& other) const {
@@ -36,12 +39,13 @@ struct ArrayShape : public Shape<4> {
         return ArrayShape(Shape::operator/(other));
     }
 
-    const std::string str() const {
-        return fmt::format("[A: {}, F: {}, T: {}, P: {}]", 
-                           numberOfAspects(),
-                           numberOfFrequencyChannels(),
-                           numberOfTimeSamples(),
-                           numberOfPolarizations()); 
+ private:
+    friend std::ostream& operator<<(std::ostream& os, const ArrayShape& shape) {
+        return os << fmt::format("[A: {}, F: {}, T: {}, P: {}]", 
+                                   shape.numberOfAspects(),
+                                   shape.numberOfFrequencyChannels(),
+                                   shape.numberOfTimeSamples(),
+                                   shape.numberOfPolarizations()); 
     }
 };
 
@@ -53,23 +57,23 @@ struct PhasorShape : public Shape<5> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->_shape[0];
+        return this->at(0);
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->_shape[1];
+        return this->at(1);
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->_shape[2];
+        return this->at(2);
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->_shape[3];
+        return this->at(3);
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->_shape[4];
+        return this->at(4);
     }
 
     PhasorShape operator*(const PhasorShape& other) const {
@@ -80,13 +84,14 @@ struct PhasorShape : public Shape<5> {
         return PhasorShape(Shape::operator/(other));
     }
 
-    const std::string str() const {
-        return fmt::format("[B: {}, A: {}, F: {}, T: {}, P: {}]", 
-                           numberOfBeams(), 
-                           numberOfAntennas(),
-                           numberOfFrequencyChannels(),
-                           numberOfTimeSamples(),
-                           numberOfPolarizations()); 
+ private:
+    friend std::ostream& operator<<(std::ostream& os, const PhasorShape& shape) {
+        return os << fmt::format("[B: {}, A: {}, F: {}, T: {}, P: {}]", 
+                                   shape.numberOfBeams(), 
+                                   shape.numberOfAntennas(),
+                                   shape.numberOfFrequencyChannels(),
+                                   shape.numberOfTimeSamples(),
+                                   shape.numberOfPolarizations()); 
     }
 };
 
@@ -98,11 +103,11 @@ struct DelayShape : public Shape<5> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->_shape[0];
+        return this->at(0);
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->_shape[1];
+        return this->at(1);
     }
 
     DelayShape operator*(const DelayShape& other) const {
@@ -113,19 +118,49 @@ struct DelayShape : public Shape<5> {
         return DelayShape(Shape::operator/(other));
     }
 
-    const std::string str() const {
-        return fmt::format("[B: {}, A: {}]", 
-                           numberOfBeams(), 
-                           numberOfAntennas()); 
+ private:
+    friend std::ostream& operator<<(std::ostream& os, const DelayShape& shape) {
+        return os << fmt::format("[B: {}, A: {}", 
+                                   shape.numberOfBeams(), 
+                                   shape.numberOfAntennas()); 
     }
 };
 
 template<Device DeviceId, typename DataType>
 using DelayTensor = Vector<DeviceId, DataType, DelayShape>;
 
+struct VectorShape : public Shape<1> {
+ public:
+    using Shape::Shape;
+
+    VectorShape operator*(const VectorShape& other) const {
+        return VectorShape(Shape::operator*(other));
+    }
+
+    VectorShape operator/(const VectorShape& other) const {
+        return VectorShape(Shape::operator/(other));
+    }
+
+ private:
+    friend std::ostream& operator<<(std::ostream& os, const VectorShape& shape) {
+        return os << fmt::format("[{}]", shape.at(0));
+    }
+};
+
 template<Device DeviceId, typename DataType>
-using Tensor = Vector<DeviceId, DataType, Shape<1>>;
+class Tensor : public Vector<DeviceId, DataType, VectorShape> {
+ public:
+    using Vector<DeviceId, DataType, VectorShape>::Vector;
+
+    explicit Tensor(const U64& size, const bool& unified = false)
+             : Vector<DeviceId, DataType, VectorShape>({size}, unified) {}
+};
 
 }  // namespace Blade
+
+template <> struct fmt::formatter<Blade::ArrayShape> : ostream_formatter {};
+template <> struct fmt::formatter<Blade::PhasorShape> : ostream_formatter {};
+template <> struct fmt::formatter<Blade::DelayShape> : ostream_formatter {};
+template <> struct fmt::formatter<Blade::VectorShape> : ostream_formatter {};
 
 #endif

@@ -39,9 +39,9 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 
     BL_DEBUG("Instantiating phasor module.");
     this->connect(phasor, {
-        .numberOfAntennas = channelizer->getOutputBuffer().numberOfAspects(),
-        .numberOfFrequencyChannels = channelizer->getOutputBuffer().numberOfFrequencyChannels(),
-        .numberOfPolarizations = channelizer->getOutputBuffer().numberOfPolarizations(),
+        .numberOfAntennas = channelizer->getOutputBuffer().shape().numberOfAspects(),
+        .numberOfFrequencyChannels = channelizer->getOutputBuffer().shape().numberOfFrequencyChannels(),
+        .numberOfPolarizations = channelizer->getOutputBuffer().shape().numberOfPolarizations(),
 
         .observationFrequencyHz = config.phasorObservationFrequencyHz,
         .channelBandwidthHz = config.phasorChannelBandwidthHz,

@@ -15,11 +15,11 @@ class BLADE_API ATA : public Generic<IT, OT> {
  protected:
     const ArrayShape getOutputBufferShape() const {
         return ArrayShape({
-            this->getInputPhasors().numberOfBeams() 
+            this->getInputPhasors().shape().numberOfBeams() 
                     + U64(this->config.enableIncoherentBeam ? 1 : 0),
-            this->getInputBuffer().numberOfFrequencyChannels(),
-            this->getInputBuffer().numberOfTimeSamples(),
-            this->getInputBuffer().numberOfPolarizations(),
+            this->getInputBuffer().shape().numberOfFrequencyChannels(),
+            this->getInputBuffer().shape().numberOfTimeSamples(),
+            this->getInputBuffer().shape().numberOfPolarizations(),
         });
     }
 };

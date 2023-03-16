@@ -62,7 +62,7 @@ class BLADE_API Cast : public Module {
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {
-        return getInputBuffer();
+        return getInputBuffer().shape();
     }
 };
 

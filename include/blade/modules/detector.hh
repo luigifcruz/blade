@@ -72,9 +72,9 @@ class BLADE_API Detector : public Module {
 
     const ArrayShape getOutputBufferShape() const {
         return ArrayShape({
-            getInputBuffer().numberOfAspects(),
-            getInputBuffer().numberOfFrequencyChannels(),
-            getInputBuffer().numberOfTimeSamples() / apparentIntegrationSize,
+            getInputBuffer().shape().numberOfAspects(),
+            getInputBuffer().shape().numberOfFrequencyChannels(),
+            getInputBuffer().shape().numberOfTimeSamples() / apparentIntegrationSize,
             config.numberOfOutputPolarizations,
         });
     }

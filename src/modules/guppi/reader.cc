@@ -96,8 +96,8 @@ Reader<OT>::Reader(const Config& config,
 
     // Print configuration information.
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
-    BL_INFO("Step Shape: {} -> {}", "N/A", getStepOutputBuffer().str());
-    BL_INFO("Total Shape: {} -> {}", "N/A", getTotalOutputBufferShape().str());
+    BL_INFO("Step Shape: {} -> {}", "N/A", getStepOutputBuffer().shape());
+    BL_INFO("Total Shape: {} -> {}", "N/A", getTotalOutputBufferShape());
     BL_INFO("Input File Path: {}", config.filepath);
 }
 

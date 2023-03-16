@@ -10,33 +10,33 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
                  const cudaStream_t& stream)
         : Generic<IT, OT>(config, input, stream) {
     // Check configuration values.
-    if (this->getInputPhasors().numberOfBeams() > config.blockSize) {
+    if (this->getInputPhasors().shape().numberOfBeams() > config.blockSize) {
         BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
-                config.blockSize, this->getInputPhasors().numberOfBeams());
+                config.blockSize, this->getInputPhasors().shape().numberOfBeams());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().numberOfFrequencyChannels() != 
-        this->getInputBuffer().numberOfFrequencyChannels()) {
+    if (this->getInputPhasors().shape().numberOfFrequencyChannels() != 
+        this->getInputBuffer().shape().numberOfFrequencyChannels()) {
         BL_FATAL("Number of frequency channels mismatch between phasors ({}) and buffer ({}).",
-                this->getInputPhasors().numberOfFrequencyChannels(),
-                this->getInputBuffer().numberOfFrequencyChannels());
+                this->getInputPhasors().shape().numberOfFrequencyChannels(),
+                this->getInputBuffer().shape().numberOfFrequencyChannels());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().numberOfPolarizations() != 
-        this->getInputBuffer().numberOfPolarizations()) {
+    if (this->getInputPhasors().shape().numberOfPolarizations() != 
+        this->getInputBuffer().shape().numberOfPolarizations()) {
         BL_FATAL("Number of polarizations mismatch between phasors ({}) and buffer ({}).",
-                this->getInputPhasors().numberOfPolarizations(),
-                this->getInputBuffer().numberOfPolarizations());
+                this->getInputPhasors().shape().numberOfPolarizations(),
+                this->getInputBuffer().shape().numberOfPolarizations());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().numberOfAntennas() != 
-        this->getInputBuffer().numberOfAspects()) {
+    if (this->getInputPhasors().shape().numberOfAntennas() != 
+        this->getInputBuffer().shape().numberOfAspects()) {
         BL_FATAL("Number of antennas mismatch between phasors ({}) and buffer ({}).",
-                this->getInputPhasors().numberOfAntennas(),
-                this->getInputBuffer().numberOfAspects());
+                this->getInputPhasors().shape().numberOfAntennas(),
+                this->getInputBuffer().shape().numberOfAspects());
         BL_CHECK_THROW(Result::ERROR);
     }
 
@@ -48,15 +48,15 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
             // Kernel function key.
             "ATA",
             // Kernel grid & block sizes.
-            dim3(this->getInputBuffer().numberOfFrequencyChannels(),
-                 this->getInputBuffer().numberOfTimeSamples() / config.blockSize),
+            dim3(this->getInputBuffer().shape().numberOfFrequencyChannels(),
+                 this->getInputBuffer().shape().numberOfTimeSamples() / config.blockSize),
             config.blockSize,
             // Kernel templates.
-            this->getInputPhasors().numberOfBeams(),
-            this->getInputPhasors().numberOfAntennas(),
-            this->getInputBuffer().numberOfFrequencyChannels(),
-            this->getInputBuffer().numberOfTimeSamples(),
-            this->getInputBuffer().numberOfPolarizations(),
+            this->getInputPhasors().shape().numberOfBeams(),
+            this->getInputPhasors().shape().numberOfAntennas(),
+            this->getInputBuffer().shape().numberOfFrequencyChannels(),
+            this->getInputBuffer().shape().numberOfTimeSamples(),
+            this->getInputBuffer().shape().numberOfPolarizations(),
             config.blockSize,
             config.enableIncoherentBeam,
             config.enableIncoherentBeamSqrt
@@ -67,8 +67,8 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
     this->output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
-    BL_INFO("Shape {} -> {}", this->getInputBuffer().str(), 
-                              this->getOutputBuffer().str());
+    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(), 
+                              this->getOutputBuffer().shape());
 }
 
 template class BLADE_API ATA<CF32, CF32>;

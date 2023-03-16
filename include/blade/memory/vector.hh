@@ -7,29 +7,30 @@
 
 namespace Blade {
 
-template<Device DeviceId, typename DataType, typename ShapeClass>
-struct Vector : public ShapeClass {
+template<Device DeviceId,
+         typename DataType,
+         typename Shape>
+struct Vector {
  public:
     Vector()
-             : ShapeClass(),
+             : _shape(),
                _data(nullptr),
                _refs(nullptr) {
         BL_TRACE("Empty vector created.");
     }
 
-    Vector(void* ptr,
-           const typename ShapeClass::Type& shape)
-             : ShapeClass(shape), 
+    explicit Vector(void* ptr, const typename Shape::Type& shape)
+             : _shape(shape), 
                _data(static_cast<DataType*>(ptr)),
                _refs(nullptr) {
         BL_TRACE("Vector created.");
     }
 
-    explicit Vector(const typename ShapeClass::Type& shape, const bool& unified = false)
-             : ShapeClass(shape),
+    explicit Vector(const typename Shape::Type& shape, const bool& unified = false)
+             : _shape(shape),
                _data(nullptr),
                _refs(nullptr) {
-        BL_TRACE("Vector allocated and created.");
+        BL_TRACE("Vector allocated and created: {}", shape);
 
         if constexpr (DeviceId == Device::CPU) {
             BL_CUDA_CHECK_THROW(cudaMallocHost(&_data, size_bytes()), [&]{
@@ -57,7 +58,7 @@ struct Vector : public ShapeClass {
     }
 
     Vector(const Vector& other)
-             : ShapeClass(other._shape),
+             : _shape(other._shape),
                _data(other._data),
                _refs(other._refs) {
         BL_TRACE("Vector created by copy.");
@@ -66,14 +67,14 @@ struct Vector : public ShapeClass {
     }
 
     Vector(Vector&& other)
-             : ShapeClass(),
+             : _shape(),
                _data(nullptr),
                _refs(nullptr) { 
         BL_TRACE("Vector created by move.");
 
         std::swap(_data, other._data);
         std::swap(_refs, other._refs);
-        std::swap(this->_shape, other._shape);
+        std::swap(_shape, other._shape);
     }
 
     Vector& operator=(const Vector& other) {
@@ -82,7 +83,7 @@ struct Vector : public ShapeClass {
         decreaseRefCount();
         _data = other._data;
         _refs = other._refs;
-        this->_shape = other._shape;
+        _shape = other._shape;
         increaseRefCount();
 
         return *this;
@@ -95,7 +96,7 @@ struct Vector : public ShapeClass {
         reset();
         std::swap(_data, other._data);
         std::swap(_refs, other._refs);
-        std::swap(this->_shape, other._shape);
+        std::swap(_shape, other._shape);
 
         return *this;
     }
@@ -119,15 +120,19 @@ struct Vector : public ShapeClass {
         return std::hash<void*>{}(_data);
     }
 
+    constexpr const U64 size() const noexcept {
+        return _shape.size();
+    }
+
     constexpr const U64 size_bytes() const noexcept {
-        return this->size() * sizeof(DataType);
+        return size() * sizeof(DataType);
     }
 
-    constexpr DataType& operator[](const typename ShapeClass::Type& shape) {
-        return _data[this->shapeToOffset(shape)];
+    constexpr DataType& operator[](const typename Shape::Type& shape) {
+        return _data[_shape->shapeToOffset(shape)];
     }
 
-    constexpr const DataType& operator[](const typename ShapeClass::Type shape) const {
+    constexpr const DataType& operator[](const typename Shape::Type& shape) const {
         return this[shape];
     }
 
@@ -159,11 +164,21 @@ struct Vector : public ShapeClass {
         return _data + size_bytes();
     }
 
-    constexpr const typename ShapeClass::Type& shape() const {
-        return this->_shape;
+    constexpr const Shape& shape() const {
+        return _shape;
+    }
+
+    const Result reshape(const Shape& shape) {
+        if (shape.size() != _shape.size()) {
+            return Result::ERROR;
+        }
+        _shape = shape;
+
+        return Result::SUCCESS;
     }
 
  private:
+    Shape _shape;
     DataType* _data;
     U64* _refs;
 
@@ -210,7 +225,7 @@ struct Vector : public ShapeClass {
     void reset() {
         _data = nullptr;
         _refs = nullptr;
-        this->_shape = typename ShapeClass::Type();
+        _shape = Shape();
     }
 };
 

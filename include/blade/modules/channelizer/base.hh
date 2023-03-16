@@ -78,10 +78,10 @@ class BLADE_API Channelizer : public Module {
 
     const ArrayShape getOutputBufferShape() const {
         return ArrayShape({
-            getInputBuffer().numberOfAspects(),
-            getInputBuffer().numberOfFrequencyChannels() * config.rate,
-            getInputBuffer().numberOfTimeSamples() / config.rate,
-            getInputBuffer().numberOfPolarizations(),
+            getInputBuffer().shape().numberOfAspects(),
+            getInputBuffer().shape().numberOfFrequencyChannels() * config.rate,
+            getInputBuffer().shape().numberOfTimeSamples() / config.rate,
+            getInputBuffer().shape().numberOfPolarizations(),
         });
     }
 };

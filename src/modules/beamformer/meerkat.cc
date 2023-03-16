@@ -17,15 +17,15 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
             // Kernel function key.
             "MeerKAT",
             // Kernel grid & block sizes.
-            dim3(this->getInputBuffer().numberOfFrequencyChannels(),
-                 this->getInputBuffer().numberOfTimeSamples() / config.blockSize),
+            dim3(this->getInputBuffer().shape().numberOfFrequencyChannels(),
+                 this->getInputBuffer().shape().numberOfTimeSamples() / config.blockSize),
             config.blockSize,
             // Kernel templates.
-            this->getInputPhasors().numberOfBeams(),
-            this->getInputPhasors().numberOfAntennas(),
-            this->getInputBuffer().numberOfFrequencyChannels(),
-            this->getInputBuffer().numberOfTimeSamples(),
-            this->getInputBuffer().numberOfPolarizations(),
+            this->getInputPhasors().shape().numberOfBeams(),
+            this->getInputPhasors().shape().numberOfAntennas(),
+            this->getInputBuffer().shape().numberOfFrequencyChannels(),
+            this->getInputBuffer().shape().numberOfTimeSamples(),
+            this->getInputBuffer().shape().numberOfPolarizations(),
             config.blockSize,
             config.enableIncoherentBeam,
             config.enableIncoherentBeamSqrt
@@ -36,8 +36,8 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
     this->output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
-    BL_INFO("Shape: {} -> {}", this->getInputBuffer().str(), 
-                               this->getOutputBuffer().str());
+    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(), 
+                               this->getOutputBuffer().shape());
 }
 
 template class BLADE_API MeerKAT<CF32, CF32>;

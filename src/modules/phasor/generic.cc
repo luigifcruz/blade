@@ -84,7 +84,7 @@ Generic<OT>::Generic(const Config& config,
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
-    BL_INFO("Calibrations Shape: {}", config.antennaCalibrations.str());
+    BL_INFO("Calibrations Shape: {}", config.antennaCalibrations.shape());
 }
 
 template class BLADE_API Generic<CF32>;

@@ -41,8 +41,8 @@ Cast<IT, OT>::Cast(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().str(), 
-                               getOutputBuffer().str());
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+                               getOutputBuffer().shape());
 }
 
 template<typename IT, typename OT>

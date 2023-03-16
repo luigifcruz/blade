@@ -17,8 +17,8 @@ using namespace Blade::Pipelines::ATA;
 using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
-static Tensor<Device::CPU, F64> dummyJulianDate({1});
-static Tensor<Device::CPU, F64> dummyDut1({1});
+static Tensor<Device::CPU, F64> dummyJulianDate(1);
+static Tensor<Device::CPU, F64> dummyDut1(1);
 
 bool blade_ata_b_initialize(U64 numberOfWorkers) {
     if (runner) {

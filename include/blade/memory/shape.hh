@@ -14,15 +14,7 @@ struct Shape {
 
     Shape() : _shape({0}) {};
     Shape(const Type& shape) : _shape(shape) {}
-
-    const Result reshape(const Type& shape) {
-        if (shape.size() != _shape.size()) {
-            return Result::ERROR;
-        }
-        _shape = shape;
-
-        return Result::SUCCESS;
-    }
+    Shape(const Shape& shape) : _shape(shape._shape) {}
 
     __host__ __device__ const U64 size() const {
         U64 size = 1;
@@ -32,7 +24,7 @@ struct Shape {
         return size; 
     }
 
-    __host__ __device__ const U64 shapeToOffset(const Type& index) const {
+    __host__ __device__ const U64 shapeToOffset(const Shape& index) const {
         U64 offset = 0;
 
         for (U64 i = 0; i < index.size(); i++) {
@@ -48,20 +40,22 @@ struct Shape {
         return offset;
     }
 
-    __host__ __device__ const bool operator==(const Shape& other) const {
-        return operator==(other.shape());
+    const bool operator!=(const Shape& other) const {
+        return !(_shape == other._shape);
     }
 
-    __host__ __device__ const bool operator==(const Type& other) const {
-        bool result = true;
-        for (U64 i = 0; i < _shape.size(); i++) {
-            result &= (_shape[i] == other[i]);
-        }
-        BL_TRACE("{} {} {}", other, _shape, result);
-        return result;
+    operator Type() {
+        return _shape;
     }
 
-    Shape operator*(const Shape& other) const {
+    operator const Type() const {
+        return _shape;
+    }
+
+ protected:
+    Type _shape;
+
+    Type operator*(const Shape& other) const {
         Type result = _shape;
         for (U64 i = 0; i < _shape.size(); i++) {
             result[i] *= other._shape[i];
@@ -69,7 +63,7 @@ struct Shape {
         return result;
     }
 
-    Shape operator/(const Shape& other) const {
+    Type operator/(const Shape& other) const {
         Type result = _shape;
         for (U64 i = 0; i < _shape.size(); i++) {
             result[i] /= other._shape[i];
@@ -77,19 +71,11 @@ struct Shape {
         return result;
     }
 
-    operator Type() const {
-        return _shape;
+    constexpr const U64& at(const U64& index) const {
+        return _shape[index];
     }
-
-    const std::string str() const {
-        return fmt::format("[{}]", _shape);
-    };
-
- protected:
-    Type _shape;
 };
 
 }  // namespace Blade
-
 
 #endif
