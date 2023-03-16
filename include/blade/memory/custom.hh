@@ -98,7 +98,7 @@ struct PhasorShape : public Shape<5> {
 template<Device DeviceId, typename DataType>
 using PhasorTensor = Vector<DeviceId, DataType, PhasorShape>;
 
-struct DelayShape : public Shape<5> {
+struct DelayShape : public Shape<2> {
  public:
     using Shape::Shape;
 
