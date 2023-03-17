@@ -23,7 +23,6 @@ struct Vector {
              : _shape(shape), 
                _data(static_cast<DataType*>(ptr)),
                _refs(nullptr) {
-        BL_TRACE("Vector created.");
     }
 
     explicit Vector(const typename Shape::Type& shape, const bool& unified = false)

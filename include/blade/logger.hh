@@ -41,7 +41,7 @@
 
 #ifndef BL_TRACE
 #ifndef NDEBUG
-#define BL_TRACE(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_TRACE << BL_LOG_DOMAIN_STR << \
+#define BL_TRACE(...) if (getenv("TRACE")) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_TRACE << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::white), __VA_ARGS__) << std::endl;
 #else
 #define BL_TRACE(...)
