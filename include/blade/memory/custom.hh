@@ -16,19 +16,19 @@ struct ArrayShape : public Shape<4> {
     using Shape::Shape;
 
     constexpr const U64& numberOfAspects() const {
-        return this->at(0);
+        return (*this)[0];
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->at(1);
+        return (*this)[1];
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->at(2);
+        return (*this)[2];
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->at(3);
+        return (*this)[3];
     }
 
     ArrayShape operator*(const ArrayShape& other) const {
@@ -57,23 +57,23 @@ struct PhasorShape : public Shape<5> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->at(0);
+        return (*this)[0];
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->at(1);
+        return (*this)[1];
     }
 
     constexpr const U64& numberOfFrequencyChannels() const {
-        return this->at(2);
+        return (*this)[2];
     }
 
     constexpr const U64& numberOfTimeSamples() const {
-        return this->at(3);
+        return (*this)[3];
     }
 
     constexpr const U64& numberOfPolarizations() const {
-        return this->at(4);
+        return (*this)[4];
     }
 
     PhasorShape operator*(const PhasorShape& other) const {
@@ -103,11 +103,11 @@ struct DelayShape : public Shape<2> {
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
-        return this->at(0);
+        return (*this)[0];
     }
 
     constexpr const U64& numberOfAntennas() const {
-        return this->at(1);
+        return (*this)[1];
     }
 
     DelayShape operator*(const DelayShape& other) const {
@@ -143,7 +143,7 @@ struct VectorShape : public Shape<1> {
 
  private:
     friend std::ostream& operator<<(std::ostream& os, const VectorShape& shape) {
-        return os << fmt::format("[{}]", shape.at(0));
+        return os << fmt::format("[{}]", shape[0]);
     }
 };
 

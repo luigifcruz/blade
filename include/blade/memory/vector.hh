@@ -15,20 +15,23 @@ struct Vector {
     Vector()
              : _shape(),
                _data(nullptr),
-               _refs(nullptr) {
+               _refs(nullptr),
+               _unified(false) {
         BL_TRACE("Empty vector created.");
     }
 
-    explicit Vector(void* ptr, const typename Shape::Type& shape)
+    explicit Vector(void* ptr, const typename Shape::Type& shape, const bool& unified = false)
              : _shape(shape), 
                _data(static_cast<DataType*>(ptr)),
-               _refs(nullptr) {
+               _refs(nullptr),
+               _unified(unified) {
     }
 
     explicit Vector(const typename Shape::Type& shape, const bool& unified = false)
              : _shape(shape),
                _data(nullptr),
-               _refs(nullptr) {
+               _refs(nullptr),
+               _unified(unified) {
         BL_TRACE("Vector allocated and created: {}", shape);
 
         if constexpr (DeviceId == Device::CPU) {
@@ -59,7 +62,8 @@ struct Vector {
     Vector(const Vector& other)
              : _shape(other._shape),
                _data(other._data),
-               _refs(other._refs) {
+               _refs(other._refs),
+               _unified(other._unified) {
         BL_TRACE("Vector created by copy.");
 
         increaseRefCount();
@@ -68,12 +72,14 @@ struct Vector {
     Vector(Vector&& other)
              : _shape(),
                _data(nullptr),
-               _refs(nullptr) { 
+               _refs(nullptr),
+               _unified(false) { 
         BL_TRACE("Vector created by move.");
 
         std::swap(_data, other._data);
         std::swap(_refs, other._refs);
         std::swap(_shape, other._shape);
+        std::swap(_unified, other._unified);
     }
 
     Vector& operator=(const Vector& other) {
@@ -83,6 +89,7 @@ struct Vector {
         _data = other._data;
         _refs = other._refs;
         _shape = other._shape;
+        _unified = other._unified;
         increaseRefCount();
 
         return *this;
@@ -96,6 +103,7 @@ struct Vector {
         std::swap(_data, other._data);
         std::swap(_refs, other._refs);
         std::swap(_shape, other._shape);
+        std::swap(_unified, other._unified);
 
         return *this;
     }
@@ -132,11 +140,7 @@ struct Vector {
     }
 
     constexpr const DataType& operator[](const typename Shape::Type& shape) const {
-        return this[shape];
-    }
-
-    [[nodiscard]] constexpr const bool empty() const noexcept {
-        return (_data == nullptr);
+        return _data[_shape->shapeToOffset(shape)];
     }
 
     constexpr DataType& operator[](U64 idx) {
@@ -145,6 +149,10 @@ struct Vector {
 
     constexpr const DataType& operator[](U64 idx) const {
         return _data[idx];
+    }
+
+    [[nodiscard]] constexpr const bool empty() const noexcept {
+        return (_data == nullptr);
     }
 
     constexpr auto begin() {
@@ -167,6 +175,10 @@ struct Vector {
         return _shape;
     }
 
+    constexpr const bool unified() const {
+            return _unified;
+    }
+
     const Result reshape(const Shape& shape) {
         if (shape.size() != _shape.size()) {
             return Result::ERROR;
@@ -180,6 +192,7 @@ struct Vector {
     Shape _shape;
     DataType* _data;
     U64* _refs;
+    bool _unified;
 
     void decreaseRefCount() {
         if (!_refs) {
@@ -225,6 +238,7 @@ struct Vector {
         _data = nullptr;
         _refs = nullptr;
         _shape = Shape();
+        _unified = false;
     }
 };
 

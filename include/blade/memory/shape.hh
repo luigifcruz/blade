@@ -24,7 +24,7 @@ struct Shape {
         return size; 
     }
 
-    __host__ __device__ const U64 shapeToOffset(const Shape& index) const {
+    __host__ __device__ const U64 shapeToOffset(const Type& index) const {
         U64 offset = 0;
 
         for (U64 i = 0; i < index.size(); i++) {
@@ -40,6 +40,10 @@ struct Shape {
         return offset;
     }
 
+    constexpr const U64 dimensions() const {
+        return Dimensions;
+    }
+
     const bool operator!=(const Shape& other) const {
         return !(_shape == other._shape);
     }
@@ -50,6 +54,10 @@ struct Shape {
 
     operator const Type() const {
         return _shape;
+    }
+
+    constexpr const U64& operator[](U64 idx) const {
+        return _shape[idx];
     }
 
  protected:
@@ -69,10 +77,6 @@ struct Shape {
             result[i] /= other._shape[i];
         }
         return result;
-    }
-
-    constexpr const U64& at(const U64& index) const {
-        return _shape[index];
     }
 };
 
