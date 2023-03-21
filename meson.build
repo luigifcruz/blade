@@ -49,8 +49,7 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-has_python = false
-# subdir('python')
+subdir('python')
 subdir('tests')
 subdir('benchmarks')
 subdir('docs')

@@ -73,8 +73,8 @@ inline void init_ata_phasor(const py::module& m) {
                                      py::arg("block_size"));
 
     py::class_<Class::Input>(phasor, "Input")
-        .def(py::init<const Vector<Device::CPU, F64>&,
-                      const Vector<Device::CPU, F64>&>(), py::arg("block_julian_date"),
+        .def(py::init<const Tensor<Device::CPU, F64>&,
+                      const Tensor<Device::CPU, F64>&>(), py::arg("block_julian_date"),
                                                           py::arg("block_dut1"));
 
     phasor
