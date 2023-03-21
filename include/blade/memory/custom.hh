@@ -148,13 +148,7 @@ struct VectorShape : public Shape<1> {
 };
 
 template<Device DeviceId, typename DataType>
-class Tensor : public Vector<DeviceId, DataType, VectorShape> {
- public:
-    using Vector<DeviceId, DataType, VectorShape>::Vector;
-
-    explicit Tensor(const U64& size, const bool& unified = false)
-             : Vector<DeviceId, DataType, VectorShape>({size}, unified) {}
-};
+using Tensor = Vector<DeviceId, DataType, VectorShape>;
 
 }  // namespace Blade
 

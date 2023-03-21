@@ -38,8 +38,8 @@ static struct {
     } Callbacks;
 } State;
 
-static Tensor<Device::CPU, F64> dummyJulianDate(1);
-static Tensor<Device::CPU, F64> dummyDut1(1);
+static Tensor<Device::CPU, F64> dummyJulianDate({1});
+static Tensor<Device::CPU, F64> dummyDut1({1});
 
 bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     if (State.RunnersInstances.B || State.RunnersInstances.H) {

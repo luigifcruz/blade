@@ -81,7 +81,7 @@ Detector<IT, OT>::Detector(const Config& config,
 
     // Allocate output buffers.
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
-    ctrlResetTensor = Tensor<Device::CUDA, BOOL>(1, true);
+    ctrlResetTensor = Tensor<Device::CUDA, BOOL>({1}, true);
 
     // Set default values.
     ctrlResetTensor[0] = true;
