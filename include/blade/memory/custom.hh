@@ -120,7 +120,7 @@ struct DelayShape : public Shape<2> {
 
  private:
     friend std::ostream& operator<<(std::ostream& os, const DelayShape& shape) {
-        return os << fmt::format("[B: {}, A: {}", 
+        return os << fmt::format("[B: {}, A: {}]", 
                                    shape.numberOfBeams(), 
                                    shape.numberOfAntennas()); 
     }
