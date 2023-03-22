@@ -7,5 +7,6 @@
 #include "blade/memory/vector.hh"
 #include "blade/memory/copy.hh"
 #include "blade/memory/shape.hh"
+#include "blade/memory/profiler.hh"
 
 #endif
