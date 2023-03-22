@@ -30,18 +30,22 @@ inline void init_vector(const py::module& m, const char* typeName) {
                 shape.push_back(static_cast<I64>(obj.shape()[i]));
             }
 
-            return py::array(py::buffer_info(
-                obj.data(),                             /* Pointer to buffer */
-                sizeof(Type),                           /* Size of one scalar */
-                py::format_descriptor<Type>::format(),  /* Python struct-style format descriptor */
-                obj.shape().dimensions(),               /* Number of dimensions */
+            return py::array_t<Type>(
                 shape,                                  /* Buffer dimensions */
-                strides                                 /* Strides (in bytes) for each index */
-             ));
-        })
+                strides,                                /* Strides (in bytes) for each index */
+                obj.data(),                              /* Pointer to buffer */
+                py::capsule(new Class(obj), [](void* p){ delete reinterpret_cast<Class*>(p); })
+             );
+        }, py::return_value_policy::reference)
+        .def("__getitem__", [](Class& obj, const typename Shape::Type& shape){
+            return obj[shape];
+        }, py::return_value_policy::reference)
         .def("__getitem__", [](Class& obj, const U64& index){
             return obj[index];
         }, py::return_value_policy::reference)
+        .def("__setitem__", [](Class& obj, const typename Shape::Type& shape, const Type& val){
+            obj[shape] = val;
+        })
         .def("__setitem__", [](Class& obj, const U64& index, const Type& val){
             obj[index] = val;
         })
