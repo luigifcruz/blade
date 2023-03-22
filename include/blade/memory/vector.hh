@@ -4,6 +4,7 @@
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
 #include "blade/memory/shape.hh"
+#include "blade/memory/profiler.hh"
 
 namespace Blade {
 
@@ -34,11 +35,26 @@ struct Vector {
                _unified(unified) {
         BL_TRACE("Vector allocated and created: {}", shape);
 
+        BL_CUDA_CHECK_THROW(cudaMallocManaged(&_refs, sizeof(U64)), [&]{
+            BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
+        });
+        *_refs = 1;
+
+        if (Memory::Profiler::IsCapturing()) {
+            if (_unified) {
+                Memory::Profiler::RegisterUnifiedAllocation(size_bytes());
+            } else if (DeviceId == Device::CPU) {
+                Memory::Profiler::RegisterCpuAllocation(size_bytes());
+            } else if (DeviceId == Device::CUDA) {
+                Memory::Profiler::RegisterCudaAllocation(size_bytes());
+            }
+            return;
+        }
+
         if constexpr (DeviceId == Device::CPU) {
             BL_CUDA_CHECK_THROW(cudaMallocHost(&_data, size_bytes()), [&]{
                 BL_FATAL("Failed to allocate pinned host memory: {}", err);
             });
-            _refs = new U64(1);
         }
 
         if constexpr (DeviceId == Device::CUDA) {
@@ -51,11 +67,6 @@ struct Vector {
                     BL_FATAL("Failed to allocate CUDA memory: {}", err);
                 });
             }
-
-            BL_CUDA_CHECK_THROW(cudaMallocManaged(&_refs, sizeof(U64)), [&]{
-                BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
-            });
-            *_refs = 1;
         }
     }
 
@@ -136,11 +147,11 @@ struct Vector {
     }
 
     constexpr DataType& operator[](const typename Shape::Type& shape) {
-        return _data[_shape->shapeToOffset(shape)];
+        return _data[_shape.shapeToOffset(shape)];
     }
 
     constexpr const DataType& operator[](const typename Shape::Type& shape) const {
-        return _data[_shape->shapeToOffset(shape)];
+        return _data[_shape.shapeToOffset(shape)];
     }
 
     constexpr DataType& operator[](U64 idx) {
@@ -204,19 +215,31 @@ struct Vector {
         if (--(*_refs) == 0) {
             BL_TRACE("Deleting vector.");
 
+            if (cudaFree(_refs) != cudaSuccess) {
+                BL_FATAL("Failed to deallocate CUDA memory.");
+            }
+
+            if (Memory::Profiler::IsCapturing()) {
+                if (_unified) {
+                    Memory::Profiler::RegisterUnifiedDeallocation(size_bytes());
+                } else if (DeviceId == Device::CPU) {
+                    Memory::Profiler::RegisterCpuDeallocation(size_bytes());
+                } else if (DeviceId == Device::CUDA) {
+                    Memory::Profiler::RegisterCudaDeallocation(size_bytes());
+                }
+
+                reset();
+                return;
+            }
+
             if constexpr (DeviceId == Device::CPU) {
                 if (cudaFreeHost(_data) != cudaSuccess) {
                     BL_FATAL("Failed to deallocate host memory.");
                 }
-                free(_refs);
             }
 
             if constexpr (DeviceId == Device::CUDA) {
                 if (cudaFree(_data) != cudaSuccess) {
-                    BL_FATAL("Failed to deallocate CUDA memory.");
-                }
-
-                if (cudaFree(_refs) != cudaSuccess) {
                     BL_FATAL("Failed to deallocate CUDA memory.");
                 }
             }
