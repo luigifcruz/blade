@@ -9,6 +9,7 @@
 
 #include "mode_b.h"
 
+int mode_b_init();
 int mode_b_setup();
 int mode_b_loop(int iterations);
 int mode_b_terminate();

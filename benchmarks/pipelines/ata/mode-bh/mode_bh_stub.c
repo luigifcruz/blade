@@ -68,9 +68,13 @@ void output_buffer_ready_cb(void* user_data_ptr, const void* buffer) {
 #endif
 }
 
-int mode_bh_setup() {
+int mode_bh_init() {
     blade_ata_bh_initialize(BLADE_ATA_MODE_BH_NUMBER_OF_WORKERS);
 
+    return 0;
+}
+
+int mode_bh_setup() {
     user_data.input_buffers = (void**)malloc(BLADE_ATA_MODE_BH_NUMBER_OF_WORKERS * sizeof(void*));
     user_data.output_buffers = (void**)malloc(BLADE_ATA_MODE_BH_NUMBER_OF_WORKERS * sizeof(void*));
 

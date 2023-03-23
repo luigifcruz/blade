@@ -32,6 +32,11 @@ Generic<OT>::Generic(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    if (Memory::Profiler::IsCapturing()) {
+        BL_WARN("Capturing: Early setup return.");
+        return;
+    }
+
     // Check if calibration values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;

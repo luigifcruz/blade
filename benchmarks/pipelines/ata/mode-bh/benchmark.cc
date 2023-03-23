@@ -4,6 +4,10 @@
 #include <blade/logger.hh>
 #include <blade/types.hh>
 
+#include "../../../helper.hh"
+
+using namespace Blade;
+
 #define CHECK_THROW(a) if (a != 0) throw "Pipeline error.";
 
 namespace bm = benchmark;
@@ -16,6 +20,9 @@ static void BM_PipelineModeBH(benchmark::State& state) {
     const uint64_t count = 2048;
 
     BL_DISABLE_PRINT();
+    BL_CHECK_THROW(Blade::InitAndProfile([&](){
+        return (mode_bh_init()) ? Result::ERROR : Result::SUCCESS;
+    }, state));
     CHECK_THROW(mode_bh_setup());
     BL_ENABLE_PRINT();
 

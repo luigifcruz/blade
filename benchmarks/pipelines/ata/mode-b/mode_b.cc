@@ -99,6 +99,11 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
     });
 
+    // Terminate if profiling.
+    if (Memory::Profiler::IsCapturing()) {
+        blade_ata_b_terminate();
+    }
+
     return true;
 }
 

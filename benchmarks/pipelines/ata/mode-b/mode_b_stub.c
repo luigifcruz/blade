@@ -3,9 +3,13 @@
 static void** input_buffers;
 static void** output_buffers;
 
-int mode_b_setup() {
+int mode_b_init() {
     blade_ata_b_initialize(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS);
 
+    return 0;
+}
+
+int mode_b_setup() {
     input_buffers = (void**)malloc(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS * sizeof(void*));
     output_buffers = (void**)malloc(BLADE_ATA_MODE_B_NUMBER_OF_WORKERS * sizeof(void*));
 
