@@ -171,7 +171,7 @@ struct Vector {
     }
 
     constexpr auto end() {
-        return _data + size_bytes();
+        return _data + size();
     }
 
     constexpr const auto begin() const {
@@ -179,7 +179,7 @@ struct Vector {
     }
 
     constexpr const auto end() const {
-        return _data + size_bytes();
+        return _data + size();
     }
 
     constexpr const Shape& shape() const {
