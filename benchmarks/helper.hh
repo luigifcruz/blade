@@ -41,6 +41,18 @@ class CudaBenchmark {
         return stream;
     }
 
+    static Result InitAndProfile(const auto& func, benchmark::State& state) {
+        Memory::Profiler::StartCapture();
+        func();
+        auto& capture = Memory::Profiler::StopCapture();
+
+        state.counters["cpuMem"] = capture.allocatedCpuMemory;
+        state.counters["cudaMem"] = capture.allocatedCudaMemory;
+        state.counters["unifiedMem"] = capture.allocatedUnifiedMemory;
+
+        return func();
+    }
+
     template<typename Block>
     static void Create(std::shared_ptr<Block>& module,
                        const typename Block::Config& config,

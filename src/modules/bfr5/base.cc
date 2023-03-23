@@ -26,6 +26,11 @@ Reader::Reader(const Config& config,
     beamCoordinates.resize(this->bfr5.beam_info.ra_elements);
     antennaPositions.resize(getTotalShape().numberOfAspects());
     antennaCalibrations = ArrayTensor<Device::CPU, CF64>(getAntennaCalibrationsShape());
+
+    if (Memory::Profiler::IsCapturing()) {
+        BL_WARN("Capturing: Early setup return.");
+        return;
+    }
      
     // Calculate beam coordinates.
     for (U64 i = 0; i < this->bfr5.beam_info.ra_elements; i++) {

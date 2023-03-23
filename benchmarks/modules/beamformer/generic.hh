@@ -12,9 +12,12 @@ class ModuleUnderTest : CudaBenchmark {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
-        BL_CHECK(this->configureModule());
-        BL_CHECK(this->allocateDeviceMemory(A, B));
-        BL_CHECK(this->initializeModule());
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->configureModule());
+            BL_CHECK(this->allocateDeviceMemory(A, B));
+            BL_CHECK(this->initializeModule());
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
@@ -34,8 +37,11 @@ class ModuleUnderTest : CudaBenchmark {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
-        BL_CHECK(this->allocateHostMemory(A, B));
-        BL_CHECK(this->allocateDeviceMemory(A, B));
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->allocateHostMemory(A, B));
+            BL_CHECK(this->allocateDeviceMemory(A, B));
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
@@ -59,10 +65,13 @@ class ModuleUnderTest : CudaBenchmark {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
-        BL_CHECK(this->configureModule());
-        BL_CHECK(this->allocateHostMemory(A, B));
-        BL_CHECK(this->allocateDeviceMemory(A, B));
-        BL_CHECK(this->initializeModule());
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->configureModule());
+            BL_CHECK(this->allocateHostMemory(A, B));
+            BL_CHECK(this->allocateDeviceMemory(A, B));
+            BL_CHECK(this->initializeModule());
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
