@@ -111,7 +111,7 @@ class BLADE_API FileReader : public Pipeline {
     }
 
     F64 getJulianDateOfLastReadBlock() const {
-        return guppi->getJulianDateOfLastReadBlock();
+        return guppi->getStepOutputJulianDate()[0];
     }
 
     const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
