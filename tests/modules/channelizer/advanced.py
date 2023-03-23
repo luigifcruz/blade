@@ -6,48 +6,46 @@ import numpy as np
 class Test(bl.Pipeline):
     channelizer: bl.Channelizer
 
-    def __init__(self, input_dims, rate):
+    def __init__(self, input_shape, rate):
         bl.Pipeline.__init__(self)
-        self.input = bl.vector.cuda.cf32.ArrayTensor(input_dims)
+        self.input = bl.cuda.cf32.ArrayTensor(input_shape)
         _config = bl.Channelizer.Config(rate, 512)
         _input = bl.Channelizer.Input(self.input)
         self.channelizer = self.connect(_config, _input)
 
-    def run(self, input: bl.vector.cpu.cf32.ArrayTensor,
-                  output: bl.vector.cpu.cf32.ArrayTensor):
+    def run(self, input: bl.cpu.cf32.ArrayTensor,
+                  output: bl.cpu.cf32.ArrayTensor):
         self.copy(self.channelizer.input(), input)
         self.compute()
         self.copy(output, self.channelizer.output())
         self.synchronize()
 
 def trial(A, F, T, P, C):
-    input_dims = bl.vector.ArrayShape(A, F, T, P)
-    output_dims = bl.vector.ArrayShape(A, F * C, T // C, P)
+    input_shape = (A, F, T, P)
+    output_shape = (A, F * C, T // C, P)
 
     # Initialize Blade pipeline.
-    mod = Test(input_dims, C)
+    mod = Test(input_shape, C)
 
     # Generate test data with Python.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), len(input_dims))
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), len(input_dims))
-    _c = np.array(_a + _b * 1j).astype(np.complex64)
-    input = _c.reshape(input_dims.shape)
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), input_shape)
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), input_shape)
+    input = np.array(_a + _b * 1j).astype(np.complex64)
 
     # Compute the FFT sizes.
     nspecs = T // C
 
     # Define output buffer.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), len(output_dims))
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), len(output_dims))
-    _c = np.array(_a + _b * 1j).astype(np.complex64)
-    output = _c.reshape(output_dims.shape)
+    _a = np.random.uniform(-int(2**16/2), int(2**16/2), output_shape)
+    _b = np.random.uniform(-int(2**16/2), int(2**16/2), output_shape)
+    output = np.array(_a + _b * 1j).astype(np.complex64)
 
     # Import test data from Python to Blade.
-    bl_input = bl.vector.cpu.cf32.ArrayTensor(input_dims)
-    bl_output = bl.vector.cpu.cf32.ArrayTensor(output_dims)
+    bl_input = bl.cpu.cf32.ArrayTensor(input_shape)
+    bl_output = bl.cpu.cf32.ArrayTensor(output_shape)
 
-    np.copyto(np.array(bl_input, copy=False), input.flatten())
-    np.copyto(np.array(bl_output, copy=False), output.flatten())
+    np.copyto(bl_input.asnumpy(), input)
+    np.copyto(bl_output.asnumpy(), output)
 
     # Channelize with Blade.
     start = time.time()
@@ -74,7 +72,7 @@ def trial(A, F, T, P, C):
     print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
 
     # Check both answers.
-    assert np.allclose(np.array(bl_output, copy=False), output.flatten(), rtol=0.01)
+    assert np.allclose(bl_output.asnumpy(), output, rtol=0.01)
     print("Test successfully completed!")
 
 

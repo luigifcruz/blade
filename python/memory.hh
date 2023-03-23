@@ -82,7 +82,7 @@ inline void init_vector_device(py::module& m, const char* name) {
 }
 
 inline void init_memory_vector(py::module& m) {
-    py::module vector = m.def_submodule("memory");
+    py::module vector = m;
 
     py::class_<ArrayShape>(vector, "ArrayShape")
         .def(py::init<const typename ArrayShape::Type&>(), py::arg("shape"))

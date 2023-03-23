@@ -5,7 +5,7 @@ from numpy import random
 
 # Human Version
 
-vec_bl = bl.memory.cpu.f32.ArrayTensor((1, 1, 10, 2))
+vec_bl = bl.cpu.f32.ArrayTensor((1, 1, 10, 2))
 vec_np = vec_bl.asnumpy()
 
 for i in range(10):
@@ -25,7 +25,7 @@ for i in range(10):
 
 # Super Human Version
 
-vec_bl = bl.memory.cpu.f32.ArrayTensor((3, 13, 9, 11))
+vec_bl = bl.cpu.f32.ArrayTensor((3, 13, 9, 11))
 vec_np = vec_bl.asnumpy()
 
 vec_np[:, :, :, :] = random.rand(*vec_np.shape)

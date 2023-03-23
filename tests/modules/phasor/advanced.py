@@ -9,23 +9,22 @@ from astropy.coordinates import ITRS, SkyCoord
 from astropy.time import Time
 import astropy.units as u
 
-class Test(bl.Pipeline):
-    phasor: bl.Phasor
 
-    def __init__(self, phasor_config: bl.Phasor.Config):
+class Test(bl.Pipeline):
+
+    def __init__(self, _config: bl.Phasor.Config):
         bl.Pipeline.__init__(self)
-        self.block_julian_date = bl.memory.cpu.f64.Tensor((1,))
-        self.block_dut1 = bl.memory.cpu.f64.Tensor((1,))
-        _config = phasor_config
+        self.block_julian_date = bl.cpu.f64.Tensor((1,))
+        self.block_dut1 = bl.cpu.f64.Tensor((1,))
         _input = bl.Phasor.Input(self.block_julian_date, self.block_dut1)
         self.phasor = self.connect(_config, _input)
 
-    def output_dims(self):
+    def output_shape(self):
         return self.phasor.phasors().shape()
 
     def run(self, block_julian_date: float,
                   block_dut1: float,
-                  phasors: bl.memory.cpu.cf32):
+                  phasors: bl.cpu.cf32):
         self.block_julian_date[0] = block_julian_date
         self.block_dut1[0] = block_dut1
         self.compute()
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     cal_shape = (20, 192, 1, 2)
     calibration = np.random.random(cal_shape) + 1j*np.random.random(cal_shape)
     calibration = np.array(calibration, dtype=np.complex128)
-    bl_calibration = bl.memory.cpu.cf64.ArrayTensor(cal_shape)
+    bl_calibration = bl.cpu.cf64.ArrayTensor(cal_shape)
     np.copyto(bl_calibration.asnumpy(), calibration)
 
     phase_center_pos_rad = [0.64169, 1.079896295]
@@ -101,7 +100,7 @@ if __name__ == "__main__":
 
     mod = Test(phasor_config)
 
-    bl_output = bl.memory.cpu.cf32.PhasorTensor(mod.output_dims())
+    bl_output = bl.cpu.cf32.PhasorTensor(mod.output_shape())
 
     mod.run((1649366473.0/ 86400) + 2440587.5, 0.0, bl_output)
 

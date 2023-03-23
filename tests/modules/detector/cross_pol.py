@@ -6,15 +6,15 @@ import numpy as np
 class Test(bl.Pipeline):
     detector: bl.Detector
 
-    def __init__(self, input_dims, detector_config: bl.Detector.Config):
+    def __init__(self, input_shape, detector_config: bl.Detector.Config):
         bl.Pipeline.__init__(self)
-        self.input = bl.vector.cuda.cf32.ArrayTensor(input_dims)
+        self.input = bl.cuda.cf32.ArrayTensor(input_shape)
         _config = detector_config
         _input = bl.Detector.Input(self.input)
         self.detector = self.connect(_config, _input)
 
-    def run(self, input: bl.vector.cpu.cf32,
-                  output: bl.vector.cpu.f32):
+    def run(self, input: bl.cpu.cf32,
+                  output: bl.cpu.f32):
         self.copy(self.detector.input(), input)
         self.compute()
         self.copy(output, self.detector.output())
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     NBEAMS = 2
     NPOLS = 2
 
-    input_dims = bl.vector.ArrayShape(NBEAMS, NCHANS, NTIME, NPOLS)
-    output_dims = bl.vector.ArrayShape(NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
+    input_shape = (NBEAMS, NCHANS, NTIME, NPOLS)
+    output_shape = (NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
 
     #
     # Blade Implementation
@@ -43,14 +43,14 @@ if __name__ == "__main__":
         block_size = 512
     )
 
-    mod = Test(input_dims, detector_config)
+    mod = Test(input_shape, detector_config)
 
-    bl_input_raw = bl.vector.cpu.cf32.ArrayTensor(input_dims)
-    bl_output_raw = bl.vector.cpu.f32.ArrayTensor(output_dims)
+    bl_input_raw = bl.cpu.cf32.ArrayTensor(input_shape)
+    bl_output_raw = bl.cpu.f32.ArrayTensor(output_shape)
 
-    bl_input = np.array(bl_input_raw, copy=False).reshape(input_dims.shape)
-    bl_output = np.array(bl_output_raw, copy=False).reshape(output_dims.shape)
-
+    bl_input = bl_input_raw.asnumpy()
+    bl_output = bl_output_raw.asnumpy()
+    
     np.copyto(bl_input, np.random.random(size=bl_input.shape) + 1j*np.random.random(size=bl_input.shape))
 
     start = time.time()
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # Python Implementation
     #
 
-    py_output = np.zeros((NBEAMS, NCHANS, NTIME//TFACT, OUTPOLS), dtype=np.float32)
+    py_output = np.zeros(output_shape, dtype=np.float32)
     
     start = time.time()
     for ibeam in range(NBEAMS):
