@@ -40,11 +40,11 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
 
     const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
 
-    // vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
-    // BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
-    // for (const DedopplerHitGroup& group : groups) {
-    //     const DedopplerHit& top_hit = group.topHit();
-    for (const DedopplerHit& top_hit : input.hits) {
+    vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
+    BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
+    for (const DedopplerHitGroup& group : groups) {
+        const DedopplerHit& top_hit = group.topHit();
+    // for (const DedopplerHit& top_hit : input.hits) {
 
         if (this->config.excludeDriftRateZero && top_hit.drift_steps == 0) {
             continue;
