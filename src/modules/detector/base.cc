@@ -83,6 +83,14 @@ Detector<IT, OT>::Detector(const Config& config,
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
     ctrlResetTensor = Tensor<Device::CUDA, BOOL>({1}, true);
 
+    if (Memory::Profiler::IsCapturing()) {
+        BL_WARN("Capturing: Early setup return.");
+        return;
+    }
+
+    // Set default values.
+    ctrlResetTensor[0] = true;
+
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
