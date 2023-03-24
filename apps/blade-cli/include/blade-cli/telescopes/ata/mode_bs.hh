@@ -142,7 +142,7 @@ inline const Result ModeBS(const Config& config) {
         .inputPhaseCenter = reader.getPhaseCenterCoordinates(),
         .inputTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate / config.integrationSize,
         .inputTotalNumberOfFrequencyChannels = readerTotalOutputDims.numberOfTimeSamples() / config.preBeamformerChannelizerRate,
-        .inputFrequencyOfFirstChannelHz = reader.getBottomFrequency(),
+        .inputFrequencyOfFirstChannelHz = reader.getBottomFrequency() + 0.5*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate,
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
         .inputLastBeamIsIncoherent = true,
         .beamNames = beamSourceNames,
@@ -175,7 +175,7 @@ inline const Result ModeBS(const Config& config) {
             .pulsarCentric = 1,
             .azimuthStart = reader.getAzimuthAngle(),
             .zenithStart = reader.getZenithAngle(),
-            .firstChannelFrequencyHz = reader.getBottomFrequency(),
+            .firstChannelMiddleFrequencyHz = reader.getTopFrequency() - 0.5*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate, // Top channel as the frequencies are descending
             .bandwidthHz = reader.getBandwidth(),
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
             .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),

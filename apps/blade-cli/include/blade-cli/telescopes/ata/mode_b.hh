@@ -176,7 +176,7 @@ inline const Result ModeB(const Config& config) {
                 .pulsarCentric = 1,
                 .azimuthStart = reader.getAzimuthAngle(),
                 .zenithStart = reader.getZenithAngle(),
-                .firstChannelFrequencyHz = reader.getTopFrequency(), // Top channel as the frequencies are descending
+                .firstChannelMiddleFrequencyHz = reader.getTopFrequency() - 0.5*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate, // Top channel as the frequencies are descending
                 .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
                 .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),

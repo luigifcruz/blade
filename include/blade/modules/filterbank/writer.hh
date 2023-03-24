@@ -30,7 +30,7 @@ class BLADE_API Writer : public Module {
         int pulsarCentric;
         double azimuthStart;
         double zenithStart;
-        double firstChannelFrequencyHz;
+        double firstChannelMiddleFrequencyHz;
         double bandwidthHz;
         double julianDateStart;
         double spectrumTimespanS;
