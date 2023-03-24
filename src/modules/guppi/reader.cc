@@ -212,17 +212,15 @@ const F64 Reader<OT>::getObservationCenterFrequency() const {
 template<typename OT>
 const F64 Reader<OT>::getObservationBottomFrequency() const {
     return getCenterFrequency() + (
-        -((double)getChannelStartIndex())
-        - (((double)this->getDatashape()->n_aspectchan) / 2.0)
-        - 0.5
+        -(double)getChannelStartIndex()
+        - ((double)this->getDatashape()->n_aspectchan) / 2.0
     ) * getChannelBandwidth();
 }
 
 template<typename OT>
 const F64 Reader<OT>::getBottomFrequency() const {
     return getCenterFrequency() + (
-        - (((double)this->getDatashape()->n_aspectchan) / 2.0)
-        - 0.5
+        - ((double)this->getDatashape()->n_aspectchan) / 2.0
     ) * getChannelBandwidth();
 }
 
@@ -232,7 +230,6 @@ const F64 Reader<OT>::getObservationTopFrequency() const {
         -((double)getChannelStartIndex())
         - (((double)this->getDatashape()->n_aspectchan) / 2.0)
         + ((double)getBlockMeta(&gr_iterate)->fenchan)
-        - 0.5 // subtract as the offset is to nchan (not nchan-1)
     ) * getChannelBandwidth();
 }
 
@@ -240,7 +237,6 @@ template<typename OT>
 const F64 Reader<OT>::getTopFrequency() const {
     return getCenterFrequency() + (
         + (((double)this->getDatashape()->n_aspectchan) / 2.0)
-        - 0.5 // subtract as the offset is to nchan (not nchan-1)
     ) * getChannelBandwidth();
 }
 
@@ -319,10 +315,13 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
 
     
     if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 1) {
+        // If stepping frequency-channels after N steps of time-samples,
+        // step time first
         gr_iterate.iterate_time_first_not_channel_first = true;
 
-        if (current_time_sample_step + 1 == config.numberOfTimeSampleStepsBeforeFrequencyChannelStep) {
-            // have to increment channel instead on occasion
+        if (this->current_time_sample_step + 1 == config.numberOfTimeSampleStepsBeforeFrequencyChannelStep) {
+            // unless this peeked step was the Nth time-sample step,
+            // increment channel instead
             gr_iterate.iterate_time_first_not_channel_first = false;
         }
     }
@@ -335,26 +334,26 @@ const Result Reader<OT>::preprocess(const cudaStream_t& stream,
     
     if (config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 1) {
         if (gr_iterate.iterate_time_first_not_channel_first) {
-            current_time_sample_step += 1;
+            this->current_time_sample_step += 1;
             if (fastestDimensionExhausted) {
                 BL_WARN("Time exhausted...");
             }
         }
         else {
             // just incremented channel instead
-            current_time_sample_step = 0;
+            this->current_time_sample_step = 0;
 
             if (fastestDimensionExhausted) {
                 // wrapped on channel increment, so incremented time too
                 // current time is checkpoint
-                checkpoint_block_index = gr_iterate.block_index;
-                checkpoint_time_index = gr_iterate.time_index;
+                this->checkpoint_block_index = gr_iterate.block_index;
+                this->checkpoint_time_index = gr_iterate.time_index;
             }
             else {
                 // incremented channel, without wrapping
                 // need to reset time to checkpoint for this
                 // new channel
-                guppiraw_iterate_set_time_index(&this->gr_iterate, checkpoint_block_index, checkpoint_time_index);
+                guppiraw_iterate_set_time_index(&this->gr_iterate, this->checkpoint_block_index, this->checkpoint_time_index);
             }
         }
         
