@@ -49,6 +49,7 @@ typedef struct {
     U64 preBeamformerChannelizerRate;
     U64 stepNumberOfTimeSamples;
     U64 stepNumberOfFrequencyChannels;
+    U64 integrationSize;
     F64 snrThreshold;
     F64 driftRateMinimum;
     F64 driftRateMaximum;

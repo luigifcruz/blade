@@ -33,6 +33,7 @@ class BLADE_API Writer : public Module {
         double firstChannelFrequencyHz;
         double bandwidthHz;
         double julianDateStart;
+        double spectrumTimespanS;
         int numberOfIfChannels;
         std::string sourceDataFilename;
         std::vector<std::string> beamNames;

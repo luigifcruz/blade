@@ -104,7 +104,7 @@ inline const Result ModeBS(const Config& config) {
         .beamformerIncoherentBeam = true,
 
         .detectorEnable = true,
-        .detectorIntegrationSize = 1,
+        .detectorIntegrationSize = config.integrationSize,
         .detectorKernel = DetectorKernel::ATPF_1pol,
 
         .castBlockSize = 512,
@@ -140,7 +140,7 @@ inline const Result ModeBS(const Config& config) {
         .inputSourceName = reader.getSourceName(),
         .inputObservationIdentifier = "Unknown",
         .inputPhaseCenter = reader.getPhaseCenterCoordinates(),
-        .inputTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate,
+        .inputTotalNumberOfTimeSamples = readerTotalOutputDims.numberOfFrequencyChannels() * config.preBeamformerChannelizerRate / config.integrationSize,
         .inputTotalNumberOfFrequencyChannels = readerTotalOutputDims.numberOfTimeSamples() / config.preBeamformerChannelizerRate,
         .inputFrequencyOfFirstChannelHz = reader.getBottomFrequency(),
         .inputCoarseChannelRatio = config.preBeamformerChannelizerRate,
@@ -156,7 +156,7 @@ inline const Result ModeBS(const Config& config) {
         .searchIncoherentBeam = true,
 
         .searchChannelBandwidthHz = reader.getChannelBandwidth() / config.preBeamformerChannelizerRate,
-        .searchChannelTimespanS = config.preBeamformerChannelizerRate / reader.getChannelBandwidth(),
+        .searchChannelTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
         .searchOutputFilepathStem = config.outputFile,
     };
     // searchConfig.accumulateRate;
@@ -178,6 +178,7 @@ inline const Result ModeBS(const Config& config) {
             .firstChannelFrequencyHz = reader.getBottomFrequency(),
             .bandwidthHz = reader.getBandwidth(),
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
+            .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
             .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .sourceDataFilename = config.inputGuppiFile,
             .beamNames = beamSourceNames,

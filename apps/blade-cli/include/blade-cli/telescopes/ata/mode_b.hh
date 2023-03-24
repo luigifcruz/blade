@@ -102,7 +102,7 @@ inline const Result ModeB(const Config& config) {
         .beamformerIncoherentBeam = config.incoherentBeamEnabled,
 
         .detectorEnable = filterbankOutput,
-        .detectorIntegrationSize = 1,
+        .detectorIntegrationSize = config.integrationSize,
         .detectorKernel = DetectorKernel::ATPFrev_1pol,
 
         // TODO: Review this calculation.
@@ -140,6 +140,8 @@ inline const Result ModeB(const Config& config) {
                 .inputFrequencyBatches = 1, // Accumulator pipeline set to reconstituteBatchedDimensions.
             },
             .inputDimensions = computeRunner->getWorker().getOutputBuffer().dims(),
+            .inputIsATPFNotAFTP = false,
+            .frequencyIsDescendingNotAscending = false,
             .reconstituteBatchedDimensions = true,
             .accumulateRate = readerTotalOutputDims.numberOfFrequencyChannels() / readerStepOutputDims.numberOfFrequencyChannels(),
         };
@@ -160,7 +162,7 @@ inline const Result ModeB(const Config& config) {
 
         writer.getModule()->headerPut("OBSFREQ", reader.getCenterFrequency()*1e-6);
         writer.getModule()->headerPut("OBSBW", reader.getBandwidth()*1e-6);
-        writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate / reader.getChannelBandwidth());
+        writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth());
         writer.getModule()->headerPut("PKTIDX", 0);
     }
     else if constexpr (std::is_same<OT, F32>::value || std::is_same<OT, F16>::value) {
@@ -177,6 +179,7 @@ inline const Result ModeB(const Config& config) {
                 .firstChannelFrequencyHz = reader.getTopFrequency(), // Top channel as the frequencies are descending
                 .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
+                .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
                 .sourceDataFilename = config.inputGuppiFile,
                 .beamNames = beamNames,

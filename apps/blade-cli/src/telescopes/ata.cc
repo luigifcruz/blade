@@ -100,6 +100,12 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
                 "Step number of frequency channels")
             ->default_val(32);
 
+    // Read target integration size.
+    app
+        .add_option("-g,--integration-size", config.integrationSize,
+                "The number of post-beamformer time-samples to integrate (must be a factor of `--step-number-of-time-samples`)")
+            ->default_val(1);
+
     // Read input type format.
     app
         .add_option("--input-type", config.inputType, "Input type format (CI8, CF16, CF32, I8, F16, F32)")
