@@ -9,7 +9,7 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
     BL_DEBUG("Initializing ATA Pipeline Mode B.");
 
     BL_DEBUG("Allocating pipeline buffers.");
-    BL_CHECK_THROW(this->input.resize(config.inputDimensions));
+    this->input = ArrayTensor<Device::CUDA, CI8>(config.inputShape);
 
     BL_DEBUG("Instantiating input cast from I8 to CF32.");
     this->connect(inputCast, {
@@ -39,9 +39,9 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 
     BL_DEBUG("Instantiating phasor module.");
     this->connect(phasor, {
-        .numberOfAntennas = channelizer->getOutputBuffer().dims().numberOfAspects(),
-        .numberOfFrequencyChannels = channelizer->getOutputBuffer().dims().numberOfFrequencyChannels(),
-        .numberOfPolarizations = channelizer->getOutputBuffer().dims().numberOfPolarizations(),
+        .numberOfAntennas = channelizer->getOutputBuffer().shape().numberOfAspects(),
+        .numberOfFrequencyChannels = channelizer->getOutputBuffer().shape().numberOfFrequencyChannels(),
+        .numberOfPolarizations = channelizer->getOutputBuffer().shape().numberOfPolarizations(),
 
         .observationFrequencyHz = config.phasorObservationFrequencyHz,
         .channelBandwidthHz = config.phasorChannelBandwidthHz,
@@ -104,8 +104,8 @@ ModeB<OT>::ModeB(const Config& config) : config(config), blockJulianDate({1}), b
 }
 
 template<typename OT>
-const Result ModeB<OT>::transferIn(const Vector<Device::CPU, F64>& blockJulianDate,
-                                   const Vector<Device::CPU, F64>& blockDut1,
+const Result ModeB<OT>::transferIn(const Tensor<Device::CPU, F64>& blockJulianDate,
+                                   const Tensor<Device::CPU, F64>& blockDut1,
                                    const ArrayTensor<Device::CPU, CI8>& input,
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.

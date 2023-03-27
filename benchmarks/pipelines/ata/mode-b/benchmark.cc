@@ -1,8 +1,12 @@
 #include <chrono>
 
+#include "../../../helper.hh"
+
 #include <benchmark/benchmark.h>
 #include <blade/logger.hh>
 #include <blade/types.hh>
+
+using namespace Blade;
 
 #define CHECK_THROW(a) if (a != 0) throw "Pipeline error.";
 
@@ -16,6 +20,9 @@ static void BM_PipelineModeB(benchmark::State& state) {
     const uint64_t count = 2048;
 
     BL_DISABLE_PRINT();
+    BL_CHECK_THROW(Blade::InitAndProfile([&](){
+        return (mode_b_init()) ? Result::ERROR : Result::SUCCESS;
+    }, state));
     CHECK_THROW(mode_b_setup());
     BL_ENABLE_PRINT();
 

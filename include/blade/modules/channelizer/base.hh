@@ -70,22 +70,19 @@ class BLADE_API Channelizer : public Module {
     std::string post_kernel;
     dim3 post_grid, post_block;
 
-    ArrayTensor<Device::CUDA, OT> buffer;
-    ArrayTensor<Device::CPU | Device::CUDA, U64> indices;
-
     cufftHandle plan;
     std::string kernel_key;
     std::unique_ptr<Internal::Callback> callback;
 
-    // Expected Dimensions
+    // Expected Shape
 
-    const ArrayDimensions getOutputBufferDims() const {
-        return {
-            .A = getInputBuffer().dims().numberOfAspects(),
-            .F = getInputBuffer().dims().numberOfFrequencyChannels() * config.rate,
-            .T = getInputBuffer().dims().numberOfTimeSamples() / config.rate,
-            .P = getInputBuffer().dims().numberOfPolarizations(),
-        };
+    const ArrayShape getOutputBufferShape() const {
+        return ArrayShape({
+            getInputBuffer().shape().numberOfAspects(),
+            getInputBuffer().shape().numberOfFrequencyChannels() * config.rate,
+            getInputBuffer().shape().numberOfTimeSamples() / config.rate,
+            getInputBuffer().shape().numberOfPolarizations(),
+        });
     }
 };
 

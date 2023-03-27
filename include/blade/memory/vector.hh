@@ -1,146 +1,267 @@
 #ifndef BLADE_MEMORY_VECTOR_HH
 #define BLADE_MEMORY_VECTOR_HH
 
+#include "blade/macros.hh"
 #include "blade/memory/types.hh"
+#include "blade/memory/shape.hh"
+#include "blade/memory/profiler.hh"
 
 namespace Blade {
 
-template <typename T>
-concept IsDimensions = 
-requires(T t) {
-    { t.size() } -> std::same_as<U64>;
-    { t == t } -> std::same_as<BOOL>;
-};
-
-template<typename Type, typename Dims>
-requires IsDimensions<Dims>
-class VectorImpl {
+template<Device DeviceId,
+         typename DataType,
+         typename Shape>
+struct Vector {
  public:
-    VectorImpl()
-             : dimensions(),
-               container(),
-               managed(true) {}
-    explicit VectorImpl(const std::span<Type>& other, const Dims& dims)
-             : dimensions(dims),
-               container(other),
-               managed(false) {
-        if (dims.size() != other.size()) {
-            BL_FATAL("Container size ({}) doesn't match dimensions size ({})",
-                     other.size(), dims.size());
-            BL_CHECK_THROW(Result::ERROR);
+    Vector()
+             : _shape(),
+               _data(nullptr),
+               _refs(nullptr),
+               _unified(false) {
+        BL_TRACE("Empty vector created.");
+    }
+
+    explicit Vector(void* ptr, const typename Shape::Type& shape, const bool& unified = false)
+             : _shape(shape), 
+               _data(static_cast<DataType*>(ptr)),
+               _refs(nullptr),
+               _unified(unified) {
+    }
+
+    explicit Vector(const typename Shape::Type& shape, const bool& unified = false)
+             : _shape(shape),
+               _data(nullptr),
+               _refs(nullptr),
+               _unified(unified) {
+        BL_TRACE("Vector allocated and created: {}", shape);
+
+        BL_CUDA_CHECK_THROW(cudaMallocManaged(&_refs, sizeof(U64)), [&]{
+            BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
+        });
+        *_refs = 1;
+
+        if (Memory::Profiler::IsCapturing()) {
+            if (_unified) {
+                Memory::Profiler::RegisterUnifiedAllocation(size_bytes());
+            } else if (DeviceId == Device::CPU) {
+                Memory::Profiler::RegisterCpuAllocation(size_bytes());
+            } else if (DeviceId == Device::CUDA) {
+                Memory::Profiler::RegisterCudaAllocation(size_bytes());
+            }
+            return;
+        }
+
+        if constexpr (DeviceId == Device::CPU) {
+            BL_CUDA_CHECK_THROW(cudaMallocHost(&_data, size_bytes()), [&]{
+                BL_FATAL("Failed to allocate pinned host memory: {}", err);
+            });
+        }
+
+        if constexpr (DeviceId == Device::CUDA) {
+            if (unified) {
+                BL_CUDA_CHECK_THROW(cudaMallocManaged(&_data, size_bytes()), [&]{
+                    BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
+                });
+            } else {
+                BL_CUDA_CHECK_THROW(cudaMalloc(&_data, size_bytes()), [&]{
+                    BL_FATAL("Failed to allocate CUDA memory: {}", err);
+                });
+            }
         }
     }
-    explicit VectorImpl(const std::span<Type>& other)
-             : dimensions({other.size()}),
-               container(other),
-               managed(false) {}
-    explicit VectorImpl(Type* ptr, const Dims& dims)
-             : dimensions(dims),
-               container(ptr, dims.size()),
-               managed(false) {}
-    explicit VectorImpl(void* ptr, const Dims& dims)
-             : dimensions(dims),
-               container(static_cast<Type*>(ptr), dims.size()),
-               managed(false) {}
 
-    VectorImpl(const VectorImpl&) = delete;
-    VectorImpl(const VectorImpl&&) = delete;
-    bool operator==(const VectorImpl&) = delete;
-    VectorImpl& operator=(const VectorImpl&) = delete;
+    Vector(const Vector& other)
+             : _shape(other._shape),
+               _data(other._data),
+               _refs(other._refs),
+               _unified(other._unified) {
+        BL_TRACE("Vector created by copy.");
 
-    virtual ~VectorImpl() {}
+        increaseRefCount();
+    }
 
-    constexpr Type* data() const noexcept {
-        return container.data();
+    Vector(Vector&& other)
+             : _shape(),
+               _data(nullptr),
+               _refs(nullptr),
+               _unified(false) { 
+        BL_TRACE("Vector created by move.");
+
+        std::swap(_data, other._data);
+        std::swap(_refs, other._refs);
+        std::swap(_shape, other._shape);
+        std::swap(_unified, other._unified);
+    }
+
+    Vector& operator=(const Vector& other) {
+        BL_TRACE("Vector copied to existing.");
+
+        decreaseRefCount();
+        _data = other._data;
+        _refs = other._refs;
+        _shape = other._shape;
+        _unified = other._unified;
+        increaseRefCount();
+
+        return *this;
+    }
+
+    Vector& operator=(Vector&& other) {
+        BL_TRACE("Vector moved to existing.");
+
+        decreaseRefCount();
+        reset();
+        std::swap(_data, other._data);
+        std::swap(_refs, other._refs);
+        std::swap(_shape, other._shape);
+        std::swap(_unified, other._unified);
+
+        return *this;
+    }
+
+    ~Vector() {
+        decreaseRefCount();
+    }
+
+    constexpr DataType* data() const noexcept {
+        return _data;
+    }
+
+    constexpr const U64 refs() const noexcept {
+        if (!_refs) {
+            return 0;
+        }
+        return *_refs;
+    }
+
+    constexpr const U64 hash() const noexcept {
+        return std::hash<void*>{}(_data);
     }
 
     constexpr const U64 size() const noexcept {
-        return container.size();
+        return _shape.size();
     }
 
     constexpr const U64 size_bytes() const noexcept {
-        return container.size_bytes();
+        return size() * sizeof(DataType);
+    }
+
+    constexpr DataType& operator[](const typename Shape::Type& shape) {
+        return _data[_shape.shapeToOffset(shape)];
+    }
+
+    constexpr const DataType& operator[](const typename Shape::Type& shape) const {
+        return _data[_shape.shapeToOffset(shape)];
+    }
+
+    constexpr DataType& operator[](U64 idx) {
+        return _data[idx];
+    }
+
+    constexpr const DataType& operator[](U64 idx) const {
+        return _data[idx];
     }
 
     [[nodiscard]] constexpr const bool empty() const noexcept {
-        return container.empty();
-    }
-
-    constexpr Type& operator[](U64 idx) {
-        return container[idx];
-    }
-
-    constexpr const Type& operator[](U64 idx) const {
-        return container[idx];
+        return (_data == nullptr);
     }
 
     constexpr auto begin() {
-        return container.begin();
+        return _data;
     }
 
     constexpr auto end() {
-        return container.end();
+        return _data + size();
     }
 
     constexpr const auto begin() const {
-        return container.begin();
+        return _data;
     }
 
     constexpr const auto end() const {
-        return container.end();
+        return _data + size();
     }
 
-    const Result link(const VectorImpl<Type, Dims>& src, Dims dstDims) {
-        if (src.empty()) {
-            BL_FATAL("Source can't be empty while linking.");
+    constexpr const Shape& shape() const {
+        return _shape;
+    }
+
+    constexpr const bool unified() const {
+            return _unified;
+    }
+
+    const Result reshape(const Shape& shape) {
+        if (shape.size() != _shape.size()) {
             return Result::ERROR;
         }
-
-        if (!this->empty()) {
-            BL_FATAL("Destination has to be empty while linking.");
-            return Result::ERROR;
-        }
-
-        if (src.dims().size() != dstDims.size()) { 
-            BL_FATAL("Dimensions mismatch. The number of elements of "
-                     "the source and destination has to be the same.");
-            return Result::ERROR;
-        }
-
-        this->managed = false;
-        this->container = src.span();
-        this->dimensions = dstDims;
+        _shape = shape;
 
         return Result::SUCCESS;
     }
 
-    const Result link(const VectorImpl<Type, Dims>& src) {
-        return link(src, src.dims());
-    }
+ private:
+    Shape _shape;
+    DataType* _data;
+    U64* _refs;
+    bool _unified;
 
-    virtual const Result resize(const Dims& dims) = 0;
+    void decreaseRefCount() {
+        if (!_refs) {
+            return;
+        }
 
-    constexpr const Dims& dims() const {
-        return dimensions;
-    }
+        BL_TRACE("Decreasing reference counter ({}).", *_refs);
 
- protected:
-    Dims dimensions;
-    std::span<Type> container;
-    bool managed;
+        if (--(*_refs) == 0) {
+            BL_TRACE("Deleting vector.");
 
-    explicit VectorImpl(const Dims& dims)
-             : dimensions(dims),
-               container(),
-               managed(true) {
-        if (dims.size() <= 0) {
-            BL_FATAL("Dimensions ({}) equals to invalid size ({}).", dims, dims.size());
-            BL_CHECK_THROW(Result::ERROR);
+            if (cudaFree(_refs) != cudaSuccess) {
+                BL_FATAL("Failed to deallocate CUDA memory.");
+            }
+
+            if (Memory::Profiler::IsCapturing()) {
+                if (_unified) {
+                    Memory::Profiler::RegisterUnifiedDeallocation(size_bytes());
+                } else if (DeviceId == Device::CPU) {
+                    Memory::Profiler::RegisterCpuDeallocation(size_bytes());
+                } else if (DeviceId == Device::CUDA) {
+                    Memory::Profiler::RegisterCudaDeallocation(size_bytes());
+                }
+
+                reset();
+                return;
+            }
+
+            if constexpr (DeviceId == Device::CPU) {
+                if (cudaFreeHost(_data) != cudaSuccess) {
+                    BL_FATAL("Failed to deallocate host memory.");
+                }
+            }
+
+            if constexpr (DeviceId == Device::CUDA) {
+                if (cudaFree(_data) != cudaSuccess) {
+                    BL_FATAL("Failed to deallocate CUDA memory.");
+                }
+            }
+
+            reset();
         }
     }
 
-    constexpr const std::span<Type>& span() const {
-        return container;
+    void increaseRefCount() {
+        if (!_refs) {
+            return;
+        }
+
+        BL_TRACE("Increasing reference counter ({}).", *_refs);
+        *_refs += 1;
+    }
+
+    void reset() {
+        _data = nullptr;
+        _refs = nullptr;
+        _shape = Shape();
+        _unified = false;
     }
 };
 

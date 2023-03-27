@@ -22,8 +22,8 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
     }, {});
 
     // Checking file and recipe bounds.
-    const auto bfr5Dims = bfr5->getTotalDims();
-    const auto guppiDims = guppi->getTotalOutputBufferDims();
+    const auto bfr5Dims = bfr5->getTotalShape();
+    const auto guppiDims = guppi->getTotalOutputBufferShape();
 
     if (guppiDims.numberOfAspects() != bfr5Dims.numberOfAspects()) {
         BL_FATAL("Number of aspects from GUPPI RAW ({}) and BFR5 ({}) files mismatch.", 

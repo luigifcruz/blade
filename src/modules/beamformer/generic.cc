@@ -14,15 +14,15 @@ Generic<IT, OT>::Generic(const Config& config,
           config(config),
           input(input) {
     // Check configuration values.
-    if ((getInputBuffer().dims().numberOfTimeSamples() % config.blockSize) != 0) {
+    if ((getInputBuffer().shape().numberOfTimeSamples() % config.blockSize) != 0) {
         BL_FATAL("Number of time samples ({}) isn't divisable by the block size ({}).", 
-                getInputBuffer().dims().numberOfTimeSamples(), config.blockSize);
+                getInputBuffer().shape().numberOfTimeSamples(), config.blockSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Phasors Dimensions [B, A, F, T, P]: {}", getInputPhasors().dims());
+    BL_INFO("Phasors Shape: {}", getInputPhasors().shape());
     BL_INFO("Enable Incoherent Beam: {}", config.enableIncoherentBeam ? "YES" : "NO");
     BL_INFO("Enable Incoherent Beam Square Root: {}", config.enableIncoherentBeamSqrt ? "YES" : "NO");
 }

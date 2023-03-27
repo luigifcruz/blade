@@ -40,7 +40,7 @@ enum class Result : uint8_t {
 }  // namespace Blade 
 
 #ifndef BL_PHYSICAL_CONSTANT_C
-#define BL_PHYSICAL_CONSTANT_C (double)299792458.0 // Speed of Light (m/s)
+#define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
 #endif
 
 #ifndef BL_PHYSICAL_CONSTANT_PI

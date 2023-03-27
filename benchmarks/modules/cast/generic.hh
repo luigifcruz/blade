@@ -11,9 +11,12 @@ class ModuleUnderTest : CudaBenchmark {
     const Result runComputeBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
-        BL_CHECK(this->configureModule());
-        BL_CHECK(this->allocateDeviceMemory(A));
-        BL_CHECK(this->initializeModule());
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->configureModule());
+            BL_CHECK(this->allocateDeviceMemory(A));
+            BL_CHECK(this->initializeModule());
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
@@ -32,8 +35,11 @@ class ModuleUnderTest : CudaBenchmark {
     const Result runTransferBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
-        BL_CHECK(this->allocateHostMemory(A));
-        BL_CHECK(this->allocateDeviceMemory(A));
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->allocateHostMemory(A));
+            BL_CHECK(this->allocateDeviceMemory(A));
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
@@ -53,10 +59,13 @@ class ModuleUnderTest : CudaBenchmark {
     const Result runConvergedBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
-        BL_CHECK(this->configureModule());
-        BL_CHECK(this->allocateHostMemory(A));
-        BL_CHECK(this->allocateDeviceMemory(A));
-        BL_CHECK(this->initializeModule());
+        BL_CHECK(InitAndProfile([&](){
+            BL_CHECK(this->configureModule());
+            BL_CHECK(this->allocateHostMemory(A));
+            BL_CHECK(this->allocateDeviceMemory(A));
+            BL_CHECK(this->initializeModule());
+            return Result::SUCCESS;
+        }, state));
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
@@ -82,23 +91,13 @@ protected:
     }
 
     const Result allocateDeviceMemory(const U64& A) {
-        BL_CHECK(deviceInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
+        deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }
 
     const Result allocateHostMemory(const U64& A) {
-        BL_CHECK(hostInputBuf.resize({
-            .A = A,
-            .F = 192,
-            .T = 8192,
-            .P = 2,
-        }));
+        hostInputBuf = ArrayTensor<Device::CPU, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }

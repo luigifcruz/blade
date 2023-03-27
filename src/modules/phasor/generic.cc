@@ -32,6 +32,11 @@ Generic<OT>::Generic(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    if (Memory::Profiler::IsCapturing()) {
+        BL_WARN("Capturing: Early setup return.");
+        return;
+    }
+
     // Check if calibration values are within bounds.
     const F64& max_value = (65500.0 / (config.numberOfAntennas * 127.0));
     const F64& min_value = max_value * -1.0;
@@ -84,7 +89,7 @@ Generic<OT>::Generic(const Config& config,
         BL_INFO("    {}: ({}, {})", i, config.beamCoordinates[i].RA, 
             config.beamCoordinates[i].DEC);
     }
-    BL_INFO("Calibrations Dimensions (A, F, T, P): {}", config.antennaCalibrations.dims());
+    BL_INFO("Calibrations Shape: {}", config.antennaCalibrations.shape());
 }
 
 template class BLADE_API Generic<CF32>;

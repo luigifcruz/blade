@@ -19,7 +19,7 @@ class BLADE_API ModeH : public Pipeline {
     // Configuration 
 
     struct Config {
-        ArrayDimensions inputDimensions;
+        ArrayShape inputShape;
 
         U64 accumulateRate;
 

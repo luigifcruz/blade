@@ -37,12 +37,12 @@ Cast<IT, OT>::Cast(const Config& config,
     );
 
     // Allocate output buffers.
-    BL_CHECK_THROW(output.buf.resize(getOutputBufferDims()));
+    output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), 
-                                                 getOutputBuffer().dims());
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+                               getOutputBuffer().shape());
 }
 
 template<typename IT, typename OT>

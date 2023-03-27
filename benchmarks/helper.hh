@@ -55,6 +55,18 @@ class CudaBenchmark {
     float elapsedTime;
 };
 
+static inline Result InitAndProfile(const auto& func, benchmark::State& state) {
+    Memory::Profiler::StartCapture();
+    func();
+    auto& capture = Memory::Profiler::StopCapture();
+
+    state.counters["cpuMem"] = capture.allocatedCpuMemory;
+    state.counters["cudaMem"] = capture.allocatedCudaMemory;
+    state.counters["unifiedMem"] = capture.allocatedUnifiedMemory;
+
+    return func();
+}
+
 }  // namespace Blade
 
 #endif 

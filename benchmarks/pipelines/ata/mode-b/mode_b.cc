@@ -17,8 +17,8 @@ using namespace Blade::Pipelines::ATA;
 using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
-static Vector<Device::CPU, F64> dummyJulianDate({1});
-static Vector<Device::CPU, F64> dummyDut1({1});
+static Tensor<Device::CPU, F64> dummyJulianDate({1});
+static Tensor<Device::CPU, F64> dummyDut1({1});
 
 bool blade_ata_b_initialize(U64 numberOfWorkers) {
     if (runner) {
@@ -30,12 +30,12 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
     dummyDut1[0] = 0.0;
 
     runner = Runner<TestPipeline>::New(numberOfWorkers, {
-        .inputDimensions = {
-            .A = BLADE_ATA_MODE_B_NANT,
-            .F = BLADE_ATA_MODE_B_NCHAN,
-            .T = BLADE_ATA_MODE_B_NTIME,
-            .P = BLADE_ATA_MODE_B_NPOL,
-        },
+        .inputShape = ArrayShape({
+            BLADE_ATA_MODE_B_NANT,
+            BLADE_ATA_MODE_B_NCHAN,
+            BLADE_ATA_MODE_B_NTIME,
+            BLADE_ATA_MODE_B_NPOL,
+        }),
 
         .preBeamformerChannelizerRate = BLADE_ATA_MODE_B_CHANNELIZER_RATE,
 
@@ -99,6 +99,11 @@ bool blade_ata_b_initialize(U64 numberOfWorkers) {
         .detectorNumberOfOutputPolarizations = BLADE_ATA_MODE_B_DETECTOR_POLS,
     });
 
+    // Terminate if profiling.
+    if (Memory::Profiler::IsCapturing()) {
+        blade_ata_b_terminate();
+    }
+
     return true;
 }
 
@@ -125,9 +130,9 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
 
     return runner->enqueue([&](auto& worker) {
         // Convert C pointers to Blade::Vector.
-        auto input = ArrayTensor<Device::CPU, CI8>(input_ptr, worker.getInputBuffer().dims());
+        auto input = ArrayTensor<Device::CPU, CI8>(input_ptr, worker.getInputBuffer().shape());
         auto output = ArrayTensor<Device::CPU, BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>(output_ptr, 
-                worker.getOutputBuffer().dims());
+                worker.getOutputBuffer().shape());
 
         // Transfer input data from CPU memory to the worker.
         Plan::TransferIn(worker, dummyJulianDate, dummyDut1, input);

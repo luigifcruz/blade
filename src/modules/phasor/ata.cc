@@ -57,7 +57,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         : Generic<OT>(config, input, stream) {
     // Check configuration values.
     const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
-    const auto& calibrationNumberOfChannels = config.antennaCalibrations.dims().numberOfFrequencyChannels();
+    const auto& calibrationNumberOfChannels = config.antennaCalibrations.shape().numberOfFrequencyChannels();
     
     // TODO: [NEXT] Add multi-step support.
     if (calibrationNumberOfChannels != dataNumberOfChannels) {
@@ -69,9 +69,9 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
     }
     this->numberOfFrequencySteps = calibrationNumberOfChannels / dataNumberOfChannels;
 
-    if (this->getConfigCalibrationDims() != config.antennaCalibrations.dims()) {
-        BL_FATAL("Dimensions of antenna calibrations {} doesn't match with the expected dimensions {}.", 
-                config.antennaCalibrations.dims(), this->getConfigCalibrationDims());
+    if (this->getConfigCalibrationShape() != config.antennaCalibrations.shape()) {
+        BL_FATAL("Shape of antenna calibrations {} doesn't match with the expected dimensions {}.", 
+                config.antennaCalibrations.shape(), this->getConfigCalibrationShape());
         BL_CHECK_THROW(Result::ERROR);
     }
     
@@ -93,12 +93,12 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
         this->config.arrayReferencePosition.ALT);
 
     // Allocate output buffers.
-    BL_CHECK_THROW(this->output.phasors.resize(getOutputPhasorsDims()));
-    BL_CHECK_THROW(this->output.delays.resize(getOutputDelaysDims()));
+    this->output.phasors = PhasorTensor<Device::CUDA, OT>(getOutputPhasorsShape(), true);
+    this->output.delays = DelayTensor<Device::CPU, F64>(getOutputDelaysShape());
 
     // Print configuration values.
-    BL_INFO("Phasors Dimensions [A, F, T, P]: {} -> {}", "N/A", this->getOutputPhasors().dims());
-    BL_INFO("Delays Dimensions [B, A]: {} -> {}", "N/A", this->getOutputDelays().dims());
+    BL_INFO("Phasors Shape: {} -> {}", "N/A", this->getOutputPhasors().shape());
+    BL_INFO("Delays Shape: {} -> {}", "N/A", this->getOutputDelays().shape());
     BL_INFO("Number Of Frequency Steps: {}", this->numberOfFrequencySteps);
 }
 

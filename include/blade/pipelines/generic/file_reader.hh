@@ -26,8 +26,8 @@ class BLADE_API FileReader : public Pipeline {
     explicit FileReader(const Config& config);
 
     // GUPPI RAW determined values
-    constexpr const ArrayDimensions getStepOutputDims() const {
-        return guppi->getStepOutputBufferDims();
+    constexpr const ArrayShape getStepOutputShape() const {
+        return guppi->getStepOutputBufferShape();
     }
 
     constexpr const U64 getStepOutputBufferSize() const {
@@ -54,23 +54,23 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getNumberOfSteps();
     }
 
-    constexpr const ArrayDimensions getTotalOutputDims() const {
-        return guppi->getTotalOutputBufferDims();
+    constexpr const ArrayShape getTotalOutputShape() const {
+        return guppi->getTotalOutputBufferShape();
     }
 
     constexpr const U64 getTotalOutputBufferSize() const {
-        return guppi->getTotalOutputBufferDims().size();
+        return guppi->getTotalOutputBufferShape().size();
     }
 
     const ArrayTensor<Device::CPU, OT>& getStepOutputBuffer() {
         return guppi->getStepOutputBuffer();
     }
 
-    const Vector<Device::CPU, F64>& getStepOutputJulianDate() {
+    const Tensor<Device::CPU, F64>& getStepOutputJulianDate() {
         return guppi->getStepOutputJulianDate();
     }
 
-    const Vector<Device::CPU, F64>& getStepOutputDut1() {
+    const Tensor<Device::CPU, F64>& getStepOutputDut1() {
         return guppi->getStepOutputDut1();
     }
 

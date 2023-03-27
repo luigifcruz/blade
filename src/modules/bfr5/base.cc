@@ -24,8 +24,13 @@ Reader::Reader(const Config& config,
 
     // Resize data holders.
     beamCoordinates.resize(this->bfr5.beam_info.ra_elements);
-    antennaPositions.resize(getTotalDims().numberOfAspects());
-    antennaCalibrations.resize(getAntennaCalibrationsDims());
+    antennaPositions.resize(getTotalShape().numberOfAspects());
+    antennaCalibrations = ArrayTensor<Device::CPU, CF64>(getAntennaCalibrationsShape());
+
+    if (Memory::Profiler::IsCapturing()) {
+        BL_WARN("Capturing: Early setup return.");
+        return;
+    }
      
     // Calculate beam coordinates.
     for (U64 i = 0; i < this->bfr5.beam_info.ra_elements; i++) {
@@ -34,7 +39,7 @@ Reader::Reader(const Config& config,
     }
 
     // Calculate antenna positions.
-    const U64 antennaPositionsByteSize = getTotalDims().numberOfAspects() * sizeof(XYZ);
+    const U64 antennaPositionsByteSize = getTotalShape().numberOfAspects() * sizeof(XYZ);
     std::memcpy(antennaPositions.data(), this->bfr5.tel_info.antenna_positions, antennaPositionsByteSize);
 
     std::string antFrame = std::string(this->bfr5.tel_info.antenna_position_frame);
@@ -63,16 +68,16 @@ Reader::Reader(const Config& config,
 
     // Calculate antenna calibrations.
     const size_t calAntStride = 1;
-    const size_t calPolStride = getAntennaCalibrationsDims().numberOfAspects() * calAntStride;
-    const size_t calChnStride = getAntennaCalibrationsDims().numberOfPolarizations() * calPolStride;
+    const size_t calPolStride = getAntennaCalibrationsShape().numberOfAspects() * calAntStride;
+    const size_t calChnStride = getAntennaCalibrationsShape().numberOfPolarizations() * calPolStride;
 
     const size_t weightsPolStride = 1;
-    const size_t weightsChnStride = getAntennaCalibrationsDims().numberOfPolarizations() * weightsPolStride;
-    const size_t weightsAntStride = getTotalDims().numberOfFrequencyChannels() * weightsChnStride;
+    const size_t weightsChnStride = getAntennaCalibrationsShape().numberOfPolarizations() * weightsPolStride;
+    const size_t weightsAntStride = getTotalShape().numberOfFrequencyChannels() * weightsChnStride;
 
-    for (U64 antIdx = 0; antIdx < getAntennaCalibrationsDims().numberOfAspects(); antIdx++) {
-        for (U64 chnIdx = 0; chnIdx < getTotalDims().numberOfFrequencyChannels(); chnIdx++) {
-            for (U64 polIdx = 0; polIdx < getAntennaCalibrationsDims().numberOfPolarizations(); polIdx++) {
+    for (U64 antIdx = 0; antIdx < getAntennaCalibrationsShape().numberOfAspects(); antIdx++) {
+        for (U64 chnIdx = 0; chnIdx < getTotalShape().numberOfFrequencyChannels(); chnIdx++) {
+            for (U64 polIdx = 0; polIdx < getAntennaCalibrationsShape().numberOfPolarizations(); polIdx++) {
                 for (U64 fchIdx = 0; fchIdx < config.channelizerRate; fchIdx++) {
                     const auto inputIdx = chnIdx * calChnStride +
                                           polIdx * calPolStride + 
@@ -90,8 +95,8 @@ Reader::Reader(const Config& config,
 
     // Print configuration buffers.
     BL_INFO("Input File Path: {}", config.filepath);
-    BL_INFO("Calibrations Dimensions [A, F, T, P]: {} -> {}", "N/A", getAntennaCalibrationsDims());
-    BL_INFO("Data Dimensions [B, A, F, T, P]: {} -> {}", "N/A", getTotalDims());
+    BL_INFO("Calibrations Shape: {} -> {}", "N/A", getAntennaCalibrationsShape());
+    BL_INFO("Data Shape: {} -> {}", "N/A", getTotalShape());
     BL_INFO("Channelizer Rate: {}", config.channelizerRate);
 }
 

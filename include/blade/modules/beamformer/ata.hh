@@ -13,14 +13,14 @@ class BLADE_API ATA : public Generic<IT, OT> {
                  const cudaStream_t& stream);
 
  protected:
-    const ArrayDimensions getOutputBufferDims() const {
-        return {
-            .A = this->getInputPhasors().dims().numberOfBeams() 
+    const ArrayShape getOutputBufferShape() const {
+        return ArrayShape({
+            this->getInputPhasors().shape().numberOfBeams() 
                     + U64(this->config.enableIncoherentBeam ? 1 : 0),
-            .F = this->getInputBuffer().dims().numberOfFrequencyChannels(),
-            .T = this->getInputBuffer().dims().numberOfTimeSamples(),
-            .P = this->getInputBuffer().dims().numberOfPolarizations(),
-        };
+            this->getInputBuffer().shape().numberOfFrequencyChannels(),
+            this->getInputBuffer().shape().numberOfTimeSamples(),
+            this->getInputBuffer().shape().numberOfPolarizations(),
+        });
     }
 };
 
