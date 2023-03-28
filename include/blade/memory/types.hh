@@ -9,9 +9,32 @@
 #include <complex>
 
 #include "blade/logger.hh"
-#include "blade/macros.hh"
 
 namespace Blade {
+
+#ifndef BL_PHYSICAL_CONSTANT_C
+#define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
+#endif
+
+#ifndef BL_PHYSICAL_CONSTANT_PI
+#define BL_PHYSICAL_CONSTANT_PI M_PI
+#endif
+
+#ifndef BL_DEG_TO_RAD 
+#define BL_DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
+#endif
+
+#ifndef BL_RAD_TO_DEG
+#define BL_RAD_TO_DEG(RAD) (RAD * 180.0 / M_PI) 
+#endif
+
+#ifndef BLADE_API
+#define BLADE_API __attribute__((visibility("default")))
+#endif
+
+#ifndef BLADE_HIDDEN
+#define BLADE_HIDDEN __attribute__((visibility("hidden")))
+#endif
 
 enum class BLADE_API Device : uint8_t {
     CPU     = 1 << 0,

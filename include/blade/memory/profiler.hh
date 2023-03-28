@@ -1,6 +1,7 @@
 #ifndef BLADE_MEMORY_PROFILER_HH
 #define BLADE_MEMORY_PROFILER_HH
 
+#include "blade/macros.hh"
 #include "blade/memory/types.hh"
 #include "blade/utils/bytesize.hh"
 
