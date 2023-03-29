@@ -1,7 +1,6 @@
 #ifndef BLADE_MEMORY_TYPES_HH
 #define BLADE_MEMORY_TYPES_HH
 
-#include <cuda_runtime.h>
 #include <cuComplex.h>
 #include <cuda_fp16.h>
 

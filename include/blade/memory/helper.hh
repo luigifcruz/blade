@@ -1,6 +1,8 @@
 #ifndef BLADE_MEMORY_HELPER_HH
 #define BLADE_MEMORY_HELPER_HH
 
+#include <cuda_runtime.h>
+
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
 

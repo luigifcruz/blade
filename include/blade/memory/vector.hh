@@ -1,6 +1,8 @@
 #ifndef BLADE_MEMORY_VECTOR_HH
 #define BLADE_MEMORY_VECTOR_HH
 
+#include <cuda_runtime.h>
+
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
 #include "blade/memory/shape.hh"
