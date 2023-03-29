@@ -151,7 +151,6 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
     if (this->getCurrentAccumulatorStep() == 0) {
-        BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
         BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
         BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
     }
@@ -166,6 +165,16 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
+    // update the blockJulianDate to be a running average of the time
+    this->blockJulianDate[0] = (
+        this->blockJulianDate[0]*this->getCurrentAccumulatorStep() + blockJulianDate[0]
+    ) / (this->getCurrentAccumulatorStep() + 1);
+    
+    if (this->getCurrentComputeCount() == 0) {
+        BL_DEBUG("Block Julian Date (#{}): {}", this->getCurrentAccumulatorStep(), blockJulianDate[0]);
+        BL_DEBUG("Running Julian Date: {}", this->blockJulianDate[0]);
+    }
+
     if (config.inputDimensions != data.dims()) {
         BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
         return Result::ASSERTION_ERROR;
@@ -175,12 +184,13 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
     const auto& inputHeight = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
     const auto& inputWidth = data.size_bytes() / inputHeight;
 
-    const auto& outputPitch = this->input.size_bytes() / inputHeight;
+    const auto& outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
+
     BL_CHECK(
         Memory::Copy2D(
             this->input,
             outputPitch, // dstStride
-            outputPitch * this->getCurrentAccumulatorStep(), // dstOffset
+            this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
 
             data,
             inputWidth,
@@ -209,7 +219,6 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
                                    const cudaStream_t& stream) { 
     // Copy input to static buffers.
     if (this->getCurrentAccumulatorStep() == 0) {
-        BL_CHECK(Memory::Copy(this->blockJulianDate, blockJulianDate));
         BL_CHECK(Memory::Copy(this->blockDut1, blockDut1));
         BL_CHECK(Memory::Copy(this->blockFrequencyChannelOffset, blockFrequencyChannelOffset));
     }
@@ -224,6 +233,16 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
         BL_CHECK_THROW(Result::ASSERTION_ERROR);
     }
 
+    // update the blockJulianDate to be a running average of the time
+    this->blockJulianDate[0] = (
+        this->blockJulianDate[0]*this->getCurrentAccumulatorStep() + blockJulianDate[0]
+    ) / (this->getCurrentAccumulatorStep() + 1);
+    
+    if (this->getCurrentComputeCount() == 0) {
+        BL_DEBUG("Block Julian Date (#{}): {}", this->getCurrentAccumulatorStep(), blockJulianDate[0]);
+        BL_DEBUG("Running Julian Date: {}", this->blockJulianDate[0]);
+    }
+
     if (config.inputDimensions != data.dims()) {
         BL_FATAL("Configured for array of shape {}, cannot accumulate shape {}.", config.inputDimensions, input.dims());
         return Result::ASSERTION_ERROR;
@@ -233,13 +252,13 @@ const Result ModeB<IT, OT>::accumulate(const Vector<Device::CPU, F64>& blockJuli
     const auto& inputHeight = config.inputDimensions.numberOfAspects() * config.inputDimensions.numberOfFrequencyChannels();
     const auto& inputWidth = data.size_bytes() / inputHeight;
 
-    const auto& outputPitch = inputWidth * this->config.accumulateRate;
+    const auto& outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
 
     BL_CHECK(
         Memory::Copy2D(
             this->input,
             outputPitch, // dstStride
-            inputWidth * this->getCurrentAccumulatorStep(), // dstOffset
+            this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
 
             data,
             inputWidth,
