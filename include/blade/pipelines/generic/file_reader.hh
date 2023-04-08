@@ -62,6 +62,10 @@ class BLADE_API FileReader : public Pipeline {
         return guppi->getChannelBandwidth();
     }
 
+    constexpr const F64 getChannelTimespan() const {
+        return guppi->getChannelTimespan();
+    }
+
     constexpr const F64 getObservationBandwidth() const {
         return guppi->getObservationBandwidth();
     }

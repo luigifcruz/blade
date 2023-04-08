@@ -156,7 +156,7 @@ inline const Result ModeBS(const Config& config) {
         .searchIncoherentBeam = true,
 
         .searchChannelBandwidthHz = reader.getChannelBandwidth() / config.preBeamformerChannelizerRate,
-        .searchChannelTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
+        .searchChannelTimespanS = config.preBeamformerChannelizerRate * config.integrationSize * reader.getChannelTimespan(),
         .searchOutputFilepathStem = config.outputFile,
     };
     // searchConfig.accumulateRate;
@@ -178,7 +178,7 @@ inline const Result ModeBS(const Config& config) {
             .firstChannelMiddleFrequencyHz = reader.getTopFrequency() - 0.5*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate, // Top channel as the frequencies are descending
             .bandwidthHz = reader.getBandwidth(),
             .julianDateStart = reader.getJulianDateOfLastReadBlock(),
-            .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
+            .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize * reader.getChannelTimespan(),
             .numberOfIfChannels = (I32) beamformRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
             .sourceDataFilename = config.inputGuppiFile,
             .beamNames = beamSourceNames,

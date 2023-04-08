@@ -10,6 +10,7 @@ typedef struct {
     I32 nants;
     I32 fenchan;
     F64 chan_bw_mhz;
+    F64 chan_timespan;
     I32 chan_start;
     F64 obs_freq_mhz;
     U64 synctime;
@@ -29,6 +30,7 @@ typedef struct {
 const U64 KEY_UINT64_SCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('S','C','H','A','N',' ',' ',' ');
 const U64 KEY_UINT64_FENCHAN = GUPPI_RAW_KEY_UINT64_ID_LE('F','E','N','C','H','A','N',' ');
 const U64 KEY_UINT64_CHAN_BW = GUPPI_RAW_KEY_UINT64_ID_LE('C','H','A','N','_','B','W',' ');
+const U64 KEY_UINT64_TBIN = GUPPI_RAW_KEY_UINT64_ID_LE('T','B','I','N',' ',' ',' ',' ');
 const U64 KEY_UINT64_OBSFREQ = GUPPI_RAW_KEY_UINT64_ID_LE('O','B','S','F','R','E','Q',' ');
 const U64 KEY_UINT64_SYNCTIME = GUPPI_RAW_KEY_UINT64_ID_LE('S','Y','N','C','T','I','M','E');
 const U64 KEY_UINT64_PIPERBLK = GUPPI_RAW_KEY_UINT64_ID_LE('P','I','P','E','R','B','L','K');
@@ -50,6 +52,8 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
         hgeti4(entry, "FENCHAN", &((guppiraw_block_meta_t*)block_meta)->fenchan);
     } else if (((U64*)entry)[0] == KEY_UINT64_CHAN_BW) {
         hgetr8(entry, "CHAN_BW", &((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
+    } else if (((U64*)entry)[0] == KEY_UINT64_TBIN) {
+        hgetr8(entry, "TBIN", &((guppiraw_block_meta_t*)block_meta)->chan_timespan);
     } else if (((U64*)entry)[0] == KEY_UINT64_OBSFREQ) {
         hgetr8(entry, "OBSFREQ", &((guppiraw_block_meta_t*)block_meta)->obs_freq_mhz);
     } else if (((U64*)entry)[0] == KEY_UINT64_SYNCTIME) {
@@ -82,6 +86,9 @@ void guppiraw_parse_block_meta(const char* entry, void* block_meta) {
         }
         if (((guppiraw_block_meta_t*)block_meta)->telescope_id[0] == '\0') {
             strcpy(((guppiraw_block_meta_t*)block_meta)->telescope_id, "Unknown");
+        }
+        if (((guppiraw_block_meta_t*)block_meta)->chan_timespan == 0) {
+            ((guppiraw_block_meta_t*)block_meta)->chan_timespan = 1e-6 / abs(((guppiraw_block_meta_t*)block_meta)->chan_bw_mhz);
         }
     }
 }
@@ -165,7 +172,7 @@ Reader<OT>::Reader(const Config& config, const Input& input)
 template<typename OT>
 F64 Reader<OT>::getUnixDateOfLastReadBlock(const U64 timesamplesOffset) {
     return guppiraw_calc_unix_date(
-        1.0 / this->getChannelBandwidth(),
+        this->getChannelTimespan(),
         this->getDatashape()->n_time,
         getBlockMeta(&gr_iterate)->piperblk,
         getBlockMeta(&gr_iterate)->synctime,
@@ -178,6 +185,11 @@ F64 Reader<OT>::getUnixDateOfLastReadBlock(const U64 timesamplesOffset) {
 template<typename OT>
 const F64 Reader<OT>::getChannelBandwidth() const {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
+}
+
+template<typename OT>
+const F64 Reader<OT>::getChannelTimespan() const {
+    return getBlockMeta(&gr_iterate)->chan_timespan;
 }
 
 template<typename OT>

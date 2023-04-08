@@ -162,7 +162,7 @@ inline const Result ModeB(const Config& config) {
 
         writer.getModule()->headerPut("OBSFREQ", reader.getCenterFrequency()*1e-6);
         writer.getModule()->headerPut("OBSBW", reader.getBandwidth()*1e-6);
-        writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth());
+        writer.getModule()->headerPut("TBIN", config.preBeamformerChannelizerRate * config.integrationSize * reader.getChannelTimespan());
         writer.getModule()->headerPut("PKTIDX", 0);
     }
     else if constexpr (std::is_same<OT, F32>::value || std::is_same<OT, F16>::value) {
@@ -179,7 +179,7 @@ inline const Result ModeB(const Config& config) {
                 .firstChannelMiddleFrequencyHz = reader.getTopFrequency() - 0.5*reader.getChannelBandwidth()/config.preBeamformerChannelizerRate, // Top channel as the frequencies are descending
                 .bandwidthHz = -1*reader.getBandwidth(), // Negated as frequencies are descending
                 .julianDateStart = reader.getJulianDateOfLastReadBlock(),
-                .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize / reader.getChannelBandwidth(),
+                .spectrumTimespanS = config.preBeamformerChannelizerRate * config.integrationSize * reader.getChannelTimespan(),
                 .numberOfIfChannels = (I32) computeRunner->getWorker().getOutputBuffer().dims().numberOfPolarizations(),
                 .sourceDataFilename = config.inputGuppiFile,
                 .beamNames = beamNames,

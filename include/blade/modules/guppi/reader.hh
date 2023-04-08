@@ -109,6 +109,7 @@ class BLADE_API Reader : public Module {
 
     const F64 getObservationBandwidth() const;
     const F64 getChannelBandwidth() const;
+    const F64 getChannelTimespan() const;
     const U64 getChannelStartIndex() const;
     const F64 getObservationCenterFrequency() const;
     const F64 getCenterFrequency() const;
