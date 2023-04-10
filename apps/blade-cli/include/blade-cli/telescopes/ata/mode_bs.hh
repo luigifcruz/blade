@@ -255,9 +255,11 @@ inline const Result ModeBS(const Config& config) {
             // Try dequeue job from last runner. If unlucky, return.
             Plan::Dequeue(readerRunner, &callbackStep, &workerId);
 
-            // Increment progress bar.
-            bar.set_progress(static_cast<float>(callbackStep) /
-                    readerNumberOfSteps * 100);
+            if (!config.progressBarDisabled) {
+                // Increment progress bar.
+                bar.set_progress(static_cast<float>(callbackStep) /
+                        readerNumberOfSteps * 100);
+            }
 
             // Compute input data.
             Plan::Compute(worker);

@@ -144,6 +144,12 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     app
         .add_flag("-I,--incoherent-beam-enable", config.incoherentBeamEnabled,
                 "Beamform the incoherent beam");
+    
+    // Read progress bar enable.
+    config.progressBarDisabled = false;
+    app
+        .add_flag("-P,--no-progress-bar", config.progressBarDisabled,
+                "Switch off the progress bar.");
 
     try {
         app.parse(argc, argv);
