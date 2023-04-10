@@ -52,9 +52,9 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
 
         // Extract the stamp
         const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;
-        const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
-        const U64 highIndex = top_hit.highIndex() + hitStampFrequencyMargin;
-        const U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
+        U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
+        U64 highIndex = top_hit.highIndex() + hitStampFrequencyMargin;
+        U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
         
         BL_DEBUG("Top hit: {}", top_hit.toString());
         BL_DEBUG(
@@ -64,8 +64,9 @@ const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
             top_hit.coarse_channel
         );
         if (first_channel > last_channel) {
-            BL_FATAL("First channel is larger than last: {} > {}", first_channel, last_channel);
-            return Result::ASSERTION_ERROR;
+            const U64 tmp_channel = last_channel;
+            last_channel = first_channel;
+            first_channel = tmp_channel;
         }
         const ArrayDimensions regionOfInterestDims = {
             .A = inputDims.numberOfAspects(),
