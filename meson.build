@@ -9,6 +9,8 @@ project(
     ]
 )
 
+cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815' ]
+
 cfg_lst = configuration_data(
     {
         'commit': run_command('git', 'describe', '--always', '--dirty', '--abbrev=9', check: true).stdout().strip()
