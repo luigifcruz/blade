@@ -199,7 +199,8 @@ struct BLADE_API TypeInfo<CF16> {
     using surtype = F16;
     inline static const char* name = "CF16";
     inline static const U64 cudaSize = 2;
-    inline static const char* cudaName = "ops::complex<F16>";
+    //inline static const char* cudaName = "ops::complex<F16>";
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -209,7 +210,8 @@ struct BLADE_API TypeInfo<CF32> {
     using surtype = F32;
     inline static const char* name = "CF32";
     inline static const U64 cudaSize = 2;
-    inline static const char* cudaName = "ops::complex<F32>";
+    //inline static const char* cudaName = "ops::complex<F32>";
+    inline static const char* cudaName = "cuFloatComplex";
 };
 
 template<>
@@ -219,7 +221,8 @@ struct BLADE_API TypeInfo<CF64> {
     using surtype = F64;
     inline static const char* name = "CF64";
     inline static const U64 cudaSize = 2;
-    inline static const char* cudaName = "ops::complex<F64>";
+    //inline static const char* cudaName = "ops::complex<F64>";
+    inline static const char* cudaName = "cuComplex";
 };
 
 template<>

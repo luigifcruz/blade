@@ -15,7 +15,7 @@ BENCHMARK(BM_BeamformerATA_Compute)
     ->Args({1, 20})
     ->Args({2, 20})
     ->Args({8, 20})
-    ->Args({2, 42})
+    ->Args({1, 42})
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 
@@ -41,7 +41,7 @@ BENCHMARK(BM_BeamformerATA_Converged)
     ->Args({1, 20})
     ->Args({2, 20})
     ->Args({8, 20})
-    ->Args({2, 42})
+    ->Args({1, 42})
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 

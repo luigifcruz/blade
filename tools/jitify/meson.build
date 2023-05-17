@@ -10,7 +10,12 @@ jitify_gen = generator(
   output: '@BASENAME@.jit.hh',
   # TODO: Fix this hardcoded CUDA path.
   # TODO: Add -lineinfo only when debug enabled.
-  arguments : ['-I/usr/local/cuda/include', '-I/opt/cuda/include', '-lineinfo',
+  arguments : [
+      '--std=c++20',
+      '-I/usr/local/cuda/include',
+      '-I/opt/cuda/include',
+      '-I/home/luigi/sandbox/blade/include',  # TODO: Automatically figure out this path.
+      '-lineinfo',
       '-i', '--minify', '-o', '@OUTPUT@', '@INPUT@']
 )
 
