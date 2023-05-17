@@ -3,6 +3,7 @@
 using namespace Blade;
 namespace bm = benchmark;
 
+// TODO: Add more data types.
 static void BM_Polarizer_Compute(bm::State& state) {
     ModuleUnderTest<Modules::Polarizer, CF32, CF32> mud;
     BL_CHECK_THROW(mud.runComputeBenchmark(state));

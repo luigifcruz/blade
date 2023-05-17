@@ -30,8 +30,8 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
             ),
             config.blockSize,
             // Kernel templates.
-            TypeInfo<IT>::cudaName,
-            TypeInfo<OT>::cudaName,
+            TypeInfo<typename TypeInfo<IT>::subtype>::cudaName,
+            TypeInfo<typename TypeInfo<OT>::subtype>::cudaName,
             getInputBuffer().size() / 2
         )
     );
@@ -69,5 +69,6 @@ const Result Polarizer<IT, OT>::process(const cudaStream_t& stream) {
 }
 
 template class BLADE_API Polarizer<CF32, CF32>;
+template class BLADE_API Polarizer<CF16, CF16>;
 
 }  // namespace Blade::Modules

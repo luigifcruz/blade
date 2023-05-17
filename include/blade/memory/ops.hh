@@ -1,6 +1,8 @@
 #ifndef BLADE_MEMORY_OPS_HH
 #define BLADE_MEMORY_OPS_HH
 
+#include <stdint.h>
+
 #include <cuda_fp16.h>
 
 #if !defined(__CUDACC_RTC__) && !defined(BL_OPS_HOST_SIDE_KEY)

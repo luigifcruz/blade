@@ -11,7 +11,7 @@ __device__ cuFloatComplex detect(const cuFloatComplex a) {
 
 template<U64 NBEAMS, U64 NANTS, U64 NCHANS,
          U64 NTIME,  U64 NPOLS, U64 TBLOCK,
-         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
+         BOOL EnableIncoherentBeam, BOOL EnableIncoherentBeamSqrt>
 __global__ void ATA(const cuFloatComplex* input,
                     const cuFloatComplex* phasor,
                           cuFloatComplex* out) {
@@ -79,7 +79,7 @@ __global__ void ATA(const cuFloatComplex* input,
 
 template<U64 NBEAMS, U64 NANTS, U64 NCHANS,
          U64 NTIME, U64 NPOLS, U64 TBLOCK,
-         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
+         BOOL EnableIncoherentBeam, BOOL EnableIncoherentBeamSqrt>
 __global__ void MeerKAT(const cuFloatComplex* input,
                         const cuFloatComplex* phasor,
                               cuFloatComplex* out) {
