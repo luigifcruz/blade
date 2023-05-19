@@ -4,7 +4,7 @@
 
 namespace Blade::CLI {
 
-const Result SetupTelescope(const Config& config) {
+Result SetupTelescope(const Config& config) {
     // Setup the telescope system.
 
     switch (config.telescope) {
@@ -19,7 +19,7 @@ const Result SetupTelescope(const Config& config) {
     return Result::ERROR;
 }
 
-const Result SetupProcessingPipeline(const Config& config) {
+Result SetupProcessingPipeline(const Config& config) {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::milliseconds;
@@ -35,7 +35,7 @@ const Result SetupProcessingPipeline(const Config& config) {
     return Result::SUCCESS;
 }
 
-const Result CollectUserInput(int argc, char **argv, Config& config) {
+Result CollectUserInput(int argc, char **argv, Config& config) {
     ::CLI::App app("BLADE (Breakthrough Listen Accelerated DSP Engine) - Command Line Tool");
 
     // Read target telescope. 
@@ -120,7 +120,7 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     return Result::SUCCESS;
 }
 
-const Result Start(int argc, char **argv) {
+Result Start(int argc, char **argv) {
     Config config;
 
     BL_CHECK(CollectUserInput(argc, argv, config));

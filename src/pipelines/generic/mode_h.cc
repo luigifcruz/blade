@@ -52,8 +52,8 @@ ModeH<IT, OT>::ModeH(const Config& config)
 }
 
 template<typename IT, typename OT>
-const Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
-                                       const cudaStream_t& stream) {
+Result ModeH<IT, OT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+                                 const cudaStream_t& stream) {
     const auto& width = (config.inputShape.numberOfTimeSamples() * config.inputShape.numberOfPolarizations()) * sizeof(IT);
     const auto& height = config.inputShape.numberOfAspects() * config.inputShape.numberOfFrequencyChannels();
 

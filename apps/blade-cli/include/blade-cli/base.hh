@@ -10,10 +10,10 @@
 
 namespace Blade::CLI {
 
-const Result Start(int argc, char **argv);
-const Result CollectUserInput(int argc, char **argv, Config& config);
-const Result SetupProcessingPipeline(const Config& config);
-const Result SetupTelescope(const Config& config);
+Result Start(int argc, char **argv);
+Result CollectUserInput(int argc, char **argv, Config& config);
+Result SetupProcessingPipeline(const Config& config);
+Result SetupTelescope(const Config& config);
 
 }  // namespace Blade::CLI
 

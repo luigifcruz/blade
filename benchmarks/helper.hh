@@ -19,14 +19,14 @@ class CudaBenchmark {
         cudaStreamDestroy(stream);
     }
 
-    const Result startIteration() {
+    Result startIteration() {
         cudaEventCreate(&start);
         cudaEventRecord(start, stream);
 
         return Result::SUCCESS;
     }
 
-    const Result finishIteration(benchmark::State& state) {
+    Result finishIteration(benchmark::State& state) {
         cudaEventCreate(&stop);
         cudaEventRecord(stop, stream);
         cudaEventSynchronize(stop);

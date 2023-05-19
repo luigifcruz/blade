@@ -12,7 +12,7 @@
 
 namespace Blade::CLI::Telescopes::ATA {
 
-const Result Setup(const Config& config);
+Result Setup(const Config& config);
 
 }  // namespace Blade::CLI::Telecopes::ATA
 

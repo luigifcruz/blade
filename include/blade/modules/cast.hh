@@ -50,7 +50,7 @@ class BLADE_API Cast : public Module {
 
     explicit Cast(const Config& config, const Input& input, 
                   const cudaStream_t& stream);
-    const Result process(const cudaStream_t& stream) final;
+    Result process(const cudaStream_t& stream) final;
 
  private:
     // Variables

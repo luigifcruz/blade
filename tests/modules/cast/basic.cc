@@ -14,8 +14,8 @@ class Test : public Pipeline {
         this->connect(cast, {512}, {input});
     }
 
-    const Result run(const ArrayTensor<Device::CPU, IT>& input,
-                           ArrayTensor<Device::CPU, OT>& output) {
+    Result run(const ArrayTensor<Device::CPU, IT>& input,
+                     ArrayTensor<Device::CPU, OT>& output) {
         BL_CHECK(this->copy(this->input, input));
         BL_CHECK(this->compute());
         BL_CHECK(this->copy(output, cast->getOutputBuffer()));

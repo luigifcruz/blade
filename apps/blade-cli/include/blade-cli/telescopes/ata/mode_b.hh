@@ -15,7 +15,7 @@ using namespace indicators;
 namespace Blade::CLI::Telescopes::ATA {
 
 template<typename IT, typename OT>
-inline const Result ModeB(const Config& config) {
+inline Result ModeB(const Config& config) {
     // Define some types.
     using Reader = Pipelines::Generic::FileReader<IT>;
     using Compute = Pipelines::ATA::ModeB<OT>;

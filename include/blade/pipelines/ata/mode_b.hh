@@ -56,10 +56,10 @@ class BLADE_API ModeB : public Pipeline {
 
     // Input
 
-    const Result transferIn(const Tensor<Device::CPU, F64>& blockJulianDate,
-                            const Tensor<Device::CPU, F64>& blockDut1,
-                            const ArrayTensor<Device::CPU, CI8>& input,
-                            const cudaStream_t& stream);
+    Result transferIn(const Tensor<Device::CPU, F64>& blockJulianDate,
+                      const Tensor<Device::CPU, F64>& blockDut1,
+                      const ArrayTensor<Device::CPU, CI8>& input,
+                      const cudaStream_t& stream);
 
     constexpr const ArrayTensor<Device::CUDA, CI8>& getInputBuffer() const {
         return input;

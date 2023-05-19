@@ -17,7 +17,7 @@ class BLADE_API Pipeline {
              const U64& numberOfComputeSteps = 1);
     virtual ~Pipeline();
 
-    const Result synchronize();
+    Result synchronize();
     bool isSynchronized();
 
     constexpr const bool accumulationComplete() const {
@@ -53,80 +53,80 @@ class BLADE_API Pipeline {
         this->modules.push_back(module);
     }
 
-    const Result compute();
+    Result compute();
    
     template<typename Type, typename Dims>
-    const Result copy(Vector<Device::CUDA, Type, Dims>& dst,
-                      const Vector<Device::CUDA, Type, Dims>& src) {
+    Result copy(Vector<Device::CUDA, Type, Dims>& dst,
+                const Vector<Device::CUDA, Type, Dims>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename Type, typename Dims>
-    const Result copy(Vector<Device::CUDA, Type, Dims>& dst,
-                      const Vector<Device::CPU, Type, Dims>& src) {
+    Result copy(Vector<Device::CUDA, Type, Dims>& dst,
+                const Vector<Device::CPU, Type, Dims>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename Type, typename Dims>
-    const Result copy(Vector<Device::CPU, Type, Dims>& dst,
-                      const Vector<Device::CPU, Type, Dims>& src) {
+    Result copy(Vector<Device::CPU, Type, Dims>& dst,
+                const Vector<Device::CPU, Type, Dims>& src) {
         return Memory::Copy(dst, src);
     }
 
     template<typename Type, typename Dims>
-    const Result copy(Vector<Device::CPU, Type, Dims>& dst,
-                      const Vector<Device::CUDA, Type, Dims>& src) {
+    Result copy(Vector<Device::CPU, Type, Dims>& dst,
+                const Vector<Device::CUDA, Type, Dims>& src) {
         return Memory::Copy(dst, src, this->stream);
     }
 
     template<typename DType, typename SType, typename Dims>
-    const Result copy2D(Vector<Device::CUDA, DType, Dims>& dst,
-                        const U64& dst_pitch,
-                        const U64& dst_pad,
-                        const Vector<Device::CUDA, SType, Dims>& src,
-                        const U64& src_pitch,
-                        const U64& src_pad,
-                        const U64& width,
-                        const U64& height) {
+    Result copy2D(Vector<Device::CUDA, DType, Dims>& dst,
+                  const U64& dst_pitch,
+                  const U64& dst_pad,
+                  const Vector<Device::CUDA, SType, Dims>& src,
+                  const U64& src_pitch,
+                  const U64& src_pad,
+                  const U64& width,
+                  const U64& height) {
         return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
             src_pad, width, height, this->stream);
     }
     
     template<typename DType, typename SType, typename Dims>
-    const Result copy2D(Vector<Device::CUDA, DType, Dims>& dst,
-                        const U64& dst_pitch,
-                        const U64& dst_pad,
-                        const Vector<Device::CPU, SType, Dims>& src,
-                        const U64& src_pitch,
-                        const U64& src_pad,
-                        const U64& width,
-                        const U64& height) {
+    Result copy2D(Vector<Device::CUDA, DType, Dims>& dst,
+                  const U64& dst_pitch,
+                  const U64& dst_pad,
+                  const Vector<Device::CPU, SType, Dims>& src,
+                  const U64& src_pitch,
+                  const U64& src_pad,
+                  const U64& width,
+                  const U64& height) {
         return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
             src_pad, width, height, this->stream);
     }
 
     template<typename DType, typename SType, typename Dims>
-    const Result copy2D(Vector<Device::CPU, DType, Dims>& dst,
-                        const U64& dst_pitch,
-                        const U64& dst_pad,
-                        const Vector<Device::CPU, SType, Dims>& src,
-                        const U64& src_pitch,
-                        const U64& src_pad,
-                        const U64& width,
-                        const U64& height) {
+    Result copy2D(Vector<Device::CPU, DType, Dims>& dst,
+                  const U64& dst_pitch,
+                  const U64& dst_pad,
+                  const Vector<Device::CPU, SType, Dims>& src,
+                  const U64& src_pitch,
+                  const U64& src_pad,
+                  const U64& width,
+                  const U64& height) {
         return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
             src_pad, width, height, this->stream);
     }
 
     template<typename DType, typename SType, typename Dims>
-    const Result copy2D(Vector<Device::CPU, DType, Dims>& dst,
-                        const U64& dst_pitch,
-                        const U64& dst_pad,
-                        const Vector<Device::CUDA, SType, Dims>& src,
-                        const U64& src_pitch,
-                        const U64& src_pad,
-                        const U64& width,
-                        const U64& height) {
+    Result copy2D(Vector<Device::CPU, DType, Dims>& dst,
+                  const U64& dst_pitch,
+                  const U64& dst_pad,
+                  const Vector<Device::CUDA, SType, Dims>& src,
+                  const U64& src_pitch,
+                  const U64& src_pad,
+                  const U64& width,
+                  const U64& height) {
         return Memory::Copy2D(dst, dst_pitch, src_pad, src, src_pitch, 
             src_pad, width, height, this->stream);
     }

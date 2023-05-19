@@ -8,7 +8,7 @@
 
 namespace Blade::CLI::Telescopes::Generic {
 
-const Result Setup(const Config& config);
+Result Setup(const Config& config);
 
 }  // Blade::CLI::Telecopes::Generic
 
