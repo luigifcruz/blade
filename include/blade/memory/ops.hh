@@ -1,11 +1,11 @@
 #ifndef BLADE_MEMORY_OPS_HH
 #define BLADE_MEMORY_OPS_HH
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <cuda_fp16.h>
 
-#if !defined(__CUDACC_RTC__) && !defined(BL_OPS_HOST_SIDE_KEY)
+#if !defined(__CUDA_ARCH__) && !defined(BL_OPS_HOST_SIDE_KEY)
 // This is not meant to be a fully featured complex library.
 // It's meant to be a replacement for cuComplex.h that supports
 // half-precision operations. It ignores multiple std::complex
@@ -88,34 +88,5 @@ class alignas(2 * sizeof(T)) complex {
 };
   
 }  // namespace Blade::ops
-
-namespace Blade::ops::types {
-
-typedef __half   F16;
-typedef float    F32;
-typedef double   F64;
-typedef int8_t   I8;
-typedef int16_t  I16;
-typedef int32_t  I32;
-typedef int64_t  I64;
-typedef uint8_t  U8;
-typedef uint16_t U16;
-typedef uint32_t U32;
-typedef uint64_t U64;
-typedef bool     BOOL;
-
-typedef ops::complex<F16> CF16;
-typedef ops::complex<F32> CF32;
-typedef ops::complex<F64> CF64;
-typedef ops::complex<I8>  CI8;
-typedef ops::complex<I16> CI16;
-typedef ops::complex<I32> CI32;
-typedef ops::complex<I64> CI64;
-typedef ops::complex<U8>  CU8;
-typedef ops::complex<U16> CU16;
-typedef ops::complex<U32> CU32;
-typedef ops::complex<U64> CU64;
-
-}  // namespace Blade::ops::types
 
 #endif

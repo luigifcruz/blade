@@ -12,25 +12,21 @@ struct Shape {
  public:
     using Type = std::array<U64, Dimensions>;
 
-    Shape() : _shape({0}) {};
-    Shape(const Type& shape) : _shape(shape) {}
-    Shape(const Shape& shape) : _shape(shape._shape) {}
+    Shape() : _shape({0}), _size(0) {};
+    Shape(const Type& shape) : _shape(shape) { computeSize(); }
+    Shape(const Shape& shape) : _shape(shape._shape) { computeSize(); }
 
-    __host__ __device__ const U64 size() const {
-        U64 size = 1;
-        for (const auto& n : _shape) {
-            size *= n;
-        }
-        return size; 
+    constexpr U64 size() const {
+        return _size;
     }
 
-    __host__ __device__ const U64 shapeToOffset(const Type& index) const {
+    __host__ __device__ U64 shapeToOffset(const Type& index) const {
         U64 offset = 0;
 
-        for (U64 i = 0; i < index.size(); i++) {
+        for (U64 i = 0; i < Dimensions; i++) {
             U64 product = index[i];
 
-            for (U64 j = i + 1; j < index.size(); j++) {
+            for (U64 j = i + 1; j < Dimensions; j++) {
                 product *= _shape[j];
             }
             
@@ -40,11 +36,11 @@ struct Shape {
         return offset;
     }
 
-    constexpr const U64 dimensions() const {
+    constexpr U64 dimensions() const {
         return Dimensions;
     }
 
-    const bool operator!=(const Shape& other) const {
+    bool operator!=(const Shape& other) const {
         return !(_shape == other._shape);
     }
 
@@ -62,10 +58,11 @@ struct Shape {
 
  protected:
     Type _shape;
+    U64 _size;
 
     Type operator*(const Shape& other) const {
         Type result = _shape;
-        for (U64 i = 0; i < _shape.size(); i++) {
+        for (U64 i = 0; i < Dimensions; i++) {
             result[i] *= other._shape[i];
         }
         return result;
@@ -73,10 +70,17 @@ struct Shape {
 
     Type operator/(const Shape& other) const {
         Type result = _shape;
-        for (U64 i = 0; i < _shape.size(); i++) {
+        for (U64 i = 0; i < Dimensions; i++) {
             result[i] /= other._shape[i];
         }
         return result;
+    }
+
+    void computeSize() {
+        _size = 1;
+        for (U64 i = 0; i < Dimensions; i++) {
+            _size *= _shape[i];
+        }
     }
 };
 

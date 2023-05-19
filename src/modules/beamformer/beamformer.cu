@@ -1,9 +1,10 @@
 #include "cuComplex.h"
-#include <stdint.h>
 
-#include "blade/memory/ops.hh"
+// TODO: Convert to Ops.
 
-using namespace Blade::ops::types;
+#include "blade/memory/base.hh"
+
+using namespace Blade;
 
 __device__ cuFloatComplex detect(const cuFloatComplex a) {
     return make_cuFloatComplex((a.x * a.x) + (a.y * a.y), 0.0f);

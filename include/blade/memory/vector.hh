@@ -6,7 +6,9 @@
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
 #include "blade/memory/shape.hh"
+#ifndef __CUDA_ARCH__
 #include "blade/memory/profiler.hh"
+#endif
 
 namespace Blade {
 
@@ -42,6 +44,7 @@ struct Vector {
         });
         *_refs = 1;
 
+#ifndef __CUDA_ARCH__
         if (Memory::Profiler::IsCapturing()) {
             if (_unified) {
                 Memory::Profiler::RegisterUnifiedAllocation(size_bytes());
@@ -52,6 +55,7 @@ struct Vector {
             }
             return;
         }
+#endif
 
         if constexpr (DeviceId == Device::CPU) {
             BL_CUDA_CHECK_THROW(cudaMallocHost(&_data, size_bytes()), [&]{
@@ -129,22 +133,22 @@ struct Vector {
         return _data;
     }
 
-    constexpr const U64 refs() const noexcept {
+    constexpr U64 refs() const noexcept {
         if (!_refs) {
             return 0;
         }
         return *_refs;
     }
 
-    constexpr const U64 hash() const noexcept {
+    constexpr U64 hash() const noexcept {
         return std::hash<void*>{}(_data);
     }
 
-    constexpr const U64 size() const noexcept {
+    constexpr U64 size() const noexcept {
         return _shape.size();
     }
 
-    constexpr const U64 size_bytes() const noexcept {
+    constexpr U64 size_bytes() const noexcept {
         return size() * sizeof(DataType);
     }
 
@@ -164,7 +168,7 @@ struct Vector {
         return _data[idx];
     }
 
-    [[nodiscard]] constexpr const bool empty() const noexcept {
+    [[nodiscard]] constexpr bool empty() const noexcept {
         return (_data == nullptr);
     }
 
@@ -176,11 +180,11 @@ struct Vector {
         return _data + size();
     }
 
-    constexpr const auto begin() const {
+    constexpr auto begin() const {
         return _data;
     }
 
-    constexpr const auto end() const {
+    constexpr auto end() const {
         return _data + size();
     }
 
@@ -188,11 +192,11 @@ struct Vector {
         return _shape;
     }
 
-    constexpr const bool unified() const {
+    constexpr bool unified() const {
             return _unified;
     }
 
-    const Result reshape(const Shape& shape) {
+    Result reshape(const Shape& shape) {
         if (shape.size() != _shape.size()) {
             return Result::ERROR;
         }
@@ -221,6 +225,7 @@ struct Vector {
                 BL_FATAL("Failed to deallocate CUDA memory.");
             }
 
+#ifndef __CUDA_ARCH__
             if (Memory::Profiler::IsCapturing()) {
                 if (_unified) {
                     Memory::Profiler::RegisterUnifiedDeallocation(size_bytes());
@@ -233,6 +238,7 @@ struct Vector {
                 reset();
                 return;
             }
+#endif
 
             if constexpr (DeviceId == Device::CPU) {
                 if (cudaFreeHost(_data) != cudaSuccess) {

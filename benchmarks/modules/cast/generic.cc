@@ -87,4 +87,45 @@ BENCHMARK(BM_Cast_Converged_CI8_CF32)
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 
+// CI8 to CF16
+
+static void BM_Cast_Compute_CI8_CF16(bm::State& state) {
+    ModuleUnderTest<Modules::Cast, CI8, CF16> mud;
+    BL_CHECK_THROW(mud.runComputeBenchmark(state));
+}
+
+BENCHMARK(BM_Cast_Compute_CI8_CF16)
+    ->Iterations(2<<13)
+    ->Args({2})
+    ->Args({16})
+    ->Args({64})
+    ->UseManualTime()
+    ->Unit(bm::kMillisecond);
+
+static void BM_Cast_Transfer_CI8_CF16(bm::State& state) {
+    ModuleUnderTest<Modules::Cast, CI8, CF16> mud;
+    BL_CHECK_THROW(mud.runTransferBenchmark(state));
+}
+
+BENCHMARK(BM_Cast_Transfer_CI8_CF16)
+    ->Iterations(64)
+    ->Args({2})
+    ->Args({16})
+    ->Args({64})
+    ->UseManualTime()
+    ->Unit(bm::kMillisecond);
+
+static void BM_Cast_Converged_CI8_CF16(bm::State& state) {
+    ModuleUnderTest<Modules::Cast, CI8, CF16> mud;
+    BL_CHECK_THROW(mud.runConvergedBenchmark(state));
+}
+
+BENCHMARK(BM_Cast_Converged_CI8_CF16)
+    ->Iterations(64)
+    ->Args({2})
+    ->Args({16})
+    ->Args({64})
+    ->UseManualTime()
+    ->Unit(bm::kMillisecond);
+
 BENCHMARK_MAIN();

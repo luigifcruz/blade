@@ -1,14 +1,76 @@
 #ifndef BLADE_MEMORY_TYPES_HH
 #define BLADE_MEMORY_TYPES_HH
 
-#include <cuComplex.h>
-#include <cuda_fp16.h>
-
+#include <cstdint>
+#include <cstddef>
 #include <complex>
+#include <cstdlib>
+
+#include <cuda_fp16.h>
 
 #include "blade/logger.hh"
 
+#ifdef __CUDA_ARCH__
+#include "blade/memory/ops.hh"
+#endif
+
 namespace Blade {
+
+typedef __half   F16;
+typedef float    F32;
+typedef double   F64;
+typedef int8_t   I8;
+typedef int16_t  I16;
+typedef int32_t  I32;
+typedef int64_t  I64;
+typedef uint8_t  U8;
+typedef uint16_t U16;
+typedef uint32_t U32;
+typedef uint64_t U64;
+typedef bool     BOOL;
+
+#ifndef __CUDA_ARCH__
+
+typedef std::complex<F16> CF16;
+typedef std::complex<F32> CF32;
+typedef std::complex<F64> CF64;
+typedef std::complex<I8>  CI8;
+typedef std::complex<I16> CI16;
+typedef std::complex<I32> CI32;
+typedef std::complex<I64> CI64;
+typedef std::complex<U8>  CU8;
+typedef std::complex<U16> CU16;
+typedef std::complex<U32> CU32;
+typedef std::complex<U64> CU64;
+
+#define BLADE_API __attribute__((visibility("default")))
+#define BLADE_HIDDEN __attribute__((visibility("hidden")))
+
+#else
+
+typedef ops::complex<F16> CF16;
+typedef ops::complex<F32> CF32;
+typedef ops::complex<F64> CF64;
+typedef ops::complex<I8>  CI8;
+typedef ops::complex<I16> CI16;
+typedef ops::complex<I32> CI32;
+typedef ops::complex<I64> CI64;
+typedef ops::complex<U8>  CU8;
+typedef ops::complex<U16> CU16;
+typedef ops::complex<U32> CU32;
+typedef ops::complex<U64> CU64;
+
+#define BLADE_API
+#define BLADE_HIDDEN
+
+#endif
+
+enum class BLADE_API Device : uint8_t {
+    CPU     = 1 << 0,
+    CUDA    = 1 << 1,
+    METAL   = 1 << 2,
+    VULKAN  = 1 << 3,
+};
 
 #ifndef BL_PHYSICAL_CONSTANT_C
 #define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
@@ -26,46 +88,6 @@ namespace Blade {
 #define BL_RAD_TO_DEG(RAD) (RAD * 180.0 / M_PI) 
 #endif
 
-#ifndef BLADE_API
-#define BLADE_API __attribute__((visibility("default")))
-#endif
-
-#ifndef BLADE_HIDDEN
-#define BLADE_HIDDEN __attribute__((visibility("hidden")))
-#endif
-
-enum class BLADE_API Device : uint8_t {
-    CPU     = 1 << 0,
-    CUDA    = 1 << 1,
-    METAL   = 1 << 2,
-    VULKAN  = 1 << 3,
-};
-
-typedef __half   F16;
-typedef float    F32;
-typedef double   F64;
-typedef int8_t   I8;
-typedef int16_t  I16;
-typedef int32_t  I32;
-typedef int64_t  I64;
-typedef uint8_t  U8;
-typedef uint16_t U16;
-typedef uint32_t U32;
-typedef uint64_t U64;
-typedef bool     BOOL;
-
-typedef std::complex<F16> CF16;
-typedef std::complex<F32> CF32;
-typedef std::complex<F64> CF64;
-typedef std::complex<I8>  CI8;
-typedef std::complex<I16> CI16;
-typedef std::complex<I32> CI32;
-typedef std::complex<I64> CI64;
-typedef std::complex<U8>  CU8;
-typedef std::complex<U16> CU16;
-typedef std::complex<U32> CU32;
-typedef std::complex<U64> CU64;
-
 template <typename T = void>
 struct BLADE_API TypeInfo;
 
@@ -74,7 +96,6 @@ struct BLADE_API TypeInfo<F16> {
     using type = F16;
     using subtype = F16;
     using surtype = CF16;
-    using twintype = __half2;
     inline static const char* name = "F16";
     inline static const U64 cudaSize = 1;
     inline static const char* cudaName = "__half";
@@ -85,7 +106,6 @@ struct BLADE_API TypeInfo<F32> {
     using type = F32;
     using subtype = F32;
     using surtype = CF32;
-    using twintype = float2;
     inline static const char* name = "F32";
     inline static const U64 cudaSize = 1;
     inline static const char* cudaName = "float";
@@ -96,7 +116,6 @@ struct BLADE_API TypeInfo<F64> {
     using type = F64;
     using subtype = F64;
     using surtype = CF64;
-    using twintype = double2;
     inline static const char* name = "F64";
     inline static const U64 cudaSize = 1;
     inline static const char* cudaName = "double";

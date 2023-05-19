@@ -7,6 +7,7 @@
 
 #define BL_OPS_HOST_SIDE_KEY
 #include "blade/memory/ops.hh"
+#include "blade/memory/base.hh"
 
 using namespace Blade;
 
@@ -40,12 +41,21 @@ __device__ bool assert_eq(half a, float b) {
     return false;
 }
 
+__device__ bool assert_eq(float a, float b) {
+    if (fabsf(a - b) > EPSILON) {
+        printf("Assertion failed: %f != %f\n", __half2float(a), b);
+        return true;
+    }
+    return false;
+}
+
 __device__ __managed__ bool err;
 
+template<typename T>
 __global__ void kadd() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
-    ops::complex<F16> c = a + b;
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
+    ops::complex<T> c = a + b;
 
     cuComplex cu_a = make_cuComplex(1.0, 2.0);
     cuComplex cu_b = make_cuComplex(3.0, 4.0);
@@ -58,15 +68,24 @@ __global__ void kadd() {
 TEST(HalfComplexTest, OpAdd) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    kadd<<<1, 1>>>();
+    kadd<F16><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }
 
+TEST(SingleComplexTest, OpAdd) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    kadd<F32><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+template<typename T>
 __global__ void ksub() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
-    ops::complex<F16> c = a - b;
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
+    ops::complex<T> c = a - b;
 
     cuComplex cu_a = make_cuComplex(1.0, 2.0);
     cuComplex cu_b = make_cuComplex(3.0, 4.0);
@@ -79,15 +98,24 @@ __global__ void ksub() {
 TEST(HalfComplexTest, OpSub) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    ksub<<<1, 1>>>();
+    ksub<F16><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }
 
+TEST(SingleComplexTest, OpSub) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    ksub<F32><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+template<typename T>
 __global__ void kmul() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
-    ops::complex<F16> c = a * b;
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
+    ops::complex<T> c = a * b;
 
     cuComplex cu_a = make_cuComplex(1.0, 2.0);
     cuComplex cu_b = make_cuComplex(3.0, 4.0);
@@ -100,15 +128,24 @@ __global__ void kmul() {
 TEST(HalfComplexTest, OpMul) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    kmul<<<1, 1>>>();
+    kmul<F16><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }
 
+TEST(SingleComplexTest, OpMul) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    kmul<F32><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+template<typename T>
 __global__ void kdiv() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
-    ops::complex<F16> c = a / b;
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
+    ops::complex<T> c = a / b;
 
     cuComplex cu_a = make_cuComplex(1.0, 2.0);
     cuComplex cu_b = make_cuComplex(3.0, 4.0);
@@ -121,14 +158,23 @@ __global__ void kdiv() {
 TEST(HalfComplexTest, OpDiv) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    kdiv<<<1, 1>>>();
+    kdiv<F16><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }
 
+TEST(SingleComplexTest, OpDiv) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    kdiv<F32><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+template<typename T>
 __global__ void keq() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
  
     err |=  (a == b);
     err |= !(a == a);
@@ -137,14 +183,23 @@ __global__ void keq() {
 TEST(HalfComplexTest, OpEq) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    keq<<<1, 1>>>();
+    keq<F16><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }
 
+TEST(SingleComplexTest, OpEq) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    keq<F32><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+template<typename T>
 __global__ void kieq() {
-    ops::complex<F16> a(1.0, 2.0);
-    ops::complex<F16> b(3.0, 4.0);
+    ops::complex<T> a(1.0, 2.0);
+    ops::complex<T> b(3.0, 4.0);
  
     err |= !(a != b);
     err |=  (a != a);
@@ -153,7 +208,15 @@ __global__ void kieq() {
 TEST(HalfComplexTest, OpIeq) {
     ::testing::GTEST_FLAG(print_time) = true;
     err = false;
-    kieq<<<1, 1>>>();
+    kieq<F16><<<1, 1>>>();
+    cudaDeviceSynchronize();
+    EXPECT_FALSE(err);
+}
+
+TEST(SingleComplexTest, OpIeq) {
+    ::testing::GTEST_FLAG(print_time) = true;
+    err = false;
+    kieq<F32><<<1, 1>>>();
     cudaDeviceSynchronize();
     EXPECT_FALSE(err);
 }

@@ -1,7 +1,5 @@
 #define BL_LOG_DOMAIN "P::MEMORY"
 
-#include "blade/utils/bytesize.hh"
-
 #include "blade/memory/profiler.hh"
 
 namespace Blade::Memory {
@@ -21,7 +19,7 @@ void Profiler::startCapture() {
     _isCapturing = true;
 }
 
-const Profiler::Capture Profiler::stopCapture() {
+Profiler::Capture Profiler::stopCapture() {
     if (!isCapturing()) {
         BL_FATAL("Can't stop capture because there is no ongoing capture.");
         BL_CHECK_THROW(Result::ERROR);
@@ -34,24 +32,24 @@ const Profiler::Capture Profiler::stopCapture() {
 void Profiler::printCapture() {
     BL_INFO("======== Memory Profile Capture ========");
     BL_INFO("--- CUDA -------------------------------")
-    BL_INFO("Allocated: {}", bytesize::bytesize(capture.allocatedCudaMemory).format());
-    BL_INFO("Deallocated: {}", bytesize::bytesize(capture.deallocatedCudaMemory).format());
+    BL_INFO("Allocated: {}", ReadableBytes(capture.allocatedCudaMemory));
+    BL_INFO("Deallocated: {}", ReadableBytes(capture.deallocatedCudaMemory));
     BL_INFO("Tensors Allocated: {}", capture.allocatedCudaTensors);
     BL_INFO("Tensors Deallocated: {}", capture.deallocatedCudaTensors);
     BL_INFO("--- CPU --------------------------------")
-    BL_INFO("Allocated: {}", bytesize::bytesize(capture.allocatedCpuMemory).format());
-    BL_INFO("Deallocated: {}", bytesize::bytesize(capture.deallocatedCpuMemory).format());
+    BL_INFO("Allocated: {}", ReadableBytes(capture.allocatedCpuMemory));
+    BL_INFO("Deallocated: {}", ReadableBytes(capture.deallocatedCpuMemory));
     BL_INFO("Tensors Allocated: {}", capture.allocatedCpuTensors);
     BL_INFO("Tensors Deallocated: {}", capture.deallocatedCpuTensors);
     BL_INFO("--- UNIFIED ----------------------------")
-    BL_INFO("Allocated: {}", bytesize::bytesize(capture.allocatedUnifiedMemory).format());
-    BL_INFO("Deallocated: {}", bytesize::bytesize(capture.deallocatedUnifiedMemory).format());
+    BL_INFO("Allocated: {}", ReadableBytes(capture.allocatedUnifiedMemory));
+    BL_INFO("Deallocated: {}", ReadableBytes(capture.deallocatedUnifiedMemory));
     BL_INFO("Tensors Allocated: {}", capture.allocatedUnifiedTensors);
     BL_INFO("Tensors Deallocated: {}", capture.deallocatedUnifiedTensors);
     BL_INFO("========================================");
 }
 
-const bool Profiler::isCapturing() {
+bool Profiler::isCapturing() {
     return _isCapturing;
 }
 
