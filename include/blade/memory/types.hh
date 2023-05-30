@@ -97,8 +97,8 @@ struct BLADE_API TypeInfo<F16> {
     using subtype = F16;
     using surtype = CF16;
     inline static const char* name = "F16";
-    inline static const U64 cudaSize = 1;
-    inline static const char* cudaName = "__half";
+    inline static const U64 cudaSize = 1;           // TODO: Remove all cudaSize after port to Ops is complete.
+    inline static const char* cudaName = "__half";  // TODO: Remove all cudaName after port to Ops is complete.
 };
 
 template<>
