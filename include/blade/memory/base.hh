@@ -7,6 +7,7 @@
 #include "blade/memory/shape.hh"
 #ifndef __CUDA_ARCH__
 #include "blade/memory/copy.hh"
+#include "blade/memory/collection.hh"
 #include "blade/memory/helper.hh"
 #include "blade/memory/profiler.hh"
 #include "blade/memory/utils.hh"

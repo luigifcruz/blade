@@ -26,6 +26,7 @@ static_dep_lst = [
 ]
 inc_lst = [
     include_directories('include'),
+    include_directories('kernels'),
     include_directories('.'),
 ]
 jit_lst = []
@@ -33,7 +34,7 @@ jit_lst = []
 subdir('meson')
 subdir('src')
 subdir('include')
-subdir('tools')
+subdir('kernels')
 
 lib_blade = library(
     'blade',
