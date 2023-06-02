@@ -25,7 +25,7 @@ public:
     }
 
 private:
-    Collection(const dim3& blockSize = 128)
+    Collection(const dim3& blockSize = 512)
         : cache(128, *collection_program),
           blockSize(blockSize) {
         BL_TRACE("[MEM::COLLECTION] Initiating.");
@@ -45,6 +45,7 @@ private:
                       const U64& axis,
                       const U64& offset,
                       const cudaStream_t& stream) {
+        // TODO: Fallback to memcpy when number of copies is low.
         cache
             .get_kernel(
                 Template("accumulate")
