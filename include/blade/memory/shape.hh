@@ -22,18 +22,62 @@ struct Shape {
 
     __host__ __device__ U64 shapeToOffset(const Type& index) const {
         U64 offset = 0;
+        U64 multiplier = 1;
 
-        for (U64 i = 0; i < Dimensions; i++) {
-            U64 product = index[i];
-
-            for (U64 j = i + 1; j < Dimensions; j++) {
-                product *= _shape[j];
-            }
-            
-            offset += product;
+        for (U64 i = Dimensions - 1; i < Dimensions; --i) {
+            offset += index[i] * multiplier;
+            multiplier *= _shape[i];
         }
 
         return offset;
+    }
+
+    __host__ __device__ Type offsetToShape(const U64& offset) const {
+        Type index;
+        U64 remainer = offset;
+
+        for (U64 i = Dimensions - 1; i < Dimensions; --i) {
+            index[i] = remainer % _shape[i];
+            remainer = remainer / _shape[i];
+        }
+
+        return index; 
+    }
+
+    template<U64 FixedAxis, U64 FixedAxisValue>
+    __host__ __device__ Type offsetToShape(const U64& offset) const {
+        Type index;
+        U64 remainer = offset;
+
+        for (U64 i = Dimensions - 1; i < Dimensions; --i) {
+            if (i == FixedAxis) {
+                index[i] = FixedAxisValue;
+            } else {
+                index[i] = remainer % _shape[i];
+                remainer = remainer / _shape[i];
+            }
+        }
+
+        return index; 
+    }
+
+    template<U64 FixedAxis, U64 FixedAxisValue>
+    __host__ __device__ U64 offsetToOffset(const U64& originalOffset) const {
+        U64 newOffset = 0;
+        U64 remainer = originalOffset;
+        U64 multiplier = 1;
+
+        for (U64 i = Dimensions - 1; i < Dimensions; --i) {
+            if (i == FixedAxis) {
+                newOffset += FixedAxisValue * multiplier;
+            } else {
+                newOffset += (remainer % _shape[i]) * multiplier;
+                remainer = remainer / _shape[i];
+            }
+            multiplier *= _shape[i];
+        }
+
+        return newOffset;
     }
 
     constexpr U64 dimensions() const {

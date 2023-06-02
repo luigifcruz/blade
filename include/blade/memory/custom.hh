@@ -9,6 +9,8 @@ namespace Blade {
 
 struct ArrayShape : public Shape<4> {
  public:
+    inline static const char* name = "ArrayShape";
+
     using Shape::Shape;
 
     constexpr const U64& numberOfAspects() const {
@@ -52,6 +54,8 @@ using ArrayTensor = Vector<DeviceId, DataType, ArrayShape>;
 
 struct PhasorShape : public Shape<5> {
  public:
+    inline static const char* name = "PhasorShape";
+
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
@@ -100,6 +104,8 @@ using PhasorTensor = Vector<DeviceId, DataType, PhasorShape>;
 
 struct DelayShape : public Shape<2> {
  public:
+    inline static const char* name = "DelayShape";
+
     using Shape::Shape;
 
     constexpr const U64& numberOfBeams() const {
@@ -133,6 +139,8 @@ using DelayTensor = Vector<DeviceId, DataType, DelayShape>;
 
 struct VectorShape : public Shape<1> {
  public:
+    inline static const char* name = "VectorShape";
+
     using Shape::Shape;
 
     VectorShape operator*(const VectorShape& other) const {
