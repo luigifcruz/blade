@@ -4,4 +4,4 @@ src_lst += files([
 
 subdir('memory')
 subdir('modules')
-subdir('pipelines')
+subdir('bundles')

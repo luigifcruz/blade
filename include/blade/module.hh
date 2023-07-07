@@ -17,20 +17,15 @@ namespace Blade {
 
 class Module {
  public:
-    explicit Module(const jitify2::PreprocessedProgram& program)
-        : cache(100, *program) {};
+    explicit Module(const jitify2::PreprocessedProgram& program) : cache(100, *program) {};
     virtual ~Module() = default;
 
     virtual constexpr const MemoryTaint getMemoryTaint() {
         return MemoryTaint::NONE; 
     }
 
-    virtual constexpr Result preprocess(const cudaStream_t& stream, 
-                                        const U64& currentComputeCount) {
-        return Result::SUCCESS;
-    }
-
-    virtual constexpr Result process(const cudaStream_t& stream) {
+    virtual constexpr Result process(const cudaStream_t& stream,
+                                     const U64& currentComputeStep) {
         return Result::SUCCESS;
     }
 

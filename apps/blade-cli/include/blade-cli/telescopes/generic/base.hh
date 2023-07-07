@@ -3,7 +3,7 @@
 
 #include "blade-cli/types.hh"
 
-#if defined(BLADE_PIPELINE_GENERIC_MODE_H)
+#if defined(BLADE_BUNDLE_GENERIC_MODE_H)
 #endif
 
 namespace Blade::CLI::Telescopes::Generic {

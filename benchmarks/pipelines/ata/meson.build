@@ -1,2 +1,3 @@
 subdir('mode-b')
-subdir('mode-bh')
+# TODO: Remove.
+# subdir('mode-bh')

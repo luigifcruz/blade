@@ -89,18 +89,8 @@ class BLADE_API Runner {
             });
         } catch (const Result& err) {
             // Print user friendly error and issue fatal error.
-            if (err == Result::PLAN_ERROR_ACCUMULATION_COMPLETE) {
-                BL_FATAL("Can't accumulate block because buffer is full.");
-                BL_CHECK_THROW(err);
-            }
-
             if (err == Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED) {
                 BL_FATAL("Can't transfer data because destination is not synchronized.");
-                BL_CHECK_THROW(err);
-            }
-
-            if (err == Result::PLAN_ERROR_NO_ACCUMULATOR) {
-                BL_FATAL("This mode doesn't support accumulation.");
                 BL_CHECK_THROW(err);
             }
 
@@ -110,8 +100,7 @@ class BLADE_API Runner {
             }
 
             // Ignore if throw was a skip operation.
-            if (err == Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE || 
-                err == Result::PLAN_SKIP_COMPUTE_INCOMPLETE ||
+            if (err == Result::PLAN_SKIP_COMPUTE_INCOMPLETE ||
                 err == Result::PLAN_SKIP_USER_INITIATED ||
                 err == Result::PLAN_SKIP_NO_DEQUEUE || 
                 err == Result::PLAN_SKIP_NO_SLOT) {

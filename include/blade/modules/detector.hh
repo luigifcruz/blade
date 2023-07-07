@@ -55,8 +55,7 @@ class BLADE_API Detector : public Module {
 
     explicit Detector(const Config& config, const Input& input, 
                       const cudaStream_t& stream);
-    Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
-    Result process(const cudaStream_t& stream) final;
+    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
 
  private:
     // Variables 

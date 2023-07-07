@@ -3,11 +3,11 @@
 
 #include "blade-cli/types.hh"
 
-#if defined(BLADE_PIPELINE_ATA_MODE_B)
+#if defined(BLADE_BUNDLE_ATA_MODE_B)
 #include "blade-cli/telescopes/ata/mode_b.hh"
 #endif
 
-#if defined(BLADE_PIPELINE_ATA_MODE_B) && defined(BLADE_PIPELINE_GENERIC_MODE_H)
+#if defined(BLADE_BUNDLE_ATA_MODE_B) && defined(BLADE_BUNDLE_GENERIC_MODE_H)
 #endif
 
 namespace Blade::CLI::Telescopes::ATA {

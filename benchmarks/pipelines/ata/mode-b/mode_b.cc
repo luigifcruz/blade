@@ -5,16 +5,65 @@
 #include "blade/logger.hh"
 #include "blade/runner.hh"
 #include "blade/plan.hh"
-#include "blade/pipelines/ata/mode_b.hh"
+#include "blade/bundles/ata/mode_b.hh"
 
 extern "C" {
 #include "mode_b.h"
 }
 
 using namespace Blade;
-using namespace Blade::Pipelines::ATA;
 
-using TestPipeline = ModeB<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
+template<typename OT>
+class Mode : public Pipeline {
+ public:
+    using ModeB = Bundles::ATA::ModeB<OT>;
+
+    // Config
+
+    typedef typename ModeB::Config Config;
+
+    // Constructor
+
+    explicit Mode(const Config& config)
+         : inputDut({1}),
+           inputJulianDate({1}),
+           inputBuffer(config.inputShape) {
+        this->connect(modeB, config, {
+            .dut = inputDut,
+            .julianDate = inputJulianDate,
+            .buffer = inputBuffer,
+        });
+    }
+
+    // Input
+
+    constexpr Tensor<Device::CPU, F64>& getInputDut() {
+        return inputDut;
+    }
+
+    constexpr Tensor<Device::CPU, F64>& getInputJulianDate() {
+        return inputJulianDate;
+    }
+
+    constexpr ArrayTensor<Device::CUDA, CI8>& getInputBuffer() {
+        return inputBuffer;
+    }
+
+    // Output
+
+    constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
+        return modeB->getOutputBuffer();
+    }
+
+ private:
+    std::shared_ptr<ModeB> modeB;
+
+    Tensor<Device::CPU, F64> inputDut;
+    Tensor<Device::CPU, F64> inputJulianDate;
+    ArrayTensor<Device::CUDA, CI8> inputBuffer;
+};
+
+using TestPipeline = Mode<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
 static Tensor<Device::CPU, F64> dummyJulianDate({1});
@@ -135,7 +184,9 @@ bool blade_ata_b_enqueue(void* input_ptr, void* output_ptr, U64 id) {
                 worker.getOutputBuffer().shape());
 
         // Transfer input data from CPU memory to the worker.
-        Plan::TransferIn(worker, dummyJulianDate, dummyDut1, input);
+        Plan::TransferIn(worker.getInputDut(), dummyDut1, worker);
+        Plan::TransferIn(worker.getInputJulianDate(), dummyJulianDate, worker);
+        Plan::TransferIn(worker.getInputBuffer(), input, worker);
 
         // Compute block.
         Plan::Compute(worker);

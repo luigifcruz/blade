@@ -4,7 +4,7 @@ namespace Blade::CLI::Telescopes::Generic {
 
 Result Setup(const Config& config) {
     switch (config.mode) {
-#if defined(BLADE_PIPELINE_ATA_MODE_H)
+#if defined(BLADE_BUNDLE_ATA_MODE_H)
         case ModeId::MODE_H:
             // return SetupGenericModeH<IT, OT>(config, readerRunner);
 #endif

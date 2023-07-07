@@ -14,15 +14,9 @@ foreach x_dep : deps
     all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
 endforeach
 
-if all_deps_found
-    src_lst += files([
-        'file_reader.cc',
-    ])
-endif
-
 sum_lst += {'File Reader': all_deps_found}
 
-cfg_lst.set('BLADE_PIPELINE_GENERIC_FILE_READER', all_deps_found)
+cfg_lst.set('BLADE_BUNDLE_GENERIC_FILE_READER', all_deps_found)
 
 #
 #  File Writer
@@ -37,15 +31,9 @@ foreach x_dep : deps
     all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
 endforeach
 
-if all_deps_found
-    src_lst += files([
-        'file_writer.cc',
-    ])
-endif
-
 sum_lst += {'File Writer': all_deps_found}
 
-cfg_lst.set('BLADE_PIPELINE_GENERIC_FILE_WRITER', all_deps_found)
+cfg_lst.set('BLADE_BUNDLE_GENERIC_FILE_WRITER', all_deps_found)
 
 #
 #  Mode H
@@ -62,14 +50,8 @@ foreach x_dep : deps
     all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
 endforeach
 
-if all_deps_found
-    src_lst += files([
-        'mode_h.cc',
-    ])
-endif
-
 sum_lst += {'Mode H': all_deps_found}
 
-cfg_lst.set('BLADE_PIPELINE_GENERIC_MODE_H', all_deps_found)
+cfg_lst.set('BLADE_BUNDLE_GENERIC_MODE_H', all_deps_found)
 
-summary(sum_lst, section: 'Generic Pipelines', bool_yn: true)
+summary(sum_lst, section: 'Generic Bundles', bool_yn: true)

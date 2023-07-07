@@ -1,9 +1,5 @@
 sum_lst = {}
 
-#
-#  Mode B
-#
-
 deps = [
     'BLADE_MODULE_CAST',
     'BLADE_MODULE_CHANNELIZER',
@@ -17,14 +13,8 @@ foreach x_dep : deps
     all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
 endforeach
 
-if all_deps_found
-    src_lst += files([
-         'mode_b.cc',
-    ])
-endif
-
 sum_lst += {'Mode B': all_deps_found}
 
-cfg_lst.set('BLADE_PIPELINE_ATA_MODE_B', all_deps_found)
+cfg_lst.set('BLADE_BUNDLE_ATA_MODE_B', all_deps_found)
 
-summary(sum_lst, section: 'ATA Pipelines', bool_yn: true)
+summary(sum_lst, section: 'ATA Bundles', bool_yn: true)
