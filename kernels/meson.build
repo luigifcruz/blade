@@ -9,8 +9,6 @@ foreach jit_file: jit_lst
   jitify_gen = custom_target(
       output: '@BASENAME@.jit.hh',
       input : jit_file,
-      build_always_stale : true,
-      build_by_default : true,
       install : true,
       install_dir : get_option('includedir') + '/blade/kernels',
       # TODO: Fix this hardcoded CUDA path.

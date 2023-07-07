@@ -9,7 +9,7 @@ project(
     ]
 )
 
-cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815' ]
+cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
 cfg_lst = configuration_data(
     {
