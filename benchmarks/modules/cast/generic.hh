@@ -8,7 +8,7 @@ namespace Blade {
 template<template<typename, typename> class MUT, typename IT, typename OT>
 class ModuleUnderTest : CudaBenchmark {
  public:
-    const Result runComputeBenchmark(benchmark::State& state) {
+    Result runComputeBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
         BL_CHECK(InitAndProfile([&](){
@@ -32,7 +32,7 @@ class ModuleUnderTest : CudaBenchmark {
         return Result::SUCCESS;
     }
 
-    const Result runTransferBenchmark(benchmark::State& state) {
+    Result runTransferBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
         BL_CHECK(InitAndProfile([&](){
@@ -56,7 +56,7 @@ class ModuleUnderTest : CudaBenchmark {
         return Result::SUCCESS;
     }
 
-    const Result runConvergedBenchmark(benchmark::State& state) {
+    Result runConvergedBenchmark(benchmark::State& state) {
         const U64 A = state.range(0);
 
         BL_CHECK(InitAndProfile([&](){
@@ -84,25 +84,25 @@ class ModuleUnderTest : CudaBenchmark {
     }
 
 protected:
-    const Result configureModule() {
+    Result configureModule() {
         config.blockSize = 512;
 
         return Result::SUCCESS;
     }
 
-    const Result allocateDeviceMemory(const U64& A) {
+    Result allocateDeviceMemory(const U64& A) {
         deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }
 
-    const Result allocateHostMemory(const U64& A) {
+    Result allocateHostMemory(const U64& A) {
         hostInputBuf = ArrayTensor<Device::CPU, IT>({A, 192, 8192, 2});
 
         return Result::SUCCESS;
     }
 
-    const Result initializeModule() {
+    Result initializeModule() {
         BL_DISABLE_PRINT();
         Create(module, config, {
             .buf = deviceInputBuf, 

@@ -34,8 +34,8 @@ FileWriter<IT>::FileWriter(const Config& config)
 }
 
 template<typename IT>
-const Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
-                                        const cudaStream_t& stream) {
+Result FileWriter<IT>::accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+                                  const cudaStream_t& stream) {
     const auto stepInputBufferSize = this->getStepInputBufferSize();
     if (stepInputBufferSize != data.size()) {
         BL_FATAL("Accumulate input size ({}) mismatches writer step input buffer size ({}).",

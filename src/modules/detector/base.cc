@@ -100,8 +100,8 @@ Detector<IT, OT>::Detector(const Config& config,
 }
 
 template<typename IT, typename OT>
-const Result Detector<IT, OT>::preprocess(const cudaStream_t& stream,
-                                          const U64& currentComputeCount) {
+Result Detector<IT, OT>::preprocess(const cudaStream_t& stream,
+                                    const U64& currentComputeCount) {
     if (config.integrationSize == apparentIntegrationSize) {
         return Result::SUCCESS;
     }
@@ -116,7 +116,7 @@ const Result Detector<IT, OT>::preprocess(const cudaStream_t& stream,
 }
 
 template<typename IT, typename OT>
-const Result Detector<IT, OT>::process(const cudaStream_t& stream) {
+Result Detector<IT, OT>::process(const cudaStream_t& stream) {
     return runKernel(
         // Kernel name.
         "main",

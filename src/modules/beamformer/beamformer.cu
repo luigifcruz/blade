@@ -1,13 +1,18 @@
 #include "cuComplex.h"
-#include <stdint.h>
+
+// TODO: Convert to Ops.
+
+#include "blade/memory/base.hh"
+
+using namespace Blade;
 
 __device__ cuFloatComplex detect(const cuFloatComplex a) {
     return make_cuFloatComplex((a.x * a.x) + (a.y * a.y), 0.0f);
 }
 
-template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
-         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
-         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
+template<U64 NBEAMS, U64 NANTS, U64 NCHANS,
+         U64 NTIME,  U64 NPOLS, U64 TBLOCK,
+         BOOL EnableIncoherentBeam, BOOL EnableIncoherentBeamSqrt>
 __global__ void ATA(const cuFloatComplex* input,
                     const cuFloatComplex* phasor,
                           cuFloatComplex* out) {
@@ -73,9 +78,9 @@ __global__ void ATA(const cuFloatComplex* input,
     }
 }
 
-template<uint64_t NBEAMS, uint64_t NANTS, uint64_t NCHANS,
-         uint64_t NTIME, uint64_t NPOLS, uint64_t TBLOCK,
-         bool EnableIncoherentBeam, bool EnableIncoherentBeamSqrt>
+template<U64 NBEAMS, U64 NANTS, U64 NCHANS,
+         U64 NTIME, U64 NPOLS, U64 TBLOCK,
+         BOOL EnableIncoherentBeam, BOOL EnableIncoherentBeamSqrt>
 __global__ void MeerKAT(const cuFloatComplex* input,
                         const cuFloatComplex* phasor,
                               cuFloatComplex* out) {

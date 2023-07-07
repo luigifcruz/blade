@@ -61,8 +61,8 @@ class BLADE_API Runner {
         return *workers[head];
     }
 
-    const Result applyToAllWorkers(const std::function<const Result(Pipeline&)>& modifier,
-                                   const bool block = false) {
+    Result applyToAllWorkers(const std::function<const Result(Pipeline&)>& modifier,
+                             const bool block = false) {
         for (auto& worker : workers) {
              BL_CHECK(modifier(*worker));
         }

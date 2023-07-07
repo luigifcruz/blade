@@ -103,8 +103,8 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 }
 
 template<typename OT>
-const Result ATA<OT>::preprocess(const cudaStream_t& stream,
-                                 const U64& currentComputeCount) {
+Result ATA<OT>::preprocess(const cudaStream_t& stream,
+                           const U64& currentComputeCount) {
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
     eraASTROM astrom;

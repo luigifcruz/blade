@@ -1,24 +1,20 @@
 #ifndef BLADE_MEMORY_TYPES_HH
 #define BLADE_MEMORY_TYPES_HH
 
-#include <cuda_runtime.h>
-#include <cuComplex.h>
+#include <cstdint>
+#include <cstddef>
+#include <complex>
+#include <cstdlib>
+
 #include <cuda_fp16.h>
 
-#include <string>
-#include <complex>
-
 #include "blade/logger.hh"
-#include "blade/macros.hh"
+
+#ifdef __CUDA_ARCH__
+#include "blade/memory/ops.hh"
+#endif
 
 namespace Blade {
-
-enum class BLADE_API Device : uint8_t {
-    CPU     = 1 << 0,
-    CUDA    = 1 << 1,
-    METAL   = 1 << 2,
-    VULKAN  = 1 << 3,
-};
 
 typedef __half   F16;
 typedef float    F32;
@@ -33,6 +29,8 @@ typedef uint32_t U32;
 typedef uint64_t U64;
 typedef bool     BOOL;
 
+#ifndef __CUDA_ARCH__
+
 typedef std::complex<F16> CF16;
 typedef std::complex<F32> CF32;
 typedef std::complex<F64> CF64;
@@ -45,6 +43,51 @@ typedef std::complex<U16> CU16;
 typedef std::complex<U32> CU32;
 typedef std::complex<U64> CU64;
 
+#define BLADE_API __attribute__((visibility("default")))
+#define BLADE_HIDDEN __attribute__((visibility("hidden")))
+
+#else
+
+typedef ops::complex<F16> CF16;
+typedef ops::complex<F32> CF32;
+typedef ops::complex<F64> CF64;
+typedef ops::complex<I8>  CI8;
+typedef ops::complex<I16> CI16;
+typedef ops::complex<I32> CI32;
+typedef ops::complex<I64> CI64;
+typedef ops::complex<U8>  CU8;
+typedef ops::complex<U16> CU16;
+typedef ops::complex<U32> CU32;
+typedef ops::complex<U64> CU64;
+
+#define BLADE_API
+#define BLADE_HIDDEN
+
+#endif
+
+enum class BLADE_API Device : uint8_t {
+    CPU     = 1 << 0,
+    CUDA    = 1 << 1,
+    METAL   = 1 << 2,
+    VULKAN  = 1 << 3,
+};
+
+#ifndef BL_PHYSICAL_CONSTANT_C
+#define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
+#endif
+
+#ifndef BL_PHYSICAL_CONSTANT_PI
+#define BL_PHYSICAL_CONSTANT_PI M_PI
+#endif
+
+#ifndef BL_DEG_TO_RAD 
+#define BL_DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
+#endif
+
+#ifndef BL_RAD_TO_DEG
+#define BL_RAD_TO_DEG(RAD) (RAD * 180.0 / M_PI) 
+#endif
+
 template <typename T = void>
 struct BLADE_API TypeInfo;
 
@@ -53,9 +96,9 @@ struct BLADE_API TypeInfo<F16> {
     using type = F16;
     using subtype = F16;
     using surtype = CF16;
-    inline static const std::string name = "F16";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "__half";
+    inline static const char* name = "F16";
+    inline static const U64 cudaSize = 1;           // TODO: Remove all cudaSize after port to Ops is complete.
+    inline static const char* cudaName = "__half";  // TODO: Remove all cudaName after port to Ops is complete.
 };
 
 template<>
@@ -63,9 +106,9 @@ struct BLADE_API TypeInfo<F32> {
     using type = F32;
     using subtype = F32;
     using surtype = CF32;
-    inline static const std::string name = "F32";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "float";
+    inline static const char* name = "F32";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "float";
 };
 
 template<>
@@ -73,9 +116,9 @@ struct BLADE_API TypeInfo<F64> {
     using type = F64;
     using subtype = F64;
     using surtype = CF64;
-    inline static const std::string name = "F64";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "double";
+    inline static const char* name = "F64";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "double";
 };
 
 template<>
@@ -83,9 +126,9 @@ struct BLADE_API TypeInfo<I8> {
     using type = I8;
     using subtype = I8;
     using surtype = CI8;
-    inline static const std::string name = "I8";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "signed char";
+    inline static const char* name = "I8";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "signed char";
 };
 
 template<>
@@ -93,9 +136,9 @@ struct BLADE_API TypeInfo<I16> {
     using type = I16;
     using subtype = I16;
     using surtype = CI16;
-    inline static const std::string name = "I16";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "short";
+    inline static const char* name = "I16";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "short";
 };
 
 template<>
@@ -103,9 +146,9 @@ struct BLADE_API TypeInfo<I32> {
     using type = I32;
     using subtype = I32;
     using surtype = CI32;
-    inline static const std::string name = "I32";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "long";
+    inline static const char* name = "I32";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "long";
 };
 
 template<>
@@ -113,9 +156,9 @@ struct BLADE_API TypeInfo<I64> {
     using type = I64;
     using subtype = I64;
     using surtype = CI64;
-    inline static const std::string name = "I64";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "long long";
+    inline static const char* name = "I64";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "long long";
 };
 
 template<>
@@ -123,9 +166,9 @@ struct BLADE_API TypeInfo<U8> {
     using type = U8;
     using subtype = U8;
     using surtype = CU8;
-    inline static const std::string name = "U8";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "unsigned char";
+    inline static const char* name = "U8";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "unsigned char";
 };
 
 template<>
@@ -133,9 +176,9 @@ struct BLADE_API TypeInfo<U16> {
     using type = U16;
     using subtype = U16;
     using surtype = CU16;
-    inline static const std::string name = "U16";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "unsigned short";
+    inline static const char* name = "U16";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "unsigned short";
 };
 
 template<>
@@ -143,9 +186,9 @@ struct BLADE_API TypeInfo<U32> {
     using type = U32;
     using subtype = U32;
     using surtype = CU32;
-    inline static const std::string name = "U32";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "unsigned long";
+    inline static const char* name = "U32";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "unsigned long";
 };
 
 template<>
@@ -153,9 +196,9 @@ struct BLADE_API TypeInfo<U64> {
     using type = U64;
     using subtype = U64;
     using surtype = CU64;
-    inline static const std::string name = "U64";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "unsigned long long";
+    inline static const char* name = "U64";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "unsigned long long";
 };
 
 template<>
@@ -163,9 +206,9 @@ struct BLADE_API TypeInfo<BOOL> {
     using type = BOOL;
     using subtype = BOOL;
     using surtype = BOOL;
-    inline static const std::string name = "BOOL";
-    inline static const std::size_t cudaSize = 1;
-    inline static const std::string cudaName = "bool";
+    inline static const char* name = "BOOL";
+    inline static const U64 cudaSize = 1;
+    inline static const char* cudaName = "bool";
 };
 
 template<>
@@ -173,9 +216,9 @@ struct BLADE_API TypeInfo<CF16> {
     using type = CF16;
     using subtype = F16;
     using surtype = F16;
-    inline static const std::string name = "CF16";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "half2";
+    inline static const char* name = "CF16";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "ops::complex<F16>";
 };
 
 template<>
@@ -183,9 +226,9 @@ struct BLADE_API TypeInfo<CF32> {
     using type = CF32;
     using subtype = F32;
     using surtype = F32;
-    inline static const std::string name = "CF32";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "cuFloatComplex";
+    inline static const char* name = "CF32";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "ops::complex<F32>";
 };
 
 template<>
@@ -193,9 +236,9 @@ struct BLADE_API TypeInfo<CF64> {
     using type = CF64;
     using subtype = F64;
     using surtype = F64;
-    inline static const std::string name = "CF64";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "cuDoubleComplex";
+    inline static const char* name = "CF64";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "ops::complex<F64>";
 };
 
 template<>
@@ -203,9 +246,9 @@ struct BLADE_API TypeInfo<CI8> {
     using type = CI8;
     using subtype = I8;
     using surtype = I8;
-    inline static const std::string name = "CI8";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CI8";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -213,9 +256,9 @@ struct BLADE_API TypeInfo<CI16> {
     using type = CI16;
     using subtype = I16;
     using surtype = I16;
-    inline static const std::string name = "CI16";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CI16";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -223,9 +266,9 @@ struct BLADE_API TypeInfo<CI32> {
     using type = CI32;
     using subtype = I32;
     using surtype = I32;
-    inline static const std::string name = "CI32";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CI32";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -233,9 +276,9 @@ struct BLADE_API TypeInfo<CI64> {
     using type = CI64;
     using subtype = I64;
     using surtype = I64;
-    inline static const std::string name = "CI64";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CI64";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -243,9 +286,9 @@ struct BLADE_API TypeInfo<CU8> {
     using type = CU8;
     using subtype = U8;
     using surtype = U8;
-    inline static const std::string name = "CU8";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CU8";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -253,9 +296,9 @@ struct BLADE_API TypeInfo<CU16> {
     using type = CU16;
     using subtype = U16;
     using surtype = U16;
-    inline static const std::string name = "CU16";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CU16";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -263,9 +306,9 @@ struct BLADE_API TypeInfo<CU32> {
     using type = CU32;
     using subtype = U32;
     using surtype = U32;
-    inline static const std::string name = "CU32";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CU32";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 template<>
@@ -273,9 +316,9 @@ struct BLADE_API TypeInfo<CU64> {
     using type = CU64;
     using subtype = U64;
     using surtype = U64;
-    inline static const std::string name = "CU64";
-    inline static const std::size_t cudaSize = 2;
-    inline static const std::string cudaName = "NonSupported";
+    inline static const char* name = "CU64";
+    inline static const U64 cudaSize = 2;
+    inline static const char* cudaName = "NonSupported";
 };
 
 }  // namespace Blade

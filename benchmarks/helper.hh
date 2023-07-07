@@ -19,14 +19,14 @@ class CudaBenchmark {
         cudaStreamDestroy(stream);
     }
 
-    const Result startIteration() {
+    Result startIteration() {
         cudaEventCreate(&start);
         cudaEventRecord(start, stream);
 
         return Result::SUCCESS;
     }
 
-    const Result finishIteration(benchmark::State& state) {
+    Result finishIteration(benchmark::State& state) {
         cudaEventCreate(&stop);
         cudaEventRecord(stop, stream);
         cudaEventSynchronize(stop);
@@ -58,7 +58,7 @@ class CudaBenchmark {
 static inline Result InitAndProfile(const auto& func, benchmark::State& state) {
     Memory::Profiler::StartCapture();
     func();
-    auto& capture = Memory::Profiler::StopCapture();
+    const auto& capture = Memory::Profiler::StopCapture();
 
     state.counters["cpuMem"] = capture.allocatedCpuMemory;
     state.counters["cudaMem"] = capture.allocatedCudaMemory;

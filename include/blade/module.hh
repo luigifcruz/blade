@@ -25,21 +25,21 @@ class Module {
         return MemoryTaint::NONE; 
     }
 
-    virtual constexpr const Result preprocess(const cudaStream_t& stream, 
-                                              const U64& currentComputeCount) {
+    virtual constexpr Result preprocess(const cudaStream_t& stream, 
+                                        const U64& currentComputeCount) {
         return Result::SUCCESS;
     }
 
-    virtual constexpr const Result process(const cudaStream_t& stream) {
+    virtual constexpr Result process(const cudaStream_t& stream) {
         return Result::SUCCESS;
     }
 
  protected:
-    const Result createKernel(const std::string& name,
-                              const std::string& key,
-                              const dim3& gridSize,
-                              const dim3& blockSize, 
-                              const auto... templateArguments) {
+    Result createKernel(const std::string& name,
+                        const std::string& key,
+                        const dim3& gridSize,
+                        const dim3& blockSize, 
+                        const auto... templateArguments) {
         if (blockSize.x > 1024) {
             BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
                     blockSize.x, blockSize.y, blockSize.z);
@@ -60,9 +60,9 @@ class Module {
         return Result::SUCCESS;
     } 
 
-    const Result runKernel(const std::string& name,
-                           const cudaStream_t& stream,
-                           auto... kernelArguments) {
+    Result runKernel(const std::string& name,
+                     const cudaStream_t& stream,
+                     auto... kernelArguments) {
         const auto& kernel = kernels[name];
 
         cache

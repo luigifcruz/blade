@@ -1,8 +1,9 @@
 #ifndef BLADE_MEMORY_PROFILER_HH
 #define BLADE_MEMORY_PROFILER_HH
 
+#include "blade/macros.hh"
 #include "blade/memory/types.hh"
-#include "blade/utils/bytesize.hh"
+#include "blade/memory/utils.hh"
 
 namespace Blade::Memory {
 
@@ -34,7 +35,7 @@ class BLADE_API Profiler {
         return GetInstance().startCapture();
     }
 
-    static const Capture StopCapture() {
+    static Capture StopCapture() {
         return GetInstance().stopCapture();
     }
 
@@ -42,7 +43,7 @@ class BLADE_API Profiler {
         return GetInstance().printCapture();
     }
 
-    static const bool IsCapturing() {
+    static bool IsCapturing() {
         return GetInstance().isCapturing();
     }
 
@@ -77,10 +78,10 @@ class BLADE_API Profiler {
     Profiler() : _isCapturing(false) {}
 
     void startCapture();
-    const Capture stopCapture();
+    Capture stopCapture();
     void printCapture();
 
-    const bool isCapturing();
+    bool isCapturing();
     void registerCudaAllocation(const U64& byteSize);
     void registerCpuAllocation(const U64& byteSize);
     void registerUnifiedAllocation(const U64& byteSize);

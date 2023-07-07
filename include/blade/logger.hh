@@ -1,6 +1,8 @@
 #ifndef BLADE_LOGGER_HH
 #define BLADE_LOGGER_HH
 
+#ifndef __CUDA_ARCH__
+
 #include <iostream>
 
 #include <fmt/ostream.h>
@@ -60,29 +62,21 @@
 #ifndef BL_WARN
 #define BL_WARN(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_WARN << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
         fmt::format(fg(fmt::color::yellow), __VA_ARGS__) << std::endl;
-#else
-#define BL_WARN(...)
 #endif
 
 #ifndef BL_INFO
 #define BL_INFO(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_INFO << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
         fmt::format(fg(fmt::color::cyan), __VA_ARGS__) << std::endl;
-#else
-#define BL_INFO(...)
 #endif
 
 #ifndef BL_ERROR
 #define BL_ERROR(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_ERROR << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::red), __VA_ARGS__) << std::endl;
-#else
-#define BL_ERROR(...)
 #endif
 
 #ifndef BL_FATAL
 #define BL_FATAL(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_FATAL << BL_LOG_DOMAIN_STR << \
         BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::magenta), __VA_ARGS__) << std::endl;
-#else
-#define BL_FATAL(...)
 #endif
 
 inline void BL_LOG_PRINT_ET() {
@@ -98,5 +92,33 @@ Version {} | Build Type: {} | Commit: {}
      ^  ^  ^       _H_ \ art by jgs
     )", BLADE_VERSION_STR, BLADE_BUILD_TYPE, BLADE_COMMIT_STR);
 }
+
+#else
+
+#ifndef BL_TRACE
+#define BL_TRACE(...)
+#endif
+
+#ifndef BL_DEBUG
+#define BL_DEBUG(...)
+#endif
+
+#ifndef BL_WARN
+#define BL_WARN(...)
+#endif
+
+#ifndef BL_INFO
+#define BL_INFO(...)
+#endif
+
+#ifndef BL_ERROR
+#define BL_ERROR(...)
+#endif
+
+#ifndef BL_FATAL
+#define BL_FATAL(...)
+#endif
+
+#endif
 
 #endif

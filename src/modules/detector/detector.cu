@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include "cuComplex.h"
 
+// TODO: Convert to Ops.
+
 template<uint64_t N, uint64_t INTG>
 __global__ void detector_4pol(const cuFloatComplex* input,
                               float* output,

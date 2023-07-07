@@ -46,7 +46,7 @@ Cast<IT, OT>::Cast(const Config& config,
 }
 
 template<typename IT, typename OT>
-const Result Cast<IT, OT>::process(const cudaStream_t& stream) {
+Result Cast<IT, OT>::process(const cudaStream_t& stream) {
     return this->runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 

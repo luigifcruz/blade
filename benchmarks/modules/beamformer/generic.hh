@@ -8,7 +8,7 @@ namespace Blade {
 template<template<typename, typename> class MUT, typename IT, typename OT>
 class ModuleUnderTest : CudaBenchmark {
  public:
-    const Result runComputeBenchmark(benchmark::State& state) {
+    Result runComputeBenchmark(benchmark::State& state) {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
@@ -33,7 +33,7 @@ class ModuleUnderTest : CudaBenchmark {
         return Result::SUCCESS;
     }
 
-    const Result runTransferBenchmark(benchmark::State& state) {
+    Result runTransferBenchmark(benchmark::State& state) {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
@@ -61,7 +61,7 @@ class ModuleUnderTest : CudaBenchmark {
         return Result::SUCCESS;
     }
 
-    const Result runConvergedBenchmark(benchmark::State& state) {
+    Result runConvergedBenchmark(benchmark::State& state) {
         const U64 A = state.range(1);
         const U64 B = state.range(0);
 
@@ -93,7 +93,7 @@ class ModuleUnderTest : CudaBenchmark {
     }
 
 protected:
-    const Result configureModule() {
+    Result configureModule() {
         config.enableIncoherentBeam = false;
         config.enableIncoherentBeamSqrt = false;
         config.blockSize = 512;
@@ -101,21 +101,21 @@ protected:
         return Result::SUCCESS;
     }
 
-    const Result allocateDeviceMemory(const U64& A, const U64& B) {
+    Result allocateDeviceMemory(const U64& A, const U64& B) {
         deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
         deviceInputPhasors = PhasorTensor<Device::CUDA, IT>({B, A, 192, 1, 2});
 
         return Result::SUCCESS;
     }
 
-    const Result allocateHostMemory(const U64& A, const U64& B) {
+    Result allocateHostMemory(const U64& A, const U64& B) {
         hostInputBuf = ArrayTensor<Device::CPU, IT>({A, 192, 8192, 2});
         hostInputPhasors = PhasorTensor<Device::CPU, IT>({B, A, 192, 1, 2});
 
         return Result::SUCCESS;
     }
 
-    const Result initializeModule() {
+    Result initializeModule() {
         BL_DISABLE_PRINT();
         Create(module, config, {
             .buf = deviceInputBuf, 

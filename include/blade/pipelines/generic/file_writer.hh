@@ -57,8 +57,8 @@ class BLADE_API FileWriter : public Pipeline {
         return this->config;
     }
 
-    const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
-                            const cudaStream_t& stream);
+    Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+                      const cudaStream_t& stream);
 
  private:
     const Config config;

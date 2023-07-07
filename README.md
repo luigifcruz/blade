@@ -32,6 +32,12 @@ Blade is organized into three parts: Modules, Pipelines, and Runners. The Module
 - Python Astropy
 - Python Pandas
 
+### Documentation Dependencies
+
+```
+python -m pip install breathe sphinx_rtd_theme
+```
+
 ### Installation
 
 Any up-to-date Linux:

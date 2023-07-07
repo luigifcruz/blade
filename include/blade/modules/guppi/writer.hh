@@ -56,7 +56,7 @@ class BLADE_API Writer : public Module {
 
     explicit Writer(const Config& config, const Input& input,
                     const cudaStream_t& stream);
-    const Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
+    Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
 
     // Miscullaneous
 

@@ -1,13 +1,15 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '0.9.0',
+    version: '0.10.0',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
         'b_ndebug=if-release',
     ]
 )
+
+cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
 cfg_lst = configuration_data(
     {
@@ -24,6 +26,7 @@ static_dep_lst = [
 ]
 inc_lst = [
     include_directories('include'),
+    include_directories('kernels'),
     include_directories('.'),
 ]
 jit_lst = []
@@ -31,7 +34,7 @@ jit_lst = []
 subdir('meson')
 subdir('src')
 subdir('include')
-subdir('tools')
+subdir('kernels')
 
 lib_blade = library(
     'blade',

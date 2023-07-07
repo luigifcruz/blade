@@ -36,8 +36,8 @@ class BLADE_API ModeH : public Pipeline {
 
     // Input
 
-    const Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
-                            const cudaStream_t& stream);
+    Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
+                      const cudaStream_t& stream);
 
     constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
         return input;

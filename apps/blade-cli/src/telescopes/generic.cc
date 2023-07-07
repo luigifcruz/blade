@@ -2,7 +2,7 @@
 
 namespace Blade::CLI::Telescopes::Generic {
 
-const Result Setup(const Config& config) {
+Result Setup(const Config& config) {
     switch (config.mode) {
 #if defined(BLADE_PIPELINE_ATA_MODE_H)
         case ModeId::MODE_H:

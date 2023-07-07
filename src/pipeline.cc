@@ -49,7 +49,7 @@ const U64 Pipeline::resetComputeSteps() {
     return previous;
 }
 
-const Result Pipeline::synchronize() {
+Result Pipeline::synchronize() {
     BL_CUDA_CHECK(cudaStreamSynchronize(this->stream), [&]{
         BL_FATAL("Failed to synchronize stream: {}", err);
     });
@@ -60,7 +60,7 @@ bool Pipeline::isSynchronized() {
     return cudaStreamQuery(this->stream) == cudaSuccess;
 }
 
-const Result Pipeline::compute() {
+Result Pipeline::compute() {
     for (auto& module : this->modules) {
         BL_CHECK(module->preprocess(this->stream, this->currentComputeCount));
     }
