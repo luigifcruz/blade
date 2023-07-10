@@ -32,8 +32,10 @@ bool Pipeline::isSynchronized() {
     return cudaStreamQuery(this->stream) == cudaSuccess;
 }
 
-// TODO: Add skip logic.
 Result Pipeline::compute() {
+    // TODO: Add handlers for Result::PIPELINE_EXHAUST.
+    // TODO: Add handlers for Result::PIPELINE_CONTINUE.
+    // TODO: Validate pipeline with MemoryTaint (in-place modules).
     for (auto& module : this->modules) {
         BL_CHECK(module->process(stream, currentComputeStep));
     }
