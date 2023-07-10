@@ -89,14 +89,13 @@ class BLADE_API Runner {
             });
         } catch (const Result& err) {
             // Ignore if throw was a skip operation.
-            if (err == Result::PLAN_SKIP_COMPUTE_INCOMPLETE ||
-                err == Result::PLAN_SKIP_NO_DEQUEUE || 
-                err == Result::PLAN_SKIP_NO_SLOT) {
+            if (err == Result::PLAN_CONTINUE_NO_DEQUEUE || 
+                err == Result::PLAN_CONTINUE_NO_SLOT) {
                 return false;
             }
 
             // Ignore if throw originates from exhaustion.
-            if (err == Result::EXHAUSTED) {
+            if (err == Result::PIPELINE_EXHAUSTED) {
                 return false;
             }
 

@@ -10,9 +10,14 @@ namespace Blade {
 
 enum class MemoryTaint : uint8_t {
     NONE     = 0 << 0,
+    // Consumes externally allocated input data.
     CONSUMER = 1 << 0,
+    // Produces internally allocated output data.
     PRODUCER = 1 << 1,
+    // Modifies externally allocated input data.
     MODIFIER = 1 << 2,
+    // Can emit Result::PIPELINE_CONTINUE after Module::Process call.
+    CHRONOUS = 1 << 3, 
 };
 
 inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
@@ -22,19 +27,12 @@ inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
 enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,
-    SKIP = 2,
     CUDA_ERROR,
     ASSERTION_ERROR,
-    EXHAUSTED,
-    BUFFER_FULL,
-    BUFFER_INCOMPLETE,
-    BUFFER_EMPTY,
-    PLAN_SKIP_NO_SLOT,
-    PLAN_SKIP_COMPUTE_INCOMPLETE,
-    PLAN_SKIP_NO_DEQUEUE,
-    PLAN_SKIP_USER_INITIATED,
-    PLAN_ERROR_NO_SLOT,
-    PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED,
+    PIPELINE_EXHAUSTED,
+    PIPELINE_CONTINUE,
+    PLAN_CONTINUE_NO_SLOT,
+    PLAN_CONTINUE_NO_DEQUEUE,
 };
 
 }  // namespace Blade 

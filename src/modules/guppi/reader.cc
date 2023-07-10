@@ -124,7 +124,7 @@ const F64 Reader<OT>::getObservationFrequency() const {
 template<typename OT>
 Result Reader<OT>::process(const cudaStream_t& stream, const U64& currentComputeStep) {
     if (!this->keepRunning()) {
-        return Result::EXHAUSTED;
+        return Result::PIPELINE_EXHAUSTED;
     }
 
     this->lastread_block_index = gr_iterate.block_index;

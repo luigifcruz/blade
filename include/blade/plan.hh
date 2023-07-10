@@ -21,7 +21,7 @@ class BLADE_API Plan {
     static void Available(const std::unique_ptr<Runner<T>>& runner) {
         // Check if runner has an available slot.
         if (!runner->slotAvailable()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+            BL_CHECK_THROW(Result::PLAN_CONTINUE_NO_SLOT);
         }
 
         // Get hot pipeline.
@@ -29,19 +29,19 @@ class BLADE_API Plan {
 
         // Check if pipeline is ready to output.
         if (pipeline.computeComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+            BL_CHECK_THROW(Result::PLAN_CONTINUE_NO_SLOT);
         }
 
         // Check if pipeline is not processing.
         if (!pipeline.isSynchronized()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+            BL_CHECK_THROW(Result::PLAN_CONTINUE_NO_SLOT);
         }
     } 
 
     static void Dequeue(auto& runner, U64* id) {
         // Dequeue job from runner.
         if (!runner->dequeue(id)) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_DEQUEUE);
+            BL_CHECK_THROW(Result::PLAN_CONTINUE_NO_DEQUEUE);
         }
     }
 
@@ -81,7 +81,7 @@ class BLADE_API Plan {
                             auto& pipeline) {
         // Check if pipeline is ready to output.
         if (pipeline.computeComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
+            BL_CHECK_THROW(Result::PLAN_CONTINUE_NO_SLOT);
         }
 
         // Transfer data to the vector.
