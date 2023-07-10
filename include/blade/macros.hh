@@ -22,6 +22,7 @@ inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
 enum class Result : uint8_t {
     SUCCESS = 0,
     ERROR = 1,
+    SKIP = 2,
     CUDA_ERROR,
     ASSERTION_ERROR,
     EXHAUSTED,
@@ -30,12 +31,9 @@ enum class Result : uint8_t {
     BUFFER_EMPTY,
     PLAN_SKIP_NO_SLOT,
     PLAN_SKIP_COMPUTE_INCOMPLETE,
-    PLAN_SKIP_ACCUMULATION_INCOMPLETE,
     PLAN_SKIP_NO_DEQUEUE,
     PLAN_SKIP_USER_INITIATED,
     PLAN_ERROR_NO_SLOT,
-    PLAN_ERROR_NO_ACCUMULATOR,
-    PLAN_ERROR_ACCUMULATION_COMPLETE,
     PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED,
 };
 

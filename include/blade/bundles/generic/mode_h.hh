@@ -1,20 +1,17 @@
-#ifndef BLADE_PIPELINES_GENERIC_MODE_H_HH
-#define BLADE_PIPELINES_GENERIC_MODE_H_HH
+#ifndef BLADE_BUNDLES_GENERIC_MODE_H_HH
+#define BLADE_BUNDLES_GENERIC_MODE_H_HH
 
-#include <memory>
-#include <deque>
-
-#include "blade/pipeline.hh"
+#include "blade/bundle.hh"
 
 #include "blade/modules/channelizer/base.hh"
 #include "blade/modules/detector.hh"
 #include "blade/modules/cast.hh"
 #include "blade/modules/polarizer.hh"
 
-namespace Blade::Pipelines::Generic {
+namespace Blade::Bundles::Generic {
 
 template<typename IT, typename OT>
-class BLADE_API ModeH : public Pipeline {
+class BLADE_API ModeH : public Bundle {
  public:
     // Configuration 
 
@@ -34,15 +31,6 @@ class BLADE_API ModeH : public Pipeline {
         U64 detectorBlockSize = 512;
     };
 
-    // Input
-
-    Result accumulate(const ArrayTensor<Device::CUDA, IT>& data,
-                      const cudaStream_t& stream);
-
-    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
-        return input;
-    }
-
     // Output 
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
@@ -61,8 +49,8 @@ class BLADE_API ModeH : public Pipeline {
     using InputCast = typename Modules::Cast<CF16, CF32>;
     std::shared_ptr<InputCast> cast;
 
-    using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
-    std::shared_ptr<PreChannelizer> channelizer;
+    using Channelizer = typename Modules::Channelizer<CF32, CF32>;
+    std::shared_ptr<Channelizer> channelizer;
 
     using Polarizer = typename Modules::Polarizer<CF32, CF32>;
     std::shared_ptr<Polarizer> polarizer;
@@ -79,6 +67,6 @@ class BLADE_API ModeH : public Pipeline {
     }
 };
 
-}  // namespace Blade::Pipelines::Generic
+}  // namespace Blade::Bundles::Generic
 
 #endif

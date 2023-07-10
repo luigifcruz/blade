@@ -59,7 +59,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Polarizer<IT, OT>::process(const cudaStream_t& stream) {
+Result Polarizer<IT, OT>::process(const cudaStream_t& stream, const U64& currentComputeStep) {
     if (config.mode == Mode::BYPASS) {
         return Result::SUCCESS;
     }

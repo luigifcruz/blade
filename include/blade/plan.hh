@@ -24,14 +24,10 @@ class BLADE_API Plan {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
 
-        // Check if accumulator is complete.
+        // Get hot pipeline.
         auto& pipeline = runner->getNextWorker();
 
-        // Check if pipeline is not full.
-        if (pipeline.accumulationComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
-        }
-
+        // Check if pipeline is ready to output.
         if (pipeline.computeComplete()) {
             BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
@@ -57,113 +53,40 @@ class BLADE_API Plan {
         return true;
     }
 
-    // Skip lets the user skip a cycle programmatically.
-    static void Skip() {
-        BL_CHECK_THROW(Result::PLAN_SKIP_USER_INITIATED);
-    }
-
     // Compute is used to trigger the compute step of a pipeline.
     template<class Pipeline>
     static void Compute(Pipeline& pipeline) {
-        // Check if accumulator is complete.
-        if (!pipeline.accumulationComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_ACCUMULATION_INCOMPLETE);
-        }
-
         // Run compute step.
         BL_CHECK_THROW(pipeline.compute());
-        
-        // Increment compute after compute step.
-        pipeline.incrementComputeStep();
-
-        // Reset accumulator after compute.
-        pipeline.resetAccumulatorSteps();
-
-        // Skip if compute is incomplete.
-        if (!pipeline.computeComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_COMPUTE_INCOMPLETE);
-        }
-
-        // Reset compute if complete.
-        pipeline.resetComputeSteps();
     } 
 
-    // TransferIn is used to the copy data to a pipeline.
-    template<typename... Args>
-    static void TransferIn(auto& pipeline, Args&... transfers) {
+    // TransferIn(3) is used to transfer data to a pipeline input vector.
+    template<Device SDev, Device DDev, typename Type, typename Shape>
+    static void TransferIn(Vector<SDev, Type, Shape>& dst, 
+                           const Vector<DDev, Type, Shape>& src, 
+                           auto& pipeline) {
         // Check if destionation pipeline is synchronized.
         if (!pipeline.isSynchronized()) {
             pipeline.synchronize();
         }
 
-        // Transfer data to the pipeline.
-        BL_CHECK_THROW(pipeline.transferIn(transfers..., pipeline.getCudaStream()));
-    }
-
-    // TransferOut(3) is used to transfer output data from one pipeline to a vector.
-    template<Device SDev, typename SType, Device DDev, typename DType>
-    static void TransferOut(ArrayTensor<SDev, SType>& dst, 
-                            const ArrayTensor<DDev, DType>& src, 
-                            auto& pipeline) {
         // Transfer data to the vector.
         BL_CHECK_THROW(Memory::Copy(dst, src, pipeline.getCudaStream()));
     }
 
-    // TransferOut(3, ...) is used to transfer output data from one pipeline to another.
-    template<typename... Args>
-    static void TransferOut(auto& destinationRunner, auto& sourceRunner, Args&... transfers) {
-        // Check if runner has an available slot.
-        if (!destinationRunner->slotAvailable()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_NO_SLOT);
+    // TransferOut(3) is used to transfer data from a pipeline output vector.
+    template<Device SDev, Device DDev, typename Type, typename Shape>
+    static void TransferOut(Vector<SDev, Type, Shape>& dst, 
+                            const Vector<DDev, Type, Shape>& src, 
+                            auto& pipeline) {
+        // Check if pipeline is ready to output.
+        if (pipeline.computeComplete()) {
+            BL_CHECK_THROW(Result::PLAN_SKIP_NO_SLOT);
         }
 
-        // Fetch runners pipelines.
-        auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
-        auto& destinationPipeline = destinationRunner->getNextWorker();
-
-        // Check if destination pipeline is synchronized.
-        if (!destinationPipeline.isSynchronized()) {
-            destinationPipeline.synchronize();
-        }
-
-        // Fetch CUDA stream of source pipeline.
-        const auto& stream = sourcePipeline.getCudaStream();
-
-        // Transfer data to the pipeline.
-        BL_CHECK_THROW(destinationPipeline.transferIn(transfers..., stream));
-    } 
-
-    // Accumulate is used to concatenate output data from one pipeline to another.
-    template<typename Runner, typename... Args>
-    static void Accumulate(Runner& destinationRunner, auto& sourceRunner, Args&... transfers) {
-        // Check if runner has an available slot.
-        if (!destinationRunner->slotAvailable()) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_NO_SLOT);
-        }
-
-        // Fetch runners pipelines.
-        auto& sourcePipeline = sourceRunner->getWorker(sourceRunner->getHead());
-        auto& destinationPipeline = destinationRunner->getNextWorker();
-
-        // Check if runner needs accumulation.
-        if (destinationPipeline.getAccumulatorNumberOfSteps() == 0) {
-            BL_CHECK_THROW(Result::PLAN_ERROR_NO_ACCUMULATOR);
-        }
-
-        // Check if destionation pipeline is synchronized.
-        if (!destinationPipeline.isSynchronized()) {
-            destinationPipeline.synchronize();
-        }
-
-        // Fetch CUDA stream of source pipeline.
-        const auto& stream = sourcePipeline.getCudaStream();
-
-        // Transfer data to the pipeline.
-        BL_CHECK_THROW(destinationPipeline.accumulate(transfers..., stream));
-
-        // Increment pipeline accumulator.
-        destinationPipeline.incrementAccumulatorStep();
-    } 
+        // Transfer data to the vector.
+        BL_CHECK_THROW(Memory::Copy(dst, src, pipeline.getCudaStream()));
+    }
 
  private:
     Plan();

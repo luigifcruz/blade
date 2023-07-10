@@ -1,13 +1,16 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '0.10.0',
+    version: '1.0.0',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
         'b_ndebug=if-release',
     ]
 )
+
+# TODO: Remove.
+has_python = false
 
 cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
@@ -52,10 +55,10 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-subdir('python')
-subdir('tests')
+# subdir('python')
+# subdir('tests')
 subdir('benchmarks')
-subdir('docs')
+# subdir('docs')
 
 summary({'cpp_std': get_option('cpp_std'),
             'prefix': get_option('prefix'),
@@ -69,4 +72,4 @@ pkg.generate(
     libraries: dep_lst,
 )
 
-subdir('apps')
+# subdir('apps')

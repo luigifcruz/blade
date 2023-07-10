@@ -100,23 +100,14 @@ Detector<IT, OT>::Detector(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Detector<IT, OT>::preprocess(const cudaStream_t& stream,
-                                    const U64& currentComputeCount) {
+Result Detector<IT, OT>::process(const cudaStream_t& stream, const U64& currentComputeStep) {
     if (config.integrationSize == apparentIntegrationSize) {
         return Result::SUCCESS;
     }
 
-    if ((currentComputeCount % config.integrationSize) == 0) {
-        ctrlResetTensor[0] = true;
-    } else {
-        ctrlResetTensor[0] = false;
-    }
+    // TODO: Check this logic.
+    ctrlResetTensor[0] = ((currentComputeStep % config.integrationSize) == 0);
 
-    return Result::SUCCESS;
-}
-
-template<typename IT, typename OT>
-Result Detector<IT, OT>::process(const cudaStream_t& stream) {
     return runKernel(
         // Kernel name.
         "main",
