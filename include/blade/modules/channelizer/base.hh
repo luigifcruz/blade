@@ -50,7 +50,7 @@ class BLADE_API Channelizer : public Module {
 
     constexpr const MemoryTaint getMemoryTaint() {
         return MemoryTaint::CONSUMER |
-               MemoryTaint::PRODUCER;
+               MemoryTaint::MODIFIER;
     }
 
     // Constructor & Processing

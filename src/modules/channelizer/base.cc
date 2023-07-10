@@ -17,22 +17,24 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     // Check configuration values.
     if ((getInputBuffer().shape().numberOfTimeSamples() % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
-                "by the channelizer rate ({}).", getInputBuffer().shape().numberOfTimeSamples(),
-                config.rate);
+                 "by the channelizer rate ({}).",
+                 getInputBuffer().shape().numberOfTimeSamples(), config.rate);
         BL_CHECK_THROW(Result::ERROR);
     }
 
     if (((config.rate % 2) != 0) && (config.rate != 1)) {
         BL_FATAL("The channelizer rate ({}) should be divisable by 2.", config.rate);
-        throw Result::ERROR;
+        BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (((config.rate % 2) != 0) && (config.rate != 1)) {
-        BL_FATAL("The channelizer rate ({}) should be divisable by 2.", config.rate);
-        throw Result::ERROR;
+    if (config.rate != 1 && config.rate != getInputBuffer().shape().numberOfTimeSamples()) {
+        BL_FATAL("Due to performance reasons, channelization rates ({}) "
+                 "different than the number of time samples ({}) are not "
+                 "supported anymore.", config.rate, getInputBuffer().shape().numberOfTimeSamples());
+        BL_CHECK_THROW(Result::ERROR);
     }
 
-    // Link output buffer or link input with output.
+    // Link input with output (in-place operation).
     BL_CHECK_THROW(Memory::Link(output.buf, input.buf, getOutputBufferShape()));
 
     // Print configuration values.
@@ -40,18 +42,10 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
                                getOutputBuffer().shape());
     BL_INFO("FFT Size: {}", config.rate);
-    BL_INFO("FFT Backend: cuFFT Callbacks");
 
     // Check FFT rate.
     if (config.rate == 1) {
         return;
-    }
-
-    if (config.rate != getInputBuffer().shape().numberOfTimeSamples()) {
-        BL_FATAL("Due to performance reasons, channelization with rates "
-                 "different than the number of time samples are not "
-                 "supported anymore.");
-        BL_CHECK_THROW(Result::ERROR);
     }
 
     // FFT dimension (1D, 2D, ...).
