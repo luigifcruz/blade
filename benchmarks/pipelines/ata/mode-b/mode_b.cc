@@ -17,10 +17,10 @@ using namespace Blade;
 // TODO: Add Mode-H benchmark.
 // TODO: Update Mode-HB benchmark.
 
-template<typename OT>
+template<typename IT, typename OT>
 class Mode : public Pipeline {
  public:
-    using ModeB = Bundles::ATA::ModeB<OT>;
+    using ModeB = Bundles::ATA::ModeB<IT, OT>;
 
     // Config
 
@@ -64,10 +64,11 @@ class Mode : public Pipeline {
 
     Tensor<Device::CPU, F64> inputDut;
     Tensor<Device::CPU, F64> inputJulianDate;
-    ArrayTensor<Device::CUDA, CI8> inputBuffer;
+    ArrayTensor<Device::CUDA, IT> inputBuffer;
 };
 
-using TestPipeline = Mode<BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
+using TestPipeline = Mode<BLADE_ATA_MODE_B_INPUT_ELEMENT_T,
+                          BLADE_ATA_MODE_B_OUTPUT_ELEMENT_T>;
 
 static std::unique_ptr<Runner<TestPipeline>> runner;
 static Tensor<Device::CPU, F64> dummyJulianDate({1});

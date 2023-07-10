@@ -14,8 +14,7 @@
 
 namespace Blade::Bundles::ATA {
 
-// TODO: Add input type.
-template<typename OT>
+template<typename IT, typename OT>
 class BLADE_API ModeB : public Bundle {
  public:
     // Configuration 
@@ -57,7 +56,7 @@ class BLADE_API ModeB : public Bundle {
     struct Input {
         const Tensor<Device::CPU, F64>& dut;
         const Tensor<Device::CPU, F64>& julianDate;
-        const ArrayTensor<Device::CUDA, CI8>& buffer;
+        const ArrayTensor<Device::CUDA, IT>& buffer;
     };
 
     // Output 
@@ -82,10 +81,9 @@ class BLADE_API ModeB : public Bundle {
 
     explicit ModeB(const Config& config, const Input& input, const cudaStream_t& stream)
          : Bundle(stream), config(config) {
-        BL_DEBUG("Initializing ATA Bundle Mode B.");
+        BL_DEBUG("Initializing Mode-B Bundle for ATA.");
 
-        // TODO: Add variable input cast.
-        BL_DEBUG("Instantiating input cast from I8 to CF32.");
+        BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
         this->connect(inputCast, {
             .blockSize = config.castBlockSize,
         }, {
@@ -180,7 +178,7 @@ class BLADE_API ModeB : public Bundle {
  private:
     const Config config;
 
-    using InputCast = typename Modules::Cast<CI8, CF32>;
+    using InputCast = typename Modules::Cast<IT, CF32>;
     std::shared_ptr<InputCast> inputCast;
 
     using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;

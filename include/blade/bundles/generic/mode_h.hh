@@ -38,30 +38,28 @@ class BLADE_API ModeH : public Bundle {
     // Output 
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
-        return detector->getOutputBuffer();
+        return outputCast->getOutputBuffer();
     }
 
     // Constructor
 
     explicit ModeH(const Config& config, const Input& input, const cudaStream_t& stream)
          : Bundle(stream), config(config) {
-        BL_DEBUG("Initializing Pipeline Mode H.");
+        BL_DEBUG("Initializing Mode-H Bundle.");
 
-        if constexpr (!std::is_same<IT, CF32>::value) {
-            BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
-            this->connect(cast, {
-                .blockSize = config.castBlockSize,
-            }, {
-                .buf = input.buffer,
-            });
-        }
+        BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
+        this->connect(inputCast, {
+            .blockSize = config.castBlockSize,
+        }, {
+            .buf = input.buffer,
+        });
 
         BL_DEBUG("Instantiating channelizer with rate {}.", config.inputShape.numberOfTimeSamples());
         this->connect(channelizer, {
             .rate = config.inputShape.numberOfTimeSamples(),
             .blockSize = config.channelizerBlockSize,
         }, {
-            .buf = this->getChannelizerInput(),
+            .buf = inputCast.getOutputBuffer(),
         });
 
         BL_DEBUG("Instatiating polarizer module.")
@@ -82,14 +80,19 @@ class BLADE_API ModeH : public Bundle {
             .buf = polarizer->getOutputBuffer(),
         });
 
-        // TODO: Add output cast.
+        BL_DEBUG("Instantiating output cast from F32 to {}.", TypeInfo<OT>::name);
+        this->connect(outputCast, {
+            .blockSize = config.castBlockSize,
+        }, {
+            .buf = detector->getOutputBuffer(),
+        });
     }
 
  private:
     const Config config;
 
-    using InputCast = typename Modules::Cast<CF16, CF32>;
-    std::shared_ptr<InputCast> cast;
+    using InputCast = typename Modules::Cast<IT, CF32>;
+    std::shared_ptr<InputCast> inputCast;
 
     using Channelizer = typename Modules::Channelizer<CF32, CF32>;
     std::shared_ptr<Channelizer> channelizer;
@@ -100,13 +103,8 @@ class BLADE_API ModeH : public Bundle {
     using Detector = typename Modules::Detector<CF32, F32>;
     std::shared_ptr<Detector> detector;
 
-    constexpr const ArrayTensor<Device::CUDA, CF32>& getChannelizerInput() {
-        if constexpr (!std::is_same<IT, CF32>::value) {
-            return cast->getOutputBuffer();
-        } else {
-            return input;
-        }
-    }
+    using OutputCast = typename Modules::Cast<F32, OT>;
+    std::shared_ptr<OutputCast> outputCast;
 };
 
 }  // namespace Blade::Bundles::Generic
