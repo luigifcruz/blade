@@ -24,8 +24,6 @@
 #mesondefine BLADE_BUNDLE_ATA_MODE_B
 
 // Generic Pipelines
-#mesondefine BLADE_BUNDLE_GENERIC_FILE_READER
-#mesondefine BLADE_BUNDLE_GENERIC_FILE_WRITER
 #mesondefine BLADE_BUNDLE_GENERIC_MODE_H
 
 // Dependency Loaders

@@ -40,10 +40,9 @@ class BLADE_API Pipeline {
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,
                  const typename Block::Input& input) {
-        module = std::make_unique<Block>(config, input, stream);
+        module = std::make_shared<Block>(config, input, stream);
 
-        if (std::is_base_of_v<Bundle, Block>) {
-            BL_DEBUG("Adding bundle to pipeline.");
+        if constexpr (std::is_base_of<Bundle, Block>::value) {
             for (auto& mod : module->getModules()) {
                 modules.push_back(mod);
             }

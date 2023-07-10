@@ -88,20 +88,8 @@ class BLADE_API Runner {
                 .worker = workers[head],
             });
         } catch (const Result& err) {
-            // Print user friendly error and issue fatal error.
-            if (err == Result::PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED) {
-                BL_FATAL("Can't transfer data because destination is not synchronized.");
-                BL_CHECK_THROW(err);
-            }
-
-            if (err == Result::PLAN_ERROR_NO_SLOT) {
-                BL_FATAL("No slot available after compute. Data has nowhere to go.")
-                BL_CHECK_THROW(err);
-            }
-
             // Ignore if throw was a skip operation.
             if (err == Result::PLAN_SKIP_COMPUTE_INCOMPLETE ||
-                err == Result::PLAN_SKIP_USER_INITIATED ||
                 err == Result::PLAN_SKIP_NO_DEQUEUE || 
                 err == Result::PLAN_SKIP_NO_SLOT) {
                 return false;
@@ -112,9 +100,8 @@ class BLADE_API Runner {
                 return false;
             }
 
-            BL_FATAL("Unknown error.");
-
             // Fatal error otherwise.
+            BL_FATAL("Unknown error.");
             BL_CHECK_THROW(err);
         }
 

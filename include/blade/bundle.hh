@@ -14,7 +14,6 @@ namespace Blade {
 class BLADE_API Bundle {
  public:
     Bundle(const cudaStream_t& stream) : stream(stream) {};
-    virtual ~Bundle();
 
  protected:
     constexpr std::vector<std::shared_ptr<Module>>& getModules() {

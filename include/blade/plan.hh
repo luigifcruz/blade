@@ -58,11 +58,6 @@ class BLADE_API Plan {
     static void Compute(Pipeline& pipeline) {
         // Run compute step.
         BL_CHECK_THROW(pipeline.compute());
-
-        // Skip if compute is incomplete.
-        if (!pipeline.computeComplete()) {
-            BL_CHECK_THROW(Result::PLAN_SKIP_COMPUTE_INCOMPLETE);
-        }
     } 
 
     // TransferIn(3) is used to transfer data to a pipeline input vector.

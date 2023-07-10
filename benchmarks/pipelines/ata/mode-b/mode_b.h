@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DEBUG
+
 #define BLADE_ATA_MODE_B_NANT 20
 #define BLADE_ATA_MODE_B_NCHAN 192
 #define BLADE_ATA_MODE_B_NTIME 8192

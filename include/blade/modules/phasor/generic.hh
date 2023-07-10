@@ -77,7 +77,7 @@ class BLADE_API Generic : public Module {
     explicit Generic(const Config& config, const Input& input, 
                      const cudaStream_t& stream);
     virtual ~Generic() = default;
-    virtual Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) = 0;
+    virtual Result process(const cudaStream_t& stream, const U64& currentComputeCount) = 0;
 
  protected:
     // Variables

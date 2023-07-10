@@ -49,8 +49,8 @@ class BLADE_API ModeH : public Bundle {
     using InputCast = typename Modules::Cast<CF16, CF32>;
     std::shared_ptr<InputCast> cast;
 
-    using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
-    std::shared_ptr<PreChannelizer> channelizer;
+    using Channelizer = typename Modules::Channelizer<CF32, CF32>;
+    std::shared_ptr<Channelizer> channelizer;
 
     using Polarizer = typename Modules::Polarizer<CF32, CF32>;
     std::shared_ptr<Polarizer> polarizer;
