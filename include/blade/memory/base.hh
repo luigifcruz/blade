@@ -9,7 +9,6 @@
 #include "blade/memory/copy.hh"
 #include "blade/memory/helper.hh"
 #include "blade/memory/profiler.hh"
-#include "blade/memory/utils.hh"
 #endif
 
 #endif

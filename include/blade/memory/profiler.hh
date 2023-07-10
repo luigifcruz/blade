@@ -3,7 +3,6 @@
 
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
-#include "blade/memory/utils.hh"
 
 namespace Blade::Memory {
 
