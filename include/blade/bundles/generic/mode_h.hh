@@ -18,8 +18,6 @@ class BLADE_API ModeH : public Bundle {
     struct Config {
         ArrayShape inputShape;
 
-        U64 accumulateRate;
-
         BOOL polarizerConvertToCircular = false;
 
         U64 detectorIntegrationSize;
@@ -31,6 +29,12 @@ class BLADE_API ModeH : public Bundle {
         U64 detectorBlockSize = 512;
     };
 
+    // Input
+
+    struct Input {
+        ArrayTensor<Device::CUDA, IT> buffer;
+    };
+
     // Output 
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
@@ -39,12 +43,50 @@ class BLADE_API ModeH : public Bundle {
 
     // Constructor
 
-    explicit ModeH(const Config& config);
+    explicit ModeH(const Config& config, const Input& input, const cudaStream_t& stream)
+         : Bundle(stream), config(config) {
+        BL_DEBUG("Initializing Pipeline Mode H.");
+
+        if constexpr (!std::is_same<IT, CF32>::value) {
+            BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
+            this->connect(cast, {
+                .blockSize = config.castBlockSize,
+            }, {
+                .buf = input.buffer,
+            });
+        }
+
+        BL_DEBUG("Instantiating channelizer with rate {}.", config.inputShape.numberOfTimeSamples());
+        this->connect(channelizer, {
+            .rate = config.inputShape.numberOfTimeSamples(),
+            .blockSize = config.channelizerBlockSize,
+        }, {
+            .buf = this->getChannelizerInput(),
+        });
+
+        BL_DEBUG("Instatiating polarizer module.")
+        this->connect(polarizer, {
+            .mode = (config.polarizerConvertToCircular) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS, 
+            .blockSize = config.polarizerBlockSize,
+        }, {
+            .buf = channelizer->getOutputBuffer(),
+        });
+
+        BL_DEBUG("Instantiating detector module.");
+        this->connect(detector, {
+            .integrationSize = config.detectorIntegrationSize,
+            .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
+
+            .blockSize = config.detectorBlockSize,
+        }, {
+            .buf = polarizer->getOutputBuffer(),
+        });
+
+        // TODO: Add output cast.
+    }
 
  private:
     const Config config;
-
-    ArrayTensor<Device::CUDA, IT> input;
 
     using InputCast = typename Modules::Cast<CF16, CF32>;
     std::shared_ptr<InputCast> cast;
