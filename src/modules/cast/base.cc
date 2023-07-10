@@ -36,6 +36,8 @@ Cast<IT, OT>::Cast(const Config& config,
         )
     );
 
+    // TODO: Add same type automatic bypass.
+
     // Allocate output buffers.
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 

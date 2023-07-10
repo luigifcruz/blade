@@ -11,7 +11,7 @@
 #include "blade/logger.hh"
 
 #ifdef __CUDA_ARCH__
-#include "blade/memory/ops.hh"
+#include "blade/memory/device/ops.hh"
 #endif
 
 namespace Blade {

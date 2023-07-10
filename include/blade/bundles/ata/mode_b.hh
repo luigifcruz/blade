@@ -14,6 +14,7 @@
 
 namespace Blade::Bundles::ATA {
 
+// TODO: Add input type.
 template<typename OT>
 class BLADE_API ModeB : public Bundle {
  public:
@@ -83,6 +84,7 @@ class BLADE_API ModeB : public Bundle {
          : Bundle(stream), config(config) {
         BL_DEBUG("Initializing ATA Bundle Mode B.");
 
+        // TODO: Add variable input cast.
         BL_DEBUG("Instantiating input cast from I8 to CF32.");
         this->connect(inputCast, {
             .blockSize = config.castBlockSize,

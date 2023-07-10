@@ -13,6 +13,10 @@ extern "C" {
 
 using namespace Blade;
 
+// TODO: Move C API to blade/examples and cleanup pipeline benchmark code.
+// TODO: Add Mode-H benchmark.
+// TODO: Update Mode-HB benchmark.
+
 template<typename OT>
 class Mode : public Pipeline {
  public:
