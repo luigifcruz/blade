@@ -6,7 +6,7 @@
 #include <cuda_fp16.h>
 
 #define BL_OPS_HOST_SIDE_KEY
-#include "blade/memory/ops.hh"
+#include "blade/memory/device/ops.hh"
 #include "blade/memory/base.hh"
 
 using namespace Blade;

@@ -1,5 +1,5 @@
-#ifndef BLADE_MEMORY_OPS_HH
-#define BLADE_MEMORY_OPS_HH
+#ifndef BLADE_MEMORY_DEVICE_OPS_HH
+#define BLADE_MEMORY_DEVICE_OPS_HH
 
 #include <cstdint>
 
@@ -12,6 +12,8 @@
 // standards for the sake of computational efficiency.
 #error "This header should only be included in device code."
 #endif
+
+// Don't forget to add tests and benchmarks for every Op.
 
 namespace Blade::ops {
 

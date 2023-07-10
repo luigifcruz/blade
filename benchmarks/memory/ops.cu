@@ -3,7 +3,7 @@
 #include <cuComplex.h>
 
 #define BL_OPS_HOST_SIDE_KEY
-#include "blade/memory/ops.hh"
+#include "blade/memory/device/ops.hh"
 #include "blade/memory/vector.hh"
 #include "blade/memory/custom.hh"
 
