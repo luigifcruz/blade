@@ -9,9 +9,6 @@ project(
     ]
 )
 
-# TODO: Remove.
-has_python = false
-
 cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
 cfg_lst = configuration_data(
@@ -55,12 +52,6 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-summary({'cpp_std': get_option('cpp_std'),
-            'prefix': get_option('prefix'),
-            'buildtype': get_option('buildtype'),
-            'python bindings': has_python,
-        }, section: 'General', bool_yn: true)
-
 pkg = import('pkgconfig')
 pkg.generate(
     lib_blade,
@@ -72,3 +63,9 @@ subdir('docs')
 subdir('tests')
 subdir('benchmarks')
 subdir('examples')
+
+summary({'cpp_std': get_option('cpp_std'),
+            'prefix': get_option('prefix'),
+            'buildtype': get_option('buildtype'),
+            'python bindings': has_python,
+        }, section: 'General', bool_yn: true)

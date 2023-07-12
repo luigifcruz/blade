@@ -31,8 +31,8 @@ inline void init_vector(const py::module& m, const char* typeName) {
             }
 
             return py::array_t<Type>(
-                shape,                                  /* Buffer dimensions */
-                strides,                                /* Strides (in bytes) for each index */
+                shape,                                   /* Buffer dimensions */
+                strides,                                 /* Strides (in bytes) for each index */
                 obj.data(),                              /* Pointer to buffer */
                 py::capsule(new Class(obj), [](void* p){ delete reinterpret_cast<Class*>(p); })
              );

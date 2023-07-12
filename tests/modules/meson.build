@@ -1,4 +1,5 @@
-subdir('cast')
+# TODO: Remove.
+# subdir('cast')
 subdir('phasor')
 subdir('beamformer')
 subdir('channelizer')
