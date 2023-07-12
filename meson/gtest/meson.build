@@ -12,4 +12,4 @@ if all_deps_found
     dep_lst += deps
 endif
 
-ldr_lst += {'GTEST': all_deps_found}
+ldr_lst += {'Google Test': all_deps_found}
