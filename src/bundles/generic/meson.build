@@ -1,5 +1,3 @@
-sum_lst = {}
-
 #
 #  Mode H
 #
@@ -15,8 +13,6 @@ foreach x_dep : deps
     all_deps_found = all_deps_found and cfg_lst.get(x_dep, false)
 endforeach
 
-sum_lst += {'Mode H': all_deps_found}
+sum_lst += {'[GEN] Mode H': all_deps_found}
 
 cfg_lst.set('BLADE_BUNDLE_GENERIC_MODE_H', all_deps_found)
-
-summary(sum_lst, section: 'Generic Bundles', bool_yn: true)

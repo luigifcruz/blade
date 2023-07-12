@@ -16,6 +16,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'Polarizer': all_deps_found}
+sum_lst += {'[GEN] Polarizer': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_POLARIZER', all_deps_found)

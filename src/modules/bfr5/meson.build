@@ -18,6 +18,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'BFR5': all_deps_found}
+sum_lst += {'[GEN] BFR5': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_BFR5', all_deps_found)

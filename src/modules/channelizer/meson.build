@@ -17,6 +17,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'Channelizer': all_deps_found}
+sum_lst += {'[GEN] Channelizer': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_CHANNELIZER', all_deps_found)
