@@ -51,9 +51,9 @@ class BLADE_API Generic : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER | 
-               MemoryTaint::PRODUCER;
+    constexpr const Taint getTaint() {
+        return Taint::CONSUMER | 
+               Taint::PRODUCER;
     }
 
     // Constructor & Processing 
@@ -61,7 +61,7 @@ class BLADE_API Generic : public Module {
     explicit Generic(const Config& config, const Input& input,
                      const cudaStream_t& stream);
     virtual ~Generic() = default;
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
  protected:
     // Variables

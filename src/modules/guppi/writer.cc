@@ -45,7 +45,7 @@ Writer<IT>::Writer(const Config& config,
 }
 
 template<typename IT>
-Result Writer<IT>::process(const cudaStream_t& stream, const U64& currentComputeStep) {
+Result Writer<IT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
     const auto& bytesWritten = guppiraw_write_block_batched(
                                     this->fileDescriptor, 
                                     &this->gr_header, 

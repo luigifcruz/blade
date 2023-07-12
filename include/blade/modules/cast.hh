@@ -41,16 +41,16 @@ class BLADE_API Cast : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER |
-               MemoryTaint::PRODUCER;
+    constexpr const Taint getTaint() {
+        return Taint::CONSUMER |
+               Taint::PRODUCER;
     }
 
     // Constructor & Processing
 
     explicit Cast(const Config& config, const Input& input, 
                   const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
  private:
     // Variables

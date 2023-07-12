@@ -82,15 +82,15 @@ class BLADE_API Reader : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::PRODUCER; 
+    constexpr const Taint getTaint() {
+        return Taint::PRODUCER; 
     }
 
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input, 
                     const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
     // Miscellaneous 
 

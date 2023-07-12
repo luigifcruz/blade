@@ -47,15 +47,15 @@ class BLADE_API Polarizer : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::MODIFIER;
+    constexpr const Taint getTaint() {
+        return Taint::MODIFIER;
     }
 
     // Constructor & Processing
 
     explicit Polarizer(const Config& config, const Input& input,
                        const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
  private:
     // Variables

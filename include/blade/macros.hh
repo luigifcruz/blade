@@ -8,7 +8,7 @@
 
 namespace Blade {
 
-enum class MemoryTaint : uint8_t {
+enum class Taint : uint8_t {
     NONE     = 0 << 0,
     // Consumes externally allocated input data.
     CONSUMER = 1 << 0,
@@ -20,8 +20,12 @@ enum class MemoryTaint : uint8_t {
     CHRONOUS = 1 << 3, 
 };
 
-inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
-    return static_cast<MemoryTaint>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+inline constexpr Taint operator|(Taint lhs, Taint rhs) {
+    return static_cast<Taint>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+}
+
+inline constexpr Taint operator&(Taint lhs, Taint rhs) {
+    return static_cast<Taint>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
 }
 
 enum class Result : uint8_t {

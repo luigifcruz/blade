@@ -48,16 +48,16 @@ class BLADE_API Channelizer : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER |
-               MemoryTaint::MODIFIER;
+    constexpr const Taint getTaint() {
+        return Taint::CONSUMER |
+               Taint::MODIFIER;
     }
 
     // Constructor & Processing
 
     explicit Channelizer(const Config& config, const Input& input, 
                          const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
     ~Channelizer();
 
  private:

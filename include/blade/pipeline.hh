@@ -8,64 +8,70 @@
 
 #include "blade/bundle.hh"
 #include "blade/logger.hh"
+#include "blade/macros.hh"
 #include "blade/module.hh"
 
 namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline(const U64& numberOfComputeSteps = 1);
+    Pipeline();
     virtual ~Pipeline();
 
-    Result synchronize();
-    bool isSynchronized();
-
     constexpr const bool computeComplete() const {
-        return currentComputeStep == numberOfComputeSteps;
+        return _computeCurrentStepNumber == _computeTotalNumberOfSteps;
     }
 
-    constexpr const U64 getComputeNumberOfSteps() const {
-        return numberOfComputeSteps;
+    constexpr const U64& computeTotalNumberOfSteps() const {
+        return _computeTotalNumberOfSteps;
     }
 
-    constexpr const U64 getCurrentComputeStep() const {
-        return currentComputeStep;
+    constexpr const U64& computeCurrentStepNumber() const {
+        return _computeCurrentStepNumber;
     }
 
-    constexpr const U64 getLifetimeComputeCycles() const {
-        return lifetimeComputeCycles;
+    constexpr const U64& computeNumberOfLifetimeCycles() const {
+        return _computeNumberOfLifetimeCycles;
+    }
+
+    constexpr const cudaStream_t& getCudaStream() const {
+        return stream;
     }
 
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,
                  const typename Block::Input& input) {
+        if (_commited) {
+            BL_FATAL("Can't connect new module after Pipeline is commited.");
+            BL_CHECK_THROW(Result::ERROR);
+        }
+
         module = std::make_shared<Block>(config, input, stream);
 
         if constexpr (std::is_base_of<Bundle, Block>::value) {
             for (auto& mod : module->getModules()) {
-                modules.push_back(mod);
+                addModule(mod);
             }
         } else {
-            modules.push_back(module);
+            addModule(module);
         }
     }
 
- protected:
     Result compute();
-
-    constexpr const cudaStream_t& getCudaStream() const {
-        return stream;
-    }
-
-    friend class Plan;
+    Result synchronize();
+    bool isSynchronized();
 
  private:
     cudaStream_t stream;
     std::vector<std::shared_ptr<Module>> modules;
-    const U64 numberOfComputeSteps;
-    U64 currentComputeStep;
-    U64 lifetimeComputeCycles;
+    bool _commited;
+    U64 _computeTotalNumberOfSteps;
+    U64 _computeCurrentStepNumber;
+    U64 _computeNumberOfLifetimeCycles;
+
+    void addModule(const std::shared_ptr<Module>& module);
+    Result commit();
 };
 
 }  // namespace Blade

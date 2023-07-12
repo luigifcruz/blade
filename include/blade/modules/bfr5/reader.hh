@@ -37,8 +37,8 @@ class BLADE_API Reader : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::NONE; 
+    constexpr const Taint getTaint() {
+        return Taint::NONE; 
     }
 
     // Constructor & Processing

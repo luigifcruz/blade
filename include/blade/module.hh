@@ -20,12 +20,16 @@ class Module {
     explicit Module(const jitify2::PreprocessedProgram& program) : cache(100, *program) {};
     virtual ~Module() = default;
 
-    virtual constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::NONE; 
+    virtual constexpr const Taint getTaint() {
+        return Taint::NONE; 
+    }
+
+    virtual constexpr U64 getComputeRatio() {
+        return 1;       
     }
 
     virtual constexpr Result process(const cudaStream_t& stream,
-                                     const U64& currentComputeStep) {
+                                     const U64& currentStepNumber) {
         return Result::SUCCESS;
     }
 

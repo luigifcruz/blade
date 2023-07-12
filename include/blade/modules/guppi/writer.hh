@@ -48,15 +48,15 @@ class BLADE_API Writer : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER; 
+    constexpr const Taint getTaint() {
+        return Taint::CONSUMER; 
     }
 
     // Constructor & Processing
 
     explicit Writer(const Config& config, const Input& input,
                     const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
     // Miscullaneous
 

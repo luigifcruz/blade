@@ -12,7 +12,7 @@ class BLADE_API ATA : public Generic<OT> {
                  const typename Generic<OT>::Input& input,
                  const cudaStream_t& stream);
 
-    Result process(const cudaStream_t& stream, const U64& currentComputeStep) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
 
  protected:
     const PhasorShape getOutputPhasorsShape() const {
