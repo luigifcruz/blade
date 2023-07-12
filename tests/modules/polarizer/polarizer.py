@@ -3,23 +3,24 @@ import blade as bl
 import numpy as np
 from random import random
 
-class Test(bl.Pipeline):
-    polarizer: bl.Polarizer
 
+@Pipeline
+class Test():
     def __init__(self, input_shape, config: bl.Polarizer.Config):
-        bl.Pipeline.__init__(self)
         self.input = bl.cuda.cf32.ArrayTensor(input_shape)
-        _config = config
-        _input = bl.Polarizer.Input(self.input)
-        self.polarizer = self.connect(_config, _input)
 
-    def run(self, input: bl.cpu.cf32,
-                  output: bl.cpu.cf32):
+        self.mod.polarizer = self.connect(
+            _config,
+            bl.Polarizer.Input(self.input)
+        )
+
+    @TransferIn
+    def transferIn(self, input):
         self.copy(self.polarizer.input(), input)
-        self.compute()
-        self.copy(output, self.polarizer.output())
-        self.synchronize()
 
+    @TransferOut
+    def transferOut(self, output):
+        self.copy(output, self.polarizer.output())
 
 if __name__ == "__main__":
     shape = (2, 192, 8750, 2)

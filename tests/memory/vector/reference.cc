@@ -182,7 +182,7 @@ int main() {
 
         auto pickles = ArrayTensor<Device::CPU, U64>({1, 2, 3, 4});
 
-        PrintVarDebug("picles", pickles);
+        PrintVarDebug("pickles", pickles);
         assert(pickles.size() == 24);
         assert(pickles.refs() == 1);
         assert(pickles.data() != nullptr);
@@ -191,12 +191,12 @@ int main() {
             .pickles = pickles,
         };
 
-        PrintVarDebug("test.picles", test.pickles);
+        PrintVarDebug("test.pickles", test.pickles);
         assert(test.pickles.size() == 24);
         assert(test.pickles.refs() == 2);
         assert(test.pickles.data() == pickles.data());
 
-        PrintVarDebug("picles", pickles);
+        PrintVarDebug("pickles", pickles);
         assert(pickles.size() == 24);
         assert(pickles.refs() == 2);
         assert(pickles.data() != nullptr);
