@@ -18,6 +18,9 @@ jitify_command_opts = [
 if get_option('buildtype') != 'release'
   jitify_command_opts += [
     '-lineinfo',
+  ]
+else
+  jitify_command_opts += [
     '--minify',
   ]
 endif
