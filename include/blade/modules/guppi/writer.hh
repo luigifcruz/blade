@@ -48,7 +48,7 @@ class BLADE_API Writer : public Module {
 
     // Taint Registers
 
-    constexpr const Taint getTaint() {
+    constexpr Taint getTaint() const {
         return Taint::CONSUMER; 
     }
 

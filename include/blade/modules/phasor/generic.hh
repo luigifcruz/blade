@@ -67,7 +67,7 @@ class BLADE_API Generic : public Module {
 
     // Taint Registers
 
-    constexpr const Taint getTaint() {
+    constexpr Taint getTaint() const {
         return Taint::CONSUMER |
                Taint::PRODUCER; 
     }

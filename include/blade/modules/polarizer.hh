@@ -47,7 +47,7 @@ class BLADE_API Polarizer : public Module {
 
     // Taint Registers
 
-    constexpr const Taint getTaint() {
+    constexpr Taint getTaint() const {
         return Taint::MODIFIER;
     }
 

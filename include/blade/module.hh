@@ -2,7 +2,9 @@
 #define BLADE_MODULE_HH
 
 #include <map>
+#include <ranges>
 #include <string>
+#include <numeric>
 #include <typeindex>
 #include <unordered_map>
 
@@ -20,11 +22,11 @@ class Module {
     explicit Module(const jitify2::PreprocessedProgram& program) : cache(100, *program) {};
     virtual ~Module() = default;
 
-    virtual constexpr const Taint getTaint() {
+    virtual constexpr Taint getTaint() const {
         return Taint::NONE; 
     }
 
-    virtual constexpr U64 getComputeRatio() {
+    virtual constexpr U64 getComputeRatio() const {
         return 1;       
     }
 
@@ -34,6 +36,8 @@ class Module {
     }
 
  protected:
+    jitify2::ProgramCache<> cache;
+    
     Result createKernel(const std::string& name,
                         const std::string& key,
                         const dim3& gridSize,
@@ -90,7 +94,6 @@ class Module {
         std::string key;
     };
 
-    jitify2::ProgramCache<> cache;
     std::unordered_map<std::string, Kernel> kernels;
 };
 

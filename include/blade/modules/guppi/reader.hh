@@ -82,7 +82,7 @@ class BLADE_API Reader : public Module {
 
     // Taint Registers
 
-    constexpr const Taint getTaint() {
+    constexpr Taint getTaint() const {
         return Taint::PRODUCER; 
     }
 
