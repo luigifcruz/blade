@@ -35,4 +35,8 @@
 #include "blade/modules/phasor/ata.hh"
 #endif
 
+#ifdef BLADE_MODULE_GATHER
+#include "blade/modules/gather.hh"
+#endif
+
 #endif

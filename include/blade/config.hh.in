@@ -9,6 +9,7 @@
 #mesondefine BLADE_MODULE_BFR5
 #mesondefine BLADE_MODULE_GUPPI
 #mesondefine BLADE_MODULE_POLARIZER
+#mesondefine BLADE_MODULE_GATHER
 
 // ATA Specific Modules
 #mesondefine BLADE_MODULE_ATA_BEAMFORMER
