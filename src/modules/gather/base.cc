@@ -53,8 +53,6 @@ Gather<IT, OT>::Gather(const Config& config,
 
 template<typename IT, typename OT>
 Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
-    return this->runKernel("main", stream, input.buf.data(), output.buf.data());
-
     if (strategy == Strategy::Kernel) {
         cache
             .get_kernel(
