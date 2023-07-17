@@ -43,4 +43,8 @@
 #include "blade/modules/copy.hh"
 #endif
 
+#ifdef BLADE_MODULE_PERMUTATION
+#include "blade/modules/permutation.hh"
+#endif
+
 #endif

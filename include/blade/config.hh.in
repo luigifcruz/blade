@@ -11,6 +11,7 @@
 #mesondefine BLADE_MODULE_POLARIZER
 #mesondefine BLADE_MODULE_GATHER
 #mesondefine BLADE_MODULE_COPY
+#mesondefine BLADE_MODULE_PERMUTATION
 
 // ATA Specific Modules
 #mesondefine BLADE_MODULE_ATA_BEAMFORMER
