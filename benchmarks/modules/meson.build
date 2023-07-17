@@ -1,5 +1,4 @@
-subdir('beamformer')
-subdir('cast')
-subdir('detector')
-subdir('polarizer')
-subdir('channelizer')
+benchmark('blade-benchmark-modules', executable(
+    'blade-benchmark-modules', ['benchmark.cc'],
+    dependencies: lib_blade_dep,
+), timeout: 0)

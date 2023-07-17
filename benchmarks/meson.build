@@ -1,6 +1,5 @@
 if cfg_lst.get('BLADE_LOADER_BENCHMARK', false)
-    # TODO: Remove.
-    # subdir('modules')
+    subdir('modules')
     subdir('bundles')
     subdir('memory')
 endif
