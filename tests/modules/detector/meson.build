@@ -1,27 +1,30 @@
 if cfg_lst.get('BLADE_MODULE_DETECTOR', false)
     if has_python
         test(
-            'blade-detector-cross-pol-python',
+            'test-modules-detector-cross-pol',
             find_program('python', 'python3'),
             args: files('cross_pol.py'),
             is_parallel: false,
             timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path))
+            env: 'PYTHONPATH=@0@'.format(python_path),
+        )
 
         test(
-            'blade-detector-single-pol-python',
+            'test-modules-detector-single-pol',
             find_program('python', 'python3'),
             args: files('single_pol.py'),
             is_parallel: false,
             timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path))
+            env: 'PYTHONPATH=@0@'.format(python_path),
+        )
     
         test(
-            'blade-detector-stepped-python',
+            'test-modules-detector-stepped',
             find_program('python', 'python3'),
             args: files('stepped.py'),
             is_parallel: false,
             timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path))
+            env: 'PYTHONPATH=@0@'.format(python_path),
+        )
     endif
 endif

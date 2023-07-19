@@ -20,7 +20,7 @@ if has_python
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: py.get_install_dir()
+        install_dir: py.get_install_dir(),
     )
     python_path = meson.current_build_dir()
 endif

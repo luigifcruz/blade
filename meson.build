@@ -18,11 +18,11 @@ cfg_lst = configuration_data(
 )
 src_lst = []
 dep_lst = [
-    dependency('cuda', version : '>=11', modules : ['nvrtc', 'cudart', 'cuda', 'culibos']),
+    dependency('cuda', version: '>=11', modules: ['nvrtc', 'cudart', 'cuda', 'culibos']),
     dependency('fmt'),
 ]
 static_dep_lst = [
-    dependency('cuda', version : '>=11', modules : ['cufft_static']),
+    dependency('cuda', version: '>=11', modules: ['cufft_static']),
 ]
 inc_lst = [
     include_directories('include'),
