@@ -6,29 +6,31 @@ namespace Blade {
 
 Pipeline::Pipeline()
      : _commited(false),
-       _computeTotalNumberOfSteps(1),
-       _computeCurrentStepNumber(0),
-       _computeNumberOfLifetimeCycles(0) {
+       _computeStepCount(0),
+       _computeStepsPerCycle(1),
+       _computeLifetimeCycles(0) {
     BL_DEBUG("Creating new pipeline.");
-    BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream,
-                                                  cudaStreamNonBlocking), [&]{
+    BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream, cudaStreamNonBlocking), [&]{
         BL_FATAL("Failed to create stream for CUDA steam: {}", err);
     });
 }
 
 void Pipeline::addModule(const std::shared_ptr<Module>& module) {
     if ((module->getTaint() & Taint::CHRONOUS) == Taint::CHRONOUS) {
-        if (_computeTotalNumberOfSteps < module->getComputeRatio()) {
-            _computeTotalNumberOfSteps = module->getComputeRatio();
+        const auto& localRatio = module->getComputeRatio();
+        if (localRatio > 1) {
+            _computeStepsPerCycle *= localRatio;
+            _computeStepRatios.push_back(localRatio);
         }
     }
     modules.push_back(module);
 }
 
 Pipeline::~Pipeline() {
-    this->synchronize();
+    synchronize();
     cudaStreamDestroy(this->stream);
-    BL_DEBUG("Destroying pipeline after {} lifetime compute cycles.", _computeNumberOfLifetimeCycles);
+    _computeStepRatios.clear();
+    BL_DEBUG("Destroying pipeline after {} lifetime compute cycles.", _computeLifetimeCycles);
 }
 
 Result Pipeline::synchronize() {
@@ -43,9 +45,13 @@ bool Pipeline::isSynchronized() {
 }
 
 Result Pipeline::commit() {
-    BL_DEBUG("Commiting pipeline with {} total number of compute steps.", _computeTotalNumberOfSteps);
+    BL_DEBUG("Commiting pipeline with {} compute steps per cycle.", _computeStepsPerCycle);
         
     // TODO: Validate pipeline topology with Taint (in-place modules).
+
+    if (_computeStepRatios.size() == 0) {
+        _computeStepRatios.push_back(1);
+    }
         
     return Result::SUCCESS;
 }
@@ -56,20 +62,31 @@ Result Pipeline::compute() {
         _commited = true;
     }
 
+    U64 localStepCount = 0;
+    U64 localRatioIndex = 0;
+    U64 localStepOffset = 1;
+
     for (auto& module : this->modules) {
-        const auto& result = module->process(stream, _computeCurrentStepNumber);
+        localStepCount = _computeStepCount / localStepOffset % _computeStepRatios[localRatioIndex];
 
-        if (result == Result::SUCCESS) {
-            continue;
-        }
-
-        if (result == Result::PIPELINE_CONTINUE) {
-            break;
-        }
+        const auto& result = module->process(stream, localStepCount);
 
         if (result == Result::PIPELINE_EXHAUSTED) {
-            BL_INFO("Module finished pipeline execution at {} lifetime compute cycles.", _computeNumberOfLifetimeCycles);
+            BL_INFO("Module finished pipeline execution at {} lifetime compute cycles.", _computeLifetimeCycles);
             return Result::PIPELINE_EXHAUSTED;
+        }
+
+        if (result != Result::SUCCESS) {
+            return result;
+        }
+
+        if (module->getComputeRatio() > 1) {
+            if ((localStepCount + 1) == _computeStepRatios[localRatioIndex]) {
+                localStepOffset += localStepCount;
+                localRatioIndex += 1;
+            } else {
+                break;
+            }
         }
     }
 
@@ -78,11 +95,12 @@ Result Pipeline::compute() {
         return Result::CUDA_ERROR;
     });
 
-    _computeCurrentStepNumber += 1;
-    if (_computeCurrentStepNumber == _computeTotalNumberOfSteps) {
-        _computeNumberOfLifetimeCycles += 1;
+    _computeStepCount += 1;
+
+    if (_computeStepCount == _computeStepsPerCycle) {
+        _computeStepCount = 0;
+        _computeLifetimeCycles += 1;
     }
-    _computeCurrentStepNumber %= _computeTotalNumberOfSteps;
 
     return Result::SUCCESS;
 }

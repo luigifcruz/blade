@@ -16,7 +16,7 @@ enum class Taint : uint8_t {
     PRODUCER = 1 << 1,
     // Modifies externally allocated input data.
     MODIFIER = 1 << 2,
-    // Can emit Result::PIPELINE_CONTINUE after Module::Process call.
+    // Has a compute ratio other than one.
     CHRONOUS = 1 << 3, 
 };
 
@@ -34,7 +34,6 @@ enum class Result : uint8_t {
     CUDA_ERROR,
     ASSERTION_ERROR,
     PIPELINE_EXHAUSTED,
-    PIPELINE_CONTINUE,
     PLAN_CONTINUE_NO_SLOT,
     PLAN_CONTINUE_NO_DEQUEUE,
 };

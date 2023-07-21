@@ -19,19 +19,19 @@ class BLADE_API Pipeline {
     virtual ~Pipeline();
 
     constexpr const bool computeComplete() const {
-        return _computeCurrentStepNumber == _computeTotalNumberOfSteps;
+        return (_computeStepCount + 1) == _computeStepsPerCycle;
     }
 
-    constexpr const U64& computeTotalNumberOfSteps() const {
-        return _computeTotalNumberOfSteps;
+    constexpr const U64& computeCurrentStepCount() const {
+        return _computeStepCount;
     }
 
-    constexpr const U64& computeCurrentStepNumber() const {
-        return _computeCurrentStepNumber;
+    constexpr const U64& computeStepsPerCycle() const {
+        return _computeStepsPerCycle;
     }
 
-    constexpr const U64& computeNumberOfLifetimeCycles() const {
-        return _computeNumberOfLifetimeCycles;
+    constexpr const U64& computeLifetimeCycles() const {
+        return _computeLifetimeCycles;
     }
 
     constexpr const cudaStream_t& getCudaStream() const {
@@ -66,9 +66,11 @@ class BLADE_API Pipeline {
     cudaStream_t stream;
     std::vector<std::shared_ptr<Module>> modules;
     bool _commited;
-    U64 _computeTotalNumberOfSteps;
-    U64 _computeCurrentStepNumber;
-    U64 _computeNumberOfLifetimeCycles;
+
+    U64 _computeStepCount;
+    U64 _computeStepsPerCycle;
+    U64 _computeLifetimeCycles;
+    std::vector<U64> _computeStepRatios;
 
     void addModule(const std::shared_ptr<Module>& module);
     Result commit();
