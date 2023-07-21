@@ -57,7 +57,7 @@ class BLADE_API Channelizer : public Module {
 
     explicit Channelizer(const Config& config, const Input& input, 
                          const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepCount) final;
     ~Channelizer();
 
  private:

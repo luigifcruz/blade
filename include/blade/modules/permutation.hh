@@ -54,7 +54,7 @@ class BLADE_API Permutation : public Module {
 
     explicit Permutation(const Config& config, const Input& input, 
                          const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentStepNumber) final;
+    Result process(const cudaStream_t& stream, const U64& currentStepCount) final;
 
  private:
     // Variables

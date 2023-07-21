@@ -51,7 +51,7 @@ Permutation<IT, OT>::Permutation(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Permutation<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
+Result Permutation<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
     return this->runKernel("main", stream, input.buf.data(), output.buf.data(), getInputBuffer().shape());
 }
 

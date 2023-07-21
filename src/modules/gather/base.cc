@@ -52,7 +52,7 @@ Gather<IT, OT>::Gather(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
+Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
     if (strategy == Strategy::Kernel) {
         cache
             .get_kernel(
@@ -60,7 +60,7 @@ Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentSte
                     .instantiate(
                         TypeInfo<IT>::name,
                         config.axis,
-                        currentStepNumber
+                        currentStepCount
                     )
             )
             ->configure(
@@ -95,7 +95,7 @@ Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentSte
         );
     }
 
-    return (currentStepNumber == (config.multiplier - 1)) ? Result::SUCCESS : Result::PIPELINE_CONTINUE;
+    return Result::SUCCESS;
 }
 
 template class BLADE_API Gather<CI8, CI8>;

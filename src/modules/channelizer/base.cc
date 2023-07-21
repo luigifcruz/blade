@@ -89,7 +89,7 @@ Channelizer<IT, OT>::~Channelizer() {
 }
 
 template<typename IT, typename OT>
-Result Channelizer<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
+Result Channelizer<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
     if (config.rate == 1) {
         return Result::SUCCESS;
     } 
