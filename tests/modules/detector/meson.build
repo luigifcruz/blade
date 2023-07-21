@@ -17,14 +17,5 @@ if cfg_lst.get('BLADE_MODULE_DETECTOR', false)
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(python_path),
         )
-    
-        test(
-            'test-modules-detector-stepped',
-            find_program('python', 'python3'),
-            args: files('stepped.py'),
-            is_parallel: false,
-            timeout: 0,
-            env: 'PYTHONPATH=@0@'.format(python_path),
-        )
     endif
 endif

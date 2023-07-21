@@ -12,22 +12,19 @@ Detector<IT, OT>::Detector(const Config& config,
                            const cudaStream_t& stream)
         : Module(detector_program),
           config(config),
-          input(input),
-          apparentIntegrationSize(config.integrationSize) {
+          input(input) {
     // Check configuration values.
-    if (apparentIntegrationSize <= 0) {
-        BL_WARN("Integration size ({}) should be more than zero.", apparentIntegrationSize);
+    if (config.integrationSize <= 0) {
+        BL_WARN("Integration size ({}) should be more than zero.", config.integrationSize);
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInputBuffer().shape().numberOfTimeSamples() > 1) {
-        if ((getInputBuffer().shape().numberOfTimeSamples() % apparentIntegrationSize) != 0) {
-            BL_FATAL("The number of time samples ({}) should be divisable "
-                     "by the integration size ({}).",
-                     getInputBuffer().shape().numberOfTimeSamples(),
-                     apparentIntegrationSize);
-            BL_CHECK_THROW(Result::ERROR);
-        }
+    if ((getInputBuffer().shape().numberOfTimeSamples() % config.integrationSize) != 0) {
+        BL_FATAL("The number of time samples ({}) should be divisable "
+                 "by the integration size ({}).",
+                 getInputBuffer().shape().numberOfTimeSamples(),
+                 config.integrationSize);
+        BL_CHECK_THROW(Result::ERROR);
     }
 
     if (getInputBuffer().shape().numberOfPolarizations() != 2) {
@@ -49,15 +46,8 @@ Detector<IT, OT>::Detector(const Config& config,
         case 1: kernel_key = "detector_1pol"; break;
         default:
             BL_FATAL("Number of output polarizations ({}) not supported.", 
-                config.numberOfOutputPolarizations);
+                     config.numberOfOutputPolarizations);
             BL_CHECK_THROW(Result::ERROR);
-    }
-
-    if (getInputBuffer().shape().numberOfTimeSamples() < config.integrationSize) {
-        apparentIntegrationSize = 1;
-        BL_INFO("Integration Procedure: Stepped");
-    } else {
-        BL_INFO("Integration Procedure: Blockwise");
     }
 
     BL_CHECK_THROW(
@@ -68,28 +58,18 @@ Detector<IT, OT>::Detector(const Config& config,
             kernel_key,
             // Kernel grid & block size.
             PadGridSize(
-                getInputBuffer().size() / 
-                    getInputBuffer().shape().numberOfPolarizations(),
+                getInputBuffer().size() / getInputBuffer().shape().numberOfPolarizations(),
                 config.blockSize
             ),
             config.blockSize,
             // Kernel templates.
             getInputBuffer().size() / getInputBuffer().shape().numberOfPolarizations(),
-            apparentIntegrationSize
+            config.integrationSize
         )
     );
 
     // Allocate output buffers.
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
-    ctrlResetTensor = Tensor<Device::CUDA, BOOL>({1}, true);
-
-    if (Memory::Profiler::IsCapturing()) {
-        BL_WARN("Capturing: Early setup return.");
-        return;
-    }
-
-    // Set default values.
-    ctrlResetTensor[0] = true;
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
@@ -100,24 +80,8 @@ Detector<IT, OT>::Detector(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Detector<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepNumber) {
-    if (config.integrationSize == apparentIntegrationSize) {
-        return Result::SUCCESS;
-    }
-
-    // TODO: Check this logic.
-    ctrlResetTensor[0] = ((currentStepNumber % config.integrationSize) != 0);
-
-    return runKernel(
-        // Kernel name.
-        "main",
-        // Kernel stream.
-        stream, 
-        // Kernel arguments.
-        input.buf.data(),
-        output.buf.data(),
-        ctrlResetTensor.data()
-    );
+Result Detector<IT, OT>::process(const cudaStream_t& stream, const U64&) {
+    return runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 
 template class BLADE_API Detector<CF32, F32>;
