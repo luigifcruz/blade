@@ -13,9 +13,7 @@ class BLADE_API Copy : public Module {
  public:
     // Configuration
 
-    struct Config {
-        U64 blockSize = 512;
-    };
+    struct Config {};
 
     constexpr const Config& getConfig() const {
         return this->config;
