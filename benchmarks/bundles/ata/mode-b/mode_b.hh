@@ -1,24 +1,19 @@
-#ifndef BENCHMARKS_BUNDLES_MODEB_H
-#define BENCHMARKS_BUNDLES_MODEB_H
+#ifndef BENCHMARKS_BUNDLES_ATA_MODEB_H
+#define BENCHMARKS_BUNDLES_ATA_MODEB_H
 
 #include "blade/base.hh"
-
 #include "blade/bundles/ata/mode_b.hh"
 
-using namespace Blade;
-
-// TODO: Move C API to blade/examples and cleanup pipeline benchmark code.
-// TODO: Add Mode-H benchmark.
-// TODO: Update Mode-HB benchmark.
+namespace Blade::ATA::ModeB {
 
 template<typename IT, typename OT>
-class BenchmarkPipeline : public Pipeline {
+class Benchmark : public Pipeline {
  public:
     using ModeB = Bundles::ATA::ModeB<IT, OT>;
 
     using Config = typename ModeB::Config;
 
-    explicit BenchmarkPipeline(const Config& config)
+    explicit Benchmark(const Config& config)
          : inputDut({1}),
            inputJulianDate({1}),
            inputBuffer(config.inputShape),
@@ -59,10 +54,10 @@ class BenchmarkPipeline : public Pipeline {
 };
 
 template<typename IT, typename OT>
-class Benchmark {
+class BenchmarkRunner {
  public:
-    Benchmark() {
-        BL_DEBUG("Configuring the Pipeline.");
+    BenchmarkRunner() {
+        BL_DEBUG("Configuring Pipeline.");
         config = {
             .inputShape = ArrayShape({ 20, 192, 8192, 2 }),
             .outputShape = ArrayShape({ 8+1, 192, 8192, 1 }),
@@ -123,7 +118,7 @@ class Benchmark {
             .detectorIntegrationSize = 1,
             .detectorNumberOfOutputPolarizations = 1,
         };
-        pipeline = std::make_shared<BenchmarkPipeline<IT, OT>>(config);
+        pipeline = std::make_shared<Benchmark<IT, OT>>(config);
 
         for (U64 i = 0; i < pipeline->numberOfStreams(); i++) {
             inputDut1.push_back(Tensor<Device::CPU, F64>({1}));
@@ -162,13 +157,15 @@ class Benchmark {
     }
 
  private:
-    typename BenchmarkPipeline<IT, OT>::Config config;
-    std::shared_ptr<BenchmarkPipeline<IT, OT>> pipeline;
+    typename Benchmark<IT, OT>::Config config;
+    std::shared_ptr<Benchmark<IT, OT>> pipeline;
 
     std::vector<Tensor<Device::CPU, F64>> inputDut1;
     std::vector<Tensor<Device::CPU, F64>> inputJulianDate;
     std::vector<ArrayTensor<Device::CPU, IT>> inputBuffer;
     std::vector<ArrayTensor<Device::CPU, OT>> outputBuffer;
 };
+
+}  // namespace Blade::ATA::ModeB
 
 #endif
