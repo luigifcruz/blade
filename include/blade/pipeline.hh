@@ -62,6 +62,10 @@ class BLADE_API Pipeline {
         return _streams[index];
     }
 
+    U64 numberOfStreams() const {
+        return _streams.size();
+    }
+
  private:
     bool _commited;
     std::vector<cudaStream_t> _streams;

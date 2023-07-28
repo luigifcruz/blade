@@ -1,5 +1,6 @@
 src_lst += files([
     'pipeline.cc',
+    'runner.cc',
 ])
 
 subdir('memory')

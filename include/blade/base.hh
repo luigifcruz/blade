@@ -5,6 +5,7 @@
 #include "blade/macros.hh"
 #include "blade/logger.hh"
 #include "blade/pipeline.hh"
+#include "blade/runner.hh"
 
 namespace Blade {
 
