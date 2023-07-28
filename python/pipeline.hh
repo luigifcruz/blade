@@ -12,7 +12,7 @@ class PipelinePub : public Pipeline {
  public:
     using Pipeline::compute;
     using Pipeline::connect;
-    using Pipeline::getCudaStream;
+    using Pipeline::stream;
 };
 
 template<typename T>
@@ -29,22 +29,22 @@ template<typename T>
 inline void init_pipeline_copy_phasor_tensor(auto& m) {
     m.def("copy", [](PipelinePub& obj, PhasorTensor<Device::CPU, T>& dst,
                                        const PhasorTensor<Device::CPU, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, PhasorTensor<Device::CPU, T>& dst,
                                        const PhasorTensor<Device::CUDA, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, PhasorTensor<Device::CUDA, T>& dst,
                                        const PhasorTensor<Device::CPU, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, PhasorTensor<Device::CUDA, T>& dst,
                                        const PhasorTensor<Device::CUDA, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 }
 
@@ -52,22 +52,22 @@ template<typename T>
 inline void init_pipeline_copy_array_tensor(auto& m) {
     m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CPU, T>& dst,
                                        const ArrayTensor<Device::CPU, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CPU, T>& dst,
                                        const ArrayTensor<Device::CUDA, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA, T>& dst,
                                        const ArrayTensor<Device::CPU, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 
     m.def("copy", [](PipelinePub& obj, ArrayTensor<Device::CUDA, T>& dst,
                                        const ArrayTensor<Device::CUDA, T>& src){
-        return Memory::Copy(dst, src, obj.getCudaStream());
+        return Memory::Copy(dst, src, obj.stream());
     }, py::arg("dst"), py::arg("src"));
 }
 

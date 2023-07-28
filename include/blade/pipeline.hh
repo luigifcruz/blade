@@ -15,7 +15,7 @@ namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline();
+    Pipeline(const U64& numberOfStreams = 2);
     virtual ~Pipeline();
 
     constexpr const bool computeComplete() const {
@@ -34,10 +34,6 @@ class BLADE_API Pipeline {
         return _computeLifetimeCycles;
     }
 
-    constexpr const cudaStream_t& getCudaStream() const {
-        return stream;
-    }
-
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,
@@ -47,7 +43,7 @@ class BLADE_API Pipeline {
             BL_CHECK_THROW(Result::ERROR);
         }
 
-        module = std::make_shared<Block>(config, input, stream);
+        module = std::make_shared<Block>(config, input, _streams[0]);
 
         if constexpr (std::is_base_of<Bundle, Block>::value) {
             for (auto& mod : module->getModules()) {
@@ -58,14 +54,18 @@ class BLADE_API Pipeline {
         }
     }
 
-    Result compute();
-    Result synchronize();
-    bool isSynchronized();
+    Result compute(const U64& index);
+    Result synchronize(const U64& index);
+    bool isSynchronized(const U64& index);
+
+    const cudaStream_t& stream(const U64& index = 0) const {
+        return _streams[index];
+    }
 
  private:
-    cudaStream_t stream;
-    std::vector<std::shared_ptr<Module>> modules;
     bool _commited;
+    std::vector<cudaStream_t> _streams;
+    std::vector<std::shared_ptr<Module>> modules;
 
     U64 _computeStepCount;
     U64 _computeStepsPerCycle;

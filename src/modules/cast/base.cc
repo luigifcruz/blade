@@ -36,11 +36,6 @@ Cast<IT, OT>::Cast(const Config& config,
         )
     );
 
-    // Print configuration values.
-    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
-                               getOutputBuffer().shape());
-
     if constexpr (std::is_same<IT, OT>::value) {
         BL_DEBUG("Bypassing cast because input and output types are the same.");
         BL_CHECK_THROW(Memory::Link(output.buf, input.buf));
@@ -49,6 +44,11 @@ Cast<IT, OT>::Cast(const Config& config,
 
     // Allocate output buffers.
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
+
+    // Print configuration values.
+    BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+                               getOutputBuffer().shape());
 }
 
 template<typename IT, typename OT>

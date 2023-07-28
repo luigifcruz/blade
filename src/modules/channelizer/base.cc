@@ -92,11 +92,12 @@ template<typename IT, typename OT>
 Result Channelizer<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
     if (config.rate == 1) {
         return Result::SUCCESS;
-    } 
+    }
 
     cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
     cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
 
+    cufftSetStream(plan, stream);
     for (U64 pol = 0; pol < getInputBuffer().shape().numberOfPolarizations(); pol++) {
         BL_CUFFT_CHECK(cufftExecC2C(plan, input_ptr + pol, output_ptr + pol, CUFFT_FORWARD), [&]{
             BL_FATAL("cuFFT failed to execute: {0:#x}", err);

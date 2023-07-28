@@ -4,15 +4,23 @@
 
 namespace Blade {
 
-Pipeline::Pipeline()
+Pipeline::Pipeline(const U64& numberOfStreams)
      : _commited(false),
        _computeStepCount(0),
        _computeStepsPerCycle(1),
        _computeLifetimeCycles(0) {
     BL_DEBUG("Creating new pipeline.");
-    BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&this->stream, cudaStreamNonBlocking), [&]{
-        BL_FATAL("Failed to create stream for CUDA steam: {}", err);
-    });
+    if (numberOfStreams == 0) {
+        BL_FATAL("Number of streams has to be at least 1.");
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    _streams.resize(numberOfStreams);
+    for (U64 i = 0; i < _streams.size(); i++) {
+        BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&_streams[i], cudaStreamNonBlocking), [&]{
+            BL_FATAL("Failed to create stream for CUDA steam: {}", err);
+        });
+    }
 }
 
 void Pipeline::addModule(const std::shared_ptr<Module>& module) {
@@ -27,21 +35,23 @@ void Pipeline::addModule(const std::shared_ptr<Module>& module) {
 }
 
 Pipeline::~Pipeline() {
-    synchronize();
-    cudaStreamDestroy(this->stream);
+    for (U64 i = 0; i < _streams.size(); i++) {
+        synchronize(i);
+        cudaStreamDestroy(_streams[i]);
+    }
     _computeStepRatios.clear();
     BL_DEBUG("Destroying pipeline after {} lifetime compute cycles.", _computeLifetimeCycles);
 }
 
-Result Pipeline::synchronize() {
-    BL_CUDA_CHECK(cudaStreamSynchronize(this->stream), [&]{
+Result Pipeline::synchronize(const U64& index) {
+    BL_CUDA_CHECK(cudaStreamSynchronize(_streams[index]), [&]{
         BL_FATAL("Failed to synchronize stream: {}", err);
     });
     return Result::SUCCESS;
 }
 
-bool Pipeline::isSynchronized() {
-    return cudaStreamQuery(this->stream) == cudaSuccess;
+bool Pipeline::isSynchronized(const U64& index) {
+    return cudaStreamQuery(_streams[index]) == cudaSuccess;
 }
 
 Result Pipeline::commit() {
@@ -56,7 +66,7 @@ Result Pipeline::commit() {
     return Result::SUCCESS;
 }
 
-Result Pipeline::compute() {
+Result Pipeline::compute(const U64& index) {
     if (!_commited) {
         BL_CHECK(commit());
         _commited = true;
@@ -69,7 +79,7 @@ Result Pipeline::compute() {
     for (auto& module : this->modules) {
         localStepCount = _computeStepCount / localStepOffset % _computeStepRatios[localRatioIndex];
 
-        const auto& result = module->process(stream, localStepCount);
+        const auto& result = module->process(_streams[index], localStepCount);
 
         if (result == Result::PIPELINE_EXHAUSTED) {
             BL_INFO("Module finished pipeline execution at {} lifetime compute cycles.", _computeLifetimeCycles);
