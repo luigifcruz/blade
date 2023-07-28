@@ -1,36 +1,28 @@
 #include <chrono>
 
+#include "./mode_b.hh"
 #include "../../../helper.hh"
 
-#include <benchmark/benchmark.h>
-#include <blade/logger.hh>
-#include <blade/types.hh>
-
 using namespace Blade;
-
-#define CHECK_THROW(a) if (a != 0) throw "Pipeline error.";
-
 namespace bm = benchmark;
 
-extern "C" {
-#include "mode_b_stub.h"
-}
-
 static void BM_PipelineModeB(benchmark::State& state) {
-    const uint64_t count = 2048;
+    const uint64_t count = 128;
+    std::shared_ptr<Benchmark<CI8, CF32>> bench;
 
     BL_DISABLE_PRINT();
-    BL_CHECK_THROW(Blade::InitAndProfile([&](){
-        return (mode_b_init()) ? Result::ERROR : Result::SUCCESS;
-    }, state));
-    CHECK_THROW(mode_b_setup());
+    Blade::InitAndProfile([&](){
+        bench = std::make_shared<Benchmark<CI8, CF32>>();
+    }, state);
     BL_ENABLE_PRINT();
 
     for (auto _ : state) {
         auto start = std::chrono::high_resolution_clock::now();
 
         BL_DISABLE_PRINT();
-        CHECK_THROW(mode_b_loop(count));
+        if (bench->run(count) != Result::SUCCESS) {
+            BL_CHECK_THROW(Result::ERROR);
+        }
         BL_ENABLE_PRINT();
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -43,12 +35,12 @@ static void BM_PipelineModeB(benchmark::State& state) {
     }
 
     BL_DISABLE_PRINT();
-    CHECK_THROW(mode_b_terminate());
+    bench.reset();
     BL_ENABLE_PRINT();
 }
 
 BENCHMARK(BM_PipelineModeB)
-    ->Iterations(8)
+    ->Iterations(1)
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 
