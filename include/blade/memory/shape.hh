@@ -84,6 +84,10 @@ struct Shape {
         return Dimensions;
     }
 
+    bool operator==(const Shape& other) const {
+        return _shape == other._shape;
+    }
+
     bool operator!=(const Shape& other) const {
         return !(_shape == other._shape);
     }

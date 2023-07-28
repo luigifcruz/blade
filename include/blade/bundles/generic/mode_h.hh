@@ -17,6 +17,7 @@ class BLADE_API ModeH : public Bundle {
 
     struct Config {
         ArrayShape inputShape;
+        ArrayShape outputShape;
 
         BOOL polarizerConvertToCircular = false;
 
@@ -86,6 +87,12 @@ class BLADE_API ModeH : public Bundle {
         }, {
             .buf = detector->getOutputBuffer(),
         });
+
+        if (getOutputBuffer().shape() != config.outputShape) {
+            BL_FATAL("Expected output buffer size ({}) mismatch with actual size ({}).",
+                     config.outputShape, getOutputBuffer().shape());
+            BL_CHECK_THROW(Result::ERROR);
+        }
     }
 
  private:

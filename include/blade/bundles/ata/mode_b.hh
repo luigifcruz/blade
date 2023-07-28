@@ -21,6 +21,7 @@ class BLADE_API ModeB : public Bundle {
 
     struct Config {
         ArrayShape inputShape;
+        ArrayShape outputShape;
 
         U64 preBeamformerChannelizerRate;
 
@@ -172,6 +173,12 @@ class BLADE_API ModeB : public Bundle {
                     .buf = beamformer->getOutputBuffer(),
                 });
             }
+        }
+
+        if (getOutputBuffer().shape() != config.outputShape) {
+            BL_FATAL("Expected output buffer size ({}) mismatch with actual size ({}).",
+                     config.outputShape, getOutputBuffer().shape());
+            BL_CHECK_THROW(Result::ERROR);
         }
     }
 
