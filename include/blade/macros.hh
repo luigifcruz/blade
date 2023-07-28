@@ -33,9 +33,10 @@ enum class Result : uint8_t {
     ERROR = 1,
     CUDA_ERROR,
     ASSERTION_ERROR,
+    RUNNER_QUEUE_FULL,
+    RUNNER_QUEUE_EMPTY,
+    RUNNER_QUEUE_NONE_AVAILABLE,
     PIPELINE_EXHAUSTED,
-    PLAN_CONTINUE_NO_SLOT,
-    PLAN_CONTINUE_NO_DEQUEUE,
 };
 
 }  // namespace Blade 

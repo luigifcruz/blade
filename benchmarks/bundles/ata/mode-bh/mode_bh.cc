@@ -1,7 +1,6 @@
 #include <memory>
 #include <cassert>
 
-#include "blade/plan.hh"
 #include "blade/base.hh"
 #include "blade/logger.hh"
 #include "blade/runner.hh"
