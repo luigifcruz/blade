@@ -45,13 +45,13 @@ struct Vector {
         *_refs = 1;
 
 #ifndef __CUDA_ARCH__
-        if (Memory::Profiler::IsCapturing()) {
+        if (Profiler::IsCapturing()) {
             if (_unified) {
-                Memory::Profiler::RegisterUnifiedAllocation(size_bytes());
+                Profiler::RegisterUnifiedAllocation(size_bytes());
             } else if (DeviceId == Device::CPU) {
-                Memory::Profiler::RegisterCpuAllocation(size_bytes());
+                Profiler::RegisterCpuAllocation(size_bytes());
             } else if (DeviceId == Device::CUDA) {
-                Memory::Profiler::RegisterCudaAllocation(size_bytes());
+                Profiler::RegisterCudaAllocation(size_bytes());
             }
             return;
         }
@@ -226,13 +226,13 @@ struct Vector {
             }
 
 #ifndef __CUDA_ARCH__
-            if (Memory::Profiler::IsCapturing()) {
+            if (Profiler::IsCapturing()) {
                 if (_unified) {
-                    Memory::Profiler::RegisterUnifiedDeallocation(size_bytes());
+                    Profiler::RegisterUnifiedDeallocation(size_bytes());
                 } else if (DeviceId == Device::CPU) {
-                    Memory::Profiler::RegisterCpuDeallocation(size_bytes());
+                    Profiler::RegisterCpuDeallocation(size_bytes());
                 } else if (DeviceId == Device::CUDA) {
-                    Memory::Profiler::RegisterCudaDeallocation(size_bytes());
+                    Profiler::RegisterCudaDeallocation(size_bytes());
                 }
 
                 reset();

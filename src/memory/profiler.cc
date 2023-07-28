@@ -3,7 +3,7 @@
 #include "blade/memory/profiler.hh"
 #include "blade/memory/helper.hh"
 
-namespace Blade::Memory {
+namespace Blade {
 
 Profiler& Profiler::GetInstance() {
     static Profiler instance;
@@ -96,4 +96,4 @@ void Profiler::registerUnifiedDeallocation(const U64& byteSize) {
     }
 }
 
-}  // namespace Blade::Memory
+}  // namespace Blade

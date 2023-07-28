@@ -38,7 +38,7 @@ Cast<IT, OT>::Cast(const Config& config,
 
     if constexpr (std::is_same<IT, OT>::value) {
         BL_DEBUG("Bypassing cast because input and output types are the same.");
-        BL_CHECK_THROW(Memory::Link(output.buf, input.buf));
+        BL_CHECK_THROW(Link(output.buf, input.buf));
         return;
     }
 

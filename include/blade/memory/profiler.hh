@@ -4,7 +4,7 @@
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
 
-namespace Blade::Memory {
+namespace Blade {
 
 class BLADE_API Profiler {
  public:
@@ -89,6 +89,6 @@ class BLADE_API Profiler {
     void registerUnifiedDeallocation(const U64& byteSize);
 };
 
-}  // namespace Blade::Memory
+}  // namespace Blade
 
 #endif

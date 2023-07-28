@@ -57,9 +57,9 @@ class CudaBenchmark {
 
 static inline void InitAndProfile(const auto& func, benchmark::State& state) {
     // Capture memory usage.
-    Memory::Profiler::StartCapture();
+    Profiler::StartCapture();
     func();
-    const auto& capture = Memory::Profiler::StopCapture();
+    const auto& capture = Profiler::StopCapture();
 
     // Log memory usage.
     state.counters["cpuMem"] = capture.allocatedCpuMemory;

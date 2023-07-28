@@ -27,7 +27,7 @@ Reader::Reader(const Config& config,
     antennaPositions.resize(getTotalShape().numberOfAspects());
     antennaCalibrations = ArrayTensor<Device::CPU, CF64>(getAntennaCalibrationsShape());
 
-    if (Memory::Profiler::IsCapturing()) {
+    if (Profiler::IsCapturing()) {
         BL_WARN("Capturing: Early setup return.");
         return;
     }

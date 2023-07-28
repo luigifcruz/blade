@@ -50,7 +50,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
     }
 
     // Link output buffer or link input with output.
-    BL_CHECK_THROW(Memory::Link(output.buf, input.buf));
+    BL_CHECK_THROW(Link(output.buf, input.buf));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);

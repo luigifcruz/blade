@@ -157,17 +157,17 @@ ArrayTensor<Device::CPU | Device::CUDA, CF32> managed_array(64);
 processor(managed_array); // Works! Unified vectors are also supported!
 ```
 
-Overloads of the `Memory::Copy` method supporting multiple devices provides an easy way to copy elements between arrays.
+Overloads of the `Copy` method supporting multiple devices provides an easy way to copy elements between arrays.
 
 ```cpp
 ArrayTensor<Device::CUDA, CF32> gpu_array_src(64);
 ArrayTensor<Device::CUDA, CF32> gpu_array_dst(64);
 ArrayTensor<Device::CPU, CF32> cpu_array_dst(64);
 
-Memory::Copy(gpu_array_dst, gpu_array_src);
+Copy(gpu_array_dst, gpu_array_src);
 
 // The same applies for memory copies between devices.
-Memory::Copy(cpu_array_dst, gpu_array_src);
+Copy(cpu_array_dst, gpu_array_src);
 ```
 
 # Blade Module

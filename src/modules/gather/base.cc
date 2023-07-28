@@ -79,7 +79,7 @@ Result Gather<IT, OT>::process(const cudaStream_t& stream, const U64& currentSte
         const auto& outputPitch = inputWidth * config.multiplier;
 
         BL_CHECK(
-            Memory::Copy2D(
+            Copy2D(
                 output.buf,
                 outputPitch,
                 0 * inputWidth,

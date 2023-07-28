@@ -35,7 +35,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     }
 
     // Link input with output (in-place operation).
-    BL_CHECK_THROW(Memory::Link(output.buf, input.buf, getOutputBufferShape()));
+    BL_CHECK_THROW(Link(output.buf, input.buf, getOutputBufferShape()));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);

@@ -6,7 +6,7 @@
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
 
-namespace Blade::Memory {
+namespace Blade {
 
 template<Device DstDeviceId, Device SrcDeviceId, typename Type, typename Dims>
 static Result Copy(Vector<DstDeviceId, Type, Dims>& dst,
@@ -36,28 +36,28 @@ template<typename Type, typename Dims>
 static Result Copy(Vector<Device::CUDA, Type, Dims>& dst,
                    const Vector<Device::CUDA, Type, Dims>& src,
                    const cudaStream_t& stream = 0) {
-    return Memory::Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
+    return Copy(dst, src, cudaMemcpyDeviceToDevice, stream);
 }
 
 template<typename Type, typename Dims>
 static Result Copy(Vector<Device::CPU, Type, Dims>& dst,
                    const Vector<Device::CPU, Type, Dims>& src,
                    const cudaStream_t& stream = 0) {
-    return Memory::Copy(dst, src, cudaMemcpyHostToHost, stream);
+    return Copy(dst, src, cudaMemcpyHostToHost, stream);
 }
 
 template<typename Type, typename Dims>
 static Result Copy(Vector<Device::CUDA, Type, Dims>& dst,
                    const Vector<Device::CPU, Type, Dims>& src,
                    const cudaStream_t& stream = 0) {
-    return Memory::Copy(dst, src, cudaMemcpyHostToDevice, stream);
+    return Copy(dst, src, cudaMemcpyHostToDevice, stream);
 }
 
 template<typename Type, typename Dims>
 static Result Copy(Vector<Device::CPU, Type, Dims>& dst,
                    const Vector<Device::CUDA, Type, Dims>& src,
                    const cudaStream_t& stream = 0) {
-    return Memory::Copy(dst, src, cudaMemcpyDeviceToHost, stream);
+    return Copy(dst, src, cudaMemcpyDeviceToHost, stream);
 }
 
 template<Device DstDeviceId, Device SrcDeviceId, typename DType, typename SType, typename Dims>
@@ -180,6 +180,6 @@ static Result Copy2D(Vector<Device::CPU, DType, Dims>& dst,
         width, height, cudaMemcpyDeviceToHost, stream);
 }
 
-}  // namespace Blade::Memory
+}  // namespace Blade
 
 #endif

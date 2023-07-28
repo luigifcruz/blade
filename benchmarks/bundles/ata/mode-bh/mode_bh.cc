@@ -120,7 +120,7 @@ bool blade_ata_bh_initialize(U64 numberOfWorkers) {
     State.OutputPointerMap.reserve(numberOfWorkers);
 
     // Terminate if capturing.
-    if (Memory::Profiler::IsCapturing()) {
+    if (Profiler::IsCapturing()) {
         blade_ata_bh_terminate();
     }
 

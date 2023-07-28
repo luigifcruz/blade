@@ -32,7 +32,7 @@ Generic<OT>::Generic(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (Memory::Profiler::IsCapturing()) {
+    if (Profiler::IsCapturing()) {
         BL_WARN("Capturing: Early setup return.");
         return;
     }
