@@ -8,7 +8,7 @@ namespace Blade {
 template<template<typename, typename> class MUT, typename IT, typename OT>
 class DetectorTest : CudaBenchmark {
  public:
-    MUT<IT, OT>::Config config;
+    typename MUT<IT, OT>::Config config;
     std::shared_ptr<MUT<IT, OT>> module;
     ArrayTensor<Device::CUDA, IT> deviceInputBuf;
 
@@ -17,7 +17,7 @@ class DetectorTest : CudaBenchmark {
         const U64 I = state.range(1);
         const U64 P = state.range(2);
 
-        BL_CHECK(InitAndProfile([&](){
+        InitAndProfile([&](){
             config.integrationSize = I;
             config.numberOfOutputPolarizations = P;
             config.blockSize = 512;
@@ -29,9 +29,7 @@ class DetectorTest : CudaBenchmark {
                 .buf = deviceInputBuf, 
             }, this->getStream());
             BL_ENABLE_PRINT();
-
-            return Result::SUCCESS;
-        }, state));
+        }, state);
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());

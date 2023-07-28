@@ -8,14 +8,14 @@ namespace Blade {
 template<template<typename, typename> class MUT, typename IT, typename OT>
 class CastTest : CudaBenchmark {
  public:
-    MUT<IT, OT>::Config config;
+    typename MUT<IT, OT>::Config config;
     std::shared_ptr<MUT<IT, OT>> module;
     ArrayTensor<Device::CUDA, IT> deviceInputBuf;
 
     Result run(benchmark::State& state) {
         const U64 A = state.range(0);
 
-        BL_CHECK(InitAndProfile([&](){
+        InitAndProfile([&](){
             config.blockSize = 512;
 
             deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});
@@ -25,9 +25,7 @@ class CastTest : CudaBenchmark {
                 .buf = deviceInputBuf, 
             }, this->getStream());
             BL_ENABLE_PRINT();
-
-            return Result::SUCCESS;
-        }, state));
+        }, state);
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());

@@ -10,7 +10,7 @@ namespace Blade {
 template<template<typename, typename> class MUT, typename IT, typename OT>
 class PolarizerTest : CudaBenchmark {
  public:
-    MUT<IT, OT>::Config config;
+    typename MUT<IT, OT>::Config config;
     std::shared_ptr<MUT<IT, OT>> module;
     ArrayTensor<Device::CUDA, IT> deviceInputBuf;
 
@@ -18,7 +18,7 @@ class PolarizerTest : CudaBenchmark {
         const U64 A = state.range(0);
         const U8 M = state.range(1);
 
-        BL_CHECK(InitAndProfile([&](){
+        InitAndProfile([&](){
             config.mode = static_cast<typename MUT<IT, OT>::Mode>(M);
             config.blockSize = 512;
 
@@ -29,9 +29,7 @@ class PolarizerTest : CudaBenchmark {
                 .buf = deviceInputBuf, 
             }, this->getStream());
             BL_ENABLE_PRINT();
-
-            return Result::SUCCESS;
-        }, state));
+        }, state);
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
