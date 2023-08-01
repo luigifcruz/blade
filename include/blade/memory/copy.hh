@@ -130,7 +130,7 @@ static Result Copy2D(Vector<DstDeviceId, DType, Dims>& dst,
             kind,
             stream
         ), [&]{
-            BL_FATAL("Can't 2D copy data ({}): {}", kind, err);
+            BL_FATAL("Can't 2D copy data: {}", err);
             return Result::CUDA_ERROR;
         }
     );

@@ -45,7 +45,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_KERNEL(callback) { \
     cudaError_t val; \
     if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         return callback(); \
     } \
 }
@@ -55,7 +55,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_KERNEL_THROW(callback) { \
     cudaError_t val; \
     if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         throw callback(); \
     } \
 }
@@ -65,7 +65,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK(x, callback) { \
     cudaError_t val = (x); \
     if (val != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         callback(); \
         return Result::CUDA_ERROR; \
     } \
@@ -76,7 +76,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_THROW(x, callback) { \
     cudaError_t val = (x); \
     if (val != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         callback(); \
         throw Result::CUDA_ERROR; \
     } \

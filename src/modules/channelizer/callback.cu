@@ -65,7 +65,7 @@ Callback::Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations) {
                                             callbackPointer, 
                                             CUFFT_CB_LD_COMPLEX,
                                             callerInfoPtr), [&]{
-        BL_FATAL("The configuration of an cuFFT callback failed: {0:#x}", err);
+        BL_FATAL("The configuration of an cuFFT callback failed: {}", static_cast<I64>(err));
     });
 
     BL_CUDA_CHECK_KERNEL_THROW([&]{
