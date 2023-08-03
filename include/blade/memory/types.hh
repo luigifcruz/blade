@@ -68,8 +68,6 @@ typedef ops::complex<U64> CU64;
 enum class BLADE_API Device : uint8_t {
     CPU     = 1 << 0,
     CUDA    = 1 << 1,
-    METAL   = 1 << 2,
-    VULKAN  = 1 << 3,
 };
 
 #ifndef BL_PHYSICAL_CONSTANT_C

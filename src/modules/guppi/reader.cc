@@ -122,7 +122,7 @@ const F64 Reader<OT>::getObservationFrequency() const {
 }
 
 template<typename OT>
-Result Reader<OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
+Result Reader<OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
     if (!this->keepRunning()) {
         return Result::PIPELINE_EXHAUSTED;
     }

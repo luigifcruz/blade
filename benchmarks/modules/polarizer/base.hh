@@ -33,7 +33,7 @@ class PolarizerTest : CudaBenchmark {
 
         for (auto _ : state) {
             BL_CHECK(this->startIteration());
-            BL_CHECK(module->process(this->getStream(), 0));
+            BL_CHECK(module->process(0, this->getStream()));
             BL_CHECK(this->finishIteration(state));
         }
 

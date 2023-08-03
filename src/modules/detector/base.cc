@@ -80,7 +80,7 @@ Detector<IT, OT>::Detector(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Detector<IT, OT>::process(const cudaStream_t& stream, const U64&) {
+Result Detector<IT, OT>::process(const U64&, const cudaStream_t& stream) {
     return runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 

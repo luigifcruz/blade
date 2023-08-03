@@ -60,9 +60,8 @@ class BLADE_API Gather : public Module {
 
     // Constructor & Processing
 
-    explicit Gather(const Config& config, const Input& input, 
-                    const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream, const U64& currentStepCount) final;
+    explicit Gather(const Config& config, const Input& input, const cudaStream_t& stream = 0);
+    Result process(const U64& currentStepCount, const cudaStream_t& stream = 0) final;
 
  private:
     // Variables

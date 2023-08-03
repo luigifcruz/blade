@@ -28,7 +28,7 @@ Generic<IT, OT>::Generic(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Generic<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
+Result Generic<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
     return runKernel("main", stream, input.buf.data(), input.phasors.data(), output.buf.data());
 }
 

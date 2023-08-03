@@ -31,6 +31,10 @@
 #include "blade/modules/beamformer/ata.hh"
 #endif
 
+#ifdef BLADE_MODULE_ATA_BEAMFORMER
+#include "blade/modules/beamformer/meerkat.hh"
+#endif
+
 #ifdef BLADE_MODULE_ATA_PHASOR
 #include "blade/modules/phasor/ata.hh"
 #endif

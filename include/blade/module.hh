@@ -30,8 +30,7 @@ class Module {
         return 1;       
     }
 
-    virtual constexpr Result process(const cudaStream_t& stream,
-                                     const U64& currentStepNumber) {
+    virtual constexpr Result process(const U64& currentStepNumber, const cudaStream_t& stream = 0) {
         return Result::SUCCESS;
     }
 

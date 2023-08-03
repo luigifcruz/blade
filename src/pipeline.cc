@@ -79,7 +79,7 @@ Result Pipeline::compute(const U64& index) {
     for (auto& module : this->modules) {
         localStepCount = _computeStepCount / localStepOffset % _computeStepRatios[localRatioIndex];
 
-        const auto& result = module->process(_streams[index], localStepCount);
+        const auto& result = module->process(localStepCount, _streams[index]);
 
         if (result == Result::PIPELINE_EXHAUSTED) {
             BL_INFO("Module finished pipeline execution at {} lifetime compute cycles.", _computeLifetimeCycles);

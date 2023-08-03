@@ -32,7 +32,7 @@ Copy<IT, OT>::Copy(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Copy<IT, OT>::process(const cudaStream_t& stream, const U64& currentStepCount) {
+Result Copy<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
     return Blade::Copy(output.buf, input.buf, stream);
 }
 
