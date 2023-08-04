@@ -1,6 +1,5 @@
 deps = [
     dependency('fmt', version: '>=6.1', required: false),
-    dependency('pybind11', version: '>=2.4', required: false),
 ]
 
 py = import('python').find_installation('python3', required: false)
@@ -11,6 +10,10 @@ has_python = py.found()
 foreach x_dep : deps
     has_python = has_python and x_dep.found()
 endforeach
+
+cmake = import('cmake')
+sub_proj = cmake.subproject('nanobind')
+deps += sub_proj.dependency('nanobind-static')
 
 if has_python
     py.extension_module(
