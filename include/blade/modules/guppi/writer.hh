@@ -34,11 +34,11 @@ class BLADE_API Writer : public Module {
     // Input
 
     struct Input {
-        const ArrayTensor<Device::CPU, IT>& buffer;
+        const ArrayTensor<Device::CPU, IT>& buf;
     };
 
     constexpr const ArrayTensor<Device::CPU, IT>& getInputBuffer() const {
-        return this->input.buffer;
+        return this->input.buf;
     }
 
     // Output
@@ -59,24 +59,24 @@ class BLADE_API Writer : public Module {
 
     // Miscullaneous
 
-    constexpr void headerPut(std::string key, std::string value) {
+    constexpr void headerPut(const std::string& key, const std::string& value) {
         guppiraw_header_put_string(&this->gr_header, key.c_str(), value.c_str());
     }
 
-    constexpr void headerPut(std::string key, F64 value) {
+    constexpr void headerPut(const std::string& key, const F64& value) {
         guppiraw_header_put_double(&this->gr_header, key.c_str(), value);
     }
 
-    constexpr void headerPut(std::string key, I64 value) {
+    constexpr void headerPut(const std::string& key, const I64& value) {
         guppiraw_header_put_integer(&this->gr_header, key.c_str(), value);
     }
 
-    constexpr void headerPut(std::string key, I32 value) {
-        guppiraw_header_put_integer(&this->gr_header, key.c_str(), (I64)value);
+    constexpr void headerPut(const std::string& key, const I32& value) {
+        guppiraw_header_put_integer(&this->gr_header, key.c_str(), static_cast<I64>(value));
     }
 
-    constexpr void headerPut(std::string key, U64 value) {
-        guppiraw_header_put_integer(&this->gr_header, key.c_str(), (I64)value);
+    constexpr void headerPut(const std::string& key, const U64& value) {
+        guppiraw_header_put_integer(&this->gr_header, key.c_str(), static_cast<I64>(value));
     }
 
  private:

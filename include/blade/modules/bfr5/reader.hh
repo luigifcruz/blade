@@ -25,6 +25,10 @@ class BLADE_API Reader : public Module {
         U64 blockSize = 512;
     };
 
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
     // Input
 
     struct Input {
