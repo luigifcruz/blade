@@ -1,5 +1,5 @@
 deps = [
-    dependency('gtest')
+    dependency('gtest', required: false)
 ]
 
 all_deps_found = true

@@ -1,9 +1,6 @@
 py = import('python').find_installation('python3', required: false)
 
-has_python = false
-if py.found()
-    has_python = true
-endif
+has_python = py.found()
 
 if has_python
     cmake = import('cmake')

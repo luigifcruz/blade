@@ -1,5 +1,5 @@
 deps = [
-    dependency('benchmark')
+    dependency('benchmark', required: false)
 ]
 
 all_deps_found = true
