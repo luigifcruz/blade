@@ -42,4 +42,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
 NB_MODULE(_blade_polarizer_impl, m) {
     NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "to_cf16");
 }

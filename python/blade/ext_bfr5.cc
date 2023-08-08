@@ -12,29 +12,29 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace Blade;
 
-template<typename IT, typename OT>
+template<class Class>
 void NB_SUBMODULE(auto& m, const auto& name) {
-    using Class = Modules::Channelizer<IT, OT>;
-
     nb::class_<Class> mod(m, name);
 
     nb::class_<typename Class::Config>(mod, "config")
-        .def(nb::init<const U64&,
-                      const U64&>(), "rate"_a,
+        .def(nb::init<const std::string&,
+                      const U64&,
+                      const U64&>(), "filepath"_a,
+                                     "channelizer_rate"_a,
                                      "block_size"_a);
 
-    nb::class_<typename Class::Input>(mod, "input")
-        .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
+    nb::class_<typename Class::Input>(mod, "input");
 
     mod
         .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
-        .def("process", [](Class& instance, const U64& counter) {
-            return instance.process(counter);
-        })
-        .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_total_shape", &Class::getTotalShape, nb::rv_policy::reference)
+        .def("get_reference_position", &Class::getReferencePosition, nb::rv_policy::reference)
+        .def("get_boresight_coordinates", &Class::getBoresightCoordinates, nb::rv_policy::reference)
+        .def("get_antenna_positions", &Class::getAntennaPositions, nb::rv_policy::reference)
+        .def("get_beam_coordinates", &Class::getBeamCoordinates, nb::rv_policy::reference)
+        .def("get_antenna_calibrations", &Class::getAntennaCalibrations, nb::rv_policy::reference);
 }
 
 NB_MODULE(_blade_bfr5_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
+    NB_SUBMODULE<Modules::Bfr5::Reader>(m, "reader");
 }

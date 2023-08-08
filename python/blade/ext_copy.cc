@@ -14,14 +14,11 @@ using namespace Blade;
 
 template<typename IT, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
-    using Class = Modules::Channelizer<IT, OT>;
+    using Class = Modules::Copy<IT, OT>;
 
     nb::class_<Class> mod(m, name);
 
-    nb::class_<typename Class::Config>(mod, "config")
-        .def(nb::init<const U64&,
-                      const U64&>(), "rate"_a,
-                                     "block_size"_a);
+    nb::class_<typename Class::Config>(mod, "config");
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
@@ -37,4 +34,6 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
 NB_MODULE(_blade_copy_impl, m) {
     NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "to_cf16");
+    NB_SUBMODULE<CI8, CI8>(m, "to_ci8");
 }

@@ -63,4 +63,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
 NB_MODULE(_blade_phasor_impl, m) {
     NB_SUBMODULE<Modules::Phasor::ATA, CF32>(m, "to_cf32");
+    NB_SUBMODULE<Modules::Phasor::ATA, CF64>(m, "to_cf64");
 }

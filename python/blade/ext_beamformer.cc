@@ -41,7 +41,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
 }
 
-NB_MODULE(_blade_channelizer_impl, m) {
+NB_MODULE(_blade_beamformer_impl, m) {
 #ifdef BLADE_MODULE_ATA_BEAMFORMER
     {
         auto mm = m.def_submodule("ata");
