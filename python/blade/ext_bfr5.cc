@@ -27,6 +27,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
     mod
         .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_total_shape", &Class::getTotalShape, nb::rv_policy::reference)
         .def("get_reference_position", &Class::getReferencePosition, nb::rv_policy::reference)
         .def("get_boresight_coordinates", &Class::getBoresightCoordinates, nb::rv_policy::reference)

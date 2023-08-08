@@ -49,7 +49,7 @@ Result Writer<IT>::process(const U64& currentStepCount, const cudaStream_t& stre
     const auto& bytesWritten = guppiraw_write_block_batched(
                                     this->fileDescriptor, 
                                     &this->gr_header, 
-                                    this->input.buffer.data(),
+                                    this->input.buf.data(),
                                     1,
                                     this->config.inputFrequencyBatches);
 

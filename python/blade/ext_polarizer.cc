@@ -19,8 +19,8 @@ void NB_SUBMODULE(auto& m, const auto& name) {
     nb::class_<Class> mod(m, name);
 
     nb::enum_<typename Class::Mode>(mod, "mode")
-        .value("BYPASS", Class::Mode::BYPASS)
-        .value("XY2LR", Class::Mode::XY2LR)
+        .value("bypass", Class::Mode::BYPASS)
+        .value("xy_to_lr", Class::Mode::XY2LR)
         .export_values();
 
     nb::class_<typename Class::Config>(mod, "config")
@@ -36,6 +36,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
+        .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
         .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
 }

@@ -35,6 +35,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
+        .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
         .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
 }

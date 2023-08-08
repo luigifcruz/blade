@@ -36,6 +36,16 @@ if has_python
         install_dir: python_ext_path,
     )
 
+    py.extension_module(
+        '_blade_const_impl',
+        sources: 'ext_const.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+
 if cfg_lst.get('BLADE_MODULE_CAST', false)
     py.extension_module(
         '_blade_cast_impl',
