@@ -1,0 +1,140 @@
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/array.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/shared_ptr.h>
+
+#include "blade/base.hh"
+#include "blade/memory/custom.hh"
+
+namespace nb = nanobind;
+using namespace nb::literals;
+using namespace Blade;
+
+template<Device DeviceType, typename DataType, typename ShapeType>
+void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
+    using ClassType = Vector<DeviceType, DataType, ShapeType>;
+
+    nb::class_<ClassType>(m, name)
+        .def(nb::init<>())
+        .def(nb::init<const ShapeType&, const bool&>(), "shape"_a, "unified"_a = false)
+        .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
+        .def("as_numpy", [](ClassType& obj){
+            // TODO: Should return nb::ndarray<...>
+        }, nb::rv_policy::reference)
+        .def("__getitem__", [](ClassType& obj, const typename ShapeType::Type& shape){
+            return obj[shape];
+        }, nb::rv_policy::reference)
+        .def("__getitem__", [](ClassType& obj, const U64& index){
+            return obj[index];
+        }, nb::rv_policy::reference)
+        .def("__setitem__", [](ClassType& obj, const typename ShapeType::Type& shape, const DataType& val){
+            obj[shape] = val;
+        })
+        .def("__setitem__", [](ClassType& obj, const U64& index, const DataType& val){
+            obj[index] = val;
+        })
+        .def("__repr__", [](ClassType& obj){
+            return fmt::format("Vector(shape={}, unified={}, hash={})",
+                                obj.shape(), obj.unified(), obj.hash());
+        })
+        .def("unified", [](ClassType& obj){
+            return obj.unified();
+        })
+        .def("hash", [](ClassType& obj){
+            return obj.hash();
+        })
+        .def("shape", [](ClassType& obj) {
+            return obj.shape();
+        });
+}
+
+template<Device DeviceType, typename DataType>
+void NB_SUBMODULE_MEMORY_DEVICE_TYPE(auto& m, const auto& name) {
+    auto mm = m.def_submodule(name);
+
+    NB_SUBMODULE_VECTOR<DeviceType, DataType, ArrayShape>(mm, "array_tensor");
+    NB_SUBMODULE_VECTOR<DeviceType, DataType, PhasorShape>(mm, "phasor_tensor");
+    NB_SUBMODULE_VECTOR<DeviceType, DataType, VectorShape>(mm, "tensor");
+}
+
+template<Device DeviceType>
+void NB_SUBMODULE_MEMORY_DEVICE(auto& m, const auto& name) {
+    auto mm = m.def_submodule(name);
+
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, I8>(mm, "i8");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, F16>(mm, "f16");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, F32>(mm, "f32");
+
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CI8>(mm, "ci8");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF16>(mm, "cf16");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF32>(mm, "cf32");
+}
+
+NB_MODULE(_blade_mem_impl, m) {
+    nb::class_<ArrayShape>(m, "array_shape")
+        .def(nb::init<const typename ArrayShape::Type&>(), "shape"_a)
+        .def("number_of_aspects", [](ArrayShape& obj){
+            return obj.numberOfAspects();
+        })
+        .def("number_of_frequency_channels", [](ArrayShape& obj){
+            return obj.numberOfFrequencyChannels();
+        })
+        .def("number_of_time_samples", [](ArrayShape& obj){
+            return obj.numberOfTimeSamples();
+        })
+        .def("number_of_polarizations", [](ArrayShape& obj){
+            return obj.numberOfPolarizations();
+        })
+        .def("__getitem__", [](ArrayShape& obj, const U64& index){
+            return obj[index];
+        }, nb::rv_policy::reference)
+        .def("__repr__", [](ArrayShape& obj){
+            return fmt::format("ArrayShape(shape={})", obj);
+        })
+        .def("__len__", [](ArrayShape& obj){
+            return obj.size();
+        });
+
+    nb::class_<PhasorShape>(m, "phasor_shape")
+        .def(nb::init<const typename PhasorShape::Type&>(), "shape"_a)
+        .def("number_of_beams", [](PhasorShape& obj){
+            return obj.numberOfBeams();
+        })
+        .def("number_of_antennas", [](PhasorShape& obj){
+            return obj.numberOfAntennas();
+        })
+        .def("number_of_frequency_channels", [](PhasorShape& obj){
+            return obj.numberOfFrequencyChannels();
+        })
+        .def("number_of_time_samples", [](PhasorShape& obj){
+            return obj.numberOfTimeSamples();
+        })
+        .def("number_of_polarizations", [](PhasorShape& obj){
+            return obj.numberOfPolarizations();
+        })
+        .def("__getitem__", [](PhasorShape& obj, const U64& index){
+            return obj[index];
+        }, nb::rv_policy::reference)
+        .def("__repr__", [](PhasorShape& obj){
+            return fmt::format("PhasorShape(shape={})", obj);
+        })
+        .def("__len__", [](PhasorShape& obj){
+            return obj.size();
+        });
+
+    nb::class_<VectorShape>(m, "vector_shape")
+        .def(nb::init<const typename VectorShape::Type&>(), "shape"_a)
+        .def("__getitem__", [](VectorShape& obj, const U64& index){
+            return obj[index];
+        }, nb::rv_policy::reference)
+        .def("__repr__", [](VectorShape& obj){
+            return fmt::format("VectorShape(shape={})", obj);
+        })
+        .def("__len__", [](VectorShape& obj){
+            return obj.size();
+        });
+
+    NB_SUBMODULE_MEMORY_DEVICE<Device::CPU>(m, "cpu");
+    NB_SUBMODULE_MEMORY_DEVICE<Device::CUDA>(m, "cuda");
+}

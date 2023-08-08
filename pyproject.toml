@@ -1,0 +1,13 @@
+[build-system]
+build-backend = 'mesonpy'
+requires = ['meson-python']
+
+[project]
+name = 'blade'
+version = '1.0.0'
+description = 'Python bindings for BLADE.'
+readme = 'README.md'
+requires-python = '>=3.8'
+authors = [
+  {name = 'Luigi Cruz', email = 'seti@luigi.ltd'},
+]

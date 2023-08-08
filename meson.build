@@ -6,6 +6,7 @@ project(
         'buildtype=release',
         'cpp_std=c++20',
         'b_ndebug=if-release',
+        'prefix=/usr',
     ]
 )
 

@@ -1,29 +1,22 @@
-deps = [
-    dependency('fmt', version: '>=6.1', required: false),
-]
-
-py = import('python').find_installation('python3', required: false)
-
-deps += py.dependency()
-
-has_python = py.found()
-foreach x_dep : deps
-    has_python = has_python and x_dep.found()
-endforeach
-
-cmake = import('cmake')
-sub_proj = cmake.subproject('nanobind')
-deps += sub_proj.dependency('nanobind-static')
+subdir('blade')
 
 if has_python
-    py.extension_module(
-        'blade',
-        sources: 'bindings.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
+    install_subdir(
+        'blade', 
         install_dir: py.get_install_dir(),
+        exclude_files: [
+            'ext_beamformer.cc',
+            'ext_bfr5.cc',
+            'ext_cast.cc',
+            'ext_channelizer.cc',
+            'ext_copy.cc',
+            'ext_detector.cc',
+            'ext_gather.cc',
+            'ext_guppi.cc',
+            'ext_mem.cc',
+            'ext_permutation.cc',
+            'ext_phasor.cc',
+            'ext_polarizer.cc',
+        ]
     )
-    python_path = meson.current_build_dir()
 endif
