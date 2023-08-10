@@ -38,6 +38,8 @@ class BLADE_API Dedoppler : public Module {
         U64 totalNumberOfTimeSamples;
         U64 totalNumberOfFrequencyChannels;
 
+        BOOL produceDebugHits = false;
+
         U64 blockSize = 512;
     };
 
@@ -48,7 +50,7 @@ class BLADE_API Dedoppler : public Module {
     // Input
 
     struct Input {
-        const ArrayTensor<Device::CUDA, F32>& buf;
+        const ArrayTensor<Device::CPU, F32>& buf;
         const Vector<Device::CPU, U64>& coarseFrequencyChannelOffset;
         const Vector<Device::CPU, F64>& julianDate;
     };
@@ -79,7 +81,8 @@ class BLADE_API Dedoppler : public Module {
     private:
     // Variables
 
-    ArrayTensor<Device::CPU, F32> buf;
+    ArrayTensor<Device::CUDA, F32> searchBuffer;
+    ArrayTensor<Device::CUDA, F32> incohBuffer;
 
     const Config config;
     const Input input;

@@ -22,10 +22,12 @@ class BLADE_API Reader : public Module {
     struct Config {
         std::string filepath;
         U64 stepNumberOfTimeSamples;
+        U64 requiredMultipleOfTimeSamplesSteps = 1;
         U64 stepNumberOfFrequencyChannels;
 
         U64 numberOfTimeSampleStepsBeforeFrequencyChannelStep = 1;
         U64 blockSize = 512;
+        U64 numberOfFilesLimit = 0; // zero for no limit
     };
 
     constexpr const Config& getConfig() const {
@@ -89,15 +91,14 @@ class BLADE_API Reader : public Module {
     const ArrayDimensions getNumberOfStepsInDimensions() const {
         auto dimensionSteps = this->getTotalOutputBufferDims() / this->getStepOutputBufferDims();
         if (this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep > 0) {
-            dimensionSteps.T /= this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep;
-            dimensionSteps.T *= this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep;
+            dimensionSteps.T -= dimensionSteps.T % this->config.numberOfTimeSampleStepsBeforeFrequencyChannelStep;
         }
+        dimensionSteps.T -= dimensionSteps.T % this->config.requiredMultipleOfTimeSamplesSteps;
         return dimensionSteps;
     }
 
     const U64 getNumberOfSteps() {
-        return (this->getTotalOutputBufferDims() / 
-               this->getStepOutputBufferDims()).size();
+        return this->getNumberOfStepsInDimensions().size();
     }
 
     // Constructor & Processing
@@ -147,6 +148,9 @@ class BLADE_API Reader : public Module {
     // Helpers
 
     const bool keepRunning() const {
+        // const auto numberOfStepsInDimensions = this->getNumberOfStepsInDimensions();
+        // return this->currentStepDimensionIndices.T < numberOfStepsInDimensions.T &&
+        // this->currentStepDimensionIndices.F < numberOfStepsInDimensions.F;
         return guppiraw_iterate_ntime_remaining(&this->gr_iterate) >= 
                 this->config.stepNumberOfTimeSamples;
     }

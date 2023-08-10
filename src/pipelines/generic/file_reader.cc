@@ -12,8 +12,10 @@ FileReader<OT>::FileReader(const Config& config) : config(config) {
     this->connect(guppi, {
         .filepath = config.inputGuppiFile,
         .stepNumberOfTimeSamples = config.stepNumberOfTimeSamples, 
+        .requiredMultipleOfTimeSamplesSteps = config.requiredMultipleOfTimeSamplesSteps,
         .stepNumberOfFrequencyChannels = config.stepNumberOfFrequencyChannels,
         .numberOfTimeSampleStepsBeforeFrequencyChannelStep = config.numberOfTimeSampleStepsBeforeFrequencyChannelStep,
+        .numberOfFilesLimit = config.numberOfGuppiFilesLimit,
     }, {});
 
     BL_DEBUG("Instantiating BFR5 file reader.");

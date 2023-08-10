@@ -38,6 +38,7 @@ class BLADE_API ModeB : public Pipeline {
         std::vector<CF64> phasorAntennaCoefficients; 
         std::vector<RA_DEC> phasorBeamCoordinates;
         U64 phasorAntennaCoefficientChannelRate;
+        BOOL phasorNegateDelays;
 
         BOOL beamformerIncoherentBeam = false;
 

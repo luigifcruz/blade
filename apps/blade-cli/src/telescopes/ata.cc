@@ -137,7 +137,7 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
     config.driftRateZeroExcluded = false;
     app
         .add_flag("-Z,--search-drift-rate-exclude-zero", config.driftRateZeroExcluded,
-                "SETI search exclude hits with drift rate of zero");
+                "SETI search exclude hits with drift rate of zero (short-hand for setting --search-drift-rate-minimum to the Dedoppler drift rate resolution)");
     
     // Read incoherent beam enable.
     config.incoherentBeamEnabled = false;
@@ -145,11 +145,41 @@ const Result CollectUserInput(int argc, char **argv, Config& config) {
         .add_flag("-I,--incoherent-beam-enable", config.incoherentBeamEnabled,
                 "Beamform the incoherent beam");
     
-    // Read progress bar enable.
+    // Read progress bar disable.
     config.progressBarDisabled = false;
     app
         .add_flag("-P,--no-progress-bar", config.progressBarDisabled,
                 "Switch off the progress bar.");
+    
+    // Read seticore hits grouping margin
+    app
+        .add_option("--hits-grouping-margin", config.hitsGroupingMargin,
+                "SETI search grouping margin specified in channels.")
+            ->default_val(30);
+    
+    // Read debug hits enable.
+    config.produceDebugHits = false;
+    app
+        .add_flag("--produce-debug-hits", config.produceDebugHits,
+                "SETI search artificial hits are made covering all ingest data. The filterbank field of the hits collectively have the beamformed data. The data field of the stamps collectively have all upchannelised data. Disables hits grouping and stamp frequency margins.");
+
+    // Read stamps frequency margin.
+    app
+        .add_option("--stamp-frequency-margin", config.stampFrequencyMarginHz,
+                "SETI search stamps frequency marginal padding.")
+            ->default_val(500.0);
+    
+    // Read phasor delays negation.
+    config.phasorNegateDelays = false;
+    app
+        .add_flag("--negate-phasor-delays", config.phasorNegateDelays,
+                "Negate the delays from which the beamforming-phasors are calculated.");
+    
+    // Read guppi file limit.
+    app
+        .add_option("--input-guppi-raw-limit", config.inputGuppiFileLimit,
+                "Limit the number of RAW files to process (0 for no limit).")
+            ->default_val(0);
 
     try {
         app.parse(argc, argv);

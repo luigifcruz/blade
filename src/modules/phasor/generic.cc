@@ -60,6 +60,7 @@ Generic<OT>::Generic(const Config& config, const Input& input)
 
     // Print generic configuration values.
     BL_INFO("Type: {} -> {}", "N/A", TypeInfo<OT>::name);
+    BL_INFO("Delays Negated: {}", config.negateDelays);
     BL_INFO("Bottom Frequency (Hz): {}", config.bottomFrequencyHz);
     BL_INFO("Channel Bandwidth (Hz): {}", config.channelBandwidthHz);
     BL_INFO("Reference Antenna Index: {}", config.referenceAntennaIndex);

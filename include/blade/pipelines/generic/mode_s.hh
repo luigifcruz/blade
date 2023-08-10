@@ -35,6 +35,7 @@ class BLADE_API ModeS : public Pipeline {
     // Configuration 
 
     struct Config {
+        U64 accumulateRate = 1;
         ArrayDimensions prebeamformerInputDimensions;
         ArrayDimensions inputDimensions;
 
@@ -57,11 +58,15 @@ class BLADE_API ModeS : public Pipeline {
         F64 searchMinimumDriftRate = 0.0;
         F64 searchMaximumDriftRate;
         F64 searchSnrThreshold;
+        F64 searchStampFrequencyMarginHz;
+        I64 searchHitsGroupingMargin;
         BOOL searchIncoherentBeam = true;
 
         F64 searchChannelBandwidthHz;
         F64 searchChannelTimespanS;
         std::string searchOutputFilepathStem;
+
+        BOOL produceDebugHits = false;
 
         U64 dedopplerBlockSize = 512;
     };
@@ -101,7 +106,7 @@ class BLADE_API ModeS : public Pipeline {
  private:
     const Config config;
 
-    ArrayTensor<Device::CUDA, F32> input;
+    ArrayTensor<Device::CPU, F32> input;
     ArrayTensor<Device::CPU, CF32> prebeamformerData;
     Vector<Device::CPU, U64> coarseFrequencyChannelOffset;
     Vector<Device::CPU, F64> frequencyOfFirstChannelHz;

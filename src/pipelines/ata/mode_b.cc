@@ -68,6 +68,7 @@ ModeB<IT, OT>::ModeB(const Config& config)
         .beamCoordinates = config.phasorBeamCoordinates,
 
         .antennaCoefficientChannelRate = this->config.phasorAntennaCoefficientChannelRate,
+        .negateDelays = this->config.phasorNegateDelays,
 
         .blockSize = config.phasorBlockSize,
     }, {

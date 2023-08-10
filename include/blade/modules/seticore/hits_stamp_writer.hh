@@ -39,8 +39,8 @@ class BLADE_API HitsStampWriter : public Module {
         U64 coarseChannelRatio;
         F64 channelBandwidthHz;
         F64 channelTimespanS;
-        U64 hitsGroupingMargin = 30;
-        BOOL excludeDriftRateZero = false;
+        F64 stampFrequencyMarginHz = 500.0;
+        I64 hitsGroupingMargin = 30;
 
         U64 blockSize = 512;
     };

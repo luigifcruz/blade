@@ -19,7 +19,6 @@ HitsStampWriter<IT>::HitsStampWriter(const Config& config, const Input& input)
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, "N/A");
     BL_INFO("Dimensions [A, F, T, P]: {} -> {}", getInputBuffer().dims(), "N/A");
     BL_INFO("Output File Path: {}", config.filepathPrefix);
-    BL_INFO("Excluding Zero Drift Rate Hits: {}", config.excludeDriftRateZero ? "YES" : "NO");
 }
 
 template<typename IT>
@@ -33,41 +32,88 @@ HitsStampWriter<IT>::~HitsStampWriter() {
 template<typename IT>
 const Result HitsStampWriter<IT>::process(const cudaStream_t& stream) {
     if (input.hits.size() == 0) {
+        BL_DEBUG("No hits.");
         return Result::SUCCESS;
     }
 
     const auto inputDims = getInputBuffer().dims();
 
-    const int hitStampFrequencyMargin = this->config.channelBandwidthHz < 500.0 ? 500.0 / this->config.channelBandwidthHz : 1;
+    int hitStampFrequencyMargin = 1;
+    if (this->config.stampFrequencyMarginHz <= 0.0) {
+        hitStampFrequencyMargin = 0;
+    }
+    else if (abs(this->config.channelBandwidthHz) < this->config.stampFrequencyMarginHz) {
+        hitStampFrequencyMargin = this->config.stampFrequencyMarginHz / abs(this->config.channelBandwidthHz);
+    }
 
     vector<DedopplerHitGroup> groups = makeHitGroups(input.hits, this->config.hitsGroupingMargin);
-    BL_DEBUG("{} group(s) of the search's {} hit(s)", groups.size(), input.hits.size());
-    for (const DedopplerHitGroup& group : groups) {
-        const DedopplerHit& top_hit = group.topHit();
-    // for (const DedopplerHit& top_hit : input.hits) {
+    // The grouping mechanism ensures all hits are in a single group.
+    // The groups bounds are transitive, expanding with each new-comer
+    // Because of this, some groups could have overlapping channel-spans.
+    // The real objective is just to ensure that all frequency data that
+    // resulted in a hit is stamped out. So leave them be, but don't stamp
+    // frequency ranges twice...
 
-        if (this->config.excludeDriftRateZero && top_hit.drift_steps == 0) {
-            continue;
+    vector<U64> stamps_first_channel;
+    vector<U64> stamps_last_channel;
+    stamps_first_channel.reserve(groups.size());
+    stamps_last_channel.reserve(groups.size());
+    BL_DEBUG("{} group(s) of the search's {} hit(s), stamps are padded by {} frequency-channels.", groups.size(), input.hits.size(), hitStampFrequencyMargin);
+    for (const DedopplerHitGroup& group : groups) {
+        // Consider the group
+        //  a stamp covers the extremes of all the hits
+        //  + the hitStampFrequencyMargin
+        int lowIndex = inputDims.numberOfFrequencyChannels();
+        int highIndex = 0;
+        for (const DedopplerHit& hit : group.hits) {
+            if (hit.lowIndex() < lowIndex) {
+                lowIndex = hit.lowIndex();
+            }
+            if (hit.highIndex() > highIndex) {
+                highIndex = hit.highIndex();
+            }
         }
 
-        // Extract the stamp
-        const int lowIndex = top_hit.lowIndex() - hitStampFrequencyMargin;
-        U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
-        U64 highIndex = top_hit.highIndex() + hitStampFrequencyMargin;
-        U64 last_channel = highIndex >= inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels()-1 : highIndex;
-        
-        BL_DEBUG("Top hit: {}", top_hit.toString());
+        lowIndex -= hitStampFrequencyMargin;
+        highIndex += hitStampFrequencyMargin;
+        const U64 first_channel = lowIndex < 0 ? 0 : (U64) lowIndex;
+        const U64 last_channel = highIndex > inputDims.numberOfFrequencyChannels() ? inputDims.numberOfFrequencyChannels() : (U64) highIndex;
+
         BL_DEBUG(
-            "Extracting fine channels [{}, {}) from coarse channel {}",
+            "Group channel range spans [{}, {}].",
             first_channel,
-            last_channel,
-            top_hit.coarse_channel
+            last_channel
         );
         if (first_channel > last_channel) {
-            const U64 tmp_channel = last_channel;
-            last_channel = first_channel;
-            first_channel = tmp_channel;
+            BL_FATAL("Channels are wrong way around");
+            BL_CHECK_THROW(Result::ERROR);
         }
+        
+        // double check that this channel range has not already been stamped
+        bool stamp_is_novel = true;
+        for (size_t index = 0; stamp_is_novel && index < stamps_first_channel.size(); index++) {
+            stamp_is_novel &= !(stamps_first_channel.at(index) <= first_channel
+                && stamps_last_channel.at(index) >= last_channel);
+            
+            if (!stamp_is_novel) {
+                BL_DEBUG(
+                    "Group channel range covered by previous stamp #{} spanning [{}, {}]",
+                    index,
+                    stamps_first_channel.at(index),
+                    stamps_last_channel.at(index)
+                );
+            }
+        }
+        if (!stamp_is_novel) {
+            continue;
+        }
+        
+        // Extract the stamp
+        const DedopplerHit& top_hit = group.topHit();
+        BL_DEBUG("Stamp #{} of group with top hit: {}", stamps_first_channel.size(), top_hit.toString());
+        stamps_first_channel.emplace_back(first_channel);
+        stamps_last_channel.emplace_back(last_channel);
+
         const ArrayDimensions regionOfInterestDims = {
             .A = inputDims.numberOfAspects(),
             .F = (U64) (last_channel - first_channel),

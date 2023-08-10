@@ -6,21 +6,47 @@ namespace Blade::Pipelines::Generic {
 
 template<HitsFormat HT>
 ModeS<HT>::ModeS(const Config& config)
-     : Pipeline(1, 1),
+     : Pipeline(config.accumulateRate, 1),
        config(config),
        coarseFrequencyChannelOffset({1}),
        frequencyOfFirstChannelHz({1}),
        julianDateStart({1}) {
     BL_DEBUG("Initializing Pipeline Mode S.");
 
+    ArrayDimensions accumulationDimensionRates = {.A=1, .F=1, .T=config.accumulateRate, .P=1};
     BL_DEBUG("Allocating pipeline buffers.");
-    BL_CHECK_THROW(this->input.resize(config.inputDimensions));
-    BL_CHECK_THROW(this->prebeamformerData.resize(config.prebeamformerInputDimensions));
+    ArrayDimensions inputAccumulatedDimensions = accumulationDimensionRates * config.inputDimensions;
+    if (config.accumulateRate > 1) {
+        BL_DEBUG("Input Dimensions: {}", config.inputDimensions);
+        BL_DEBUG("Accumulated Input Dimensions: {}", inputAccumulatedDimensions);
+    }
+    BL_CHECK_THROW(this->input.resize(inputAccumulatedDimensions));
+    if (config.accumulateRate > 1) {
+        BL_DEBUG("Accumulated Input Byte Size: {}", this->input.size_bytes());
+    }
+
+    ArrayDimensions prebeamformerAccumulatedDimensions = accumulationDimensionRates * config.prebeamformerInputDimensions;
+    if (config.accumulateRate > 1) {
+        BL_DEBUG("Input Pre-Beamformer Dimensions: {}", config.prebeamformerInputDimensions);
+        BL_DEBUG("Accumulated Input Dimensions: {}", prebeamformerAccumulatedDimensions);
+    }
+
+    BL_CHECK_THROW(this->prebeamformerData.resize(prebeamformerAccumulatedDimensions));
+    if (config.accumulateRate > 1) {
+        BL_DEBUG("Accumulated Input Byte Size: {}", this->prebeamformerData.size_bytes());
+    }
 
     BL_DEBUG("Instantiating Dedoppler module.");
+    F64 minimumDriftRate = config.searchMinimumDriftRate;
+    if (config.searchDriftRateZeroExcluded && minimumDriftRate == 0.0) {
+        // set the minimum to at least the drift-rate-resolution:
+        // Calculation taken from the private Dedoppler.drift_rate_resolution.
+        minimumDriftRate = config.searchChannelBandwidthHz / (this->input.dims().numberOfTimeSamples() * config.searchChannelTimespanS);
+        BL_INFO("Set the minimum drift rate of the dedoppler search to the search's resolution of {} Hz/s to exclude zero.", minimumDriftRate);
+    }
     this->connect(this->dedoppler, {
         .mitigateDcSpike = config.searchMitigateDcSpike,
-        .minimumDriftRate = config.searchMinimumDriftRate,
+        .minimumDriftRate = minimumDriftRate,
         .maximumDriftRate = config.searchMaximumDriftRate,
         .snrThreshold = config.searchSnrThreshold,
         .frequencyOfFirstChannelHz = config.inputFrequencyOfFirstChannelHz,
@@ -40,6 +66,8 @@ ModeS<HT>::ModeS(const Config& config)
         .aspectCoordinates = config.beamCoordinates,
         .totalNumberOfTimeSamples = config.inputTotalNumberOfTimeSamples,
         .totalNumberOfFrequencyChannels = config.inputTotalNumberOfFrequencyChannels,
+
+        .produceDebugHits = config.produceDebugHits,
     }, {
         .buf = this->input,
         .coarseFrequencyChannelOffset = this->coarseFrequencyChannelOffset,
@@ -59,7 +87,8 @@ ModeS<HT>::ModeS(const Config& config)
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
             .channelTimespanS = config.searchChannelTimespanS,
-            .excludeDriftRateZero = config.searchDriftRateZeroExcluded,
+            .stampFrequencyMarginHz = config.produceDebugHits ? 0.0 : config.searchStampFrequencyMarginHz,
+            .hitsGroupingMargin = config.produceDebugHits ? -config.inputCoarseChannelRatio : config.searchHitsGroupingMargin,
         }, {
             .buffer = this->prebeamformerData,
             .hits = this->dedoppler->getOutputHits(),
@@ -79,7 +108,8 @@ ModeS<HT>::ModeS(const Config& config)
             .coarseChannelRatio = config.inputCoarseChannelRatio,
             .channelBandwidthHz = config.searchChannelBandwidthHz,
             .channelTimespanS = config.searchChannelTimespanS,
-            .excludeDriftRateZero = config.searchDriftRateZeroExcluded,
+            .stampFrequencyMarginHz = config.produceDebugHits ? 0.0 : config.searchStampFrequencyMarginHz,
+            .hitsGroupingMargin = config.produceDebugHits ? -config.inputCoarseChannelRatio : config.searchHitsGroupingMargin,
         }, {
             .buffer = this->prebeamformerData,
             .hits = this->dedoppler->getOutputHits(),
@@ -114,17 +144,67 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
             julianDateStart
         ));
     }
-    BL_CHECK(Memory::Copy(
-        this->prebeamformerData,
-        prebeamformerData
-    ));
-    BL_CHECK(Memory::Copy(
-        this->input,
-        data
-    ));
+
+    // Accumulate buffers across the T dimension
+    if (this->getAccumulatorNumberOfSteps() == 1) {
+        BL_CHECK(Memory::Copy(
+            this->prebeamformerData,
+            prebeamformerData
+        ));
+        
+        BL_CHECK(Memory::Copy(
+            this->input,
+            data,
+            stream
+        ));
+    }
+    else {
+        // Accumulate AFTP buffers across the T dimension
+        U64 inputHeight = config.prebeamformerInputDimensions.numberOfAspects() * config.prebeamformerInputDimensions.numberOfFrequencyChannels();
+        U64 inputWidth = prebeamformerData.size_bytes() / inputHeight;
+
+        U64 outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
+
+        BL_CHECK(
+            Memory::Copy2D(
+                this->prebeamformerData,
+                outputPitch, // dstStride
+                this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
+
+                prebeamformerData,
+                inputWidth,
+                0,
+
+                inputWidth,
+                inputHeight
+            )
+        );
+
+        // Accumulate ATPF buffers across the T dimension
+        inputHeight = config.inputDimensions.numberOfAspects();
+        inputWidth = data.size_bytes() / inputHeight;
+
+        outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
+
+        BL_CHECK(
+            Memory::Copy2D(
+                this->input,
+                outputPitch, // dstStride
+                this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
+
+                data,
+                inputWidth,
+                0,
+
+                inputWidth,
+                inputHeight, 
+                stream
+            )
+        );
+    }
 
     BL_DEBUG(
-        "accumulate from CPU: {}/{}\nschan: {}\nfch1: {}\njd: {}",
+        "accumulate from RAM: {}/{}\nschan: {}\nfch1: {}\njd: {}",
         this->getCurrentAccumulatorStep(),
         this->getAccumulatorNumberOfSteps(),
         coarseFrequencyChannelOffset[0],
@@ -159,17 +239,69 @@ const Result ModeS<HT>::accumulate(const ArrayTensor<Device::CUDA, F32>& data,
             julianDateStart
         ));
     }
-    BL_CHECK(Memory::Copy(
-        this->prebeamformerData,
-        prebeamformerData
-    ));
-    BL_CHECK(Memory::Copy(
-        this->input,
-        data
-    ));
+
+    // Accumulate buffers across the T dimension
+    if (this->getAccumulatorNumberOfSteps() == 1) {
+        BL_CHECK(Memory::Copy(
+            this->prebeamformerData,
+            prebeamformerData,
+            stream
+        ));
+        
+        BL_CHECK(Memory::Copy(
+            this->input,
+            data,
+            stream
+        ));
+    }
+    else {
+        // Accumulate AFTP buffers across the T dimension
+        U64 inputHeight = config.prebeamformerInputDimensions.numberOfAspects() * config.prebeamformerInputDimensions.numberOfFrequencyChannels();
+        U64 inputWidth = prebeamformerData.size_bytes() / inputHeight;
+
+        U64 outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
+
+        BL_CHECK(
+            Memory::Copy2D(
+                this->prebeamformerData,
+                outputPitch, // dstStride
+                this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
+
+                prebeamformerData,
+                inputWidth,
+                0,
+
+                inputWidth,
+                inputHeight,
+                stream
+            )
+        );
+
+        // Accumulate ATPF buffers across the T dimension
+        inputHeight = config.inputDimensions.numberOfAspects();
+        inputWidth = data.size_bytes() / inputHeight;
+
+        outputPitch = inputWidth * this->getAccumulatorNumberOfSteps();
+
+        BL_CHECK(
+            Memory::Copy2D(
+                this->input,
+                outputPitch, // dstStride
+                this->getCurrentAccumulatorStep() * inputWidth, // dstOffset
+
+                data,
+                inputWidth,
+                0,
+
+                inputWidth,
+                inputHeight, 
+                stream
+            )
+        );
+    }
 
     BL_DEBUG(
-        "accumulate from CUDA: {}/{}\nschan: {}\nfch1: {}\njd: {}",
+        "accumulate from VRAM: {}/{}\nschan: {}\nfch1: {}\njd: {}",
         this->getCurrentAccumulatorStep(),
         this->getAccumulatorNumberOfSteps(),
         coarseFrequencyChannelOffset[0],
