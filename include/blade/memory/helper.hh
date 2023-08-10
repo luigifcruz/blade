@@ -40,7 +40,7 @@ class BLADE_API Duet {
 
 template<typename Type, typename Dims>
 inline Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
-                              const bool& readOnly = false) {
+                       const bool& readOnly = false) {
     cudaPointerAttributes attr;
     BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, vec.data()), [&]{
         BL_FATAL("Failed to get pointer attributes: {}", err);
@@ -60,22 +60,6 @@ inline Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
         BL_FATAL("Failed to register CPU memory: {}", err);
     });
 
-    return Result::SUCCESS;
-}
-
-template<Device DeviceId, typename Type, typename Shape>
-inline Result Link(Vector<DeviceId, Type, Shape>& dst,
-                          const Vector<DeviceId, Type, Shape>& src) {
-    dst = src;
-    return Result::SUCCESS;
-}
-
-template<Device DeviceId, typename Type, typename Shape>
-inline Result Link(Vector<DeviceId, Type, Shape>& dst,
-                          const Vector<DeviceId, Type, Shape>& src,
-                          const Shape dstShape) {
-    dst = src;
-    return dst.reshape(dstShape);
     return Result::SUCCESS;
 }
 

@@ -86,6 +86,22 @@ class Module {
                     (gridSize.z + (blockSize.z - 1)) / blockSize.z);
     }
 
+    template<Device DeviceId, typename Type, typename Shape>
+    static Result Link(Vector<DeviceId, Type, Shape>& dst,
+                       const Vector<DeviceId, Type, Shape>& src) {
+        dst = src;
+        return Result::SUCCESS;
+    }
+
+    template<Device DeviceId, typename Type, typename Shape>
+    static Result Link(Vector<DeviceId, Type, Shape>& dst,
+                       const Vector<DeviceId, Type, Shape>& src,
+                       const Shape dstShape) {
+        dst = src;
+        return dst.reshape(dstShape);
+        return Result::SUCCESS;
+    }
+
  private:
     struct Kernel {
         dim3 gridSize;
