@@ -33,9 +33,12 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("get_boresight_coordinates", &Class::getBoresightCoordinates, nb::rv_policy::reference)
         .def("get_antenna_positions", &Class::getAntennaPositions, nb::rv_policy::reference)
         .def("get_beam_coordinates", &Class::getBeamCoordinates, nb::rv_policy::reference)
-        .def("get_antenna_calibrations", &Class::getAntennaCalibrations, nb::rv_policy::reference);
+        .def("get_antenna_calibrations", &Class::getAntennaCalibrations, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Bfr5Reader()");
+        });
 }
 
-NB_MODULE(_blade_bfr5_impl, m) {
+NB_MODULE(_bfr5_impl, m) {
     NB_SUBMODULE<Modules::Bfr5::Reader>(m, "reader");
 }

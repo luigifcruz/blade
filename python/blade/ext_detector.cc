@@ -35,9 +35,12 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Detector()");
+        });
 }
 
-NB_MODULE(_blade_detector_impl, m) {
-    NB_SUBMODULE<CF32, F32>(m, "to_f32");
+NB_MODULE(_detector_impl, m) {
+    NB_SUBMODULE<CF32, F32>(m, "f32");
 }

@@ -11,7 +11,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace Blade;
 
-NB_MODULE(_blade_const_impl, m) {
+NB_MODULE(_const_impl, m) {
     nb::class_<XYZ>(m, "xyz", nb::dynamic_attr())
         .def(nb::init<F64, F64, F64>(), "x"_a, "y"_a, "z"_a)
         .def("__init__", [](XYZ* t, const std::tuple<F64, F64, F64>& elements) {

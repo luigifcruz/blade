@@ -33,9 +33,12 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Channelizer()");
+        });
 }
 
-NB_MODULE(_blade_channelizer_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
+NB_MODULE(_channelizer_impl, m) {
+    NB_SUBMODULE<CF32, CF32>(m, "cf32");
 }

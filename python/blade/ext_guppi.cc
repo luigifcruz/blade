@@ -48,7 +48,10 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
         .def("get_total_bandwidth", &Class::getTotalBandwidth, nb::rv_policy::reference)
         .def("get_channel_bandwidth", &Class::getChannelBandwidth, nb::rv_policy::reference)
         .def("get_channel_start_index", &Class::getChannelStartIndex, nb::rv_policy::reference)
-        .def("get_observation_frequency", &Class::getObservationFrequency, nb::rv_policy::reference);
+        .def("get_observation_frequency", &Class::getObservationFrequency, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("GuppiReader()");
+        });
 }
 
 template<typename IT>
@@ -83,10 +86,13 @@ void NB_SUBMODULE_WRITER(auto& m, const auto& name, const auto& typeName) {
         })
         .def("header_put", [](Class& instance, const std::string& key, const I64& value){
             return instance.headerPut(key, value);
+        })
+        .def("__repr__", [](Class& obj){
+            return fmt::format("GuppiWriter()");
         });
 }
 
-NB_MODULE(_blade_guppi_impl, m) {
+NB_MODULE(_guppi_impl, m) {
     NB_SUBMODULE_READER<CI8>(m, "reader", "ci8");
     NB_SUBMODULE_WRITER<CF16>(m, "writer", "cf16");
     NB_SUBMODULE_WRITER<CF32>(m, "writer", "cf32");

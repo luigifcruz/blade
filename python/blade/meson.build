@@ -27,7 +27,7 @@ if has_python
     endif
 
     py.extension_module(
-        '_blade_mem_impl',
+        '_mem_impl',
         sources: 'ext_mem.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -37,8 +37,28 @@ if has_python
     )
 
     py.extension_module(
-        '_blade_const_impl',
+        '_const_impl',
         sources: 'ext_const.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+
+    py.extension_module(
+        '_pipeline_impl',
+        sources: 'ext_pipeline.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+
+    py.extension_module(
+        '_runner_impl',
+        sources: 'ext_runner.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
         link_with: lib_blade,
@@ -48,7 +68,7 @@ if has_python
 
 if cfg_lst.get('BLADE_MODULE_CAST', false)
     py.extension_module(
-        '_blade_cast_impl',
+        '_cast_impl',
         sources: 'ext_cast.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -60,7 +80,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
     py.extension_module(
-        '_blade_channelizer_impl',
+        '_channelizer_impl',
         sources: 'ext_channelizer.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -72,7 +92,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_POLARIZER', false)
     py.extension_module(
-        '_blade_polarizer_impl',
+        '_polarizer_impl',
         sources: 'ext_polarizer.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -84,7 +104,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_PERMUTATION', false)
     py.extension_module(
-        '_blade_permutation_impl',
+        '_permutation_impl',
         sources: 'ext_permutation.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -96,7 +116,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_GUPPI', false)
     py.extension_module(
-        '_blade_guppi_impl',
+        '_guppi_impl',
         sources: 'ext_guppi.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -108,7 +128,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_GATHER', false)
     py.extension_module(
-        '_blade_gather_impl',
+        '_gather_impl',
         sources: 'ext_gather.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -120,7 +140,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_DETECTOR', false)
     py.extension_module(
-        '_blade_detector_impl',
+        '_detector_impl',
         sources: 'ext_detector.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -130,10 +150,10 @@ if cfg_lst.get('BLADE_MODULE_DETECTOR', false)
     )
 endif
 
-if cfg_lst.get('BLADE_MODULE_COPY', false)
+if cfg_lst.get('BLADE_MODULE_DUPLICATE', false)
     py.extension_module(
-        '_blade_copy_impl',
-        sources: 'ext_copy.cc',
+        '_duplicate_impl',
+        sources: 'ext_duplicate.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
         link_with: lib_blade,
@@ -144,7 +164,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_BFR5', false)
     py.extension_module(
-        '_blade_bfr5_impl',
+        '_bfr5_impl',
         sources: 'ext_bfr5.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -156,7 +176,7 @@ endif
 
 if cfg_lst.get('BLADE_MODULE_ATA_PHASOR', false)
     py.extension_module(
-        '_blade_phasor_impl',
+        '_phasor_impl',
         sources: 'ext_phasor.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
@@ -170,7 +190,7 @@ if (cfg_lst.get('BLADE_MODULE_ATA_BEAMFORMER', false) or
     cfg_lst.get('BLADE_MODULE_VLA_BEAMFORMER', false) or
     cfg_lst.get('BLADE_MODULE_MEERKAT_BEAMFORMER', false))
     py.extension_module(
-        '_blade_beamformer_impl',
+        '_beamformer_impl',
         sources: 'ext_beamformer.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,

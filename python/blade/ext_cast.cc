@@ -31,11 +31,32 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Cast()");
+        });
 }
 
-NB_MODULE(_blade_cast_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
-    NB_SUBMODULE<CF32, CF16>(m, "to_cf16");
-    // TODO: Add extra types.
+NB_MODULE(_cast_impl, m) {
+    NB_SUBMODULE< CI8,  CI8>(m,  "ci8");
+    NB_SUBMODULE<CF16, CF16>(m, "cf16");
+    NB_SUBMODULE<CF32, CF32>(m, "cf32");
+    NB_SUBMODULE<  I8,   I8>(m,   "i8");
+    NB_SUBMODULE< F16,  F16>(m,  "f16");
+    NB_SUBMODULE< F32,  F32>(m,  "f32");
+
+    NB_SUBMODULE< CI8, CF32>(m, "cf32");
+    NB_SUBMODULE< CI8, CF16>(m, "cf16");
+    NB_SUBMODULE<CF16,  F16>(m,  "f16");
+    NB_SUBMODULE<CF16,  F32>(m,  "f32");
+    NB_SUBMODULE<CF16, CF32>(m, "cf32");
+    NB_SUBMODULE<CF32,  F16>(m,  "f16");
+    NB_SUBMODULE<CF32,  F32>(m,  "f32");
+    NB_SUBMODULE<CF32, CF16>(m, "cf16");
+    NB_SUBMODULE< F16,  F32>(m,  "f32");
+    NB_SUBMODULE< F16, CF32>(m, "cf32");
+    NB_SUBMODULE< F16, CF16>(m, "cf16");
+    NB_SUBMODULE< F32,  F16>(m,  "f16");
+    NB_SUBMODULE< F32, CF32>(m, "cf32");
+    NB_SUBMODULE< F32, CF16>(m, "cf16");
 }

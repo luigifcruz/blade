@@ -39,20 +39,23 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input_buffer", &Class::getInputBuffer, nb::rv_policy::reference)
         .def("get_input_phasors", &Class::getInputPhasors, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Beamformer()");
+        });
 }
 
-NB_MODULE(_blade_beamformer_impl, m) {
+NB_MODULE(_beamformer_impl, m) {
 #ifdef BLADE_MODULE_ATA_BEAMFORMER
     {
         auto mm = m.def_submodule("ata");
-        NB_SUBMODULE<Modules::Beamformer::ATA, CF32, CF32>(mm, "to_cf32");
+        NB_SUBMODULE<Modules::Beamformer::ATA, CF32, CF32>(mm, "cf32");
     }
 #endif
 #ifdef BLADE_MODULE_MEERKAT_BEAMFORMER
     {
         auto mm = m.def_submodule("meerkat");
-        NB_SUBMODULE<Modules::Beamformer::MeerKAT, CF32, CF32>(mm, "to_cf32");
+        NB_SUBMODULE<Modules::Beamformer::MeerKAT, CF32, CF32>(mm, "cf32");
     }
 #endif
 }

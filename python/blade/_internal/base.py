@@ -1,3 +1,5 @@
+from blade._const_impl import *
+
 #
 # Constants 
 #
@@ -12,6 +14,12 @@ class Constant:
     @property
     def value(self):
         return self._value
+    
+# Telescope
+ata     = Constant('ata')
+vla     = Constant('vla')
+meerkat = Constant('meerkat')
+generic = Constant('generic')
 
 # Device
 cpu     = Constant('cpu')
@@ -43,3 +51,17 @@ cu8  = Constant('cu8')
 cu16 = Constant('cu16')
 cu32 = Constant('cu32')
 cu64 = Constant('cu64')
+
+# Modules
+beamformer   = Constant('beamformer')
+bfr5_reader  = Constant('bfr5-reader')
+cast         = Constant('cast')
+channelizer  = Constant('channelizer')
+duplicate    = Constant('duplicate')
+detector     = Constant('detector')
+gather       = Constant('gather')
+guppi_reader = Constant('guppi-reader')
+guppi_writer = Constant('guppi-writer')
+permutation  = Constant('permutation')
+phasor       = Constant('phasor')
+polarizer    = Constant('polarizer')

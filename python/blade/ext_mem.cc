@@ -47,6 +47,11 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
         .def("shape", [](ClassType& obj) {
             return obj.shape();
         });
+
+    nb::class_<Duet<ClassType>>(m, fmt::format("{}_duet", name).c_str())
+        .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
+        .def("__getitem__", &Duet<ClassType>::operator[])
+        .def("__call__", &Duet<ClassType>::operator ClassType&);
 }
 
 template<Device DeviceType, typename DataType>
@@ -71,7 +76,7 @@ void NB_SUBMODULE_MEMORY_DEVICE(auto& m, const auto& name) {
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF32>(mm, "cf32");
 }
 
-NB_MODULE(_blade_mem_impl, m) {
+NB_MODULE(_mem_impl, m) {
     nb::class_<ArrayShape>(m, "array_shape")
         .def(nb::init<const typename ArrayShape::Type&>(), "shape"_a)
         .def("number_of_aspects", [](ArrayShape& obj){

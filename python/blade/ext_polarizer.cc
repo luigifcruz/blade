@@ -38,10 +38,13 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Polarizer()");
+        });
 }
 
-NB_MODULE(_blade_polarizer_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
-    NB_SUBMODULE<CF16, CF16>(m, "to_cf16");
+NB_MODULE(_polarizer_impl, m) {
+    NB_SUBMODULE<CF32, CF32>(m, "cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "cf16");
 }
