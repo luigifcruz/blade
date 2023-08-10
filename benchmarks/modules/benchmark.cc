@@ -22,8 +22,8 @@
 #include "./gather/generic.hh"
 #endif
 
-#if defined(BLADE_MODULE_COPY)
-#include "./copy/generic.hh"
+#if defined(BLADE_MODULE_DUPLICATE)
+#include "./duplicate/generic.hh"
 #endif
 
 #if defined(BLADE_MODULE_PERMUTATION)

@@ -1,5 +1,5 @@
-#ifndef BLADE_MODULES_COPY_GENERIC_HH
-#define BLADE_MODULES_COPY_GENERIC_HH
+#ifndef BLADE_MODULES_DUPLICATE_GENERIC_HH
+#define BLADE_MODULES_DUPLICATE_GENERIC_HH
 
 #include "blade/base.hh"
 #include "blade/module.hh"
@@ -9,7 +9,7 @@ namespace Blade::Modules {
 // MAYDO: Add built-in casting, if necessary.
 // MAYDO: Add support for types different than ArrayTensor, if necessary.
 template<typename IT, typename OT>
-class BLADE_API Copy : public Module {
+class BLADE_API Duplicate : public Module {
  public:
     // Configuration
 
@@ -48,7 +48,7 @@ class BLADE_API Copy : public Module {
 
     // Constructor & Processing
 
-    explicit Copy(const Config& config, const Input& input, const cudaStream_t& stream = 0);
+    explicit Duplicate(const Config& config, const Input& input, const cudaStream_t& stream = 0);
     Result process(const U64& currentStepCount, const cudaStream_t& stream = 0) final;
 
  private:

@@ -14,7 +14,7 @@ using namespace Blade;
 
 template<typename IT, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
-    using Class = Modules::Copy<IT, OT>;
+    using Class = Modules::Duplicate<IT, OT>;
 
     nb::class_<Class> mod(m, name);
 
@@ -30,11 +30,14 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
-        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference);
+        .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
+        .def("__repr__", [](Class& obj){
+            return fmt::format("Duplicate()");
+        });
 }
 
-NB_MODULE(_blade_copy_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "to_cf32");
-    NB_SUBMODULE<CF16, CF16>(m, "to_cf16");
-    NB_SUBMODULE<CI8, CI8>(m, "to_ci8");
+NB_MODULE(_duplicate_impl, m) {
+    NB_SUBMODULE<CF32, CF32>(m, "cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "cf16");
+    NB_SUBMODULE<CI8, CI8>(m, "ci8");
 }

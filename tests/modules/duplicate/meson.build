@@ -1,9 +1,9 @@
-if cfg_lst.get('BLADE_MODULE_COPY', false)
+if cfg_lst.get('BLADE_MODULE_DUPLICATE', false)
     if has_python
         test(
-            'test-modules-copy',
+            'test-modules-duplicate',
             find_program('python', 'python3'),
-            args: files('copy.py'),
+            args: files('duplicate.py'),
             is_parallel: false,
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(python_path),

@@ -8,7 +8,7 @@ subdir('channelizer')
 subdir('polarizer')
 subdir('gather')
 subdir('permutation')
-subdir('copy')
+subdir('duplicate')
 subdir('guppi')
 subdir('bfr5')
 

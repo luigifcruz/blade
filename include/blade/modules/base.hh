@@ -43,8 +43,8 @@
 #include "blade/modules/gather.hh"
 #endif
 
-#ifdef BLADE_MODULE_COPY
-#include "blade/modules/copy.hh"
+#ifdef BLADE_MODULE_DUPLICATE
+#include "blade/modules/duplicate.hh"
 #endif
 
 #ifdef BLADE_MODULE_PERMUTATION
