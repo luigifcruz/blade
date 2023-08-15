@@ -29,7 +29,7 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
                                      "step_number_of_time_samples"_a,
                                      "step_number_of_frequency_channels"_a,
                                      "step_number_of_aspects"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input");
 
@@ -69,7 +69,7 @@ void NB_SUBMODULE_WRITER(auto& m, const auto& name, const auto& typeName) {
                       const U64&>(), "filepath"_a,
                                      "directio"_a,
                                      "input_frequency_batches"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CPU, IT>&>(), "buf"_a);

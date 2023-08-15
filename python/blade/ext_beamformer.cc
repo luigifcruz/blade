@@ -24,7 +24,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                       const U64&>(),
                                      "enable_incoherent_beam"_a,
                                      "enable_incoherent_beam_sqrt"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&,

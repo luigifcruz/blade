@@ -66,8 +66,22 @@ typedef ops::complex<U64> CU64;
 #endif
 
 enum class BLADE_API Device : uint8_t {
+    NONE    = 0 << 0,
     CPU     = 1 << 0,
     CUDA    = 1 << 1,
+};
+
+template <Device D = Device::NONE>
+struct BLADE_API DeviceInfo;
+
+template<>
+struct BLADE_API DeviceInfo<Device::CUDA> {
+    inline static const char* name = "CUDA";
+};
+
+template<>
+struct BLADE_API DeviceInfo<Device::CPU> {
+    inline static const char* name = "CPU";
 };
 
 #ifndef BL_PHYSICAL_CONSTANT_C

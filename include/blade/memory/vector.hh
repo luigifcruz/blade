@@ -140,6 +140,14 @@ struct Vector {
         return *_refs;
     }
 
+    constexpr const char* type() const noexcept {
+        return TypeInfo<DataType>::name;
+    }
+
+    constexpr const char* device() const noexcept {
+        return DeviceInfo<DeviceId>::name;
+    }
+
     constexpr U64 hash() const noexcept {
         return std::hash<void*>{}(_data);
     }

@@ -21,7 +21,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const ArrayShape&,
                       const U64&>(), "indexes"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);

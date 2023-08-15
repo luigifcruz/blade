@@ -35,8 +35,8 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
             obj[index] = val;
         })
         .def("__repr__", [](ClassType& obj){
-            return fmt::format("Vector(shape={}, unified={}, hash={})",
-                                obj.shape(), obj.unified(), obj.hash());
+            return fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
+                               obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
         })
         .def("unified", [](ClassType& obj){
             return obj.unified();
@@ -100,6 +100,7 @@ NB_MODULE(_mem_impl, m) {
         .def("__len__", [](ArrayShape& obj){
             return obj.size();
         });
+    nb::implicitly_convertible<typename ArrayShape::Type, ArrayShape>();
 
     nb::class_<PhasorShape>(m, "phasor_shape")
         .def(nb::init<const typename PhasorShape::Type&>(), "shape"_a)
@@ -127,6 +128,7 @@ NB_MODULE(_mem_impl, m) {
         .def("__len__", [](PhasorShape& obj){
             return obj.size();
         });
+    nb::implicitly_convertible<typename PhasorShape::Type, PhasorShape>();
 
     nb::class_<VectorShape>(m, "vector_shape")
         .def(nb::init<const typename VectorShape::Type&>(), "shape"_a)
@@ -139,6 +141,7 @@ NB_MODULE(_mem_impl, m) {
         .def("__len__", [](VectorShape& obj){
             return obj.size();
         });
+    nb::implicitly_convertible<typename VectorShape::Type, VectorShape>();
 
     NB_SUBMODULE_MEMORY_DEVICE<Device::CPU>(m, "cpu");
     NB_SUBMODULE_MEMORY_DEVICE<Device::CUDA>(m, "cuda");

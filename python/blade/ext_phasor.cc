@@ -45,7 +45,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                                      "antenna_positions"_a,
                                      "antenna_calibrations"_a,
                                      "beam_coordinates"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const Tensor<Device::CPU, F64>&,

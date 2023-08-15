@@ -21,7 +21,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                       const U64&,
                       const U64&>(), "filepath"_a,
                                      "channelizer_rate"_a,
-                                     "block_size"_a);
+                                     "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input");
 

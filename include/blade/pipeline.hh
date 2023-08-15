@@ -54,6 +54,8 @@ class BLADE_API Pipeline {
         }
     }
 
+    void addModule(const std::shared_ptr<Module>& module);
+
     Result compute(const U64& index);
     Result synchronize(const U64& index);
     bool isSynchronized(const U64& index);
@@ -76,7 +78,6 @@ class BLADE_API Pipeline {
     U64 _computeLifetimeCycles;
     std::vector<U64> _computeStepRatios;
 
-    void addModule(const std::shared_ptr<Module>& module);
     Result commit();
 };
 
