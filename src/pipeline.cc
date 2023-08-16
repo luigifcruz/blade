@@ -17,7 +17,7 @@ Pipeline::Pipeline(const U64& numberOfStreams)
 
     _streams.resize(numberOfStreams);
     for (U64 i = 0; i < _streams.size(); i++) {
-        BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(&_streams[i], cudaStreamNonBlocking), [&]{
+        BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(_streams[i], cudaStreamNonBlocking), [&]{
             BL_FATAL("Failed to create stream for CUDA steam: {}", err);
         });
     }

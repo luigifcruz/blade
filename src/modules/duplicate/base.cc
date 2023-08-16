@@ -12,7 +12,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Duplicate<IT, OT>::Duplicate(const Config& config,
                              const Input& input,
-                             const cudaStream_t& stream)
+                             const Stream& stream)
         : Module(duplicate_program),
           config(config),
           input(input) {
@@ -32,7 +32,7 @@ Duplicate<IT, OT>::Duplicate(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Duplicate<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Duplicate<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     return Blade::Copy(output.buf, input.buf, stream);
 }
 

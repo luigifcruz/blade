@@ -58,9 +58,9 @@ class BLADE_API Generic : public Module {
 
     // Constructor & Processing 
 
-    explicit Generic(const Config& config, const Input& input, const cudaStream_t& stream = 0);
+    explicit Generic(const Config& config, const Input& input, const Stream& stream = {});
     virtual ~Generic() = default;
-    Result process(const U64& currentStepCount, const cudaStream_t& stream = 0) final;
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  protected:
     // Variables

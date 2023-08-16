@@ -9,7 +9,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Channelizer<IT, OT>::Channelizer(const Config& config, 
                                  const Input& input,
-                                 const cudaStream_t& stream)
+                                 const Stream& stream)
         : Module(channelizer_program),
           config(config),
           input(input),
@@ -89,7 +89,7 @@ Channelizer<IT, OT>::~Channelizer() {
 }
 
 template<typename IT, typename OT>
-Result Channelizer<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (config.rate == 1) {
         return Result::SUCCESS;
     }

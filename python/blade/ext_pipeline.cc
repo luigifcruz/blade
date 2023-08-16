@@ -21,7 +21,7 @@ NB_MODULE(_pipeline_impl, m) {
         .def("compute", &Pipeline::compute, nb::rv_policy::reference)
         .def("synchronize", &Pipeline::synchronize, nb::rv_policy::reference)
         .def("is_synchronized", &Pipeline::isSynchronized, nb::rv_policy::reference)
-        // TODO: Add stream();
+        .def("get_stream", &Pipeline::stream, "index"_a = 0)
         .def("number_of_streams", &Pipeline::numberOfStreams, nb::rv_policy::reference)
         .def("add_module", &Pipeline::addModule, nb::rv_policy::reference)
         .def("__repr__", [](Pipeline& obj){

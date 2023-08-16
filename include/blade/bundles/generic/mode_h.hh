@@ -44,7 +44,7 @@ class BLADE_API ModeH : public Bundle {
 
     // Constructor
 
-    explicit ModeH(const Config& config, const Input& input, const cudaStream_t& stream)
+    explicit ModeH(const Config& config, const Input& input, const Stream& stream)
          : Bundle(stream), config(config) {
         BL_DEBUG("Initializing Mode-H Bundle.");
 

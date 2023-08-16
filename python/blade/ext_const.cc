@@ -12,6 +12,11 @@ using namespace nb::literals;
 using namespace Blade;
 
 NB_MODULE(_const_impl, m) {
+    nb::class_<Stream>(m, "stream")
+        .def("__repr__", [](Stream& obj){
+            return fmt::format("Stream()");
+        });
+
     nb::class_<XYZ>(m, "xyz", nb::dynamic_attr())
         .def(nb::init<F64, F64, F64>(), "x"_a, "y"_a, "z"_a)
         .def("__init__", [](XYZ* t, const std::tuple<F64, F64, F64>& elements) {

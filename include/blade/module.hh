@@ -30,7 +30,7 @@ class Module {
         return 1;       
     }
 
-    virtual constexpr Result process(const U64& currentStepNumber, const cudaStream_t& stream = 0) {
+    virtual constexpr Result process(const U64& currentStepNumber, const Stream& stream = {}) {
         return Result::SUCCESS;
     }
 
@@ -63,7 +63,7 @@ class Module {
     } 
 
     Result runKernel(const std::string& name,
-                     const cudaStream_t& stream,
+                     const Stream& stream,
                      auto... kernelArguments) {
         const auto& kernel = kernels[name];
 

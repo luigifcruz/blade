@@ -12,7 +12,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Polarizer<IT, OT>::Polarizer(const Config& config, 
                              const Input& input, 
-                             const cudaStream_t& stream)
+                             const Stream& stream)
         : Module(polarizer_program),
           config(config),
           input(input) {
@@ -59,7 +59,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Polarizer<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Polarizer<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (config.mode == Mode::BYPASS) {
         return Result::SUCCESS;
     }

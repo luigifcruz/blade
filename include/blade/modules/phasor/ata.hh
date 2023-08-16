@@ -10,9 +10,9 @@ class BLADE_API ATA : public Generic<OT> {
  public:
     explicit ATA(const typename Generic<OT>::Config& config,
                  const typename Generic<OT>::Input& input,
-                 const cudaStream_t& stream = 0);
+                 const Stream& stream = {});
 
-    Result process(const U64& currentStepCount, const cudaStream_t& stream = 0) final;
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  protected:
     const PhasorShape getOutputPhasorsShape() const {

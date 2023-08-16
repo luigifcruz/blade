@@ -16,6 +16,18 @@
 
 namespace Blade {
 
+struct Stream {
+    void* handle = nullptr;
+
+    operator CUstream_st*() const {
+        return reinterpret_cast<CUstream_st*>(handle);
+    }
+
+    operator CUstream_st**() {
+        return reinterpret_cast<CUstream_st**>(&handle);
+    }
+};
+
 typedef __half   F16;
 typedef float    F32;
 typedef double   F64;

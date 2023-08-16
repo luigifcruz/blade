@@ -80,7 +80,7 @@ class BLADE_API ModeB : public Bundle {
 
     // Constructor
 
-    explicit ModeB(const Config& config, const Input& input, const cudaStream_t& stream)
+    explicit ModeB(const Config& config, const Input& input, const Stream& stream)
          : Bundle(stream), config(config) {
         BL_DEBUG("Initializing Mode-B Bundle for ATA.");
 

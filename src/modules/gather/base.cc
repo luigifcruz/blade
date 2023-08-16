@@ -12,7 +12,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Gather<IT, OT>::Gather(const Config& config,
                        const Input& input,
-                       const cudaStream_t& stream)
+                       const Stream& stream)
         : Module(gather_program),
           config(config),
           input(input),
@@ -52,7 +52,7 @@ Gather<IT, OT>::Gather(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Gather<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (strategy == Strategy::Kernel) {
         cache
             .get_kernel(

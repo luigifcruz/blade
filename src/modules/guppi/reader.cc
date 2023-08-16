@@ -50,7 +50,7 @@ inline guppiraw_block_meta_t* getBlockMeta(const guppiraw_iterate_info_t* gr_ite
 template<typename OT>
 Reader<OT>::Reader(const Config& config,
                    const Input& input,
-                   const cudaStream_t& stream)
+                   const Stream& stream)
         : Module(guppi_program),
           config(config),
           input(input) {
@@ -122,7 +122,7 @@ const F64 Reader<OT>::getObservationFrequency() const {
 }
 
 template<typename OT>
-Result Reader<OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Reader<OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (!this->keepRunning()) {
         return Result::PIPELINE_EXHAUSTED;
     }

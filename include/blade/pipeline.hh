@@ -60,7 +60,7 @@ class BLADE_API Pipeline {
     Result synchronize(const U64& index);
     bool isSynchronized(const U64& index);
 
-    const cudaStream_t& stream(const U64& index = 0) const {
+    const Stream& stream(const U64& index = 0) const {
         return _streams[index];
     }
 
@@ -70,7 +70,7 @@ class BLADE_API Pipeline {
 
  private:
     bool _commited;
-    std::vector<cudaStream_t> _streams;
+    std::vector<Stream> _streams;
     std::vector<std::shared_ptr<Module>> modules;
 
     U64 _computeStepCount;

@@ -13,7 +13,7 @@ namespace Blade {
 
 class BLADE_API Bundle {
  public:
-    Bundle(const cudaStream_t& stream) : stream(stream) {};
+    Bundle(const Stream& stream) : stream(stream) {};
 
  protected:
     constexpr std::vector<std::shared_ptr<Module>>& getModules() {
@@ -31,7 +31,7 @@ class BLADE_API Bundle {
     friend class Pipeline;
 
  private:
-    const cudaStream_t stream;
+    const Stream stream;
     std::vector<std::shared_ptr<Module>> modules;
 };
 

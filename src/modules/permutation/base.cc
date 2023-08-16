@@ -12,7 +12,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Permutation<IT, OT>::Permutation(const Config& config,
                        const Input& input,
-                       const cudaStream_t& stream)
+                       const Stream& stream)
         : Module(permutation_program),
           config(config),
           input(input) {
@@ -51,7 +51,7 @@ Permutation<IT, OT>::Permutation(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Permutation<IT, OT>::process(const U64& currentStepCount, const cudaStream_t& stream) {
+Result Permutation<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     return this->runKernel("main", stream, input.buf.data(), output.buf.data(), getInputBuffer().shape());
 }
 
