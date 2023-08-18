@@ -14,7 +14,7 @@ using namespace Blade;
 
 template<class Class>
 void NB_SUBMODULE(auto& m, const auto& name) {
-    nb::class_<Class> mod(m, name);
+    nb::class_<Class, Module> mod(m, name);
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const std::string&,
@@ -26,7 +26,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
     nb::class_<typename Class::Input>(mod, "input");
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_total_shape", &Class::getTotalShape, nb::rv_policy::reference)
         .def("get_reference_position", &Class::getReferencePosition, nb::rv_policy::reference)
@@ -40,5 +44,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_bfr5_impl, m) {
-    NB_SUBMODULE<Modules::Bfr5::Reader>(m, "reader");
+    NB_SUBMODULE<Modules::Bfr5::Reader>(m, "taint_reader");
 }

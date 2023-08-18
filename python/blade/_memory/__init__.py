@@ -15,7 +15,7 @@ def _create_array(type, shape, dtype, device):
         _mem = importlib.import_module(f'blade._mem_impl')
     except ModuleNotFoundError:
         raise ModuleNotFoundError(f"Can't find specified memory extension.")
-    
+
     _caller = _mem
 
     _caller = getattr(_caller, _device)

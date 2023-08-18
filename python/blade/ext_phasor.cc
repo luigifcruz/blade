@@ -16,7 +16,7 @@ template<template<typename...> class BaseClass, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
     using Class = BaseClass<OT>;
 
-    nb::class_<Class> mod(m, name);
+    nb::class_<Class, Module> mod(m, name);
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&,
@@ -53,7 +53,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                                                           "block_dut"_a);
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
@@ -66,6 +70,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_phasor_impl, m) {
-    NB_SUBMODULE<Modules::Phasor::ATA, CF32>(m, "cf32");
-    NB_SUBMODULE<Modules::Phasor::ATA, CF64>(m, "cf64");
+#ifdef BLADE_MODULE_ATA_PHASOR
+    {
+        auto mm = m.def_submodule("tel_ata");
+        NB_SUBMODULE<Modules::Phasor::ATA, CF32>(m, "type_cf32");
+        NB_SUBMODULE<Modules::Phasor::ATA, CF64>(m, "type_cf64");
+    }
+#endif
 }

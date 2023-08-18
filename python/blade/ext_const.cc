@@ -13,6 +13,10 @@ using namespace Blade;
 
 NB_MODULE(_const_impl, m) {
     nb::class_<Stream>(m, "stream")
+        .def("__init__", [](Stream* stream) {
+            static auto _stream = Stream{nullptr};
+            stream = &_stream;
+        })
         .def("__repr__", [](Stream& obj){
             return fmt::format("Stream()");
         });

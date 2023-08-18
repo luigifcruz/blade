@@ -15,11 +15,11 @@ class BLADE_API Bundle {
  public:
     Bundle(const Stream& stream) : stream(stream) {};
 
- protected:
     constexpr std::vector<std::shared_ptr<Module>>& getModules() {
         return modules;
     }
 
+ protected:
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,

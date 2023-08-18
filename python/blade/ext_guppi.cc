@@ -18,7 +18,7 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
 
     auto mm = m.def_submodule(name);
 
-    nb::class_<Class> mod(mm, typeName);
+    nb::class_<Class, Module> mod(mm, typeName);
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const std::string&,
@@ -34,7 +34,11 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
     nb::class_<typename Class::Input>(mod, "input");
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
@@ -93,7 +97,7 @@ void NB_SUBMODULE_WRITER(auto& m, const auto& name, const auto& typeName) {
 }
 
 NB_MODULE(_guppi_impl, m) {
-    NB_SUBMODULE_READER<CI8>(m, "reader", "ci8");
-    NB_SUBMODULE_WRITER<CF16>(m, "writer", "cf16");
-    NB_SUBMODULE_WRITER<CF32>(m, "writer", "cf32");
+    NB_SUBMODULE_READER<CI8>(m, "taint_reader", "type_ci8");
+    NB_SUBMODULE_WRITER<CF16>(m, "taint_writer", "type_cf16");
+    NB_SUBMODULE_WRITER<CF32>(m, "taint_writer", "type_cf32");
 }

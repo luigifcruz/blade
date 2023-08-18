@@ -2,7 +2,7 @@ subdir('blade')
 
 if has_python
     install_subdir(
-        'blade', 
+        'blade',
         install_dir: py.get_install_dir(),
         exclude_files: [
             'ext_beamformer.cc',

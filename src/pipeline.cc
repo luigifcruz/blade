@@ -56,13 +56,13 @@ bool Pipeline::isSynchronized(const U64& index) {
 
 Result Pipeline::commit() {
     BL_DEBUG("Commiting pipeline with {} compute steps per cycle.", _computeStepsPerCycle);
-        
+
     // TODO: Validate pipeline topology with Taint (in-place modules).
 
     if (_computeStepRatios.size() == 0) {
         _computeStepRatios.push_back(1);
     }
-        
+
     return Result::SUCCESS;
 }
 

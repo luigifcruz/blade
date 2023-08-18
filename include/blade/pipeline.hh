@@ -34,6 +34,10 @@ class BLADE_API Pipeline {
         return _computeLifetimeCycles;
     }
 
+    constexpr const bool& commited() const {
+        return _commited;
+    }
+
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,

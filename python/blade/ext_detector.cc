@@ -16,7 +16,7 @@ template<typename IT, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
     using Class = Modules::Detector<IT, OT>;
 
-    nb::class_<Class> mod(m, name);
+    nb::class_<Class, Module> mod(m, name);
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&,
@@ -29,7 +29,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
@@ -42,5 +46,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_detector_impl, m) {
-    NB_SUBMODULE<CF32, F32>(m, "f32");
+    NB_SUBMODULE<CF32, F32>(m, "type_f32");
 }

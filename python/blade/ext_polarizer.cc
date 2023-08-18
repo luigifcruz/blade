@@ -16,7 +16,7 @@ template<typename IT, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
     using Class = Modules::Polarizer<IT, OT>;
 
-    nb::class_<Class> mod(m, name);
+    nb::class_<Class, Module> mod(m, name);
 
     nb::enum_<typename Class::Mode>(mod, "mode")
         .value("bypass", Class::Mode::BYPASS)
@@ -24,15 +24,19 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .export_values();
 
     nb::class_<typename Class::Config>(mod, "config")
-        .def(nb::init<const typename Class::Mode, 
-                      const U64&>(), "mode"_a, 
+        .def(nb::init<const typename Class::Mode,
+                      const U64&>(), "mode"_a,
                                      "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
@@ -45,6 +49,6 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_polarizer_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "cf32");
-    NB_SUBMODULE<CF16, CF16>(m, "cf16");
+    NB_SUBMODULE<CF32, CF32>(m, "type_cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "type_cf16");
 }

@@ -20,8 +20,9 @@ NB_MODULE(_pipeline_impl, m) {
         .def("compute_lifetime_cycles", &Pipeline::computeLifetimeCycles, nb::rv_policy::reference)
         .def("compute", &Pipeline::compute, nb::rv_policy::reference)
         .def("synchronize", &Pipeline::synchronize, nb::rv_policy::reference)
+        .def("commited", &Pipeline::commited)
         .def("is_synchronized", &Pipeline::isSynchronized, nb::rv_policy::reference)
-        .def("get_stream", &Pipeline::stream, "index"_a = 0)
+        .def("stream", &Pipeline::stream, "index"_a = 0)
         .def("number_of_streams", &Pipeline::numberOfStreams, nb::rv_policy::reference)
         .def("add_module", &Pipeline::addModule, nb::rv_policy::reference)
         .def("__repr__", [](Pipeline& obj){

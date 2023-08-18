@@ -4,7 +4,11 @@ has_python = py.found()
 
 if has_python
     cmake = import('cmake')
-    sub_proj = cmake.subproject('nanobind')
+
+    opt_var = cmake.subproject_options()
+    opt_var.add_cmake_defines({'NB_ABORT_ON_LEAK': 0})
+
+    sub_proj = cmake.subproject('nanobind', options: opt_var)
 
     deps = []
     deps += sub_proj.dependency('nanobind-static')
@@ -15,11 +19,11 @@ if has_python
 
     if get_option('buildtype') == 'debugoptimized'
         run_command(
-            find_program('bash'), 
+            find_program('bash'),
             '-c',
             '@0@ -fs @1@/* @2@'.format(
-                find_program('ln').full_path(), 
-                meson.current_source_dir(), 
+                find_program('ln').full_path(),
+                meson.current_source_dir(),
                 meson.current_build_dir()
             ),
             check: true
@@ -29,6 +33,16 @@ if has_python
     py.extension_module(
         '_mem_impl',
         sources: 'ext_mem.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+
+    py.extension_module(
+        '_hidden_impl',
+        sources: 'ext_hidden.cc',
         include_directories: inc_lst,
         dependencies: deps + dep_lst,
         link_with: lib_blade,

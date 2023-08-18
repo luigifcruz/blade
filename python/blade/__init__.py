@@ -8,5 +8,3 @@ from blade._memory import phasor_tensor
 from blade._memory import tensor
 
 from blade._modules import module
-
-import blade._bundles as Bundles

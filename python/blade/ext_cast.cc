@@ -16,7 +16,7 @@ template<typename IT, typename OT>
 void NB_SUBMODULE(auto& m, const auto& name) {
     using Class = Modules::Cast<IT, OT>;
 
-    nb::class_<Class> mod(m, name);
+    nb::class_<Class, Module> mod(m, name);
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&>(), "block_size"_a = 512);
@@ -25,7 +25,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
 
     mod
-        .def(nb::init<const typename Class::Config&, const typename Class::Input&>())
+        .def(nb::init<const typename Class::Config&,
+                      const typename Class::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a)
         .def("process", [](Class& instance, const U64& counter) {
             return instance.process(counter);
         })
@@ -38,25 +42,25 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_cast_impl, m) {
-    NB_SUBMODULE< CI8,  CI8>(m,  "ci8");
-    NB_SUBMODULE<CF16, CF16>(m, "cf16");
-    NB_SUBMODULE<CF32, CF32>(m, "cf32");
-    NB_SUBMODULE<  I8,   I8>(m,   "i8");
-    NB_SUBMODULE< F16,  F16>(m,  "f16");
-    NB_SUBMODULE< F32,  F32>(m,  "f32");
+    NB_SUBMODULE< CI8,  CI8>(m,  "type_ci8");
+    NB_SUBMODULE<CF16, CF16>(m, "type_cf16");
+    NB_SUBMODULE<CF32, CF32>(m, "type_cf32");
+    NB_SUBMODULE<  I8,   I8>(m,   "type_i8");
+    NB_SUBMODULE< F16,  F16>(m,  "type_f16");
+    NB_SUBMODULE< F32,  F32>(m,  "type_f32");
 
-    NB_SUBMODULE< CI8, CF32>(m, "cf32");
-    NB_SUBMODULE< CI8, CF16>(m, "cf16");
-    NB_SUBMODULE<CF16,  F16>(m,  "f16");
-    NB_SUBMODULE<CF16,  F32>(m,  "f32");
-    NB_SUBMODULE<CF16, CF32>(m, "cf32");
-    NB_SUBMODULE<CF32,  F16>(m,  "f16");
-    NB_SUBMODULE<CF32,  F32>(m,  "f32");
-    NB_SUBMODULE<CF32, CF16>(m, "cf16");
-    NB_SUBMODULE< F16,  F32>(m,  "f32");
-    NB_SUBMODULE< F16, CF32>(m, "cf32");
-    NB_SUBMODULE< F16, CF16>(m, "cf16");
-    NB_SUBMODULE< F32,  F16>(m,  "f16");
-    NB_SUBMODULE< F32, CF32>(m, "cf32");
-    NB_SUBMODULE< F32, CF16>(m, "cf16");
+    NB_SUBMODULE< CI8, CF32>(m, "type_cf32");
+    NB_SUBMODULE< CI8, CF16>(m, "type_cf16");
+    NB_SUBMODULE<CF16,  F16>(m,  "type_f16");
+    NB_SUBMODULE<CF16,  F32>(m,  "type_f32");
+    NB_SUBMODULE<CF16, CF32>(m, "type_cf32");
+    NB_SUBMODULE<CF32,  F16>(m,  "type_f16");
+    NB_SUBMODULE<CF32,  F32>(m,  "type_f32");
+    NB_SUBMODULE<CF32, CF16>(m, "type_cf16");
+    NB_SUBMODULE< F16,  F32>(m,  "type_f32");
+    NB_SUBMODULE< F16, CF32>(m, "type_cf32");
+    NB_SUBMODULE< F16, CF16>(m, "type_cf16");
+    NB_SUBMODULE< F32,  F16>(m,  "type_f16");
+    NB_SUBMODULE< F32, CF32>(m, "type_cf32");
+    NB_SUBMODULE< F32, CF16>(m, "type_cf16");
 }
