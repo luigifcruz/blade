@@ -22,7 +22,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def(nb::init<const U64&>(), "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
-        .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buf"_a);
+        .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buffer"_a);
 
     mod
         .def(nb::init<const typename Class::Config&,

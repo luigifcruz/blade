@@ -76,7 +76,7 @@ void NB_SUBMODULE_WRITER(auto& m, const auto& name, const auto& typeName) {
                                      "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
-        .def(nb::init<const ArrayTensor<Device::CPU, IT>&>(), "buf"_a);
+        .def(nb::init<const ArrayTensor<Device::CPU, IT>&>(), "buffer"_a);
 
     mod
         .def(nb::init<const typename Class::Config&, const typename Class::Input&>())

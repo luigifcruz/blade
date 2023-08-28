@@ -28,7 +28,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&,
-                      const PhasorTensor<Device::CUDA, IT>&>(), "buf"_a,
+                      const PhasorTensor<Device::CUDA, IT>&>(), "buffer"_a,
                                                                 "phasors"_a);
 
     mod
@@ -61,5 +61,7 @@ NB_MODULE(_beamformer_impl, m) {
         auto mm = m.def_submodule("tel_meerkat");
         NB_SUBMODULE<Modules::Beamformer::MeerKAT, CF32, CF32>(mm, "type_cf32");
     }
+#endif
+#ifdef BLADE_MODULE_VLA_BEAMFORMER
 #endif
 }
