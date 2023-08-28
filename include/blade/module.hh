@@ -23,11 +23,11 @@ class Module {
     virtual ~Module() = default;
 
     virtual constexpr Taint getTaint() const {
-        return Taint::NONE; 
+        return Taint::NONE;
     }
 
     virtual constexpr U64 getComputeRatio() const {
-        return 1;       
+        return 1;
     }
 
     virtual constexpr Result process(const U64& currentStepNumber, const Stream& stream = {}) {
@@ -36,11 +36,11 @@ class Module {
 
  protected:
     jitify2::ProgramCache<> cache;
-    
+
     Result createKernel(const std::string& name,
                         const std::string& key,
                         const dim3& gridSize,
-                        const dim3& blockSize, 
+                        const dim3& blockSize,
                         const auto... templateArguments) {
         if (blockSize.x > 1024) {
             BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
@@ -56,11 +56,11 @@ class Module {
         kernels.insert({name, {
             .gridSize = gridSize,
             .blockSize = blockSize,
-            .key = Template(key).instantiate(templateArguments...), 
+            .key = Template(key).instantiate(templateArguments...),
         }});
 
         return Result::SUCCESS;
-    } 
+    }
 
     Result runKernel(const std::string& name,
                      const Stream& stream,

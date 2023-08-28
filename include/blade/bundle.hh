@@ -8,6 +8,7 @@
 
 #include "blade/logger.hh"
 #include "blade/module.hh"
+#include "blade/macros.hh"
 
 namespace Blade {
 
@@ -17,6 +18,14 @@ class BLADE_API Bundle {
 
     constexpr std::vector<std::shared_ptr<Module>>& getModules() {
         return modules;
+    }
+
+    Result process(const U64& currentStepNumber, const Stream& stream = {}) {
+        for (auto& module : modules) {
+            BL_CHECK(module->process(currentStepNumber, stream));
+        }
+
+        return Result::SUCCESS;
     }
 
  protected:
