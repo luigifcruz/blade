@@ -17,7 +17,7 @@ namespace Blade::Bundles::ATA {
 template<typename IT, typename OT>
 class BLADE_API ModeB : public Bundle {
  public:
-    // Configuration 
+    // Configuration
 
     struct Config {
         ArrayShape inputShape;
@@ -32,10 +32,10 @@ class BLADE_API ModeB : public Bundle {
         F64 phasorTotalBandwidthHz;
         U64 phasorFrequencyStartIndex;
         U64 phasorReferenceAntennaIndex;
-        LLA phasorArrayReferencePosition; 
+        LLA phasorArrayReferencePosition;
         RA_DEC phasorBoresightCoordinate;
         std::vector<XYZ> phasorAntennaPositions;
-        ArrayTensor<Device::CPU, CF64> phasorAntennaCalibrations; 
+        ArrayTensor<Device::CPU, CF64> phasorAntennaCalibrations;
         std::vector<RA_DEC> phasorBeamCoordinates;
 
         BOOL beamformerIncoherentBeam = false;
@@ -52,7 +52,11 @@ class BLADE_API ModeB : public Bundle {
         U64 detectorBlockSize = 512;
     };
 
-    // Input 
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
+    // Input
 
     struct Input {
         const Tensor<Device::CPU, F64>& dut;
@@ -60,7 +64,19 @@ class BLADE_API ModeB : public Bundle {
         const ArrayTensor<Device::CUDA, IT>& buffer;
     };
 
-    // Output 
+    constexpr const ArrayTensor<Device::CUDA, IT>& getInputBuffer() const {
+        return this->input.buffer;
+    }
+
+    constexpr const Tensor<Device::CPU, F64>& getInputDut() const {
+        return this->input.dut;
+    }
+
+    constexpr const Tensor<Device::CPU, F64>& getInputJulianDate() const {
+        return this->input.julianDate;
+    }
+
+    // Output
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
         if (config.detectorEnable) {
@@ -81,7 +97,7 @@ class BLADE_API ModeB : public Bundle {
     // Constructor
 
     explicit ModeB(const Config& config, const Input& input, const Stream& stream)
-         : Bundle(stream), config(config) {
+         : Bundle(stream), config(config), input(input) {
         BL_DEBUG("Initializing Mode-B Bundle for ATA.");
 
         BL_DEBUG("Instantiating input cast from {} to CF32.", TypeInfo<IT>::name);
@@ -103,8 +119,8 @@ class BLADE_API ModeB : public Bundle {
 
         BL_DEBUG("Instatiating polarizer module.")
         this->connect(polarizer, {
-            .mode = (config.preBeamformerPolarizerConvertToCircular) ? Polarizer::Mode::XY2LR : 
-                                                                       Polarizer::Mode::BYPASS, 
+            .mode = (config.preBeamformerPolarizerConvertToCircular) ? Polarizer::Mode::XY2LR :
+                                                                       Polarizer::Mode::BYPASS,
             .blockSize = config.polarizerBlockSize,
         }, {
             .buf = channelizer->getOutputBuffer(),
@@ -184,6 +200,7 @@ class BLADE_API ModeB : public Bundle {
 
  private:
     const Config config;
+    Input input;
 
     using InputCast = typename Modules::Cast<IT, CF32>;
     std::shared_ptr<InputCast> inputCast;
