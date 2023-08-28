@@ -214,4 +214,28 @@ if (cfg_lst.get('BLADE_MODULE_ATA_BEAMFORMER', false) or
     )
 endif
 
+if (cfg_lst.get('BLADE_BUNDLE_ATA_MODE_B', false))
+    py.extension_module(
+        '_modeb_impl',
+        sources: 'ext_modeb.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+endif
+
+if (cfg_lst.get('BLADE_BUNDLE_GENERIC_MODE_H', false))
+    py.extension_module(
+        '_modeh_impl',
+        sources: 'ext_modeh.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+endif
+
 endif

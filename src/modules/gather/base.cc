@@ -28,7 +28,7 @@ Gather<IT, OT>::Gather(const Config& config,
                  config.axis, input.buf.shape().dimensions());
         BL_CHECK_THROW(Result::ERROR);
     }
-    
+
     const auto choppedShape = ArrayShape::Type(input.buf.shape()) | std::views::drop(config.axis);
     const U64 copySize = std::accumulate(choppedShape.begin(), choppedShape.end(), 0);
     BL_DEBUG("Copy size of {} elements.", copySize);
@@ -44,7 +44,7 @@ Gather<IT, OT>::Gather(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
     BL_INFO("Axis: {}", config.axis);
     BL_INFO("Multiplier: {}", config.multiplier);
@@ -73,7 +73,7 @@ Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream
     }
 
     if (strategy == Strategy::Copy) {
-        const auto& inputHeight = output.buf.shape().numberOfAspects() * 
+        const auto& inputHeight = output.buf.shape().numberOfAspects() *
                                   output.buf.shape().numberOfFrequencyChannels();
         const auto& inputWidth = input.buf.size_bytes() / inputHeight;
         const auto& outputPitch = inputWidth * config.multiplier;
@@ -89,7 +89,7 @@ Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream
                 0,
 
                 inputWidth,
-                inputHeight, 
+                inputHeight,
                 stream
             )
         );
