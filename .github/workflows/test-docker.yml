@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build-cuda:
 
-    runs-on: [self-hosted, linux, x64, cuda]
+    runs-on: [cuda]
 
     steps:
       - name: Checkout code
