@@ -6,7 +6,8 @@ if has_python
     cmake = import('cmake')
 
     opt_var = cmake.subproject_options()
-    opt_var.add_cmake_defines({'NB_ABORT_ON_LEAK': 0})
+    
+    opt_var.append_compile_args('cpp', '-UNB_ABORT_ON_LEAK')
 
     sub_proj = cmake.subproject('nanobind', options: opt_var)
 
