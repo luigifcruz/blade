@@ -25,7 +25,7 @@ RUN apt install -y liberfa-dev
 RUN apt install -y libhdf5-dev
 
 RUN rm -fr build
-RUN git submodule update --init
+RUN git submodule update --init --recursive
 RUN meson build -Dprefix=/usr
 RUN cd build && ninja install
 
