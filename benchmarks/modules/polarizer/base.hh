@@ -19,7 +19,8 @@ class PolarizerTest : CudaBenchmark {
         const U8 M = state.range(1);
 
         InitAndProfile([&](){
-            config.mode = static_cast<typename MUT<IT, OT>::Mode>(M);
+            config.inputPolarization = POL::XY;
+            config.outputPolarization = static_cast<POL>(M);
             config.blockSize = 512;
 
             deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, 192, 8192, 2});

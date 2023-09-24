@@ -12,8 +12,8 @@ static void BM_Polarizer_Compute_CF32_CF32(bm::State& state) {
 
 BENCHMARK(BM_Polarizer_Compute_CF32_CF32)
     ->Iterations(2<<13)
-    ->Args({ 2, 1})
-    ->Args({16, 1})
+    ->Args({ 2, static_cast<uint8_t>(POL::LR)})
+    ->Args({16, static_cast<uint8_t>(POL::LR)})
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
 
@@ -26,7 +26,7 @@ static void BM_Polarizer_Compute_CF16_CF16(bm::State& state) {
 
 BENCHMARK(BM_Polarizer_Compute_CF16_CF16)
     ->Iterations(2<<13)
-    ->Args({ 2, 1})
-    ->Args({16, 1})
+    ->Args({ 2, static_cast<uint8_t>(POL::LR)})
+    ->Args({16, static_cast<uint8_t>(POL::LR)})
     ->UseManualTime()
     ->Unit(bm::kMillisecond);

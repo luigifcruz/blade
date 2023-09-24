@@ -45,7 +45,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
     }
 
     // Link output buffers.
-    if (config.mode == Mode::BYPASS) {
+    if (config.inputPolarization == config.outputPolarization) {
         BL_INFO("Bypass: Enabled");
     }
 
@@ -60,7 +60,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 
 template<typename IT, typename OT>
 Result Polarizer<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
-    if (config.mode == Mode::BYPASS) {
+    if (config.inputPolarization == config.outputPolarization) {
         return Result::SUCCESS;
     }
 

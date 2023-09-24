@@ -74,7 +74,8 @@ class BLADE_API ModeH : public Bundle {
 
         BL_DEBUG("Instatiating polarizer module.")
         this->connect(polarizer, {
-            .mode = (config.polarizerConvertToCircular) ? Polarizer::Mode::XY2LR : Polarizer::Mode::BYPASS,
+            .inputPolarization = POL::XY,
+            .outputPolarization = (config.polarizerConvertToCircular) ? POL::LR : POL::XY,
             .blockSize = config.polarizerBlockSize,
         }, {
             .buf = channelizer->getOutputBuffer(),

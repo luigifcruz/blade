@@ -18,14 +18,11 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 
     nb::class_<Class, Module> mod(m, name);
 
-    nb::enum_<typename Class::Mode>(mod, "mode")
-        .value("bypass", Class::Mode::BYPASS)
-        .value("xy_to_lr", Class::Mode::XY2LR)
-        .export_values();
-
     nb::class_<typename Class::Config>(mod, "config")
-        .def(nb::init<const typename Class::Mode,
-                      const U64&>(), "mode"_a,
+        .def(nb::init<const POL&,
+                      const POL&,
+                      const U64&>(), "inputPolarization"_a,
+                                     "outputPolarization"_a,
                                      "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")

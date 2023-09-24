@@ -40,6 +40,15 @@ struct HA_DEC {
     double DEC;
 };
 
+enum class POL : uint8_t {
+    X,
+    Y,
+    L,
+    R,
+    XY,
+    LR,
+};
+
 }  // namespace Blade
 
 #endif

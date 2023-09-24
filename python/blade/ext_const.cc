@@ -21,6 +21,15 @@ NB_MODULE(_const_impl, m) {
             return fmt::format("Stream()");
         });
 
+    nb::enum_<POL>(m, "pol")
+        .value("x", POL::X)
+        .value("y", POL::Y)
+        .value("l", POL::L)
+        .value("r", POL::R)
+        .value("xy", POL::XY)
+        .value("lr", POL::LR)
+        .export_values();
+
     nb::class_<XYZ>(m, "xyz", nb::dynamic_attr())
         .def(nb::init<F64, F64, F64>(), "x"_a, "y"_a, "z"_a)
         .def("__init__", [](XYZ* t, const std::tuple<F64, F64, F64>& elements) {

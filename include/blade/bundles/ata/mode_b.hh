@@ -119,8 +119,8 @@ class BLADE_API ModeB : public Bundle {
 
         BL_DEBUG("Instatiating polarizer module.")
         this->connect(polarizer, {
-            .mode = (config.preBeamformerPolarizerConvertToCircular) ? Polarizer::Mode::XY2LR :
-                                                                       Polarizer::Mode::BYPASS,
+            .inputPolarization = POL::XY,
+            .outputPolarization = (config.preBeamformerPolarizerConvertToCircular) ? POL::LR : POL::XY,
             .blockSize = config.polarizerBlockSize,
         }, {
             .buf = channelizer->getOutputBuffer(),
