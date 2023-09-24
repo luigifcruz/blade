@@ -1,18 +1,28 @@
 # TODO: Update this Dockerfile.
-FROM nvidia/cuda:12.2.0-devel-ubuntu20.04
+FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update --fix-missing
+RUN apt update --fix-missing
 
 COPY . /blade
 WORKDIR /blade
 
-RUN apt-get install -y g++-10 python3-pip cmake ccache liberfa-dev git libbenchmark-dev libhdf5-dev
-RUN python3 -m pip install meson ninja numpy astropy pandas
+# System dependencies.
+RUN apt install -y build-essential pkg-config git python3-pip
 
-ENV CC=gcc-10
-ENV CXX=g++-10
+# Build dependencies.
+RUN python3 -m pip install cmake meson ninja
+
+# Test dependencies.
+RUN apt install -y libbenchmark-dev
+RUN python3 -m pip install numpy astropy pandas
+
+# ATA phasor module dependencies.
+RUN apt install -y liberfa-dev
+
+# HDF5 writer dependencies.
+RUN apt install -y libhdf5-dev
 
 RUN rm -fr build
 RUN git submodule update --init
