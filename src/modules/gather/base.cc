@@ -29,8 +29,10 @@ Gather<IT, OT>::Gather(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    const auto choppedShape = ArrayShape::Type(input.buf.shape()) | std::views::drop(config.axis);
-    const U64 copySize = std::accumulate(choppedShape.begin(), choppedShape.end(), 0);
+    U64 copySize = 0;
+    for (U64 i = config.axis; i < input.buf.shape().size(); ++i) {
+        copySize += input.buf.shape()[i];
+    }
     BL_DEBUG("Copy size of {} elements.", copySize);
 
     if (copySize < config.copySizeThreshold) {
