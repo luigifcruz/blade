@@ -15,7 +15,7 @@ RUN apt install -y build-essential pkg-config git python3-pip
 RUN python3 -m pip install cmake meson ninja
 
 # Test dependencies.
-RUN apt install -y libbenchmark-dev
+RUN apt install -y libbenchmark-dev libgtest-dev
 RUN python3 -m pip install numpy astropy pandas
 
 # ATA phasor module dependencies.
