@@ -24,6 +24,10 @@ class BLADE_API Duet {
         _fixed = swapchain[0];
     }
 
+    void set(const U64& index) {
+        _fixed = swapchain[index];
+    }
+
     operator T&() {
         return _fixed;
     }
@@ -31,6 +35,10 @@ class BLADE_API Duet {
     T& operator[](const U64& index) {
         _fixed = swapchain[index];
         return _fixed;
+    }
+
+    const T& at(const U64& index) const {
+        return swapchain.at(index);
     }
 
  private:

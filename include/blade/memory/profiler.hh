@@ -24,7 +24,7 @@ class BLADE_API Profiler {
         U64 allocatedUnifiedTensors;
         U64 deallocatedUnifiedTensors;
     };
-    
+
     Profiler(Profiler const&) = delete;
     void operator=(Profiler const&) = delete;
 
@@ -73,7 +73,7 @@ class BLADE_API Profiler {
  private:
     Capture capture;
     bool _isCapturing;
-    
+
     Profiler() : _isCapturing(false) {}
 
     void startCapture();

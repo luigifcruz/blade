@@ -7,9 +7,9 @@ import blade._hidden_impl as _hidden
 # Macros
 #
 
-def _FetchPipeline():
-    if 'pipeline' in globals():
-        return globals()['pipeline']
+def _Fetch(_name = 'runner'):
+    if _name in globals():
+        return globals()[_name]
 
     _caller_frame = _inspect.currentframe()
 
@@ -20,11 +20,13 @@ def _FetchPipeline():
 
     if _caller_frame and 'self' in _caller_frame.f_locals:
         _instance = _caller_frame.f_locals['self']
-        if hasattr(_instance, 'pipeline'):
-            return getattr(_instance, 'pipeline')
+        if hasattr(_instance, _name):
+            return getattr(_instance, _name)
+
+    if _name == 'runner':
+        return _Fetch('pipeline')
 
     return None
-
 #
 # Constants
 #
@@ -59,3 +61,29 @@ _create_constants(_telescope_lst)
 _create_constants(_device_lst)
 _create_constants(_types_lst)
 _create_constants(_modules_lst)
+
+#
+# Helpers
+#
+
+# Function will automatically convert duets into the underlying buffer.
+# TODO: Might be able to eliminate this function
+def _sanitize_duet(object, index = 0):
+    def sanitize_item(item):
+        if item.__class__.__name__.endswith("_duet"):
+            return item[index]
+        return item
+
+    if isinstance(object, tuple):
+        return tuple(sanitize_item(item) for item in object)
+
+    elif isinstance(object, dict):
+        sanitized_dict = {}
+        for key, value in object.items():
+            sanitized_key = sanitize_item(key)
+            sanitized_value = sanitize_item(value)
+            sanitized_dict[sanitized_key] = sanitized_value
+        return sanitized_dict
+
+    else:
+        return sanitize_item(object)

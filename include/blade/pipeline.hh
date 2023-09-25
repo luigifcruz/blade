@@ -15,7 +15,7 @@ namespace Blade {
 
 class BLADE_API Pipeline {
  public:
-    Pipeline(const U64& numberOfStreams = 2);
+    Pipeline();
     virtual ~Pipeline();
 
     constexpr const bool computeComplete() const {
@@ -75,7 +75,7 @@ class BLADE_API Pipeline {
  private:
     bool _commited;
     std::vector<Stream> _streams;
-    std::vector<std::shared_ptr<Module>> modules;
+    std::vector<std::shared_ptr<Module>> _modules;
 
     U64 _computeStepCount;
     U64 _computeStepsPerCycle;

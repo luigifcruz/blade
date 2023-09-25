@@ -1,7 +1,6 @@
 import importlib
 
-import blade._internal.base as bl
-
+import blade._internal as bl
 
 def module(name, config, input, out=bl.cf32, telescope=bl.generic):
     # Validate input parameters.
@@ -20,12 +19,10 @@ def module(name, config, input, out=bl.cf32, telescope=bl.generic):
     else:
         raise ValueError("Module telescope has to be a constant type (bl.generic, bl.ata, bl.vla, etc).")
 
-    _input = input
-    _config = config
     _tmp = _name.split('_')
     _ext_name = _tmp[0]
     _ext_taint = _tmp[1] if len(_tmp) > 1 else None
-    _pipeline = bl._FetchPipeline()
+    _pipeline = bl._Fetch()
 
     # Import module extension implementation.
     try:
@@ -62,48 +59,49 @@ def module(name, config, input, out=bl.cf32, telescope=bl.generic):
         _caller = getattr(_caller, f"type_{_out}")
 
     # Automatically cast configuration to correct type.
-    _config = getattr(_caller, 'config')
+    _config_struct = getattr(_caller, 'config')
 
     if isinstance(config, tuple):
-        _config = _config(*config)
+        _config_struct = _config_struct(*config)
     elif isinstance(config, dict):
-        _config = _config(**config)
+        _config_struct = _config_struct(**config)
     elif isinstance(config, int):
-        _config = _config(config)
+        _config_struct = _config_struct(config)
     else:
         raise ValueError('Config should be a Tuple, Dict, or Int.')
 
     # Automatically cast input to correct type.
-    _input = getattr(_caller, 'input')
+    _input_struct = getattr(_caller, 'input')
+    _sanitized_input = bl._sanitize_duet(input)
 
     if isinstance(input, tuple):
-        _input = _input(*input)
+        _input_struct = _input_struct(*_sanitized_input)
     elif isinstance(input, dict):
-        _input = _input(**input)
+        _input_struct = _input_struct(**_sanitized_input)
     elif ('blade._mem_impl.cuda' in input.__class__.__module__) or \
          ('blade._mem_impl.cpu' in input.__class__.__module__):
-        _input = _input(input)
+        _input_struct = _input_struct(_sanitized_input)
     else:
         raise ValueError('Input should be a Tuple, Dict, or Vector.')
 
     # Register module into current pipeline.
 
     # This is the same logic implemented in 'pipeline.h'.
-    # It's duplicated because it would be a pain in the ass to
-    # redefine all the modules types permutations.
+    # It's duplicated because it would be sub-optimal to
+    # redefine thousands of modules types permutations.
     if _pipeline:
         if _pipeline.commited():
             raise RuntimeError("Can't connect new module after Pipeline is commited.")
 
-        _inst = _caller(_config, _input, _pipeline.stream())
+        _inst = _caller(_config_struct, _input_struct, _pipeline.stream())
 
         if isinstance(_inst, bl._hidden.bundle):
             for _module in _inst.modules():
-                _pipeline.add_module(_inst)
+                _pipeline.add_module(_module)
         else:
             _pipeline.add_module(_inst)
     else:
         # Instantiate module in the default stream if outside a pipeline.
-        _inst = _caller(_config, _input, bl.stream())
+        _inst = _caller(_config_struct, _input_struct, bl.stream())
 
     return _inst

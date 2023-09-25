@@ -13,7 +13,7 @@ using namespace Blade;
 
 NB_MODULE(_pipeline_impl, m) {
     nb::class_<Pipeline>(m, "pipeline")
-        .def(nb::init<const U64&>(), "number_of_streams"_a)
+        .def(nb::init<>())
         .def("compute_complete", &Pipeline::computeComplete, nb::rv_policy::reference)
         .def("compute_current_step_count", &Pipeline::computeCurrentStepCount, nb::rv_policy::reference)
         .def("compute_steps_per_cycle", &Pipeline::computeStepsPerCycle, nb::rv_policy::reference)
@@ -27,6 +27,6 @@ NB_MODULE(_pipeline_impl, m) {
         .def("add_module", &Pipeline::addModule, nb::rv_policy::reference)
         .def("__repr__", [](Pipeline& obj){
             return fmt::format("Pipeline(current_step_count={}, steps_per_cycle={}, lifetime_cycles={})",
-                               obj.computeCurrentStepCount(), obj.computeStepsPerCycle(), obj.computeLifetimeCycles());
+                            obj.computeCurrentStepCount(), obj.computeStepsPerCycle(), obj.computeLifetimeCycles());
         });
 }

@@ -20,6 +20,10 @@ struct Shape {
         return _size;
     }
 
+    constexpr const U64* data() const {
+        return _shape.data();
+    }
+
     __host__ __device__ U64 shapeToOffset(const Type& index) const {
         U64 offset = 0;
         U64 multiplier = 1;

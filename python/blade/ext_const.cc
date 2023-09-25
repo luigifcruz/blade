@@ -12,6 +12,17 @@ using namespace nb::literals;
 using namespace Blade;
 
 NB_MODULE(_const_impl, m) {
+    nb::enum_<Result>(m, "result")
+        .value("success", Result::SUCCESS)
+        .value("error", Result::ERROR)
+        .value("cuda_error", Result::CUDA_ERROR)
+        .value("assertion_error", Result::ASSERTION_ERROR)
+        .value("runner_queue_full", Result::RUNNER_QUEUE_FULL)
+        .value("runner_queue_empty", Result::RUNNER_QUEUE_EMPTY)
+        .value("runner_queue_none_available", Result::RUNNER_QUEUE_NONE_AVAILABLE)
+        .value("pipeline_exhausted", Result::PIPELINE_EXHAUSTED)
+        .export_values();
+
     nb::class_<Stream>(m, "stream")
         .def("__init__", [](Stream* stream) {
             static auto _stream = Stream{nullptr};

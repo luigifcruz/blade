@@ -7,7 +7,7 @@
 namespace Blade::ATA::ModeB {
 
 template<typename IT, typename OT>
-class Benchmark : public Pipeline {
+class Benchmark : public Runner {
  public:
     using ModeB = Bundles::ATA::ModeB<IT, OT>;
 
@@ -25,22 +25,20 @@ class Benchmark : public Pipeline {
         });
     }
 
-    Result transferIn(const U64& index,
-                      const Tensor<Device::CPU, F64>& cpuInputDut,
+    Result transferIn(const Tensor<Device::CPU, F64>& cpuInputDut,
                       const Tensor<Device::CPU, F64>& cpuInputJulianDate,
                       const ArrayTensor<Device::CPU, IT>& cpuInputBuffer) {
-        BL_CHECK(Copy(inputDut[index], cpuInputDut, this->stream(index)));
-        BL_CHECK(Copy(inputJulianDate[index], cpuInputJulianDate, this->stream(index)));
-        BL_CHECK(Copy(inputBuffer[index], cpuInputBuffer, this->stream(index)));
+        BL_CHECK(this->copy(inputDut, cpuInputDut));
+        BL_CHECK(this->copy(inputJulianDate, cpuInputJulianDate));
+        BL_CHECK(this->copy(inputBuffer, cpuInputBuffer));
         return Result::SUCCESS;
     }
 
-    Result transferOut(const U64& index,
-                       ArrayTensor<Device::CPU, OT>& cpuOutputBuffer) {
+    Result transferOut(ArrayTensor<Device::CPU, OT>& cpuOutputBuffer) {
         // Copy pipeline output buffer to a staging buffer on the device.
-        BL_CHECK(Copy(outputBuffer[index], modeB->getOutputBuffer(), this->stream(index)));
+        BL_CHECK(this->copy(outputBuffer, modeB->getOutputBuffer()));
         // Copy data from the staging buffer to the host buffer.
-        BL_CHECK(Copy(cpuOutputBuffer, outputBuffer[index], this->stream(index)));
+        BL_CHECK(this->copy(cpuOutputBuffer, outputBuffer));
         return Result::SUCCESS;
     }
 
@@ -129,25 +127,20 @@ class BenchmarkRunner {
     }
 
     Result run(const U64& totalIterations) {
-        Runner runner(pipeline);
         U64 dequeueCount = 0;
         U64 enqueueCount = 0;
 
         while (dequeueCount < (totalIterations - 1)) {
-            runner.enqueue([&](const U64& index, U64& id, const bool& willOutput){
-                BL_TRACE("[QUEUE] Index: {} | Id: {} | Will Output: {} | Enq. Count: {}",
-                         index, id, (willOutput) ? "YES" : "NO", enqueueCount);
-                BL_CHECK(pipeline->transferIn(index, inputDut1[index], inputJulianDate[index], inputBuffer[index]));
-                BL_CHECK(pipeline->compute(index));
-                if (willOutput) {
-                    BL_CHECK(pipeline->transferOut(index, outputBuffer[index]));
-                }
-                id = enqueueCount++;
-                return Result::SUCCESS;
-            });
+            const auto& swap = enqueueCount % 2;
+            auto inputCallback = [&](){
+                return pipeline->transferIn(inputDut1[swap], inputJulianDate[swap], inputBuffer[swap]);
+            };
+            auto outputCallback = [&](){
+                return pipeline->transferOut(outputBuffer[swap]);
+            };
+            pipeline->enqueue(inputCallback, outputCallback, enqueueCount++);
 
-            runner.dequeue([&](const U64& index, const U64& id){
-                BL_TRACE("[DEQUEUE] Index: {} | Id: {} | Deq. Count: {}", index, id, dequeueCount);
+            pipeline->dequeue([&](const U64& id){
                 dequeueCount++;
                 return Result::SUCCESS;
             });

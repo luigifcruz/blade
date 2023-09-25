@@ -4,21 +4,17 @@
 
 namespace Blade {
 
-Pipeline::Pipeline(const U64& numberOfStreams)
+Pipeline::Pipeline()
      : _commited(false),
        _computeStepCount(0),
        _computeStepsPerCycle(1),
        _computeLifetimeCycles(0) {
     BL_DEBUG("Creating new pipeline.");
-    if (numberOfStreams == 0) {
-        BL_FATAL("Number of streams has to be at least 1.");
-        BL_CHECK_THROW(Result::ERROR);
-    }
 
-    _streams.resize(numberOfStreams);
+    _streams.resize(2);
     for (U64 i = 0; i < _streams.size(); i++) {
         BL_CUDA_CHECK_THROW(cudaStreamCreateWithFlags(_streams[i], cudaStreamNonBlocking), [&]{
-            BL_FATAL("Failed to create stream for CUDA steam: {}", err);
+            BL_FATAL("Failed to create CUDA stream: {}", err);
         });
     }
 }
@@ -31,7 +27,7 @@ void Pipeline::addModule(const std::shared_ptr<Module>& module) {
             _computeStepRatios.push_back(localRatio);
         }
     }
-    modules.push_back(module);
+    _modules.push_back(module);
 }
 
 Pipeline::~Pipeline() {
@@ -76,7 +72,7 @@ Result Pipeline::compute(const U64& index) {
     U64 localRatioIndex = 0;
     U64 localStepOffset = 1;
 
-    for (auto& module : this->modules) {
+    for (auto& module : _modules) {
         localStepCount = _computeStepCount / localStepOffset % _computeStepRatios[localRatioIndex];
 
         const auto& result = module->process(localStepCount, _streams[index]);

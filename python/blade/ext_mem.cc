@@ -15,43 +15,65 @@ template<Device DeviceType, typename DataType, typename ShapeType>
 void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
     using ClassType = Vector<DeviceType, DataType, ShapeType>;
 
-    nb::class_<ClassType>(m, name)
-        .def(nb::init<>())
-        .def(nb::init<const ShapeType&, const bool&>(), "shape"_a, "unified"_a = false)
-        .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
-        .def("as_numpy", [](ClassType& obj){
-            // TODO: Should return nb::ndarray<...>
-        }, nb::rv_policy::reference)
-        .def("__getitem__", [](ClassType& obj, const typename ShapeType::Type& shape){
-            return obj[shape];
-        }, nb::rv_policy::reference)
-        .def("__getitem__", [](ClassType& obj, const U64& index){
-            return obj[index];
-        }, nb::rv_policy::reference)
-        .def("__setitem__", [](ClassType& obj, const typename ShapeType::Type& shape, const DataType& val){
-            obj[shape] = val;
-        })
-        .def("__setitem__", [](ClassType& obj, const U64& index, const DataType& val){
-            obj[index] = val;
-        })
-        .def("__repr__", [](ClassType& obj){
-            return fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
-                               obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
-        })
-        .def("unified", [](ClassType& obj){
-            return obj.unified();
-        })
-        .def("hash", [](ClassType& obj){
-            return obj.hash();
-        })
-        .def("shape", [](ClassType& obj) {
-            return obj.shape();
-        });
+    auto mm = 
+        nb::class_<ClassType>(m, name)
+            .def(nb::init<>())
+            .def(nb::init<const ShapeType&, const bool&>(), "shape"_a, "unified"_a = false)
+            .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
+            .def("__getitem__", [](ClassType& obj, const typename ShapeType::Type& shape){
+                return obj[shape];
+            }, nb::rv_policy::reference)
+            .def("__getitem__", [](ClassType& obj, const U64& index){
+                return obj[index];
+            }, nb::rv_policy::reference)
+            .def("__setitem__", [](ClassType& obj, const typename ShapeType::Type& shape, const DataType& val){
+                obj[shape] = val;
+            })
+            .def("__setitem__", [](ClassType& obj, const U64& index, const DataType& val){
+                obj[index] = val;
+            })
+            .def("__repr__", [](ClassType& obj){
+                return fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
+                                obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
+            })
+            .def("unified", [](ClassType& obj){
+                return obj.unified();
+            })
+            .def("hash", [](ClassType& obj){
+                return obj.hash();
+            })
+            .def("shape", [](ClassType& obj) {
+                return obj.shape();
+            });
 
     nb::class_<Duet<ClassType>>(m, fmt::format("{}_duet", name).c_str())
         .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
+        .def("set", &Duet<ClassType>::set)
         .def("__getitem__", &Duet<ClassType>::operator[])
         .def("__call__", &Duet<ClassType>::operator ClassType&);
+
+    // TODO: Add support for all formats.
+    // TODO: Handle heterogeneous locations better.
+    if constexpr (!std::is_same<F16, DataType>::value &&
+                  !std::is_same<CF16, DataType>::value && 
+                  !std::is_same<CI8, DataType>::value &&
+                  !std::is_same<CF32, DataType>::value) {
+        mm.def("as_numpy", [](ClassType& obj){
+            ClassType* p = new ClassType(obj);
+            nb::capsule deleter(p, [](void *p) noexcept {
+                delete reinterpret_cast<ClassType*>(p);
+            });
+
+            auto* value = p->data();
+            const U64* shape = p->shape().data();
+            constexpr const U64 ndims = std::tuple_size<typename ShapeType::Type>::value;
+
+            return nb::ndarray<nb::numpy, DataType, nb::shape<ndims>>(value, 
+                                                                      ndims, 
+                                                                      shape, 
+                                                                      deleter);
+        }, nb::rv_policy::reference);
+    }
 }
 
 template<Device DeviceType, typename DataType>

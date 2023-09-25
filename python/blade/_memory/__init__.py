@@ -1,20 +1,13 @@
-import importlib
-
-import blade._internal.base as bl
-
+import blade._internal as bl
+import blade._mem_impl as _mem
 
 def _create_array(type, shape, dtype, device):
-    _pipeline = bl._FetchPipeline()
+    _pipeline = bl._Fetch()
     _type = type + '_duet' if _pipeline else type
     _shape = shape
     _dtype = dtype.value
     _device = device.value if device != bl.unified else bl.cuda.value
     _unified = False if device != bl.unified else True
-
-    try:
-        _mem = importlib.import_module(f'blade._mem_impl')
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(f"Can't find specified memory extension.")
 
     _caller = _mem
 
@@ -23,7 +16,6 @@ def _create_array(type, shape, dtype, device):
     _caller = getattr(_caller, _type)
 
     return _caller(_shape, unified=_unified)
-
 
 def array_tensor(shape, dtype=bl.f32, device=bl.cuda):
     return _create_array("array_tensor", shape, dtype, device)

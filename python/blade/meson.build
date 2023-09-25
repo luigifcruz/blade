@@ -52,6 +52,16 @@ if has_python
     )
 
     py.extension_module(
+        '_copy_impl',
+        sources: 'ext_copy.cc',
+        include_directories: inc_lst,
+        dependencies: deps + dep_lst,
+        link_with: lib_blade,
+        install: true,
+        install_dir: python_ext_path,
+    )
+
+    py.extension_module(
         '_const_impl',
         sources: 'ext_const.cc',
         include_directories: inc_lst,

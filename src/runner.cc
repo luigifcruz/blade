@@ -4,8 +4,7 @@
 
 namespace Blade {
 
-Runner::Runner(const std::shared_ptr<Pipeline>& pipeline)
-     : pipeline(pipeline), numberOfStreams(pipeline->numberOfStreams()), headIndex(0) {
+Runner::Runner() : headIndex(0) {
     BL_DEBUG("Initializing runner state.")
 }
 
@@ -15,24 +14,29 @@ Runner::~Runner() {
     }
 }
 
-Result Runner::enqueue(const std::function<Result(const U64& index, U64& id, const bool& willOutput)>& callback) {
-    if (queue.size() == numberOfStreams) {
+Result Runner::enqueue(const std::function<Result()>& inputCallback,
+                       const std::function<Result()>& outputCallback,
+                       const U64& id) {
+    if (queue.size() == numberOfStreams()) {
         std::this_thread::yield();
         return Result::RUNNER_QUEUE_FULL;
     }
 
-    U64 id = 0;
-    const bool willOutput = (pipeline->computeStepsPerCycle() == 
-                                (pipeline->computeCurrentStepCount() + 1));
-    BL_CHECK(callback(headIndex, id, willOutput));
-    queue.push({headIndex, id});
+    const bool willOutput = (computeStepsPerCycle() == (computeCurrentStepCount() + 1));
+    BL_TRACE("[E] Index: {} | Id: {} | Will Output: {}", headIndex, id, willOutput ? "Y" : "N");
 
-    headIndex = (headIndex + 1) % numberOfStreams;
+    BL_CHECK(inputCallback());
+    BL_CHECK(compute(headIndex));
+    if (willOutput) {
+        BL_CHECK(outputCallback());
+    }
+    queue.push({headIndex, id});
+    headIndex = (headIndex + 1) % numberOfStreams();
 
     return Result::SUCCESS;
 }
 
-Result Runner::dequeue(const std::function<Result(const U64& index, const U64& id)>& callback) {
+Result Runner::dequeue(const std::function<Result(const U64& id)>& callback) {
     // If queue is empty, return immediately.
     if (queue.size() == 0) {
         std::this_thread::yield();
@@ -40,20 +44,22 @@ Result Runner::dequeue(const std::function<Result(const U64& index, const U64& i
     }
 
     // If queue is not full, check if head is synchronized.
-    if (queue.size() < numberOfStreams) {
+    if (queue.size() < numberOfStreams()) {
         const auto [frontIndex, frontId] = queue.front();
-        if (pipeline->isSynchronized(frontIndex)) {
+        if (isSynchronized(frontIndex)) {
             queue.pop();
-            return callback(frontIndex, frontId);
+            BL_TRACE("[D] Index: {} | Id: {}", frontIndex, frontId);
+            return callback(frontId);
         }
         return Result::RUNNER_QUEUE_NONE_AVAILABLE;
     }
 
     // If queue is full, wait until head is synchronized.
     const auto [frontIndex, frontId] = queue.front();
-    BL_CHECK(pipeline->synchronize(frontIndex));
+    BL_CHECK(synchronize(frontIndex));
     queue.pop();
-    return callback(frontIndex, frontId);
+    BL_TRACE("[D] Index: {} | Id: {}", frontIndex, frontId);
+    return callback(frontId);
 }
 
 }  // namespace Blade

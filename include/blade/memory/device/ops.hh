@@ -19,7 +19,7 @@ namespace Blade::ops {
 
 template<typename T>
 class alignas(2 * sizeof(T)) complex {
- public:   
+ public:
     __host__ __device__ complex() : _real(0), _imag(0) {}
     __host__ __device__ complex(T r) : _real(r), _imag(0) {}
     __host__ __device__ complex(T r, T i) : _real(r), _imag(i) {}
@@ -33,7 +33,7 @@ class alignas(2 * sizeof(T)) complex {
     }
 
     __host__ __device__ complex<T> operator*(const complex<T>& rhs) const {
-        return complex<T>(_real * rhs._real - _imag * rhs._imag, 
+        return complex<T>(_real * rhs._real - _imag * rhs._imag,
                           _real * rhs._imag + _imag * rhs._real);
     }
 
@@ -88,7 +88,7 @@ class alignas(2 * sizeof(T)) complex {
     T _real;
     T _imag;
 };
-  
+
 }  // namespace Blade::ops
 
 #endif
