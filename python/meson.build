@@ -1,6 +1,11 @@
+py = import('python').find_installation('python3', required: false)
+
+py_build_path = join_paths(meson.current_build_dir(), 'blade') 
+py_install_path = join_paths(py.get_install_dir(), 'blade')
+
 subdir('blade')
 
-if has_python
+if py.found()
     install_subdir(
         'blade',
         install_dir: py.get_install_dir(),

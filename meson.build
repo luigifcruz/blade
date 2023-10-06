@@ -65,8 +65,9 @@ subdir('tests')
 subdir('benchmarks')
 subdir('examples')
 
-summary({'cpp_std': get_option('cpp_std'),
-            'prefix': get_option('prefix'),
-            'buildtype': get_option('buildtype'),
-            'python bindings': has_python,
-        }, section: 'General', bool_yn: true)
+summary({
+    'cpp_std': get_option('cpp_std'),
+    'prefix': get_option('prefix'),
+    'buildtype': get_option('buildtype'),
+    'python bindings': py.found(),
+}, section: 'General', bool_yn: true)

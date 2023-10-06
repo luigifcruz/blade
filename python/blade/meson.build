@@ -1,95 +1,89 @@
-py = import('python').find_installation('python3', required: false)
+if not py.found()
+    warning('Python installion not found. Ignoring bindings and tests.')
+    subdir_done()
+endif
 
-has_python = py.found()
+cmake = import('cmake')
+opt_var = cmake.subproject_options()
+opt_var.append_compile_args('cpp', '-UNB_ABORT_ON_LEAK')
+sub_proj = cmake.subproject('nanobind', options: opt_var)
 
-if has_python
-    cmake = import('cmake')
+deps = []
+deps += sub_proj.dependency('nanobind-static')
+deps += py.dependency()
 
-    opt_var = cmake.subproject_options()
-    
-    opt_var.append_compile_args('cpp', '-UNB_ABORT_ON_LEAK')
-
-    sub_proj = cmake.subproject('nanobind', options: opt_var)
-
-    deps = []
-    deps += sub_proj.dependency('nanobind-static')
-    deps += py.dependency()
-
-    python_path = meson.current_build_dir()
-    python_ext_path = join_paths(py.get_install_dir(), 'blade')
-
-    if get_option('buildtype') == 'debugoptimized'
-        run_command(
-            find_program('bash'),
-            '-c',
-            '@0@ -fs @1@/* @2@'.format(
-                find_program('ln').full_path(),
-                meson.current_source_dir(),
-                meson.current_build_dir()
-            ),
-            check: true
-        )
-    endif
-
-    py.extension_module(
-        '_mem_impl',
-        sources: 'ext_mem.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
+if get_option('buildtype') == 'debugoptimized'
+    run_command(
+        find_program('bash'),
+        '-c',
+        '@0@ -fs @1@/* @2@'.format(
+            find_program('ln').full_path(),
+            meson.current_source_dir(),
+            meson.current_build_dir()
+        ),
+        check: true
     )
+endif
 
-    py.extension_module(
-        '_hidden_impl',
-        sources: 'ext_hidden.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
-    )
+py.extension_module(
+    '_mem_impl',
+    sources: 'ext_mem.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
 
-    py.extension_module(
-        '_copy_impl',
-        sources: 'ext_copy.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
-    )
+py.extension_module(
+    '_hidden_impl',
+    sources: 'ext_hidden.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
 
-    py.extension_module(
-        '_const_impl',
-        sources: 'ext_const.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
-    )
+py.extension_module(
+    '_copy_impl',
+    sources: 'ext_copy.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
 
-    py.extension_module(
-        '_pipeline_impl',
-        sources: 'ext_pipeline.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
-    )
+py.extension_module(
+    '_const_impl',
+    sources: 'ext_const.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
 
-    py.extension_module(
-        '_runner_impl',
-        sources: 'ext_runner.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: python_ext_path,
-    )
+py.extension_module(
+    '_pipeline_impl',
+    sources: 'ext_pipeline.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
+
+py.extension_module(
+    '_runner_impl',
+    sources: 'ext_runner.cc',
+    include_directories: inc_lst,
+    dependencies: deps + dep_lst,
+    link_with: lib_blade,
+    install: true,
+    install_dir: py_install_path,
+)
 
 if cfg_lst.get('BLADE_MODULE_CAST', false)
     py.extension_module(
@@ -99,7 +93,7 @@ if cfg_lst.get('BLADE_MODULE_CAST', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -111,7 +105,7 @@ if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -123,7 +117,7 @@ if cfg_lst.get('BLADE_MODULE_POLARIZER', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -135,7 +129,7 @@ if cfg_lst.get('BLADE_MODULE_PERMUTATION', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -147,7 +141,7 @@ if cfg_lst.get('BLADE_MODULE_GUPPI', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -159,7 +153,7 @@ if cfg_lst.get('BLADE_MODULE_GATHER', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -171,7 +165,7 @@ if cfg_lst.get('BLADE_MODULE_DETECTOR', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -183,7 +177,7 @@ if cfg_lst.get('BLADE_MODULE_DUPLICATE', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -195,7 +189,7 @@ if cfg_lst.get('BLADE_MODULE_BFR5', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -207,7 +201,7 @@ if cfg_lst.get('BLADE_MODULE_ATA_PHASOR', false)
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -221,7 +215,7 @@ if (cfg_lst.get('BLADE_MODULE_ATA_BEAMFORMER', false) or
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -233,7 +227,7 @@ if (cfg_lst.get('BLADE_BUNDLE_ATA_MODE_B', false))
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
 endif
 
@@ -245,8 +239,6 @@ if (cfg_lst.get('BLADE_BUNDLE_GENERIC_MODE_H', false))
         dependencies: deps + dep_lst,
         link_with: lib_blade,
         install: true,
-        install_dir: python_ext_path,
+        install_dir: py_install_path,
     )
-endif
-
 endif

@@ -9,13 +9,13 @@ test(
     timeout: 0,
 )
 
-if has_python
+if py.found()
     test(
         'test-memory-vector-matrix',
-        find_program('python', 'python3'),
+        py,
         args: files('matrix.py'),
         is_parallel: false,
         timeout: 0,
-        env: 'PYTHONPATH=@0@'.format(python_path),
+        env: 'PYTHONPATH=@0@'.format(py_build_path),
     )
 endif
