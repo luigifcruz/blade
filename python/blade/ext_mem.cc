@@ -53,11 +53,9 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
         .def("__call__", &Duet<ClassType>::operator ClassType&);
 
     // TODO: Add support for all formats.
-    // TODO: Handle heterogeneous locations better.
     if constexpr (!std::is_same<F16, DataType>::value &&
                   !std::is_same<CF16, DataType>::value && 
-                  !std::is_same<CI8, DataType>::value &&
-                  !std::is_same<CF32, DataType>::value) {
+                  !std::is_same<CI8, DataType>::value) {
         mm.def("as_numpy", [](ClassType& obj){
             ClassType* p = new ClassType(obj);
             nb::capsule deleter(p, [](void *p) noexcept {
@@ -67,11 +65,16 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
             auto* value = p->data();
             const U64* shape = p->shape().data();
             constexpr const U64 ndims = std::tuple_size<typename ShapeType::Type>::value;
+            int32_t device_type = (DeviceType == Device::CUDA) ? nb::device::cuda::value : 
+                                                                 nb::device::cpu::value;
 
             return nb::ndarray<nb::numpy, DataType, nb::shape<ndims>>(value, 
                                                                       ndims, 
                                                                       shape, 
-                                                                      deleter);
+                                                                      deleter,
+                                                                      nullptr,
+                                                                      nb::dtype<DataType>(), 
+                                                                      device_type);
         }, nb::rv_policy::reference);
     }
 }
