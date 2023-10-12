@@ -9,4 +9,4 @@
 	url = http://github.com/MydonSolutions/bfr5c99
 [submodule "subprojects/nanobind"]
 	path = subprojects/nanobind
-	url = https://github.com/wjakob/nanobind
+	url = https://github.com/luigifcruz/nanobind
