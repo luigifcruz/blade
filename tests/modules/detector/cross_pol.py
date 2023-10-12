@@ -1,61 +1,53 @@
-import time
-from random import random
-import blade as bl
 import numpy as np
+import blade as bl
 
-class Test(bl.Pipeline):
-    detector: bl.Detector
+@bl.runner
+class Pipeline:
+    def __init__(self, input_shape, output_shape, config):
+        self.input.buf = bl.array_tensor(input_shape, dtype=bl.cf32)
+        self.output.buf = bl.array_tensor(output_shape, dtype=bl.f32)
 
-    def __init__(self, input_shape, detector_config: bl.Detector.Config):
-        bl.Pipeline.__init__(self)
-        self.input = bl.cuda.cf32.ArrayTensor(input_shape)
-        _config = detector_config
-        _input = bl.Detector.Input(self.input)
-        self.detector = self.connect(_config, _input)
+        self.module.detector = bl.module(bl.detector, config, self.input.buf, out=bl.f32)
 
-    def run(self, input: bl.cpu.cf32,
-                  output: bl.cpu.f32):
-        self.copy(self.detector.input(), input)
-        self.compute()
-        self.copy(output, self.detector.output())
-        self.synchronize()
+    def transfer_in(self, buf):
+        self.copy(self.input.buf, buf)
+
+    def transfer_out(self, buf):
+        self.copy(self.output.buf, self.module.detector.get_output())
+        self.copy(buf, self.output.buf)
 
 
 if __name__ == "__main__":
-    NTIME = 8750
-    TFACT = 10
-    NCHANS = 192
-    OUTPOLS = 4
-    NBEAMS = 2
-    NPOLS = 2
+    number_of_beams = 2
+    number_of_channels = 192
+    number_of_samples = 8750
+    number_of_polarizations = 2
 
-    input_shape = (NBEAMS, NCHANS, NTIME, NPOLS)
-    output_shape = (NBEAMS, NCHANS, NTIME // TFACT, OUTPOLS)
+    integration_size = 10
+    output_polarizations = 4
+
+    input_shape = (number_of_beams, number_of_channels, number_of_samples, number_of_polarizations)
+    output_shape = (number_of_beams, number_of_channels, number_of_samples // integration_size, output_polarizations)
+
+    config = {
+        'integration_size': integration_size,
+        'number_of_output_polarizations': output_polarizations,
+    }
+
+    host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)
+    host_output = bl.array_tensor(output_shape, dtype=bl.f32, device=bl.cpu)
+
+    bl_input = host_input.as_numpy()
+    bl_output = host_output.as_numpy()
+
+    np.copyto(bl_input, np.random.random(size=input_shape) + 1j*np.random.random(size=input_shape))
 
     #
     # Blade Implementation
     #
 
-    detector_config = bl.Detector.Config(
-        integration_size = TFACT,
-        number_of_output_polarizations = OUTPOLS,
-        
-        block_size = 512
-    )
-
-    mod = Test(input_shape, detector_config)
-
-    bl_input_raw = bl.cpu.cf32.ArrayTensor(input_shape)
-    bl_output_raw = bl.cpu.f32.ArrayTensor(output_shape)
-
-    bl_input = bl_input_raw.asnumpy()
-    bl_output = bl_output_raw.asnumpy()
-    
-    np.copyto(bl_input, np.random.random(size=bl_input.shape) + 1j*np.random.random(size=bl_input.shape))
-
-    start = time.time()
-    mod.run(bl_input_raw, bl_output_raw)
-    print(f"Detection with Blade took {time.time()-start:.2f} s.")
+    pipeline = Pipeline(input_shape, output_shape, config)
+    pipeline(host_input, host_output)
 
     #
     # Python Implementation
@@ -63,22 +55,20 @@ if __name__ == "__main__":
 
     py_output = np.zeros(output_shape, dtype=np.float32)
     
-    start = time.time()
-    for ibeam in range(NBEAMS):
-        for ichan in range(NCHANS):
-            for isamp in range(NTIME//TFACT):
-                x = bl_input[ibeam, ichan, isamp*TFACT:isamp*TFACT+TFACT, 0] #just to make code more visible
-                y = bl_input[ibeam, ichan, isamp*TFACT:isamp*TFACT+TFACT, 1] #just to make code more visible
+    for ibeam in range(number_of_beams):
+        for ichan in range(number_of_channels):
+            for isamp in range(number_of_samples//integration_size):
+                x = bl_input[ibeam, ichan, isamp*integration_size:isamp*integration_size+integration_size, 0]
+                y = bl_input[ibeam, ichan, isamp*integration_size:isamp*integration_size+integration_size, 1]
 
-                auto_x = x*np.conj(x) # or: x.real*x.real + x.imag*x.imag... this will definitely be a real value, no .imag part
-                auto_y = y*np.conj(y) # or: y.real*y.real + y.imag*y.imag... this will definitely be a real value, no .imag part
-                cross  = x*np.conj(y) # or:
+                auto_x = x*np.conj(x)
+                auto_y = y*np.conj(y)
+                cross  = x*np.conj(y)
 
-                py_output[ibeam, ichan, isamp, 0] = np.sum(auto_x.real) #real is actually abs() too, because x*xT
-                py_output[ibeam, ichan, isamp, 1] = np.sum(auto_y.real) #real is actually abs() too, because y*yT
+                py_output[ibeam, ichan, isamp, 0] = np.sum(auto_x.real)
+                py_output[ibeam, ichan, isamp, 1] = np.sum(auto_y.real)
                 py_output[ibeam, ichan, isamp, 2] = np.sum(cross.real)
                 py_output[ibeam, ichan, isamp, 3] = np.sum(cross.imag)
-    print(f"Detection with Python took {time.time()-start:.2f} s.")
 
     #
     # Compare Results
