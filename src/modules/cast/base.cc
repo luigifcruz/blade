@@ -56,26 +56,37 @@ Result Cast<IT, OT>::process(const U64& currentStepCount, const Stream& stream) 
     return this->runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 
-template class BLADE_API Cast<CI8, CI8>;
-template class BLADE_API Cast<CF16, CF16>;
-template class BLADE_API Cast<CF32, CF32>;
+// I8 -> X
 template class BLADE_API Cast<I8, I8>;
-template class BLADE_API Cast<F16, F16>;
-template class BLADE_API Cast<F32, F32>;
+template class BLADE_API Cast<I8, F32>;
 
-template class BLADE_API Cast<CI8, CF32>;
-template class BLADE_API Cast<CI8, CF16>;
-template class BLADE_API Cast<CF16, F16>;
-template class BLADE_API Cast<CF16, F32>;
-template class BLADE_API Cast<CF16, CF32>;
-template class BLADE_API Cast<CF32, F16>;
-template class BLADE_API Cast<CF32, F32>;
-template class BLADE_API Cast<CF32, CF16>;
+// F16 -> X
+template class BLADE_API Cast<F16, F16>;
 template class BLADE_API Cast<F16, F32>;
 template class BLADE_API Cast<F16, CF32>;
 template class BLADE_API Cast<F16, CF16>;
+
+// F32 -> X
+template class BLADE_API Cast<F32, F32>;
 template class BLADE_API Cast<F32, F16>;
 template class BLADE_API Cast<F32, CF32>;
 template class BLADE_API Cast<F32, CF16>;
+
+// CI8 -> X
+template class BLADE_API Cast<CI8, CI8>;
+template class BLADE_API Cast<CI8, CF32>;
+template class BLADE_API Cast<CI8, CF16>;
+
+// CF32 -> X
+template class BLADE_API Cast<CF32, F16>;
+template class BLADE_API Cast<CF32, F32>;
+template class BLADE_API Cast<CF32, CF16>;
+template class BLADE_API Cast<CF32, CF32>;
+
+// CF16 -> X
+template class BLADE_API Cast<CF16, F16>;
+template class BLADE_API Cast<CF16, F32>;
+template class BLADE_API Cast<CF16, CF32>;
+template class BLADE_API Cast<CF16, CF16>;
 
 }  // namespace Blade::Modules
