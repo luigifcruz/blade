@@ -2,7 +2,29 @@ import importlib
 
 import blade._internal as bl
 
-def module(name, config, input, out=bl.cf32, telescope=bl.generic):
+    """
+    Dynamically loads a module extension implementation and returns an instance of it.
+
+    Args:
+        name (bl.constant): The name of the module to load.
+        config (Union[Tuple, Dict, int]): The configuration for the module.
+        input (Union[Tuple, Dict, Vector]): The input data for the module.
+        it (bl.constant, optional): The input data type (`bl.cf32, `bl.f32`, etc). Defaults to `bl.cf32`.
+        ot (bl.constant, optional): The output data type (`bl.cf32, `bl.f32`, etc). Defaults to `bl.cf32`.
+        telescope (bl.constant, optional): The telescope type (`bl.generic, `bl.ata`, `bl.vla`, etc). Defaults to `bl.generic`.
+
+    Returns:
+        An instance of the loaded module extension implementation.
+
+    Raises:
+        ValueError: If the module name, output data type, or input data type is not a constant type.
+        ModuleNotFoundError: If the specified module extension cannot be found.
+        AttributeError: If the module does not support the specified telescope, taint, or output data type.
+        ValueError: If the configuration or input data is not a Tuple, Dict, or Int.
+        ValueError: If the input data is not a Tuple, Dict, or Vector.
+        RuntimeError: If a new module is attempted to be connected after the pipeline is committed.
+    """
+
     # Validate input parameters.
     if isinstance(name, bl._Constant):
         _name = name.value
