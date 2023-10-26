@@ -2,6 +2,7 @@ import importlib
 
 import blade._internal as bl
 
+def module(name, config, input, it=bl.cf32, ot=bl.cf32, telescope=bl.generic):
     """
     Dynamically loads a module extension implementation and returns an instance of it.
 
@@ -29,26 +30,31 @@ import blade._internal as bl
     if isinstance(name, bl._Constant):
         _name = name.value
     else:
-        raise ValueError("Module name has to be a constant type (bl.beamformer, bl.phasor, etc).")
-
-    if isinstance(out, bl._Constant):
-        _out = out.value
+        raise ValueError("Module name has to be a constant type (`bl.beamformer`, `bl.phasor`, etc).")
+    
+    if isinstance(it, bl._Constant):
+        _in_type = it.value
     else:
-        raise ValueError("Module output data type has to be a constant type (bl.cf32, bl.f32, etc).")
+        raise ValueError("Module input data type has to be a constant type (`bl.cf32`, `bl.f32`, etc).")
+
+    if isinstance(ot, bl._Constant):
+        _out_type = ot.value
+    else:
+        raise ValueError("Module output data type has to be a constant type (`bl.cf32`, `bl.f32`, etc).")
 
     if isinstance(telescope, bl._Constant):
         _telescope = telescope.value
     else:
-        raise ValueError("Module telescope has to be a constant type (bl.generic, bl.ata, bl.vla, etc).")
+        raise ValueError("Module telescope has to be a constant type (`bl.generic`, `bl.ata`, `bl.vla`, etc).")
 
-    _tmp = _name.split('_')
+    _tmp = _name.split("_")
     _ext_name = _tmp[0]
     _ext_taint = _tmp[1] if len(_tmp) > 1 else None
     _pipeline = bl._Fetch()
 
     # Import module extension implementation.
     try:
-        _ext = importlib.import_module(f'blade._{_ext_name}_impl')
+        _ext = importlib.import_module(f"blade._{_ext_name}_impl")
     except ModuleNotFoundError:
         raise ModuleNotFoundError(f"Can't find specified module extension ({_ext_name}).")
 
@@ -72,16 +78,29 @@ import blade._internal as bl
         _caller = getattr(_caller, f"taint_{_ext_taint}")
     elif _ext_taint:
         raise AttributeError(f"The module '{_name}' doesn't support taints.")
+    
+    # Check if module supports input data type.
+    if any(s.startswith("in_") for s in dir(_caller)):
+        _in_list = [s.replace("in_", "") for s in dir(_caller) if not s.startswith("_")]
+        if _in_type not in _in_list:
+            raise AttributeError(f"The module '{_name}' only supports these input types: {', '.join(_in_list)}.")
+        _caller = getattr(_caller, f"in_{_in_type}")
 
     # Check if module supports output data type.
-    if any(s.startswith("type_") for s in dir(_caller)):
-        _type_list = [s.replace("type_", "") for s in dir(_caller) if not s.startswith("_")]
-        if _out not in _type_list:
-            raise AttributeError(f"The module '{_name}' only supports these output types: {', '.join(_type_list)}.")
-        _caller = getattr(_caller, f"type_{_out}")
+    if any(s.startswith("out_") for s in dir(_caller)):
+        _out_list = [s.replace("out_", "") for s in dir(_caller) if not s.startswith("_")]
+        if _out_type not in _out_list:
+            raise AttributeError(f"The module '{_name}' with input '{_in_type}' only supports these output types: {', '.join(_out_list)}.")
+        _caller = getattr(_caller, f"out_{_out_type}")
+
+    # Get module class.
+    if "mod" in dir(_caller):
+        _caller = getattr(_caller, "mod")
+    else:
+        raise RuntimeError(f"The module '{_name}' doesn't have a valid module handle.")
 
     # Automatically cast configuration to correct type.
-    _config_struct = getattr(_caller, 'config')
+    _config_struct = getattr(_caller, "config")
 
     if isinstance(config, tuple):
         _config_struct = _config_struct(*config)
@@ -90,21 +109,21 @@ import blade._internal as bl
     elif isinstance(config, int):
         _config_struct = _config_struct(config)
     else:
-        raise ValueError('Config should be a Tuple, Dict, or Int.')
+        raise ValueError("Config should be a Tuple, Dict, or Int.")
 
     # Automatically cast input to correct type.
-    _input_struct = getattr(_caller, 'input')
+    _input_struct = getattr(_caller, "input")
     _sanitized_input = bl._sanitize_duet(input)
 
     if isinstance(input, tuple):
         _input_struct = _input_struct(*_sanitized_input)
     elif isinstance(input, dict):
         _input_struct = _input_struct(**_sanitized_input)
-    elif ('blade._mem_impl.cuda' in input.__class__.__module__) or \
-         ('blade._mem_impl.cpu' in input.__class__.__module__):
+    elif ("blade._mem_impl.cuda" in input.__class__.__module__) or \
+         ("blade._mem_impl.cpu" in input.__class__.__module__):
         _input_struct = _input_struct(_sanitized_input)
     else:
-        raise ValueError('Input should be a Tuple, Dict, or Vector.')
+        raise ValueError("Input should be a Tuple, Dict, or Vector.")
 
     # Register module into current pipeline.
 
