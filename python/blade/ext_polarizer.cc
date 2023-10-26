@@ -8,10 +8,13 @@ using namespace nb::literals;
 using namespace Blade;
 
 template<typename IT, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
+void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     using Class = Modules::Polarizer<IT, OT>;
 
-    nb::class_<Class, Module> mod(m, name);
+    auto mm = m.def_submodule(in_name)
+               .def_submodule(out_name);
+
+    nb::class_<Class, Module> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const POL&,
@@ -41,6 +44,6 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_polarizer_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "type_cf32");
-    NB_SUBMODULE<CF16, CF16>(m, "type_cf16");
+    NB_SUBMODULE<CF32, CF32>(m, "in_cf32", "out_cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "in_cf16", "out_cf16");
 }

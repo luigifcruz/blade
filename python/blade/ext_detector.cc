@@ -8,10 +8,13 @@ using namespace nb::literals;
 using namespace Blade;
 
 template<typename IT, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
+void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     using Class = Modules::Detector<IT, OT>;
 
-    nb::class_<Class, Module> mod(m, name);
+    auto mm = m.def_submodule(in_name)
+               .def_submodule(out_name);
+
+    nb::class_<Class, Module> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&,
@@ -41,5 +44,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_detector_impl, m) {
-    NB_SUBMODULE<CF32, F32>(m, "type_f32");
+    NB_SUBMODULE<CF32, F32>(m, "in_cf32", "out_f32");
 }
