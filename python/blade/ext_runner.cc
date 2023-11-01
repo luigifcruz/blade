@@ -1,4 +1,5 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/function.h>
 
 #include "blade/base.hh"
 #include "blade/memory/custom.hh"
