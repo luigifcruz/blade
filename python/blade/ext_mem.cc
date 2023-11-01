@@ -94,10 +94,12 @@ void NB_SUBMODULE_MEMORY_DEVICE(auto& m, const auto& name) {
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, I8>(mm, "i8");
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, F16>(mm, "f16");
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, F32>(mm, "f32");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, F64>(mm, "f64");
 
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CI8>(mm, "ci8");
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF16>(mm, "cf16");
     NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF32>(mm, "cf32");
+    NB_SUBMODULE_MEMORY_DEVICE_TYPE<DeviceType, CF64>(mm, "cf64");
 }
 
 NB_MODULE(_mem_impl, m) {
