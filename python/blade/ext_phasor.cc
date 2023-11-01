@@ -1,4 +1,5 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
 
 #include "blade/base.hh"
 #include "blade/modules/base.hh"
@@ -7,13 +8,36 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace Blade;
 
-template<template<typename...> class BaseClass, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
-    using Class = BaseClass<OT>;
+template<template<typename...> class Base, 
+         template<typename...> class Generic, 
+         typename OT>
+void NB_SUBMODULE_TELESCOPE(auto& m, const auto& tel_name, const auto& out_name) {
+    using Class = Base<OT>;
+    using GenericClass = Generic<OT>;
 
-    nb::class_<Class, Module> mod(m, name);
+    auto mm = m.def_submodule(tel_name)
+               .def_submodule(out_name);
 
-    nb::class_<typename Class::Config>(mod, "config")
+    nb::class_<Class, GenericClass> mod(mm, "mod");
+
+    mod
+        .def(nb::init<const typename GenericClass::Config&,
+                      const typename GenericClass::Input&,
+                      const Stream&>(), "config"_a,
+                                        "input"_a,
+                                        "stream"_a);
+}
+
+template<template<typename...> class Generic, 
+         typename OT>
+void NB_SUBMODULE_GENERIC(auto& m, const auto& out_name) {
+    using GenericClass = Generic<OT>;
+
+    auto mm = m.def_submodule(out_name);
+
+    nb::class_<GenericClass, Module> mod(mm, "_generic_mod");
+
+    nb::class_<typename GenericClass::Config>(mod, "config")
         .def(nb::init<const U64&,
                       const U64&,
                       const U64&,
@@ -42,34 +66,37 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                                      "beam_coordinates"_a,
                                      "block_size"_a = 512);
 
-    nb::class_<typename Class::Input>(mod, "input")
+    nb::class_<typename GenericClass::Input>(mod, "input")
         .def(nb::init<const Tensor<Device::CPU, F64>&,
                       const Tensor<Device::CPU, F64>&>(), "block_julian_date"_a,
                                                           "block_dut"_a);
 
     mod
-        .def(nb::init<const typename Class::Config&,
-                      const typename Class::Input&,
-                      const Stream&>(), "config"_a,
-                                        "input"_a,
-                                        "stream"_a)
-        .def("process", [](Class& instance, const U64& counter) {
+        .def("process", [](GenericClass& instance, const U64& counter) {
             return instance.process(counter);
         })
-        .def("get_config", &Class::getConfig, nb::rv_policy::reference)
-        .def("get_delays", &Class::getOutputDelays, nb::rv_policy::reference)
-        .def("get_phasors", &Class::getOutputPhasors, nb::rv_policy::reference)
-        .def("__repr__", [](Class& obj){
+        .def("get_config", &GenericClass::getConfig, nb::rv_policy::reference)
+        .def("get_delays", &GenericClass::getOutputDelays, nb::rv_policy::reference)
+        .def("get_phasors", &GenericClass::getOutputPhasors, nb::rv_policy::reference)
+        .def("__repr__", [](GenericClass& obj){
             return fmt::format("Phasor()");
         });
 }
 
 NB_MODULE(_phasor_impl, m) {
+    // Generic classes.
+
+    NB_SUBMODULE_GENERIC<Modules::Phasor::Generic, CF32>(m, "out_cf32");
+    NB_SUBMODULE_GENERIC<Modules::Phasor::Generic, CF64>(m, "out_cf64");
+
+    // Telescope specific classes.
+
 #ifdef BLADE_MODULE_ATA_PHASOR
-    {
-        auto mm = m.def_submodule("tel_ata");
-        NB_SUBMODULE<Modules::Phasor::ATA, CF32>(m, "type_cf32");
-        NB_SUBMODULE<Modules::Phasor::ATA, CF64>(m, "type_cf64");
-    }
+    NB_SUBMODULE_TELESCOPE<Modules::Phasor::ATA, 
+                           Modules::Phasor::Generic, 
+                           CF32>(m, "tel_ata", "out_cf32");
+    NB_SUBMODULE_TELESCOPE<Modules::Phasor::ATA,
+                           Modules::Phasor::Generic, 
+                           CF64>(m, "tel_ata", "out_cf64");
 #endif
 }
