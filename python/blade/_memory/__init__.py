@@ -9,6 +9,9 @@ def _create_array(type, shape, dtype, device):
     _device = device.value if device != bl.unified else bl.cuda.value
     _unified = False if device != bl.unified else True
 
+    if isinstance(_shape, int):
+        _shape = (_shape,)
+
     _caller = _mem
 
     _caller = getattr(_caller, _device)
