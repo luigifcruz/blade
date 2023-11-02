@@ -31,24 +31,16 @@ if __name__ == "__main__":
         'enable_incoherent_beam_sqrt': True,
     }
 
-    # Generate test data with Python.
-    _a = np.random.uniform(-int(2**8/2), int(2**8/2), input_shape)
-    _b = np.random.uniform(-int(2**8/2), int(2**8/2), input_shape)
-    input = np.array(_a + _b * 1j).astype(np.complex64)
-
-    _a = np.zeros(phasor_shape, dtype=np.complex64)
-    phasors = np.random.random(size=_a.shape) + 1j*np.random.random(size=_a.shape)
-
-    output = np.zeros(output_shape, dtype=np.complex64)
-
-    # Import test data from Python to Blade.
     host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)
     host_phasors = bl.phasor_tensor(phasor_shape, dtype=bl.cf32, device=bl.cpu)
     host_output = bl.array_tensor(output_shape, dtype=bl.cf32, device=bl.cpu)
 
-    np.copyto(host_input.as_numpy(), input)
-    np.copyto(host_phasors.as_numpy(), phasors)
-    np.copyto(host_output.as_numpy(), output)
+    bl_input = host_input.as_numpy()
+    bl_phasors = host_phasors.as_numpy()
+    bl_output = host_output.as_numpy()
+
+    np.copyto(bl_input, np.random.random(size=input_shape)+1j*np.random.random(size=input_shape))
+    np.copyto(bl_phasors, np.random.random(size=phasor_shape)+1j*np.random.random(size=phasor_shape))
 
     #
     # Blade Implementation
@@ -61,20 +53,19 @@ if __name__ == "__main__":
     # Python Implementation
     #
 
-    for ibeam in range(phasors.shape[0]):
-        phased = input * phasors[ibeam][..., :]
-        output[ibeam] = phased.sum(axis=0)
-    phased = input * phasors[-1][..., :]
+    py_output = np.zeros(output_shape, dtype=np.complex64)
+
+    for ibeam in range(bl_phasors.shape[0]):
+        phased = bl_input * bl_phasors[ibeam][..., :]
+        py_output[ibeam] = phased.sum(axis=0)
+    phased = bl_input * bl_phasors[-1][..., :]
     phased = (phased.real * phased.real) + (phased.imag * phased.imag)
-    output[-1] = np.sqrt(phased.sum(axis=0))
+    py_output[-1] = np.sqrt(phased.sum(axis=0))
 
     #
     # Compare Results
     #
 
-    bl_out = host_output.as_numpy()
-    py_out = output
-
-    assert np.allclose(bl_out[:-1, :, :, :], py_out[:-1, :, :, :], rtol=0.01)
-    assert np.allclose(bl_out[-1, :, :, :], py_out[-1, :, :, :], atol=250)
+    assert np.allclose(bl_output[:-1, :, :, :], py_output[:-1, :, :, :], rtol=0.01)
+    assert np.allclose(bl_output[-1, :, :, :], py_output[-1, :, :, :], atol=250)
     print("Test successfully completed!")

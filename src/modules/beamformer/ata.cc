@@ -68,7 +68,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
 
     // Print configuration values.
     BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(), 
-                              this->getOutputBuffer().shape());
+                               this->getOutputBuffer().shape());
 }
 
 template class BLADE_API ATA<CF32, CF32>;
