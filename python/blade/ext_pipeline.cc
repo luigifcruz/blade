@@ -21,6 +21,7 @@ NB_MODULE(_pipeline_impl, m) {
         .def("stream", &Pipeline::stream, "index"_a = 0)
         .def("number_of_streams", &Pipeline::numberOfStreams, nb::rv_policy::reference)
         .def("add_module", &Pipeline::addModule, nb::rv_policy::reference)
+        .def("will_output", &Pipeline::willOutput, nb::rv_policy::reference)
         .def("__repr__", [](Pipeline& obj){
             return fmt::format("Pipeline(current_step_count={}, steps_per_cycle={}, lifetime_cycles={})",
                             obj.computeCurrentStepCount(), obj.computeStepsPerCycle(), obj.computeLifetimeCycles());

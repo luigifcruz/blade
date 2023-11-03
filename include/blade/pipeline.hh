@@ -38,6 +38,10 @@ class BLADE_API Pipeline {
         return _commited;
     }
 
+    constexpr bool willOutput() const {
+        return (computeStepsPerCycle() == (computeCurrentStepCount() + 1));
+    }
+
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,
                  const typename Block::Config& config,

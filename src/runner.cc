@@ -22,12 +22,11 @@ Result Runner::enqueue(const std::function<Result()>& inputCallback,
         return Result::RUNNER_QUEUE_FULL;
     }
 
-    const bool willOutput = (computeStepsPerCycle() == (computeCurrentStepCount() + 1));
-    BL_TRACE("[E] Index: {} | Id: {} | Will Output: {}", headIndex, id, willOutput ? "Y" : "N");
+    BL_TRACE("[E] Index: {} | Id: {} | Will Output: {}", headIndex, id, willOutput() ? "Y" : "N");
 
     BL_CHECK(inputCallback());
     BL_CHECK(compute(headIndex));
-    if (willOutput) {
+    if (willOutput()) {
         BL_CHECK(outputCallback());
     }
     queue.push({headIndex, id});

@@ -60,6 +60,9 @@ def runner(cls):
             if len(args) != total_expected_args:
                 raise ValueError(f"Expected {total_expected_args} arguments, but got {len(args)}.")
 
+            # Check if runner will output.
+            will_output = self.runner.will_output()
+
             # Feed the first N elements to the transfer_in function.
             transfer_in_args = args[:num_args_transfer_in]
             self.transfer_in(*transfer_in_args)
@@ -67,11 +70,14 @@ def runner(cls):
             # Register the computation.
             assert self.runner.compute(0) == bl.result.success
 
-            # Feed the remaining elements to the transfer_out function.
-            transfer_out_args = args[num_args_transfer_in:]
-            self.transfer_out(*transfer_out_args)
+            if will_output:
+                # Feed the remaining elements to the transfer_out function.
+                transfer_out_args = args[num_args_transfer_in:]
+                self.transfer_out(*transfer_out_args)
 
             # Synchronize default stream.
             assert self.runner.synchronize(0) == bl.result.success
+
+            return will_output
 
     return BasePipeline
