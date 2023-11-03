@@ -16,7 +16,7 @@ Duplicate<IT, OT>::Duplicate(const Config& config,
         : Module(duplicate_program),
           config(config),
           input(input) {
-    if constexpr (std::is_same<IT, OT>::value) {
+    if constexpr (!std::is_same<IT, OT>::value) {
         BL_FATAL("Input ({}) and output ({}) types aren't the same. Casting isn't supported by Duplicate yet.",
                  TypeInfo<IT>::name, TypeInfo<OT>::name);
         BL_CHECK_THROW(Result::ERROR);
