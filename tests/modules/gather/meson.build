@@ -4,7 +4,7 @@ if cfg_lst.get('BLADE_MODULE_GATHER', false)
         test(
             'test-modules-gather-ata',
             py,
-            args: [files('gather.py'), '2', '192', '8192', '2', '2', '64'],
+            args: [files('gather.py'), '2', '192', '8192', '2', '2', '16'],
             is_parallel: false,
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(py_build_path),
