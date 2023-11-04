@@ -14,13 +14,15 @@ template<typename T>
 class BLADE_API Duet {
  public:
     Duet(const U64& number)
-        : swapchain(2, T({number})) {
+        : swapchain({T({number}), 
+                     T({number})}) {
         _fixed = swapchain[0];
     }
 
     template<typename... Args>
     Duet(Args&&... args)
-        : swapchain(2, T(std::forward<Args>(args)...)) {
+        : swapchain({T(std::forward<Args>(args)...), 
+                     T(std::forward<Args>(args)...)}) {
         _fixed = swapchain[0];
     }
 
