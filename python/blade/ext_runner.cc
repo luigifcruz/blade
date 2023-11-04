@@ -62,9 +62,9 @@ NB_MODULE(_runner_impl, m) {
     auto mm =
         nb::class_<Runner, Pipeline>(m, "runner")
             .def(nb::init<>())
-            .def("enqueue", &Runner::enqueue, nb::rv_policy::reference, 
+            .def("enqueue", &Runner::enqueue, 
                  "inputCallback"_a, "outputCallback"_a, "id"_a = 0)
-            .def("dequeue", &Runner::dequeue, nb::rv_policy::reference,
+            .def("dequeue", &Runner::dequeue,
                  "callback"_a)
             .def("__repr__", [](Runner& obj){
                 return fmt::format("Runner()");

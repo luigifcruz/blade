@@ -28,9 +28,9 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                                         "input"_a,
                                         "stream"_a)
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
-        .def("get_total_shape", &Class::getTotalShape, nb::rv_policy::reference)
-        .def("get_reference_position", &Class::getReferencePosition, nb::rv_policy::reference)
-        .def("get_boresight_coordinates", &Class::getBoresightCoordinates, nb::rv_policy::reference)
+        .def("get_total_shape", &Class::getTotalShape)
+        .def("get_reference_position", &Class::getReferencePosition)
+        .def("get_boresight_coordinates", &Class::getBoresightCoordinates)
         .def("get_antenna_positions", &Class::getAntennaPositions, nb::rv_policy::reference)
         .def("get_beam_coordinates", &Class::getBeamCoordinates, nb::rv_policy::reference)
         .def("get_antenna_calibrations", &Class::getAntennaCalibrations, nb::rv_policy::reference)

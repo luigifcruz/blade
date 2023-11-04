@@ -41,13 +41,13 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
         .def("get_step_output_buffer", &Class::getStepOutputBuffer, nb::rv_policy::reference)
         .def("get_step_output_julian_date", &Class::getStepOutputJulianDate, nb::rv_policy::reference)
         .def("get_step_output_dut", &Class::getStepOutputDut1, nb::rv_policy::reference)
-        .def("get_total_output_buffer_shape", &Class::getTotalOutputBufferShape, nb::rv_policy::reference)
-        .def("get_step_output_buffer_shape", &Class::getStepOutputBufferShape, nb::rv_policy::reference)
-        .def("get_number_of_steps", &Class::getNumberOfSteps, nb::rv_policy::reference)
-        .def("get_total_bandwidth", &Class::getTotalBandwidth, nb::rv_policy::reference)
-        .def("get_channel_bandwidth", &Class::getChannelBandwidth, nb::rv_policy::reference)
-        .def("get_channel_start_index", &Class::getChannelStartIndex, nb::rv_policy::reference)
-        .def("get_observation_frequency", &Class::getObservationFrequency, nb::rv_policy::reference)
+        .def("get_total_output_buffer_shape", &Class::getTotalOutputBufferShape)
+        .def("get_step_output_buffer_shape", &Class::getStepOutputBufferShape)
+        .def("get_number_of_steps", &Class::getNumberOfSteps)
+        .def("get_total_bandwidth", &Class::getTotalBandwidth)
+        .def("get_channel_bandwidth", &Class::getChannelBandwidth)
+        .def("get_channel_start_index", &Class::getChannelStartIndex)
+        .def("get_observation_frequency", &Class::getObservationFrequency)
         .def("__repr__", [](Class& obj){
             return fmt::format("GuppiReader()");
         });

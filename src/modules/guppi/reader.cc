@@ -102,22 +102,22 @@ Reader<OT>::Reader(const Config& config,
 }
 
 template<typename OT>
-const F64 Reader<OT>::getChannelBandwidth() const {
+F64 Reader<OT>::getChannelBandwidth() const {
     return getBlockMeta(&gr_iterate)->chan_bw_mhz * 1e6;
 }
 
 template<typename OT>
-const F64 Reader<OT>::getTotalBandwidth() const {
+F64 Reader<OT>::getTotalBandwidth() const {
     return getChannelBandwidth() * getStepOutputBufferShape().numberOfFrequencyChannels();
 }
 
 template<typename OT>
-const U64 Reader<OT>::getChannelStartIndex() const {
+U64 Reader<OT>::getChannelStartIndex() const {
     return getBlockMeta(&gr_iterate)->chan_start;
 }
 
 template<typename OT>
-const F64 Reader<OT>::getObservationFrequency() const {
+F64 Reader<OT>::getObservationFrequency() const {
     return getBlockMeta(&gr_iterate)->obs_freq_mhz * 1e6;
 }
 
