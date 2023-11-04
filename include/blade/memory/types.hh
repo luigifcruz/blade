@@ -14,6 +14,26 @@
 #include "blade/memory/device/ops.hh"
 #endif
 
+#ifndef BL_MEM_ALIGN
+#define BL_MEM_ALIGN(n) alignas(n)
+#endif
+
+#ifndef BL_PHYSICAL_CONSTANT_C
+#define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
+#endif
+
+#ifndef BL_PHYSICAL_CONSTANT_PI
+#define BL_PHYSICAL_CONSTANT_PI M_PI
+#endif
+
+#ifndef BL_DEG_TO_RAD 
+#define BL_DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
+#endif
+
+#ifndef BL_RAD_TO_DEG
+#define BL_RAD_TO_DEG(RAD) (RAD * 180.0 / M_PI) 
+#endif
+
 namespace Blade {
 
 struct Stream {
@@ -95,22 +115,6 @@ template<>
 struct BLADE_API DeviceInfo<Device::CPU> {
     inline static const char* name = "CPU";
 };
-
-#ifndef BL_PHYSICAL_CONSTANT_C
-#define BL_PHYSICAL_CONSTANT_C (double)299792458.0  // Speed of Light (m/s)
-#endif
-
-#ifndef BL_PHYSICAL_CONSTANT_PI
-#define BL_PHYSICAL_CONSTANT_PI M_PI
-#endif
-
-#ifndef BL_DEG_TO_RAD 
-#define BL_DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
-#endif
-
-#ifndef BL_RAD_TO_DEG
-#define BL_RAD_TO_DEG(RAD) (RAD * 180.0 / M_PI) 
-#endif
 
 template <typename T = void>
 struct BLADE_API TypeInfo;
