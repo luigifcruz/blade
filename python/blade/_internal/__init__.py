@@ -67,7 +67,6 @@ _create_constants(_modules_lst)
 #
 
 # Function will automatically convert duets into the underlying buffer.
-# TODO: Might be able to eliminate this function
 def _sanitize_duet(object, index = 0):
     def sanitize_item(item):
         if item.__class__.__name__.endswith("_duet"):
