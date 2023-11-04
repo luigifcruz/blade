@@ -3,12 +3,16 @@
 using namespace Blade;
 
 // TODO: Several improvements can be made to this kernel.
-template<typename T, U64 Axis, U64 Offset>
+template<typename T>
 __global__ void accumulate(const ArrayTensor<Device::CUDA, T> input,
-                                 ArrayTensor<Device::CUDA, T> output) {
+                                 ArrayTensor<Device::CUDA, T> output,
+                           const U64 axis,
+                           const U64 offset) {
     const U64 tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (tid < input.size()) {
-        output[output.shape().offsetToOffset<Axis, Offset>(tid)] = input[tid];
+        const auto inputShape = input.shape().offsetToShape(tid);
+        const U64 oid = output.shape().shapeToOffset(inputShape, axis, offset);
+        output[oid] = input[tid];
     }
 }

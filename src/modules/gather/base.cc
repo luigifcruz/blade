@@ -17,7 +17,7 @@ Gather<IT, OT>::Gather(const Config& config,
           config(config),
           input(input),
           computeRatio(config.multiplier) {
-    if constexpr (std::is_same<IT, OT>::value) {
+    if constexpr (!std::is_same<IT, OT>::value) {
         BL_FATAL("Input ({}) and output ({}) types aren't the same. Casting isn't supported by Gather yet.",
                  TypeInfo<IT>::name, TypeInfo<OT>::name);
         BL_CHECK_THROW(Result::ERROR);
@@ -29,13 +29,21 @@ Gather<IT, OT>::Gather(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    U64 copySize = 0;
-    for (U64 i = config.axis; i < input.buf.shape().size(); ++i) {
-        copySize += input.buf.shape()[i];
+    widthSize = 1;
+    for (U64 i = config.axis; i < input.buf.shape().dimensions(); i++) {
+        widthSize *= input.buf.shape()[i];
     }
-    BL_DEBUG("Copy size of {} elements.", copySize);
+    widthByteSize = widthSize * sizeof(IT);
+    BL_DEBUG("Width size of {} elements.", widthSize);
+    BL_DEBUG("Step copy size of {} bytes.", widthByteSize);
 
-    if (copySize < config.copySizeThreshold) {
+    heightSize = 1;
+    for (U64 i = 0; i < config.axis; i++) {
+        heightSize *= input.buf.shape()[i];
+    }
+    BL_DEBUG("Height size of {} elements.", heightSize);
+
+    if (widthSize < config.copySizeThreshold) {
         strategy = Strategy::Kernel;
     } else {
         strategy = Strategy::Copy;
@@ -45,11 +53,12 @@ Gather<IT, OT>::Gather(const Config& config,
     output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
+
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
     BL_INFO("Axis: {}", config.axis);
-    BL_INFO("Multiplier: {}", config.multiplier);
+    BL_INFO("Multiplier: {}", computeRatio);
     BL_INFO("Strategy: {}", (strategy == Strategy::Kernel) ? "KERNEL" : "COPY");
 }
 
@@ -59,11 +68,7 @@ Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream
         cache
             .get_kernel(
                 Template("accumulate")
-                    .instantiate(
-                        TypeInfo<IT>::name,
-                        config.axis,
-                        currentStepCount
-                    )
+                    .instantiate(TypeInfo<IT>::name)
             )
             ->configure(
                 PadGridSize(input.buf.size(), config.blockSize),
@@ -71,27 +76,27 @@ Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream
                 0,
                 stream
             )
-            ->launch(input.buf, output.buf);
+            ->launch(
+                input.buf,
+                output.buf,
+                config.axis,
+                currentStepCount * input.buf.shape()[config.axis]
+            );
     }
 
     if (strategy == Strategy::Copy) {
-        const auto& inputHeight = output.buf.shape().numberOfAspects() *
-                                  output.buf.shape().numberOfFrequencyChannels();
-        const auto& inputWidth = input.buf.size_bytes() / inputHeight;
-        const auto& outputPitch = inputWidth * config.multiplier;
-
         BL_CHECK(
             Copy2D(
                 output.buf,
-                outputPitch,
-                0 * inputWidth,
+                widthByteSize * computeRatio,
+                widthByteSize * currentStepCount,
 
                 input.buf,
-                inputWidth,
+                widthByteSize,
                 0,
 
-                inputWidth,
-                inputHeight,
+                widthByteSize,
+                heightSize,
                 stream
             )
         );

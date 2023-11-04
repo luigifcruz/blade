@@ -8,10 +8,13 @@ using namespace nb::literals;
 using namespace Blade;
 
 template<typename IT, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
+void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     using Class = Modules::Gather<IT, OT>;
 
-    nb::class_<Class, Module> mod(m, name);
+    auto mm = m.def_submodule(in_name)
+               .def_submodule(out_name);
+
+    nb::class_<Class, Module> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&,
@@ -19,7 +22,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
                       const U64&,
                       const U64&>(), "axis"_a,
                                      "multiplier"_a,
-                                     "copy_size_threshold"_a,
+                                     "copy_size_threshold"_a = 512,
                                      "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
@@ -43,7 +46,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_gather_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "type_cf32");
-    NB_SUBMODULE<CF16, CF16>(m, "type_cf16");
-    NB_SUBMODULE<CI8, CI8>(m, "type_ci8");
+    NB_SUBMODULE<CF32, CF32>(m, "in_cf32", "out_cf32");
+    NB_SUBMODULE<CF16, CF16>(m, "in_cf16", "out_cf16");
+    NB_SUBMODULE<CI8, CI8>(m, "in_ci8", "out_ci8");
 }

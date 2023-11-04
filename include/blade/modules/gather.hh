@@ -76,6 +76,9 @@ class BLADE_API Gather : public Module {
     Output output;
 
     U64 computeRatio;
+    U64 widthSize;
+    U64 widthByteSize;
+    U64 heightSize;
     Strategy strategy;
 
     // Expected Shape
