@@ -76,7 +76,7 @@ struct Vector {
         }
     }
 
-    Vector(const Vector& other)
+    __host__ __device__ Vector(const Vector& other)
              : _shape(other._shape),
                _data(other._data),
                _refs(other._refs),
@@ -86,7 +86,7 @@ struct Vector {
         increaseRefCount();
     }
 
-    Vector(Vector&& other)
+    __host__ __device__ Vector(Vector&& other)
              : _shape(),
                _data(nullptr),
                _refs(nullptr),
@@ -99,7 +99,7 @@ struct Vector {
         std::swap(_unified, other._unified);
     }
 
-    Vector& operator=(const Vector& other) {
+    __host__ __device__ Vector& operator=(const Vector& other) {
         BL_TRACE("Vector copied to existing.");
 
         decreaseRefCount();
@@ -112,7 +112,7 @@ struct Vector {
         return *this;
     }
 
-    Vector& operator=(Vector&& other) {
+    __host__ __device__ Vector& operator=(Vector&& other) {
         BL_TRACE("Vector moved to existing.");
 
         decreaseRefCount();
@@ -125,86 +125,86 @@ struct Vector {
         return *this;
     }
 
-    ~Vector() {
+    __host__ __device__ ~Vector() {
         decreaseRefCount();
     }
 
-    constexpr DataType* data() const noexcept {
+    __host__ __device__ constexpr DataType* data() const noexcept {
         return _data;
     }
 
-    constexpr U64 refs() const noexcept {
+    __host__ __device__ constexpr U64 refs() const noexcept {
         if (!_refs) {
             return 0;
         }
         return *_refs;
     }
 
-    constexpr const char* type() const noexcept {
+    __host__ __device__ constexpr const char* type() const noexcept {
         return TypeInfo<DataType>::name;
     }
 
-    constexpr const char* device() const noexcept {
+    __host__ __device__ constexpr const char* device() const noexcept {
         return DeviceInfo<DeviceId>::name;
     }
 
-    constexpr U64 hash() const noexcept {
+    __host__ __device__ constexpr U64 hash() const noexcept {
         return std::hash<void*>{}(_data);
     }
 
-    constexpr U64 size() const noexcept {
+    __host__ __device__ constexpr U64 size() const noexcept {
         return _shape.size();
     }
 
-    constexpr U64 size_bytes() const noexcept {
+    __host__ __device__ constexpr U64 size_bytes() const noexcept {
         return size() * sizeof(DataType);
     }
 
-    constexpr DataType& operator[](const typename Shape::Type& shape) {
+    __host__ __device__ constexpr DataType& operator[](const typename Shape::Type& shape) {
         return _data[_shape.shapeToOffset(shape)];
     }
 
-    constexpr const DataType& operator[](const typename Shape::Type& shape) const {
+    __host__ __device__ constexpr const DataType& operator[](const typename Shape::Type& shape) const {
         return _data[_shape.shapeToOffset(shape)];
     }
 
-    constexpr DataType& operator[](U64 idx) {
+    __host__ __device__ constexpr DataType& operator[](const U64& idx) {
         return _data[idx];
     }
 
-    constexpr const DataType& operator[](U64 idx) const {
+    __host__ __device__ constexpr const DataType& operator[](const U64& idx) const {
         return _data[idx];
     }
 
-    [[nodiscard]] constexpr bool empty() const noexcept {
+    __host__ __device__ [[nodiscard]] constexpr bool empty() const noexcept {
         return (_data == nullptr);
     }
 
-    constexpr auto begin() {
+    __host__ __device__ constexpr auto begin() {
         return _data;
     }
 
-    constexpr auto end() {
+    __host__ __device__ constexpr auto end() {
         return _data + size();
     }
 
-    constexpr auto begin() const {
+    __host__ __device__ constexpr auto begin() const {
         return _data;
     }
 
-    constexpr auto end() const {
+    __host__ __device__ constexpr auto end() const {
         return _data + size();
     }
 
-    constexpr const Shape& shape() const {
+    __host__ __device__ constexpr const Shape& shape() const {
         return _shape;
     }
 
-    constexpr bool unified() const {
+    __host__ __device__ constexpr bool unified() const {
             return _unified;
     }
 
-    Result reshape(const Shape& shape) {
+    __host__ __device__ Result reshape(const Shape& shape) {
         if (shape.size() != _shape.size()) {
             return Result::ERROR;
         }
@@ -219,7 +219,7 @@ struct Vector {
     U64* _refs;
     bool _unified;
 
-    void decreaseRefCount() {
+    __host__ __device__ void decreaseRefCount() {
         if (!_refs) {
             return;
         }
@@ -264,7 +264,7 @@ struct Vector {
         }
     }
 
-    void increaseRefCount() {
+    __host__ __device__ void increaseRefCount() {
         if (!_refs) {
             return;
         }
@@ -273,7 +273,7 @@ struct Vector {
         *_refs += 1;
     }
 
-    void reset() {
+    __host__ __device__ void reset() {
         _data = nullptr;
         _refs = nullptr;
         _shape = Shape();
