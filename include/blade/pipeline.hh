@@ -18,7 +18,7 @@ class BLADE_API Pipeline {
     Pipeline();
     virtual ~Pipeline();
 
-    constexpr const bool computeComplete() const {
+    constexpr bool computeComplete() const {
         return (_computeStepCount + 1) == _computeStepsPerCycle;
     }
 

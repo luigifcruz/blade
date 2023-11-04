@@ -53,7 +53,7 @@ class BLADE_API Reader : public Module {
     // Miscellaneous
 
     // TODO: This is the data size, right?
-    const ArrayShape getTotalShape() const {
+    ArrayShape getTotalShape() const {
         return ArrayShape({
             this->bfr5.dim_info.nbeams * this->bfr5.dim_info.nants,
             this->bfr5.dim_info.nchan,
@@ -62,7 +62,7 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    constexpr const LLA getReferencePosition() const {
+    constexpr LLA getReferencePosition() const {
         return {
             .LON = this->bfr5.tel_info.longitude,
             .LAT = this->bfr5.tel_info.latitude,
@@ -70,7 +70,7 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    constexpr const RA_DEC getBoresightCoordinates() const {
+    constexpr RA_DEC getBoresightCoordinates() const {
         return {
             .RA = this->bfr5.obs_info.phase_center_ra,
             .DEC = this->bfr5.obs_info.phase_center_dec

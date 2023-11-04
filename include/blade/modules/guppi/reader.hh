@@ -57,7 +57,7 @@ class BLADE_API Reader : public Module {
         return this->output.stepDut1;
     }
 
-    const ArrayShape getTotalOutputBufferShape() const {
+    ArrayShape getTotalOutputBufferShape() const {
         return ArrayShape({
             this->getDatashape()->n_aspect,
             this->getDatashape()->n_aspectchan,
@@ -66,7 +66,7 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    const ArrayShape getStepOutputBufferShape() const {
+    ArrayShape getStepOutputBufferShape() const {
         return ArrayShape({
             this->config.stepNumberOfAspects,
             this->config.stepNumberOfFrequencyChannels,
@@ -75,7 +75,7 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    const U64 getNumberOfSteps() {
+    U64 getNumberOfSteps() {
         return this->getTotalOutputBufferShape().size() / 
                this->getStepOutputBufferShape().size();
     }
@@ -93,10 +93,10 @@ class BLADE_API Reader : public Module {
 
     // Miscellaneous 
 
-    const F64 getTotalBandwidth() const;
-    const F64 getChannelBandwidth() const;
-    const U64 getChannelStartIndex() const;
-    const F64 getObservationFrequency() const;
+    F64 getTotalBandwidth() const;
+    F64 getChannelBandwidth() const;
+    U64 getChannelStartIndex() const;
+    F64 getObservationFrequency() const;
 
  private:
     // Variables 

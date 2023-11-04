@@ -63,7 +63,7 @@ struct Shape {
         return _shape;
     }
 
-    __host__ __device__ constexpr const U64& operator[](U64 idx) const {
+    __host__ __device__ constexpr const U64& operator[](const U64& idx) const {
         return _shape[idx];
     }
 
