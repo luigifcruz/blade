@@ -43,13 +43,14 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
             })
             .def("shape", [](ClassType& obj) {
                 return obj.shape();
-            });
+            }, nb::rv_policy::reference);
 
     nb::class_<Duet<ClassType>>(m, fmt::format("{}_duet", name).c_str())
         .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
         .def("set", &Duet<ClassType>::set)
-        .def("__getitem__", &Duet<ClassType>::operator[])
-        .def("__call__", &Duet<ClassType>::operator ClassType&);
+        .def("at", &Duet<ClassType>::at, nb::rv_policy::reference)
+        .def("__getitem__", &Duet<ClassType>::operator[], nb::rv_policy::reference)
+        .def("__call__", &Duet<ClassType>::operator ClassType&, nb::rv_policy::reference);
 
     // TODO: Add support for all formats.
     if constexpr (!std::is_same<F16, DataType>::value &&
@@ -107,16 +108,16 @@ NB_MODULE(_mem_impl, m) {
         .def(nb::init<const typename ArrayShape::Type&>(), "shape"_a)
         .def("number_of_aspects", [](ArrayShape& obj){
             return obj.numberOfAspects();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_frequency_channels", [](ArrayShape& obj){
             return obj.numberOfFrequencyChannels();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_time_samples", [](ArrayShape& obj){
             return obj.numberOfTimeSamples();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_polarizations", [](ArrayShape& obj){
             return obj.numberOfPolarizations();
-        })
+        }, nb::rv_policy::reference)
         .def("__getitem__", [](ArrayShape& obj, const U64& index){
             return obj[index];
         }, nb::rv_policy::reference)
@@ -132,19 +133,19 @@ NB_MODULE(_mem_impl, m) {
         .def(nb::init<const typename PhasorShape::Type&>(), "shape"_a)
         .def("number_of_beams", [](PhasorShape& obj){
             return obj.numberOfBeams();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_antennas", [](PhasorShape& obj){
             return obj.numberOfAntennas();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_frequency_channels", [](PhasorShape& obj){
             return obj.numberOfFrequencyChannels();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_time_samples", [](PhasorShape& obj){
             return obj.numberOfTimeSamples();
-        })
+        }, nb::rv_policy::reference)
         .def("number_of_polarizations", [](PhasorShape& obj){
             return obj.numberOfPolarizations();
-        })
+        }, nb::rv_policy::reference)
         .def("__getitem__", [](PhasorShape& obj, const U64& index){
             return obj[index];
         }, nb::rv_policy::reference)
