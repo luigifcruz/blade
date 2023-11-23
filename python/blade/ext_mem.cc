@@ -2,6 +2,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/complex.h>
+#include <nanobind/stl/string.h>
 
 #include "blade/base.hh"
 #include "blade/memory/custom.hh"

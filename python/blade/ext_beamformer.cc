@@ -1,4 +1,5 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 #include "blade/base.hh"
 #include "blade/modules/base.hh"
