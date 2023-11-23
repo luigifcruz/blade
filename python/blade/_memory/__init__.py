@@ -48,6 +48,20 @@ def phasor_tensor(shape, dtype=bl.f32, device=bl.cuda):
     """
     return _create_array("phasor_tensor", shape, dtype, device)
 
+def delay_tensor(shape, dtype=bl.f32, device=bl.cuda):
+    """
+    Creates a delay tensor with the specified shape, data type, and device.
+
+    Args:
+        shape (tuple): The shape of the tensor.
+        dtype (bl.constant, optional): The data type of the tensor (`bl.f32`, `bl.i8`, etc). Defaults to `bl.f32`.
+        device (bl.constant, optional): The device to create the tensor on (`bl.cuda`, `bl.cpu`, or `bl.unified`). Defaults to `bl.cuda`.
+
+    Returns:
+        array: The created delay tensor.
+    """
+    return _create_array("delay_tensor", shape, dtype, device)
+
 def tensor(shape, dtype=bl.f32, device=bl.cuda):
     """
     Creates a new tensor with the specified shape, data type, and device.

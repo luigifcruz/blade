@@ -86,6 +86,7 @@ void NB_SUBMODULE_MEMORY_DEVICE_TYPE(auto& m, const auto& name) {
 
     NB_SUBMODULE_VECTOR<DeviceType, DataType, ArrayShape>(mm, "array_tensor");
     NB_SUBMODULE_VECTOR<DeviceType, DataType, PhasorShape>(mm, "phasor_tensor");
+    NB_SUBMODULE_VECTOR<DeviceType, DataType, DelayShape>(mm, "delay_tensor");
     NB_SUBMODULE_VECTOR<DeviceType, DataType, VectorShape>(mm, "tensor");
 }
 
@@ -170,6 +171,25 @@ NB_MODULE(_mem_impl, m) {
             return obj.size();
         });
     nb::implicitly_convertible<typename VectorShape::Type, VectorShape>();
+
+    nb::class_<DelayShape>(m, "delay_shape")
+        .def(nb::init<const typename DelayShape::Type&>(), "shape"_a)
+        .def_prop_ro("number_of_beams", [](DelayShape& obj){
+            return obj.numberOfBeams();
+        }, nb::rv_policy::reference)
+        .def_prop_ro("number_of_antennas", [](DelayShape& obj){
+            return obj.numberOfAntennas();
+        }, nb::rv_policy::reference)
+        .def("__getitem__", [](DelayShape& obj, const U64& index){
+            return obj[index];
+        }, nb::rv_policy::reference)
+        .def("__repr__", [](DelayShape& obj){
+            return fmt::format("DelayShape(shape={})", obj);
+        })
+        .def("__len__", [](DelayShape& obj){
+            return obj.size();
+        });
+    nb::implicitly_convertible<typename DelayShape::Type, DelayShape>();
 
     NB_SUBMODULE_MEMORY_DEVICE<Device::CPU>(m, "cpu");
     NB_SUBMODULE_MEMORY_DEVICE<Device::CUDA>(m, "cuda");
