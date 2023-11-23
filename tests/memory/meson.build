@@ -1,6 +1,4 @@
 subdir('copy')
 subdir('custom')
 subdir('device')
-subdir('helper')
-subdir('shape')
 subdir('vector')

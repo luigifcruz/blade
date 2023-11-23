@@ -34,15 +34,18 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
             })
             .def("__repr__", [](ClassType& obj){
                 return fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
-                                obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
+                                   obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
             })
-            .def("unified", [](ClassType& obj){
+            .def_prop_ro("device", [](ClassType& obj){
+                return obj.device();
+            })
+            .def_prop_ro("unified", [](ClassType& obj){
                 return obj.unified();
             })
-            .def("hash", [](ClassType& obj){
+            .def_prop_ro("hash", [](ClassType& obj){
                 return obj.hash();
             })
-            .def("shape", [](ClassType& obj) {
+            .def_prop_ro("shape", [](ClassType& obj) {
                 return obj.shape();
             }, nb::rv_policy::reference);
 
@@ -108,16 +111,16 @@ void NB_SUBMODULE_MEMORY_DEVICE(auto& m, const auto& name) {
 NB_MODULE(_mem_impl, m) {
     nb::class_<ArrayShape>(m, "array_shape")
         .def(nb::init<const typename ArrayShape::Type&>(), "shape"_a)
-        .def("number_of_aspects", [](ArrayShape& obj){
+        .def_prop_ro("number_of_aspects", [](ArrayShape& obj){
             return obj.numberOfAspects();
         }, nb::rv_policy::reference)
-        .def("number_of_frequency_channels", [](ArrayShape& obj){
+        .def_prop_ro("number_of_frequency_channels", [](ArrayShape& obj){
             return obj.numberOfFrequencyChannels();
         }, nb::rv_policy::reference)
-        .def("number_of_time_samples", [](ArrayShape& obj){
+        .def_prop_ro("number_of_time_samples", [](ArrayShape& obj){
             return obj.numberOfTimeSamples();
         }, nb::rv_policy::reference)
-        .def("number_of_polarizations", [](ArrayShape& obj){
+        .def_prop_ro("number_of_polarizations", [](ArrayShape& obj){
             return obj.numberOfPolarizations();
         }, nb::rv_policy::reference)
         .def("__getitem__", [](ArrayShape& obj, const U64& index){
@@ -133,19 +136,19 @@ NB_MODULE(_mem_impl, m) {
 
     nb::class_<PhasorShape>(m, "phasor_shape")
         .def(nb::init<const typename PhasorShape::Type&>(), "shape"_a)
-        .def("number_of_beams", [](PhasorShape& obj){
+        .def_prop_ro("number_of_beams", [](PhasorShape& obj){
             return obj.numberOfBeams();
         }, nb::rv_policy::reference)
-        .def("number_of_antennas", [](PhasorShape& obj){
+        .def_prop_ro("number_of_antennas", [](PhasorShape& obj){
             return obj.numberOfAntennas();
         }, nb::rv_policy::reference)
-        .def("number_of_frequency_channels", [](PhasorShape& obj){
+        .def_prop_ro("number_of_frequency_channels", [](PhasorShape& obj){
             return obj.numberOfFrequencyChannels();
         }, nb::rv_policy::reference)
-        .def("number_of_time_samples", [](PhasorShape& obj){
+        .def_prop_ro("number_of_time_samples", [](PhasorShape& obj){
             return obj.numberOfTimeSamples();
         }, nb::rv_policy::reference)
-        .def("number_of_polarizations", [](PhasorShape& obj){
+        .def_prop_ro("number_of_polarizations", [](PhasorShape& obj){
             return obj.numberOfPolarizations();
         }, nb::rv_policy::reference)
         .def("__getitem__", [](PhasorShape& obj, const U64& index){
