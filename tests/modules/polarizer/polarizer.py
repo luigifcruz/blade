@@ -45,7 +45,7 @@ if __name__ == "__main__":
     #
 
     py_input = bl_input.flatten().view(np.complex64)
-    py_output = np.zeros(len(host_input.shape()), dtype=np.complex64)
+    py_output = np.zeros(len(host_input.shape), dtype=np.complex64)
 
     py_output[0::2] = py_input[0::2] + 1j * py_input[1::2]
     py_output[1::2] = py_input[0::2] - 1j * py_input[1::2]
