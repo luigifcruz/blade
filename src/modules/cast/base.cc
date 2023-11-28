@@ -36,6 +36,12 @@ Cast<IT, OT>::Cast(const Config& config,
         )
     );
 
+    if ((TypeInfo<IT>::is_complex and !TypeInfo<OT>::is_complex) or 
+        (!TypeInfo<IT>::is_complex and TypeInfo<OT>::is_complex)) {
+        BL_FATAL("Cannot cast between complex and non-complex types.");
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
     if constexpr (std::is_same<IT, OT>::value) {
         BL_DEBUG("Bypassing cast because input and output types are the same.");
         BL_CHECK_THROW(Link(output.buf, input.buf));
