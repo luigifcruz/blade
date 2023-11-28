@@ -10,10 +10,13 @@ using namespace nb::literals;
 using namespace Blade;
 
 template<typename IT, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
+void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     using Class = Bundles::Generic::ModeH<IT, OT>;
 
-    nb::class_<Class, Bundle> mod(m, name);
+    auto mm = m.def_submodule(in_name)
+               .def_submodule(out_name);
+
+    nb::class_<Class, Bundle> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const ArrayShape&,
@@ -62,5 +65,5 @@ void NB_SUBMODULE(auto& m, const auto& name) {
 }
 
 NB_MODULE(_modeh_impl, m) {
-    NB_SUBMODULE<CF32, CF32>(m, "type_cf32");
+    NB_SUBMODULE<CF32, F32>(m, "in_cf32", "out_f32");
 }
