@@ -19,9 +19,9 @@ class Pipeline:
 
 
 if __name__ == "__main__":
-    in_shape = (2, 192, 2, 2)
-    int_shape = (2, 192*2, 1, 2)
-    out_shape = (2, 192*2, 1, 1)
+    in_shape = (2, 192, 8192, 2)
+    int_shape = (2, 192*8192, 1, 2)
+    out_shape = (2, 192*8192, 1, 1)
 
     config = {
         'input_shape': in_shape,
@@ -58,11 +58,9 @@ if __name__ == "__main__":
     fft_result = np.fft.fftshift(np.fft.fft(bl_input_buffer, axis=2), axes=2)
     fft_result = fft_result.reshape(int_shape)
 
-    py_input = fft_result.flatten()
-    polarized = np.zeros(len(host_input_buffer.shape), dtype=np.complex64)
-    polarized[0::2] = py_input[0::2] + 1j * py_input[1::2]
-    polarized[1::2] = py_input[0::2] - 1j * py_input[1::2]
-    polarized = polarized.reshape(int_shape)
+    polarized = np.zeros(int_shape, dtype=np.complex64)
+    polarized[..., 0] = fft_result[..., 0] + 1j * fft_result[..., 1]
+    polarized[..., 1] = fft_result[..., 0] - 1j * fft_result[..., 1]
 
     for ibeam in range(int_shape[0]):
         for ichan in range(int_shape[1]):

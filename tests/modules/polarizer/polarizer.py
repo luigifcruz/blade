@@ -44,18 +44,23 @@ if __name__ == "__main__":
     # Python Implementation
     #
 
-    py_input = bl_input.flatten().view(np.complex64)
-    py_output = np.zeros(len(host_input.shape), dtype=np.complex64)
-
-    py_output[0::2] = py_input[0::2] + 1j * py_input[1::2]
-    py_output[1::2] = py_input[0::2] - 1j * py_input[1::2]
-
-    py_output = py_output.view(np.complex64)
-    py_output = py_output.reshape(shape)
+    py_output = np.zeros(shape, dtype=np.complex64)
+    py_output[..., 0] = bl_input[..., 0] + 1j * bl_input[..., 1]
+    py_output[..., 1] = bl_input[..., 0] - 1j * bl_input[..., 1]
 
     #
     # Compare Results
     #
+
+    print("Top 10 differences:")
+    diff = np.abs(bl_output - py_output)
+    diff = diff.flatten()
+    diff.sort()
+    print(diff[-10:])
+    print("")
+    print("Average difference: ", np.mean(diff))
+    print("Maximum difference: ", np.max(diff))
+    print("Minimum difference: ", np.min(diff))
 
     assert np.allclose(bl_output, py_output, rtol=0.1)
     print("Test successfully completed!")
