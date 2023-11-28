@@ -344,13 +344,17 @@ if __name__ == "__main__":
                 obsnchan, channelBandwidthHz)
         py_output_phasors[0, i, :, 0, 0] *= get_fringe_rate(delay1, rfFrequencyHz,
                 totalBandwidthHz)
+        py_output_phasors[0, i, :, 0, 1] = py_output_phasors[0, i, :, 0, 0]
         py_output_phasors[0, i, :, 0, 0] *= bl_calibration[i, :, 0, 0]
+        py_output_phasors[0, i, :, 0, 1] *= bl_calibration[i, :, 0, 1]
 
         py_output_phasors[1, i, :, 0, 0] = create_delay_phasors(delay2, frequencyStartIndex,
                 obsnchan, channelBandwidthHz)
         py_output_phasors[1, i, :, 0, 0] *= get_fringe_rate(delay2, rfFrequencyHz,
                 totalBandwidthHz)
+        py_output_phasors[1, i, :, 0, 1] = py_output_phasors[1, i, :, 0, 0]
         py_output_phasors[1, i, :, 0, 0] *= bl_calibration[i, :, 0, 0]
+        py_output_phasors[1, i, :, 0, 1] *= bl_calibration[i, :, 0, 1]
 
     #
     # Compare Results
@@ -366,8 +370,5 @@ if __name__ == "__main__":
     print("Maximum difference: ", np.max(diff))
     print("Minimum difference: ", np.min(diff))
 
-    # TODO: Investigate why sometimes the difference is so large.
-    #       Probably related to astropy's ITRS and SkyCoord (?)
-
-    assert np.allclose(bl_output_phasors[:, :, :, 0, 0], py_output_phasors[:, :, :, 0, 0], rtol=0.5, atol=3.5)
+    assert np.allclose(bl_output_phasors, py_output_phasors, rtol=0.5, atol=0.5)
     print("Test successfully completed!")
