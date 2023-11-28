@@ -10,6 +10,7 @@ __global__ void permutation(const ArrayTensor<Device::CUDA, T> input,
     const U64 tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (tid < input.size()) {
+        ArrayShape::Type permutedCoords = {};
         ArrayShape::Type originalCoords = input.shape().offsetToShape(tid);
         for (U64 dim = 0; dim < permutationIndex.dimensions(); dim++) {
             permutedCoords[dim] = originalCoords[permutationIndex[dim]];

@@ -16,10 +16,25 @@ Permutation<IT, OT>::Permutation(const Config& config,
         : Module(permutation_program),
           config(config),
           input(input) {
-    if constexpr (std::is_same<IT, OT>::value) {
+    if constexpr (!std::is_same<IT, OT>::value) {
         BL_FATAL("Input ({}) and output ({}) types aren't the same. Casting isn't supported by Permutation yet.",
                  TypeInfo<IT>::name, TypeInfo<OT>::name);
         BL_CHECK_THROW(Result::ERROR);
+    }
+
+    if (config.indexes.dimensions() != input.buf.shape().dimensions()) {
+        BL_FATAL("Selected input rank ({}) doesn't match input shape rank ({}).",
+                 config.indexes.size(), input.buf.shape().dimensions());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
+    std::unordered_set<U64> indexesSet;
+    for (U64 i = 0; i < config.indexes.dimensions(); i++) {
+        if (indexesSet.find(config.indexes[i]) != indexesSet.end()) {
+            BL_FATAL("Repeated index {} in permutation.", config.indexes[i]);
+            BL_CHECK_THROW(Result::ERROR);
+        }
+        indexesSet.insert(config.indexes[i]);
     }
 
     // Configure kernels.
@@ -31,12 +46,12 @@ Permutation<IT, OT>::Permutation(const Config& config,
             "permutation",
             // Kernel grid & block size.
             PadGridSize(
-                getInputBuffer().size() * TypeInfo<IT>::cudaSize,
+                getInputBuffer().size(),
                 config.blockSize
             ),
             config.blockSize,
             // Kernel templates.
-            TypeInfo<typename TypeInfo<IT>::subtype>::cudaName
+            TypeInfo<IT>::cudaName
         )
     );
 
@@ -52,7 +67,7 @@ Permutation<IT, OT>::Permutation(const Config& config,
 
 template<typename IT, typename OT>
 Result Permutation<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
-    return this->runKernel("main", stream, input.buf.data(), output.buf.data(), getInputBuffer().shape());
+    return this->runKernel("main", stream, input.buf, output.buf, config.indexes);
 }
 
 template class BLADE_API Permutation<CI8, CI8>;
