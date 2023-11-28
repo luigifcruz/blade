@@ -15,5 +15,4 @@ if __name__ == "__main__":
     bl.copy(host_input, host_output)
     assert np.allclose(host_input.as_numpy(), host_output.as_numpy(), rtol=0.1)
 
-
     print("Test successfully completed!")

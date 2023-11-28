@@ -1,5 +1,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include "blade/base.hh"
 #include "blade/bundles/base.hh"
@@ -10,10 +11,13 @@ using namespace nb::literals;
 using namespace Blade;
 
 template<template<typename...> class BaseClass, typename IT, typename OT>
-void NB_SUBMODULE(auto& m, const auto& name) {
+void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     using Class = BaseClass<IT, OT>;
 
-    nb::class_<Class, Bundle> mod(m, name);
+    auto mm = m.def_submodule(in_name)
+               .def_submodule(out_name);
+
+    nb::class_<Class, Bundle> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const ArrayShape&,
@@ -107,7 +111,10 @@ NB_MODULE(_modeb_impl, m) {
 #ifdef BLADE_MODULE_ATA_BEAMFORMER
     {
         auto mm = m.def_submodule("tel_ata");
-        NB_SUBMODULE<Bundles::ATA::ModeB, CI8, CF32>(mm, "type_cf32");
+        NB_SUBMODULE<Bundles::ATA::ModeB, CI8, CF32>(mm, "in_ci8", "out_cf32");
+        NB_SUBMODULE<Bundles::ATA::ModeB, CF32, CF32>(mm, "in_cf32", "out_cf32");
+        NB_SUBMODULE<Bundles::ATA::ModeB, CI8, F32>(mm, "in_ci8", "out_f32");
+        NB_SUBMODULE<Bundles::ATA::ModeB, CF32, F32>(mm, "in_cf32", "out_f32");
     }
 #endif
 #ifdef BLADE_MODULE_MEERKAT_BEAMFORMER
