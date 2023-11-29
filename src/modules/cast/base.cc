@@ -59,6 +59,9 @@ Cast<IT, OT>::Cast(const Config& config,
 
 template<typename IT, typename OT>
 Result Cast<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
+    if constexpr (std::is_same<IT, OT>::value) {
+        return Result::SUCCESS;
+    }
     return this->runKernel("main", stream, input.buf.data(), output.buf.data());
 }
 
