@@ -91,7 +91,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
 
 template<typename IT, typename OT>
 Channelizer<IT, OT>::~Channelizer() {
-if (config.rate != 1) {
+    if (config.rate != 1) {
         cufftDestroy(plan);
     }
 }
