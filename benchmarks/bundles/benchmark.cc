@@ -12,8 +12,7 @@
 #endif
 
 #if defined(BLADE_BUNDLE_GENERIC_MODE_H)
-// TODO: Add Mode-H benchmark.
-//#include "./generic/mode-h/generic.hh"
+#include "./generic/mode-h/generic.hh"
 #endif
 
 BENCHMARK_MAIN();
