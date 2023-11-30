@@ -4,7 +4,9 @@
 #include "../../../helper.hh"
 
 using namespace Blade;
+
 namespace bm = benchmark;
+namespace chr = std::chrono;
 
 static void BM_BundleATAModeB(benchmark::State& state) {
     const uint64_t count = 256;
@@ -17,19 +19,15 @@ static void BM_BundleATAModeB(benchmark::State& state) {
     BL_ENABLE_PRINT();
 
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = chr::high_resolution_clock::now();
 
         BL_DISABLE_PRINT();
-        if (bench->run(count) != Result::SUCCESS) {
-            BL_CHECK_THROW(Result::ERROR);
-        }
+        BL_CHECK_THROW(bench->run(count));
         BL_ENABLE_PRINT();
 
-        auto end = std::chrono::high_resolution_clock::now();
+        auto end = chr::high_resolution_clock::now();
 
-        auto elapsed_seconds =
-          std::chrono::duration_cast<std::chrono::duration<double>>(
-            end - start);
+        auto elapsed_seconds = chr::duration_cast<chr::duration<double>>(end - start);
 
         state.SetIterationTime(elapsed_seconds.count() / count);
     }

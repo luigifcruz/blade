@@ -35,9 +35,7 @@ class Benchmark : public Runner {
     }
 
     Result transferOut(ArrayTensor<Device::CPU, OT>& cpuOutputBuffer) {
-        // Copy pipeline output buffer to a staging buffer on the device.
         BL_CHECK(this->copy(outputBuffer, modeB->getOutputBuffer()));
-        // Copy data from the staging buffer to the host buffer.
         BL_CHECK(this->copy(cpuOutputBuffer, outputBuffer));
         return Result::SUCCESS;
     }
@@ -132,18 +130,19 @@ class BenchmarkRunner {
 
         while (dequeueCount < (totalIterations - 1)) {
             const auto& swap = enqueueCount % 2;
+
             auto inputCallback = [&](){
                 return pipeline->transferIn(inputDut1[swap], inputJulianDate[swap], inputBuffer[swap]);
             };
             auto outputCallback = [&](){
                 return pipeline->transferOut(outputBuffer[swap]);
             };
-            pipeline->enqueue(inputCallback, outputCallback, enqueueCount++);
 
-            pipeline->dequeue([&](const U64& id){
+            BL_CHECK(pipeline->enqueue(inputCallback, outputCallback, enqueueCount++));
+            BL_CHECK(pipeline->dequeue([&](const U64& id){
                 dequeueCount++;
                 return Result::SUCCESS;
-            });
+            }));
         }
 
         return Result::SUCCESS;
