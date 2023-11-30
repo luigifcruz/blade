@@ -116,6 +116,7 @@ enum class Result : uint8_t {
 #define BL_CHECK_THROW(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
+        printf("Function %s (%s@%d) throwed!\n", __func__, __FILE__, __LINE__); \
         throw val; \
     } \
 }
