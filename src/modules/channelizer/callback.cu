@@ -43,7 +43,7 @@ __device__ cufftComplex CB_ConvertInputC(void *dataIn, size_t offset, void *call
 
 __managed__ __device__ cufftCallbackLoadC d_loadCallbackPtr = CB_ConvertInputC; 
 
-Callback::Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations) {
+Callback::Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations) : callerInfo(nullptr) {
     void** callerInfoPtr = nullptr;
     void** callbackPointer = nullptr;
 
@@ -55,7 +55,7 @@ Callback::Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations) {
         BL_CUDA_CHECK_THROW(cudaMallocManaged(&callerInfo, sizeof(uint64_t)), [&]{
             BL_FATAL("Can't allocate CUDA memory: {}", err);
         });
-        this->callerInfo[0] = static_cast<uint64_t>(numberOfPolarizations) * 2;
+        *callerInfo = static_cast<uint64_t>(numberOfPolarizations) * 2;
 
         callerInfoPtr = (void**)&callerInfo;
         callbackPointer = (void**)&d_loadCallbackPtr;

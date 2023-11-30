@@ -13,12 +13,12 @@ namespace Internal {
 
 class Callback {
  public:
-   Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations);
-   ~Callback();
+    Callback(cufftHandle& plan, const uint64_t& numberOfPolarizations);
+    ~Callback();
 
  private:
-   cufftCallbackLoadC h_loadCallbackPtr;
-   uint64_t* callerInfo;
+    cufftCallbackLoadC h_loadCallbackPtr;
+    uint64_t* callerInfo;
 };
 
 }  // namespace Internal
