@@ -20,6 +20,14 @@ Pipeline::Pipeline()
 }
 
 void Pipeline::addModule(const std::shared_ptr<Module>& module) {
+    cudaError_t val;
+    if ((val = cudaPeekAtLastError()) != cudaSuccess) {
+        const char* err = cudaGetErrorString(val);
+        BL_FATAL("Error while creating module '{}' in position '{}': '{}'", 
+                module->name(), _modules.size(), err);
+        std::exit(1);
+    }
+
     if ((module->getTaint() & Taint::CHRONOUS) == Taint::CHRONOUS) {
         const auto& localRatio = module->getComputeRatio();
         if (localRatio > 1) {
@@ -31,12 +39,29 @@ void Pipeline::addModule(const std::shared_ptr<Module>& module) {
 }
 
 Pipeline::~Pipeline() {
+    BL_DEBUG("Destroying pipeline after {} lifetime compute cycles.", _computeLifetimeCycles);
+
     for (U64 i = 0; i < _streams.size(); i++) {
         synchronize(i);
         cudaStreamDestroy(_streams[i]);
     }
+
+    U64 pos = 0;
+    for (auto& module : _modules) {
+        const std::string moduleName = module->name();
+
+        module.reset();
+
+        cudaError_t val;
+        if ((val = cudaPeekAtLastError()) != cudaSuccess) {
+            const char* err = cudaGetErrorString(val);
+            BL_FATAL("Error while destroying module '{}' in position '{}': '{}'", moduleName, pos, err);
+            std::exit(1);
+        }
+        pos += 1;
+    }
+    
     _computeStepRatios.clear();
-    BL_DEBUG("Destroying pipeline after {} lifetime compute cycles.", _computeLifetimeCycles);
 }
 
 Result Pipeline::synchronize(const U64& index) {
