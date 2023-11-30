@@ -8,11 +8,11 @@ namespace bm = benchmark;
 
 static void BM_BundleATAModeB(benchmark::State& state) {
     const uint64_t count = 256;
-    std::shared_ptr<ATA::ModeB::BenchmarkRunner<CI8, CF32>> bench;
+    std::shared_ptr<ATA::ModeB::BenchmarkRunner<CI8, F32>> bench;
 
     BL_DISABLE_PRINT();
     Blade::InitAndProfile([&](){
-        bench = std::make_shared<ATA::ModeB::BenchmarkRunner<CI8, CF32>>();
+        bench = std::make_shared<ATA::ModeB::BenchmarkRunner<CI8, F32>>();
     }, state);
     BL_ENABLE_PRINT();
 
