@@ -37,6 +37,8 @@ Permutation<IT, OT>::Permutation(const Config& config,
         indexesSet.insert(config.indexes[i]);
     }
 
+    // TODO: Add bypass for identity permutation.
+
     // Configure kernels.
     BL_CHECK_THROW(
         this->createKernel(
