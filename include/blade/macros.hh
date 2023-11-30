@@ -29,14 +29,22 @@ inline constexpr Taint operator&(Taint lhs, Taint rhs) {
 }
 
 enum class Result : uint8_t {
+    // Successful operation.
+
     SUCCESS = 0,
+
+    // Hard errors.
+
     ERROR = 1,
     CUDA_ERROR,
     ASSERTION_ERROR,
-    RUNNER_QUEUE_FULL,
-    RUNNER_QUEUE_EMPTY,
-    RUNNER_QUEUE_NONE_AVAILABLE,
-    PIPELINE_EXHAUSTED,
+
+    // Soft errors.
+
+    RUNNER_QUEUE_FULL              = 0 | (1 << 4),
+    RUNNER_QUEUE_EMPTY             = 1 | (1 << 4),
+    RUNNER_QUEUE_NONE_AVAILABLE    = 2 | (1 << 4),
+    PIPELINE_EXHAUSTED             = 3 | (1 << 4),
 };
 
 }  // namespace Blade 
@@ -107,7 +115,9 @@ enum class Result : uint8_t {
 #define BL_CHECK(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
-        return val; \
+        if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
+            return val; \
+        } \
     } \
 }
 #endif
@@ -116,8 +126,10 @@ enum class Result : uint8_t {
 #define BL_CHECK_THROW(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
-        printf("Function %s (%s@%d) throwed!\n", __func__, __FILE__, __LINE__); \
-        throw val; \
+        if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
+            printf("Function %s (%s@%d) throwed!\n", __func__, __FILE__, __LINE__); \
+            throw val; \
+        } \
     } \
 }
 #endif
