@@ -14,7 +14,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
           config(config),
           input(input),
           post_block(config.blockSize) {
-// Check configuration values.
+    // Check configuration values.
     if ((getInputBuffer().shape().numberOfTimeSamples() % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                  "by the channelizer rate ({}).",
@@ -102,7 +102,7 @@ Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& s
         return Result::SUCCESS;
     }
 
-cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+    cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
     cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
 
     cufftSetStream(plan, stream);
