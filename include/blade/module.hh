@@ -30,6 +30,8 @@ class Module {
         return 1;
     }
 
+    virtual std::string name() const = 0;
+
     virtual constexpr Result process(const U64& currentStepNumber, const Stream& stream = {}) {
         return Result::SUCCESS;
     }

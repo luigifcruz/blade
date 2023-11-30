@@ -46,6 +46,10 @@ class BLADE_API Cast : public Module {
                Taint::PRODUCER;
     }
 
+    std::string name() const {
+        return "Cast";
+    }
+
     // Constructor & Processing
 
     explicit Cast(const Config& config, const Input& input, const Stream& stream = {});

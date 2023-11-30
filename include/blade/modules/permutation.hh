@@ -50,6 +50,10 @@ class BLADE_API Permutation : public Module {
                Taint::PRODUCER;
     }
 
+    std::string name() const {
+        return "Permutation";
+    }
+
     // Constructor & Processing
 
     explicit Permutation(const Config& config, const Input& input, const Stream& stream = {});

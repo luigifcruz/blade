@@ -45,6 +45,10 @@ class BLADE_API Reader : public Module {
         return Taint::NONE; 
     }
 
+    std::string name() const {
+        return "BFR5 Reader";
+    }
+
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input,

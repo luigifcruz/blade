@@ -58,6 +58,10 @@ class BLADE_API Gather : public Module {
         return computeRatio;
     }
 
+    std::string name() const {
+        return "Gather";
+    }
+
     // Constructor & Processing
 
     explicit Gather(const Config& config, const Input& input, const Stream& stream = {});

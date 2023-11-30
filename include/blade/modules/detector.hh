@@ -51,6 +51,10 @@ class BLADE_API Detector : public Module {
                Taint::PRODUCER;
     }
 
+    std::string name() const {
+        return "Detector";
+    }
+
     // Constructor & Processing
 
     explicit Detector(const Config& config, const Input& input, const Stream& stream = {});

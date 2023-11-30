@@ -47,6 +47,10 @@ class BLADE_API Polarizer : public Module {
         return Taint::MODIFIER;
     }
 
+    std::string name() const {
+        return "Polarizer";
+    }
+
     // Constructor & Processing
 
     explicit Polarizer(const Config& config, const Input& input, const Stream& stream = {});

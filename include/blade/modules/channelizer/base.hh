@@ -53,6 +53,10 @@ class BLADE_API Channelizer : public Module {
                Taint::MODIFIER;
     }
 
+    std::string name() const {
+        return "Channelizer";
+    }
+
     // Constructor & Processing
 
     explicit Channelizer(const Config& config, const Input& input, const Stream& stream = {});

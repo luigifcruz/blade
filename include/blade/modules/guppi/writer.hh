@@ -52,6 +52,10 @@ class BLADE_API Writer : public Module {
         return Taint::CONSUMER; 
     }
 
+    std::string name() const {
+        return "Guppi Writer";
+    }
+
     // Constructor & Processing
 
     explicit Writer(const Config& config, const Input& input, const Stream& stream = {});

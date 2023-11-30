@@ -56,6 +56,10 @@ class BLADE_API Generic : public Module {
                Taint::PRODUCER;
     }
 
+    std::string name() const {
+        return "Beamformer";
+    }
+
     // Constructor & Processing 
 
     explicit Generic(const Config& config, const Input& input, const Stream& stream = {});

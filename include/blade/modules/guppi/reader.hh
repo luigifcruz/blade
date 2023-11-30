@@ -86,6 +86,10 @@ class BLADE_API Reader : public Module {
         return Taint::PRODUCER; 
     }
 
+    std::string name() const {
+        return "Guppi Reader";
+    }
+
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input, const Stream& stream = {});

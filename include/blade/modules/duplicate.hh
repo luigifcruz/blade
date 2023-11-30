@@ -46,6 +46,10 @@ class BLADE_API Duplicate : public Module {
                Taint::PRODUCER;
     }
 
+    std::string name() const {
+        return "Duplicate";
+    }
+
     // Constructor & Processing
 
     explicit Duplicate(const Config& config, const Input& input, const Stream& stream = {});
