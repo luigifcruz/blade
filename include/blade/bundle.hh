@@ -20,14 +20,6 @@ class BLADE_API Bundle {
         return modules;
     }
 
-    Result process(const U64& currentStepNumber, const Stream& stream = {}) {
-        for (auto& module : modules) {
-            BL_CHECK(module->process(currentStepNumber, stream));
-        }
-
-        return Result::SUCCESS;
-    }
-
  protected:
     template<typename Block>
     void connect(std::shared_ptr<Block>& module,

@@ -94,9 +94,6 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                       const Stream&>(), "config"_a,
                                         "input"_a,
                                         "stream"_a)
-        .def("process", [](Class& instance, const U64& counter) {
-            return instance.process(counter);
-        })
         .def("get_config", &Class::getConfig, nb::rv_policy::reference)
         .def("get_input_julian_date", &Class::getInputJulianDate, nb::rv_policy::reference)
         .def("get_input_buffer", &Class::getInputBuffer, nb::rv_policy::reference)
