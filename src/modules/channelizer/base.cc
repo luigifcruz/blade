@@ -14,7 +14,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
           config(config),
           input(input),
           post_block(config.blockSize) {
-    // Check configuration values.
+// Check configuration values.
     if ((getInputBuffer().shape().numberOfTimeSamples() % config.rate) != 0) {
         BL_FATAL("The number of time samples ({}) should be divisable "
                  "by the channelizer rate ({}).",
@@ -70,12 +70,20 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     int batch = (getInputBuffer().size() / getInputBuffer().shape().numberOfPolarizations()) / config.rate;
 
     // Create cuFFT plan.
-    cufftCreate(&plan);
-    cufftPlanMany(&plan, rank, n,
-                  inembed, istride, idist,
-                  onembed, ostride, odist,
-                  CUFFT_C2C, batch);
-    cufftSetStream(plan, stream);
+    BL_CUFFT_CHECK_THROW(cufftCreate(&plan), [&](){
+        BL_FATAL("Failed to create cuFFT instance.");
+    });
+
+    BL_CUFFT_CHECK_THROW(cufftPlanMany(&plan, rank, n,
+                                       inembed, istride, idist,
+                                       onembed, ostride, odist,
+                                       CUFFT_C2C, batch), [&](){
+        BL_FATAL("Failed to create cuFFT plan.");
+    });
+
+    BL_CUFFT_CHECK_THROW(cufftSetStream(plan, stream), [&](){
+        BL_FATAL("Failed to set cuFFT stream.");
+    });
 
     // Install callbacks.
     callback = std::make_unique<Internal::Callback>(plan, input.buf.shape().numberOfPolarizations());
@@ -83,7 +91,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
 
 template<typename IT, typename OT>
 Channelizer<IT, OT>::~Channelizer() {
-    if (config.rate != 1) {
+if (config.rate != 1) {
         cufftDestroy(plan);
     }
 }
@@ -94,7 +102,7 @@ Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& s
         return Result::SUCCESS;
     }
 
-    cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
+cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
     cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
 
     cufftSetStream(plan, stream);
