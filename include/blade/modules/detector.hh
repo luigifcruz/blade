@@ -8,6 +8,7 @@
 
 namespace Blade::Modules {
 
+// TODO: Add support for stepped integration.
 template<typename IT, typename OT>
 class BLADE_API Detector : public Module {
  public:

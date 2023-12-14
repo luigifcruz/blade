@@ -29,6 +29,11 @@ Gather<IT, OT>::Gather(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    if (config.multiplier <= 0) {
+        BL_FATAL("Multiplier ({}) should be more than zero.", config.multiplier);
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
     widthSize = 1;
     for (U64 i = config.axis; i < input.buf.shape().dimensions(); i++) {
         widthSize *= input.buf.shape()[i];
