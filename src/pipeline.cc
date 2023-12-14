@@ -93,6 +93,8 @@ Result Pipeline::compute(const U64& index) {
         _commited = true;
     }
 
+    // TODO: Validate local step count.
+
     U64 localStepCount = 0;
     U64 localRatioIndex = 0;
     U64 localStepOffset = 1;
@@ -112,7 +114,7 @@ Result Pipeline::compute(const U64& index) {
         }
 
         if (module->getComputeRatio() > 1) {
-            if ((localStepCount + 1) == _computeStepRatios[localRatioIndex]) {
+            if (localStepCount == _computeStepRatios[localRatioIndex]) {
                 localStepOffset += localStepCount;
                 localRatioIndex += 1;
             } else {
