@@ -47,6 +47,7 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
 }
 
 NB_MODULE(_gather_impl, m) {
+    NB_SUBMODULE<F32, F32>(m, "in_f64", "out_f64");
     NB_SUBMODULE<CF32, CF32>(m, "in_cf32", "out_cf32");
     NB_SUBMODULE<CF16, CF16>(m, "in_cf16", "out_cf16");
     NB_SUBMODULE<CI8, CI8>(m, "in_ci8", "out_ci8");

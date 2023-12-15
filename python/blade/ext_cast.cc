@@ -52,6 +52,7 @@ NB_MODULE(_cast_impl, m) {
     NB_SUBMODULE< F16,  F16>(m, "in_f16", "out_f16");
 
     // F32 -> X
+    NB_SUBMODULE< F32,  I32>(m, "in_f32", "out_i32");
     NB_SUBMODULE< F32,  F16>(m, "in_f32", "out_f16");
     NB_SUBMODULE< F32, CF32>(m, "in_f32", "out_cf32");
     NB_SUBMODULE< F32, CF16>(m, "in_f32", "out_cf16");

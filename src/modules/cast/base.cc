@@ -76,6 +76,7 @@ template class BLADE_API Cast<F16, CF32>;
 template class BLADE_API Cast<F16, CF16>;
 
 // F32 -> X
+template class BLADE_API Cast<F32, I32>;
 template class BLADE_API Cast<F32, F32>;
 template class BLADE_API Cast<F32, F16>;
 template class BLADE_API Cast<F32, CF32>;

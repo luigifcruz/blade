@@ -113,5 +113,6 @@ Result Gather<IT, OT>::process(const U64& currentStepCount, const Stream& stream
 template class BLADE_API Gather<CI8, CI8>;
 template class BLADE_API Gather<CF16, CF16>;
 template class BLADE_API Gather<CF32, CF32>;
+template class BLADE_API Gather<F32, F32>;
 
 }  // namespace Blade::Modules
