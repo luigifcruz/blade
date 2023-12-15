@@ -64,20 +64,25 @@ class BenchmarkRunner {
     Result run(const U64& totalIterations) {
         U64 dequeueCount = 0;
         U64 enqueueCount = 0;
+        U64 iterations = 0;
 
-        while (dequeueCount < (totalIterations - 1)) {
-            const auto& swap = enqueueCount % 2;
-
+        while (iterations < totalIterations) {
             auto inputCallback = [&](){
-                return pipeline->transferIn(inputBuffer[swap]);
+                const U64 i = enqueueCount++ % 2;
+                return pipeline->transferIn(inputBuffer[i]);
             };
             auto outputCallback = [&](){
-                return pipeline->transferOut(outputBuffer[swap]);
+                const U64 i = dequeueCount++ % 2;
+                return pipeline->transferOut(outputBuffer[i]);
             };
-            
-            BL_CHECK(pipeline->enqueue(inputCallback, outputCallback, enqueueCount++));
-            BL_CHECK(pipeline->dequeue([&](const U64& id){
-                dequeueCount++;
+            BL_CHECK(pipeline->enqueue(inputCallback, outputCallback, enqueueCount, dequeueCount));
+
+            BL_CHECK(pipeline->dequeue([&](const U64& inputId, 
+                                           const U64& outputId,
+                                           const bool& didOutput){
+                if (didOutput) {
+                    iterations++;
+                }
                 return Result::SUCCESS;
             }));
         }

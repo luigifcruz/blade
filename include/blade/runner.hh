@@ -16,10 +16,15 @@ class BLADE_API Runner : public Pipeline {
     Runner();
     ~Runner();
 
+    typedef std::function<Result(const U64& inputId,
+                                 const U64& outputId,
+                                 const bool& didOutput)> DequeueCallback;
+
     Result enqueue(const std::function<Result()>& inputCallback,
                    const std::function<Result()>& outputCallback,
-                   const U64& id = 0);
-    Result dequeue(const std::function<Result(const U64& id)>& callback);
+                   U64 inputId,
+                   U64 outputId);
+    Result dequeue(const DequeueCallback& callback);
 
     template<typename DT, typename ST>
     Result copy(DT& dst, const ST& src) {
@@ -43,7 +48,7 @@ class BLADE_API Runner : public Pipeline {
 
  private:
     U64 headIndex;
-    std::queue<std::tuple<U64, U64>> queue;
+    std::queue<std::tuple<U64, U64, U64, bool>> queue;
 };
 
 }  // namespace Blade

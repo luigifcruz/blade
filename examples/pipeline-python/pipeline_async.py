@@ -39,28 +39,30 @@ host_output = bl.array_tensor(shape, dtype=bl.cf32, device=bl.cpu)
 # Initialize enqueue and dequeue counters
 enqueue_count = [0]
 dequeue_count = [0]
+iterations = [0]
 
 # Loop until 8 items have been dequeued
-while dequeue_count[0] < 8:
+while iterations[0] < 8:
     # Define the input callback function
     def input_callback():
+        enqueue_count[0] += 1
         pipeline.transfer_in(host_input)
         return bl.result.success
 
     # Define the output callback function
     def output_callback():
-        print(f"Enqueuing {enqueue_count[0]}")
+        dequeue_count[0] += 1
         pipeline.transfer_out(host_output)
         return bl.result.success
 
     # Enqueue the pipeline with the input and output callbacks and the current enqueue count
-    pipeline.enqueue(input_callback, output_callback, enqueue_count[0])
-    enqueue_count[0] += 1
+    pipeline.enqueue(input_callback, output_callback, enqueue_count[0], dequeue_count[0])
 
     # Define the dequeue callback function
-    def callback(id):
-        print(f"Dequeuing {id}")
-        dequeue_count[0] += 1
+    def callback(input_id, output_id, did_output):
+        print(f"[D] Input ID: {input_id}, Output ID: {output_id}, Did Output: {did_output}")
+        if did_output:
+            iterations[0] += 1
         return bl.result.success
 
     # Dequeue the pipeline with the callback function
