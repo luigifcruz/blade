@@ -29,8 +29,6 @@ foreach jit_file: jit_lst
     jitify_gen = custom_target(
         output: '@BASENAME@.jit.hh',
         input: jit_file,
-        install: true,
-        install_dir: get_option('includedir') + '/blade/kernels',
         command: jitify_command_opts,
     )
 

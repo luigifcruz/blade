@@ -10,6 +10,7 @@ project(
     ]
 )
 
+is_static = get_option('default_library') == 'static'
 cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
 cfg_lst = configuration_data(
@@ -44,7 +45,7 @@ lib_blade = library(
     dependencies: dep_lst + static_dep_lst,
     gnu_symbol_visibility: 'hidden',
     cuda_args: ['-dc'],
-    install: true,
+    install: not is_static,
 )
 
 lib_blade_dep = declare_dependency(
@@ -53,11 +54,13 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-pkg = import('pkgconfig')
-pkg.generate(
-    lib_blade,
-    libraries: dep_lst,
-)
+if not is_static
+    pkg = import('pkgconfig')
+    pkg.generate(
+        lib_blade,
+        libraries: dep_lst,
+    )
+endif
 
 subdir('python')
 subdir('docs')
@@ -69,5 +72,6 @@ summary({
     'cpp_std': get_option('cpp_std'),
     'prefix': get_option('prefix'),
     'buildtype': get_option('buildtype'),
+    'static library': is_static,
     'python bindings': py.found(),
 }, section: 'General', bool_yn: true)
