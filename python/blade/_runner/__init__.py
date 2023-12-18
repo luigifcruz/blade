@@ -48,7 +48,7 @@ def runner(cls):
             
             # Set all duets to the position #0.
             for namespace in [self.input, self.output]:
-                for name, value in vars(namespace).items():
+                for _, value in vars(namespace).items():
                     value.set(0)
 
             # Get the number of input elements of the transfer_in and transfer_out functions.
@@ -79,5 +79,8 @@ def runner(cls):
             assert self.runner.synchronize(0) == bl.result.success
 
             return will_output
+        
+        def synchronize(self):
+            assert self.runner.synchronize(0) == bl.result.success
 
     return BasePipeline

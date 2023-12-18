@@ -10,7 +10,7 @@ import astropy.units as u
 
 @bl.runner
 class Pipeline:
-    def __init__(self, in_shape, out_shape, config_b, config_h):
+    def __init__(self, in_shape, out_shape, config_b, config_gather, config_h):
         self.input.dut = bl.tensor(1, dtype=bl.f64, device=bl.cpu)
         self.input.date = bl.tensor(1, dtype=bl.f64, device=bl.cpu)
         self.input.buffer = bl.array_tensor(in_shape, dtype=bl.cf32)
@@ -18,7 +18,8 @@ class Pipeline:
 
         input = (self.input.dut, self.input.date, self.input.buffer)
         self.module.mode_b = bl.module(bl.modeb, config_b, input, telescope=bl.ata)
-        self.module.mode_h = bl.module(bl.modeh, config_h, self.module.mode_b.get_output(), ot=bl.f32)
+        self.module.gather = bl.module(bl.gather, config_gather, self.module.mode_b.get_output(), ot=bl.cf32)
+        self.module.mode_h = bl.module(bl.modeh, config_h, self.module.gather.get_output(), ot=bl.f32)
 
     def transfer_in(self, dut, date, buffer):
         self.copy(self.input.dut, dut)
@@ -37,9 +38,9 @@ if __name__ == "__main__":
     b_in_shape = (20, 192, 512, 2)
     b_out_shape = (2, 192, 512, 2)
 
-    h_in_shape = (2, 192, 512, 2)
-    h_int_shape = (2, 192*512, 1, 2)
-    h_out_shape = (2, 192*512, 1, 1)
+    h_in_shape = (2, 192, 512*4, 2)
+    h_int_shape = (2, 192*512*4, 1, 2)
+    h_out_shape = (2, 192*512*4, 1, 1)
 
     host_calibration = bl.array_tensor(cal_shape, dtype=bl.cf64, device=bl.cpu)
     bl_calibration = host_calibration.as_numpy()
@@ -103,6 +104,11 @@ if __name__ == "__main__":
         'detector_number_of_output_polarizations': 1,
     }
 
+    config_gather = {
+        'axis': 2,
+        'multiplier': 4,
+    }
+
     config_h = {
         'input_shape': h_in_shape,
         'output_shape': h_out_shape,
@@ -129,12 +135,42 @@ if __name__ == "__main__":
     # Blade Implementation
     #
 
-    pipeline = Pipeline(b_in_shape, h_out_shape, config_b, config_h)
+    pipeline = Pipeline(b_in_shape, h_out_shape, config_b, config_gather, config_h)
 
     bl_input_date[0] = (1649366473.0/ 86400) + 2440587.5
     bl_input_dut[0] = 0.0
 
-    pipeline(host_input_dut, host_input_date, host_input_buffer, host_output_buffer)
+    # Initialize enqueue and dequeue counters
+    enqueue_count = [0]
+    dequeue_count = [0]
+    iterations = [0]
+
+    # Loop until 8 items have been dequeued
+    while iterations[0] < 1:
+        # Define the input callback function
+        def input_callback():
+            enqueue_count[0] += 1
+            pipeline.transfer_in(host_input_dut, host_input_date, host_input_buffer)
+            return bl.result.success
+
+        # Define the output callback function
+        def output_callback():
+            dequeue_count[0] += 1
+            pipeline.transfer_out(host_output_buffer)
+            return bl.result.success
+
+        # Enqueue the pipeline with the input and output callbacks and the current enqueue count
+        pipeline.enqueue(input_callback, output_callback, enqueue_count[0], dequeue_count[0])
+
+        # Define the dequeue callback function
+        def callback(input_id, output_id, did_output):
+            print(f"[D] Input ID: {input_id}, Output ID: {output_id}, Did Output: {did_output}")
+            if did_output:
+                iterations[0] += 1
+            return bl.result.success
+
+        # Dequeue the pipeline with the callback function
+        pipeline.dequeue(callback)
 
     #
     # Python Implementation
@@ -395,9 +431,11 @@ if __name__ == "__main__":
     for ibeam in range(b_out_shape[0]):
         py_output_b[ibeam] = (bl_input_buffer * py_output_phasors[ibeam][..., :]).sum(axis=0)
 
+    py_output_b_expanded = np.tile(py_output_b, (1, 1, 4, 1))
+
     py_output_buffer = np.zeros(h_out_shape, dtype=np.float32)
 
-    fft_result = np.fft.fftshift(np.fft.fft(py_output_b, axis=2), axes=2)
+    fft_result = np.fft.fftshift(np.fft.fft(py_output_b_expanded, axis=2), axes=2)
     fft_result = fft_result.reshape(h_int_shape)
 
     polarized = np.zeros(h_int_shape, dtype=np.complex64)
