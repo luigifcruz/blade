@@ -76,13 +76,12 @@ bool Pipeline::isSynchronized(const U64& index) {
 }
 
 Result Pipeline::commit() {
-    BL_DEBUG("Commiting pipeline with {} compute steps per cycle.", _computeStepsPerCycle);
+    BL_DEBUG("Commiting pipeline with {} modules and {} compute steps per cycle.",
+             _modules.size(), _computeStepsPerCycle);
 
     // TODO: Validate pipeline topology with Taint (in-place modules).
 
-    if (_computeStepRatios.size() == 0) {
-        _computeStepRatios.push_back(1);
-    }
+    _computeStepRatios.push_back(1);
 
     return Result::SUCCESS;
 }
@@ -93,14 +92,15 @@ Result Pipeline::compute(const U64& index) {
         _commited = true;
     }
 
-    // TODO: Validate local step count.
-
     U64 localStepCount = 0;
     U64 localRatioIndex = 0;
     U64 localStepOffset = 1;
 
     for (auto& module : _modules) {
         localStepCount = _computeStepCount / localStepOffset % _computeStepRatios[localRatioIndex];
+
+        BL_TRACE("[M: '{}', R: {}]: Step Count: {}, Step Offset: {}, Step Ratio: {}", 
+                 module->name(), module->getComputeRatio(), localStepCount, localStepOffset, _computeStepRatios[localRatioIndex]);
 
         const auto& result = module->process(localStepCount, _streams[index]);
 
@@ -114,7 +114,7 @@ Result Pipeline::compute(const U64& index) {
         }
 
         if (module->getComputeRatio() > 1) {
-            if (localStepCount == _computeStepRatios[localRatioIndex]) {
+            if (localStepCount == (_computeStepRatios[localRatioIndex] - 1)) {
                 localStepOffset += localStepCount;
                 localRatioIndex += 1;
             } else {
@@ -134,6 +134,8 @@ Result Pipeline::compute(const U64& index) {
         _computeStepCount = 0;
         _computeLifetimeCycles += 1;
     }
+
+    BL_TRACE("----------------")
 
     return Result::SUCCESS;
 }
