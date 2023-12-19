@@ -7,18 +7,19 @@ RUN apt update --fix-missing
 COPY . /blade
 WORKDIR /blade
 
-# System dependencies.
-RUN apt install -y build-essential pkg-config git python3-pip
+#
+# This is copy-pasta from the README.md file.
+# Update this as the README.md file changes.
+#
 
-# Build dependencies.
-RUN python3 -m pip install cmake meson ninja
-
-# Test dependencies.
+RUN apt install -y git build-essential pkg-config git cmake
+RUN apt install -y python3-dev python3-pip
+RUN python3 -m pip install meson ninja
+RUN apt install -y liberfa-dev libhdf5-dev
 RUN apt install -y libbenchmark-dev libgtest-dev
 RUN python3 -m pip install numpy astropy pandas
 
-# Optional dependencies.
-RUN apt install -y liberfa-dev libhdf5-dev
+###
 
 RUN rm -fr build
 RUN git submodule update --init --recursive
