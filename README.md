@@ -106,7 +106,7 @@ BLADE was created originally as the beamforming engine for the Allen Telescope A
 ## Contributing
 Contributions are welcome! Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests and invite you to submit pull requests directly in this repository. The library follows the [Google C++ Code Style Guide](https://google.github.io/styleguide/cppguide.html). The default line length is 88. This can be overridden if necessary. Please, be sensible.
 
-### License
+## License
 BLADE is distributed under the [MIT license](./LICENSE). See [LICENSE.md](./LICENSE) for details. All contributions to the project are considered to be licensed under the same terms. If you have any questions, please contact [Luigi Cruz](https://luigi.ltd/contact).
 
 
