@@ -1,4 +1,3 @@
-# TODO: Update this Dockerfile.
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -18,11 +17,8 @@ RUN python3 -m pip install cmake meson ninja
 RUN apt install -y libbenchmark-dev libgtest-dev
 RUN python3 -m pip install numpy astropy pandas
 
-# ATA phasor module dependencies.
-RUN apt install -y liberfa-dev
-
-# HDF5 writer dependencies.
-RUN apt install -y libhdf5-dev
+# Optional dependencies.
+RUN apt install -y liberfa-dev libhdf5-dev
 
 RUN rm -fr build
 RUN git submodule update --init --recursive
