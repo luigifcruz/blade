@@ -21,7 +21,7 @@ cfg_lst = configuration_data(
 src_lst = []
 dep_lst = [
     dependency('cuda', version: '>=11', modules: ['nvrtc', 'cudart', 'cuda', 'culibos']),
-    dependency('fmt', version: '>=9.1', fallback: 'fmt'),
+    dependency('fmt', version: '>=9.1', fallback: 'fmt', default_options: ['default_library=static']),
 ]
 static_dep_lst = [
     dependency('cuda', version: '>=11', modules: ['cufft_static']),
