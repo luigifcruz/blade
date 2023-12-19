@@ -5,6 +5,8 @@
 <img src="docs/IMG_7960.jpeg" />
 </p>
 
+BLADE is a modern, high-performance signal processing library for radio telescopes, such as the Allen Telescope Array. Written in modern C++20, it utilizes CUDA for accelerated processing, Python bindings for ease of use, and just-in-time (JIT) compilation of CUDA kernels for runtime customizability. BLADE is designed to be flexible and extensible to support other radio telescopes. 
+
 - 🌌 Optimized for high-throughput signal processing for radio telescopes.
 - 📡 Used in production in world-class radio telescopes like the Allen Telescope Array.
 - 💻 Deep CUDA integration for superior performance and efficiency.
@@ -12,8 +14,6 @@
 - 🧰 Comprehensive C++20 support for robust and maintainable codebase.
 - 🔄 Modular DSP architecture for flexible and extensible signal processing solutions.
 - 🚀 Just-in-time (JIT) compilation of CUDA kernels for maximum performance and runtime customizability.
-
-BLADE (Breakthrough Listen Accelerated DSP Engine) is a modern, high-performance signal processing library for radio telescopes, such as the Allen Telescope Array. Written in modern C++20, it utilizes CUDA for accelerated processing, Python bindings for ease of use, and just-in-time (JIT) compilation of CUDA kernels for runtime customizability. BLADE is designed to be flexible and extensible to support other radio telescopes. 
 
 The library structures into Modules, Pipelines, and Runners:
 
