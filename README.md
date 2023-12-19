@@ -35,7 +35,7 @@ Currently, BLADE implements the following Modules:
 All frequency values are in Hertz and all angles are in radians!
 
 ## Installation
-Don't worry, it is not difficult! Follow the instructions below to compile it on your system. Keep in mind that BLADE requires a Linux system with an NVIDIA Graphics Card. A Docker image is also available for building and testing BLADE. To build it, run `docker build -t blade .` and to run it, run `docker run -rm -it --gpus all blade bash`. The Docker image is based on Ubuntu 22.04 and contains all the dependencies required to build and test BLADE. The [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) is required to run this image.
+Don't worry, it is not difficult! Follow the instructions below to compile it on your system. Keep in mind that BLADE requires a Linux system with an NVIDIA Graphics Card. A Docker image is also available for building and testing BLADE. To build it, run `docker build -t blade .` and to run it, run `docker run --rm -it --gpus all blade bash`. The Docker image is based on Ubuntu 22.04 and contains all the dependencies required to build and test BLADE. The [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) is required to run this image.
 
 ### Step 1: Dependencies
 BLADE requires a C++20 compiler (>GCC-10 or >Clang 13.0), the [Meson](https://mesonbuild.com) build system, [Ninja Build](https://ninja-build.org), and [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit). Follow the instructions below to install the dependencies and build BLADE from source.
@@ -43,17 +43,22 @@ BLADE requires a C++20 compiler (>GCC-10 or >Clang 13.0), the [Meson](https://me
 #### Ubuntu 22.04
 Core dependencies (you probably already have them).
 ```bash
-$ apt install git build-essential cmake pkg-config ninja-build meson git
+$ apt install git build-essential pkg-config git cmake
+```
+
+Python dependencies.
+```bash
+$ apt install python3-dev python3-pip
+```
+
+Build dependencies. These are installed by Python because Ubuntu 22.04 only offers old versions of them.
+```bash
+$ python3 -m pip install meson ninja
 ```
 
 Modules dependencies.
 ```bash
 $ apt install liberfa-dev libhdf5-dev
-```
-
-Python dependencies (optional).
-```bash
-$ apt install python3-dev python3-pip
 ```
 
 Test and benchmark dependencies (optional).
@@ -80,6 +85,7 @@ Clone the repository from Github.
 ```bash
 $ git clone https://github.com/luigifcruz/blade.git
 $ cd blade
+$ git submodule update --init --recursive
 ```
 
 Build and install `release` version.
@@ -101,14 +107,14 @@ BLADE was created originally as the beamforming engine for the Allen Telescope A
 Contributions are welcome! Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests and invite you to submit pull requests directly in this repository. The library follows the [Google C++ Code Style Guide](https://google.github.io/styleguide/cppguide.html). The default line length is 88. This can be overridden if necessary. Please, be sensible.
 
 ### License
-BLADE is distributed under the [MIT license](./LICENSE.md). See [LICENSE.md](./LICENSE.md) for details. All contributions to the project are considered to be licensed under the same terms. If you have any questions, please contact [Luigi Cruz](https://luigi.ltd/contact).
+BLADE is distributed under the [MIT license](./LICENSE). See [LICENSE.md](./LICENSE) for details. All contributions to the project are considered to be licensed under the same terms. If you have any questions, please contact [Luigi Cruz](https://luigi.ltd/contact).
 
 
 ```
-                                     .-.
-                    .-""`""-.      |(@ @)
-                 _/`oOoOoOoOo`\_   \ \-/
-                '.-=-=-=-=-=-=-.'   \/ \
-                  `-=.=-.-=.=-'      \ /\
-                     ^  ^  ^         _H_ \ art by jgs
+                           .-.
+          .-""`""-.      |(@ @)
+       _/`oOoOoOoOo`\_   \ \-/
+      '.-=-=-=-=-=-=-.'   \/ \
+        `-=.=-.-=.=-'      \ /\
+           ^  ^  ^         _H_ \ art by jgs
 ```
