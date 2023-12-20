@@ -39,5 +39,6 @@ Result Duplicate<IT, OT>::process(const U64& currentStepCount, const Stream& str
 template class BLADE_API Duplicate<CI8, CI8>;
 template class BLADE_API Duplicate<CF16, CF16>;
 template class BLADE_API Duplicate<CF32, CF32>;
+template class BLADE_API Duplicate<F32, F32>;
 
 }  // namespace Blade::Modules
