@@ -101,7 +101,7 @@ $ ninja install
 ```
 
 ## Usage
-A command-line interface is expected to be added in the future. For now, the library can be used in Python or C++. The Python bindings are automatically installed when the library is installed. The C++ library can be used by including the header file (`#include <blade/base.hh>`) in your project. Navigate to the [examples](./examples) directory to see demonstrations of how to use the library.
+A command-line interface is expected to be added in the future. For now, the library can be used in Python or C++. The Python bindings are automatically installed when the library is installed. The C++ library can be used by including the header file (`#include <blade/base.hh>`) in your project. Navigate to the [examples](./examples) directory to see demonstrations of how to use the library. Peeking at the code inside [tests](./tests) and [benchmarks](./benchmarks) directories is also a good way to learn how to use BLADE.
 
 ## About
 BLADE was created originally as the beamforming engine for the Allen Telescope Array (ATA). Since then, the library has grown to support other workloads like the High-Resolution Spectrometer (HRS). The library is designed to be flexible and extensible to support other radio telescopes with ongoing efforts to upstream the Very Large Array (VLA) COSMIC support. The library is written in modern C++20 and makes use of a just-in-time (JIT) compilation of CUDA kernels to deliver accelerated processing with runtime customizability. Performant Python bindings are also available. Regular talks about BLADE were given at multiple conferences and are available [here](https://luigi.ltd/talks/).
