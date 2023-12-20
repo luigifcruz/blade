@@ -31,10 +31,9 @@ jobs:
         run: docker run --gpus all --rm blade bash -c "cd blade/build && ninja test"
 
       - name: Run memory benchmark.
-        - name: Run memory benchmark.
-          run: |
-            docker run --gpus all -v $(pwd):/tmp --rm blade bash -c \
-            "cd blade/build && ./benchmarks/memory/benchmark-memory --benchmark_format=json | tee /tmp/benchmark_result.json"
+        run: |
+          docker run --gpus all -v $(pwd):/tmp --rm blade bash -c \
+          "cd blade/build && ./benchmarks/memory/benchmark-memory --benchmark_format=json | tee /tmp/benchmark_result.json"
 
       - name: Store memory benchmark.
         uses: benchmark-action/github-action-benchmark@v1
