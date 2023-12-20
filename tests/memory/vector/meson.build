@@ -4,6 +4,7 @@ test(
         'test-memory-vector-reference', 
         'reference.cc',
         dependencies: lib_blade_dep,
+        cuda_args: cuda_args,
     ), 
     is_parallel: false, 
     timeout: 0,

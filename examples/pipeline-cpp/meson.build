@@ -6,6 +6,7 @@ if cfg_lst.get('BLADE_MODULE_CAST', false) and \
             'test-examples-cpp', 
             ['pipeline.cc'],
             dependencies: lib_blade_dep,
+            cuda_args: cuda_args,
         ),
         is_parallel: false,
         timeout: 0,
