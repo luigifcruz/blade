@@ -123,7 +123,7 @@ static void CuComplexKernelBenchmark(benchmark::State& state) {
         cudaEventSynchronize(stop);
         float elapsed_ms;
         cudaEventElapsedTime(&elapsed_ms, start, stop);
-        state.SetIterationTime(elapsed_ms);
+        state.SetIterationTime(elapsed_ms / 1000.0);
     }
 }
 

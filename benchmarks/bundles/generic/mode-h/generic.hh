@@ -38,6 +38,6 @@ static void BM_BundleATAModeH(benchmark::State& state) {
 }
 
 BENCHMARK(BM_BundleATAModeH)
-    ->Iterations(1)
+    ->Iterations(2)
     ->UseManualTime()
     ->Unit(bm::kMillisecond);
