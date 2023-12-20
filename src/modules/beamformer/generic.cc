@@ -9,7 +9,7 @@ namespace Blade::Modules::Beamformer {
 template<typename IT, typename OT>
 Generic<IT, OT>::Generic(const Config& config, 
                          const Input& input,
-                         const cudaStream_t& stream)
+                         const Stream& stream)
         : Module(beamformer_program),
           config(config),
           input(input) {
@@ -28,7 +28,7 @@ Generic<IT, OT>::Generic(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Generic<IT, OT>::process(const cudaStream_t& stream) {
+Result Generic<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     return runKernel("main", stream, input.buf.data(), input.phasors.data(), output.buf.data());
 }
 

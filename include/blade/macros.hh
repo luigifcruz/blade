@@ -8,35 +8,43 @@
 
 namespace Blade {
 
-enum class MemoryTaint : uint8_t {
+enum class Taint : uint8_t {
     NONE     = 0 << 0,
+    // Consumes externally allocated input data.
     CONSUMER = 1 << 0,
+    // Produces internally allocated output data.
     PRODUCER = 1 << 1,
+    // Modifies externally allocated input data.
     MODIFIER = 1 << 2,
+    // Has a compute ratio other than one.
+    CHRONOUS = 1 << 3, 
 };
 
-inline constexpr MemoryTaint operator|(MemoryTaint lhs, MemoryTaint rhs) {
-    return static_cast<MemoryTaint>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+inline constexpr Taint operator|(Taint lhs, Taint rhs) {
+    return static_cast<Taint>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+}
+
+inline constexpr Taint operator&(Taint lhs, Taint rhs) {
+    return static_cast<Taint>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
 }
 
 enum class Result : uint8_t {
+    // Successful operation.
+
     SUCCESS = 0,
+
+    // Hard errors.
+
     ERROR = 1,
     CUDA_ERROR,
     ASSERTION_ERROR,
-    EXHAUSTED,
-    BUFFER_FULL,
-    BUFFER_INCOMPLETE,
-    BUFFER_EMPTY,
-    PLAN_SKIP_NO_SLOT,
-    PLAN_SKIP_COMPUTE_INCOMPLETE,
-    PLAN_SKIP_ACCUMULATION_INCOMPLETE,
-    PLAN_SKIP_NO_DEQUEUE,
-    PLAN_SKIP_USER_INITIATED,
-    PLAN_ERROR_NO_SLOT,
-    PLAN_ERROR_NO_ACCUMULATOR,
-    PLAN_ERROR_ACCUMULATION_COMPLETE,
-    PLAN_ERROR_DESTINATION_NOT_SYNCHRONIZED,
+
+    // Soft errors.
+
+    RUNNER_QUEUE_FULL              = 0 | (1 << 4),
+    RUNNER_QUEUE_EMPTY             = 1 | (1 << 4),
+    RUNNER_QUEUE_NONE_AVAILABLE    = 2 | (1 << 4),
+    PIPELINE_EXHAUSTED             = 3 | (1 << 4),
 };
 
 }  // namespace Blade 
@@ -45,7 +53,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_KERNEL(callback) { \
     cudaError_t val; \
     if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         return callback(); \
     } \
 }
@@ -55,7 +63,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_KERNEL_THROW(callback) { \
     cudaError_t val; \
     if ((val = cudaPeekAtLastError()) != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         throw callback(); \
     } \
 }
@@ -65,7 +73,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK(x, callback) { \
     cudaError_t val = (x); \
     if (val != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         callback(); \
         return Result::CUDA_ERROR; \
     } \
@@ -76,7 +84,7 @@ enum class Result : uint8_t {
 #define BL_CUDA_CHECK_THROW(x, callback) { \
     cudaError_t val = (x); \
     if (val != cudaSuccess) { \
-        auto err = cudaGetErrorString(val); \
+        const char* err = cudaGetErrorString(val); \
         callback(); \
         throw Result::CUDA_ERROR; \
     } \
@@ -107,7 +115,9 @@ enum class Result : uint8_t {
 #define BL_CHECK(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
-        return val; \
+        if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
+            return val; \
+        } \
     } \
 }
 #endif
@@ -116,7 +126,10 @@ enum class Result : uint8_t {
 #define BL_CHECK_THROW(x) { \
     Result val = (x); \
     if (val != Result::SUCCESS) { \
-        throw val; \
+        if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
+            printf("Function %s (%s@%d) throwed!\n", __func__, __FILE__, __LINE__); \
+            throw val; \
+        } \
     } \
 }
 #endif

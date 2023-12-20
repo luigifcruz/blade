@@ -25,6 +25,10 @@ class BLADE_API Reader : public Module {
         U64 blockSize = 512;
     };
 
+    constexpr const Config& getConfig() const {
+        return this->config;
+    }
+
     // Input
 
     struct Input {
@@ -37,19 +41,23 @@ class BLADE_API Reader : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::NONE; 
+    constexpr Taint getTaint() const {
+        return Taint::NONE; 
+    }
+
+    std::string name() const {
+        return "BFR5 Reader";
     }
 
     // Constructor & Processing
 
     explicit Reader(const Config& config, const Input& input,
-                    const cudaStream_t& stream);
+                    const Stream& stream = {});
 
     // Miscellaneous
 
     // TODO: This is the data size, right?
-    const ArrayShape getTotalShape() const {
+    ArrayShape getTotalShape() const {
         return ArrayShape({
             this->bfr5.dim_info.nbeams * this->bfr5.dim_info.nants,
             this->bfr5.dim_info.nchan,
@@ -58,7 +66,7 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    constexpr const LLA getReferencePosition() const {
+    constexpr LLA getReferencePosition() const {
         return {
             .LON = this->bfr5.tel_info.longitude,
             .LAT = this->bfr5.tel_info.latitude,
@@ -66,7 +74,7 @@ class BLADE_API Reader : public Module {
         };
     }
 
-    constexpr const RA_DEC getBoresightCoordinates() const {
+    constexpr RA_DEC getBoresightCoordinates() const {
         return {
             .RA = this->bfr5.obs_info.phase_center_ra,
             .DEC = this->bfr5.obs_info.phase_center_dec

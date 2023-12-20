@@ -31,8 +31,24 @@
 #include "blade/modules/beamformer/ata.hh"
 #endif
 
+#ifdef BLADE_MODULE_ATA_BEAMFORMER
+#include "blade/modules/beamformer/meerkat.hh"
+#endif
+
 #ifdef BLADE_MODULE_ATA_PHASOR
 #include "blade/modules/phasor/ata.hh"
+#endif
+
+#ifdef BLADE_MODULE_GATHER
+#include "blade/modules/gather.hh"
+#endif
+
+#ifdef BLADE_MODULE_DUPLICATE
+#include "blade/modules/duplicate.hh"
+#endif
+
+#ifdef BLADE_MODULE_PERMUTATION
+#include "blade/modules/permutation.hh"
 #endif
 
 #endif

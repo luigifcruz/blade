@@ -53,7 +53,7 @@ namespace Blade::Modules::Phasor {
 template<typename OT>
 ATA<OT>::ATA(const typename Generic<OT>::Config& config,
              const typename Generic<OT>::Input& input,
-             const cudaStream_t& stream)
+             const Stream& stream)
         : Generic<OT>(config, input, stream) {
     // Check configuration values.
     const auto& dataNumberOfChannels = this->config.numberOfFrequencyChannels;
@@ -103,8 +103,7 @@ ATA<OT>::ATA(const typename Generic<OT>::Config& config,
 }
 
 template<typename OT>
-Result ATA<OT>::preprocess(const cudaStream_t& stream,
-                           const U64& currentComputeCount) {
+Result ATA<OT>::process(const U64& currentStepCount, const Stream& stream) {
     HA_DEC boresight_ha_dec = {0.0, 0.0};
     
     eraASTROM astrom;

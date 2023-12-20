@@ -67,17 +67,20 @@ class BLADE_API Generic : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER |
-               MemoryTaint::PRODUCER; 
+    constexpr Taint getTaint() const {
+        return Taint::CONSUMER |
+               Taint::PRODUCER; 
+    }
+
+    std::string name() const {
+        return "Phasor";
     }
 
     // Constructor & Processing
 
-    explicit Generic(const Config& config, const Input& input, 
-                     const cudaStream_t& stream);
+    explicit Generic(const Config& config, const Input& input, const Stream& stream = {});
     virtual ~Generic() = default;
-    virtual Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) = 0;
+    virtual Result process(const U64& currentComputeCount, const Stream& stream = {}) = 0;
 
  protected:
     // Variables

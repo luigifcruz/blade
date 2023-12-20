@@ -7,8 +7,6 @@
 #include "blade/base.hh"
 #include "blade/module.hh"
 
-#include "blade/modules/channelizer/callback.hh"
-
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
@@ -48,16 +46,19 @@ class BLADE_API Channelizer : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER |
-               MemoryTaint::PRODUCER;
+    constexpr Taint getTaint() const {
+        return Taint::CONSUMER |
+               Taint::MODIFIER;
+    }
+
+    std::string name() const {
+        return "Channelizer";
     }
 
     // Constructor & Processing
 
-    explicit Channelizer(const Config& config, const Input& input, 
-                         const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream) final;
+    explicit Channelizer(const Config& config, const Input& input, const Stream& stream = {});
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
     ~Channelizer();
 
  private:
@@ -72,7 +73,6 @@ class BLADE_API Channelizer : public Module {
 
     cufftHandle plan;
     std::string kernel_key;
-    std::unique_ptr<Internal::Callback> callback;
 
     // Expected Shape
 

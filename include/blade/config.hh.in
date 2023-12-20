@@ -9,6 +9,9 @@
 #mesondefine BLADE_MODULE_BFR5
 #mesondefine BLADE_MODULE_GUPPI
 #mesondefine BLADE_MODULE_POLARIZER
+#mesondefine BLADE_MODULE_GATHER
+#mesondefine BLADE_MODULE_DUPLICATE
+#mesondefine BLADE_MODULE_PERMUTATION
 
 // ATA Specific Modules
 #mesondefine BLADE_MODULE_ATA_BEAMFORMER
@@ -21,16 +24,13 @@
 #mesondefine BLADE_MODULE_VLA_BEAMFORMER
 
 // ATA Pipelines
-#mesondefine BLADE_PIPELINE_ATA_MODE_B
+#mesondefine BLADE_BUNDLE_ATA_MODE_B
 
 // Generic Pipelines
-#mesondefine BLADE_PIPELINE_GENERIC_FILE_READER
-#mesondefine BLADE_PIPELINE_GENERIC_FILE_WRITER
-#mesondefine BLADE_PIPELINE_GENERIC_MODE_H
+#mesondefine BLADE_BUNDLE_GENERIC_MODE_H
 
 // Dependency Loaders
 #mesondefine BLADE_LOADER_RADIOINTERFEROMETRY
 #mesondefine BLADE_LOADER_GUPPIRAW
 #mesondefine BLADE_LOADER_BFR5
-#mesondefine BLADE_LOADER_CLI11
 #mesondefine BLADE_LOADER_BENCHMARK

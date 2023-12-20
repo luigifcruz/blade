@@ -1,16 +1,56 @@
 #ifndef BLADE_MEMORY_HELPER_HH
 #define BLADE_MEMORY_HELPER_HH
 
+#include <vector>
+
 #include <cuda_runtime.h>
 
 #include "blade/memory/types.hh"
 #include "blade/memory/vector.hh"
 
-namespace Blade::Memory {
+namespace Blade {
+
+template<typename T>
+class BLADE_API Duet {
+ public:
+    Duet(const U64& number)
+        : swapchain({T({number}), 
+                     T({number})}) {
+        _fixed = swapchain[0];
+    }
+
+    template<typename... Args>
+    Duet(Args&&... args)
+        : swapchain({T(std::forward<Args>(args)...), 
+                     T(std::forward<Args>(args)...)}) {
+        _fixed = swapchain[0];
+    }
+
+    void set(const U64& index) {
+        _fixed = swapchain[index];
+    }
+
+    operator T&() {
+        return _fixed;
+    }
+
+    T& operator[](const U64& index) {
+        _fixed = swapchain[index];
+        return _fixed;
+    }
+
+    const T& at(const U64& index) const {
+        return swapchain.at(index);
+    }
+
+ private:
+    T _fixed;
+    std::vector<T> swapchain;
+};
 
 template<typename Type, typename Dims>
-static inline Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
-                              const bool& readOnly = false) {
+inline Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
+                       const bool& readOnly = false) {
     cudaPointerAttributes attr;
     BL_CUDA_CHECK(cudaPointerGetAttributes(&attr, vec.data()), [&]{
         BL_FATAL("Failed to get pointer attributes: {}", err);
@@ -33,22 +73,26 @@ static inline Result PageLock(const Vector<Device::CPU, Type, Dims>& vec,
     return Result::SUCCESS;
 }
 
-template<Device DeviceId, typename Type, typename Shape>
-static inline Result Link(Vector<DeviceId, Type, Shape>& dst,
-                          const Vector<DeviceId, Type, Shape>& src) {
-    dst = src;
-    return Result::SUCCESS;
+inline std::string ReadableBytes(uint64_t bytes) {
+    const double GB = 1e9;
+    const double MB = 1e6;
+    const double KB = 1e3;
+
+    char buffer[50];
+
+    if (bytes >= GB) {
+        sprintf(buffer, "%.2f GB", bytes / GB);
+    } else if (bytes >= MB) {
+        sprintf(buffer, "%.2f MB", bytes / MB);
+    } else if (bytes >= KB) {
+        sprintf(buffer, "%.2f KB", bytes / KB);
+    } else {
+        sprintf(buffer, "%ld bytes", bytes);
+    }
+
+    return std::string(buffer);
 }
 
-template<Device DeviceId, typename Type, typename Shape>
-static inline Result Link(Vector<DeviceId, Type, Shape>& dst,
-                          const Vector<DeviceId, Type, Shape>& src,
-                          const Shape dstShape) {
-    dst = src;
-    return dst.reshape(dstShape);
-    return Result::SUCCESS;
-}
-
-}  // namespace Blade::Memory
+}  // namespace Blade
 
 #endif

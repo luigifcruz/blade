@@ -1,5 +1,5 @@
 deps = [
-    dependency('benchmark')
+    dependency('benchmark', required: false)
 ]
 
 all_deps_found = true
@@ -12,4 +12,4 @@ if all_deps_found
     dep_lst += deps
 endif
 
-ldr_lst += {'BENCHMARK': all_deps_found}
+ldr_lst += {'Google Benchmark': all_deps_found}

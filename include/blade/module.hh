@@ -2,7 +2,9 @@
 #define BLADE_MODULE_HH
 
 #include <map>
+#include <ranges>
 #include <string>
+#include <numeric>
 #include <typeindex>
 #include <unordered_map>
 
@@ -17,28 +19,30 @@ namespace Blade {
 
 class Module {
  public:
-    explicit Module(const jitify2::PreprocessedProgram& program)
-        : cache(100, *program) {};
+    explicit Module(const jitify2::PreprocessedProgram& program) : cache(100, *program) {};
     virtual ~Module() = default;
 
-    virtual constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::NONE; 
+    virtual constexpr Taint getTaint() const {
+        return Taint::NONE;
     }
 
-    virtual constexpr Result preprocess(const cudaStream_t& stream, 
-                                        const U64& currentComputeCount) {
-        return Result::SUCCESS;
+    virtual constexpr U64 getComputeRatio() const {
+        return 1;
     }
 
-    virtual constexpr Result process(const cudaStream_t& stream) {
+    virtual std::string name() const = 0;
+
+    virtual constexpr Result process(const U64& currentStepNumber, const Stream& stream = {}) {
         return Result::SUCCESS;
     }
 
  protected:
+    jitify2::ProgramCache<> cache;
+
     Result createKernel(const std::string& name,
                         const std::string& key,
                         const dim3& gridSize,
-                        const dim3& blockSize, 
+                        const dim3& blockSize,
                         const auto... templateArguments) {
         if (blockSize.x > 1024) {
             BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
@@ -54,14 +58,14 @@ class Module {
         kernels.insert({name, {
             .gridSize = gridSize,
             .blockSize = blockSize,
-            .key = Template(key).instantiate(templateArguments...), 
+            .key = Template(key).instantiate(templateArguments...),
         }});
 
         return Result::SUCCESS;
-    } 
+    }
 
     Result runKernel(const std::string& name,
-                     const cudaStream_t& stream,
+                     const Stream& stream,
                      auto... kernelArguments) {
         const auto& kernel = kernels[name];
 
@@ -84,6 +88,22 @@ class Module {
                     (gridSize.z + (blockSize.z - 1)) / blockSize.z);
     }
 
+    template<Device DeviceId, typename Type, typename Shape>
+    static Result Link(Vector<DeviceId, Type, Shape>& dst,
+                       const Vector<DeviceId, Type, Shape>& src) {
+        dst = src;
+        return Result::SUCCESS;
+    }
+
+    template<Device DeviceId, typename Type, typename Shape>
+    static Result Link(Vector<DeviceId, Type, Shape>& dst,
+                       const Vector<DeviceId, Type, Shape>& src,
+                       const Shape dstShape) {
+        dst = src;
+        return dst.reshape(dstShape);
+        return Result::SUCCESS;
+    }
+
  private:
     struct Kernel {
         dim3 gridSize;
@@ -91,7 +111,6 @@ class Module {
         std::string key;
     };
 
-    jitify2::ProgramCache<> cache;
     std::unordered_map<std::string, Kernel> kernels;
 };
 

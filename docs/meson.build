@@ -16,7 +16,7 @@ if sphinx.found() and doxygen.found() and breathe.found()
     sphinx_conf = configure_file(
         input: 'conf.py.in',
         output: 'conf.py',
-        configuration: sphinx_conf_data
+        configuration: sphinx_conf_data,
     )
 
     doxy_conf_data = configuration_data()
@@ -26,7 +26,7 @@ if sphinx.found() and doxygen.found() and breathe.found()
     doxygen_conf_weston = configure_file(
         input: 'doxygen.ini.in',
         output: 'doxygen.ini',
-        configuration: doxy_conf_data
+        configuration: doxy_conf_data,
     )
 
     script_data = configuration_data()
@@ -38,7 +38,7 @@ if sphinx.found() and doxygen.found() and breathe.found()
     script_doxy_sphinx = configure_file(
         input: 'run_doxygen_sphinx.sh.in',
         output: 'run_doxygen_sphinx.sh',
-        configuration: script_data
+        configuration: script_data,
     )
 
     # copy everything to build_dir, if you plan on adding other files in the top
@@ -53,7 +53,7 @@ if sphinx.found() and doxygen.found() and breathe.found()
     subdir('toc')
 
     sphinx_doc = custom_target(
-        'blade-doc-breathe',
+        'doc-breathe',
         command: script_doxy_sphinx,
         output: 'doc',
         build_by_default: true,

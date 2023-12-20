@@ -1,7 +1,10 @@
-subdir('collection')
-
-benchmark('memory-ops-benchmark', executable(
-    'blade-memory-ops-benchmark', ['ops.cu'],
-    dependencies: lib_blade_dep,
-    cuda_args: cuda_args,
-), timeout: 0)
+benchmark(
+    'memory-benchmark-memory', 
+    executable(
+        'benchmark-memory',
+        ['benchmark.cu'],
+        dependencies: lib_blade_dep,
+        cuda_args: cuda_args,
+    ), 
+    timeout: 0,
+)

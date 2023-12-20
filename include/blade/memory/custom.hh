@@ -13,27 +13,27 @@ struct ArrayShape : public Shape<4> {
 
     using Shape::Shape;
 
-    constexpr const U64& numberOfAspects() const {
+    __host__ __device__ constexpr const U64& numberOfAspects() const {
         return (*this)[0];
     }
 
-    constexpr const U64& numberOfFrequencyChannels() const {
+    __host__ __device__ constexpr const U64& numberOfFrequencyChannels() const {
         return (*this)[1];
     }
 
-    constexpr const U64& numberOfTimeSamples() const {
+    __host__ __device__ constexpr const U64& numberOfTimeSamples() const {
         return (*this)[2];
     }
 
-    constexpr const U64& numberOfPolarizations() const {
+    __host__ __device__ constexpr const U64& numberOfPolarizations() const {
         return (*this)[3];
     }
 
-    ArrayShape operator*(const ArrayShape& other) const {
+    __host__ __device__ ArrayShape operator*(const ArrayShape& other) const {
         return ArrayShape(Shape::operator*(other));
     }
 
-    ArrayShape operator/(const ArrayShape& other) const {
+    __host__ __device__ ArrayShape operator/(const ArrayShape& other) const {
         return ArrayShape(Shape::operator/(other));
     }
 
@@ -58,31 +58,31 @@ struct PhasorShape : public Shape<5> {
 
     using Shape::Shape;
 
-    constexpr const U64& numberOfBeams() const {
+    __host__ __device__ constexpr const U64& numberOfBeams() const {
         return (*this)[0];
     }
 
-    constexpr const U64& numberOfAntennas() const {
+    __host__ __device__ constexpr const U64& numberOfAntennas() const {
         return (*this)[1];
     }
 
-    constexpr const U64& numberOfFrequencyChannels() const {
+    __host__ __device__ constexpr const U64& numberOfFrequencyChannels() const {
         return (*this)[2];
     }
 
-    constexpr const U64& numberOfTimeSamples() const {
+    __host__ __device__ constexpr const U64& numberOfTimeSamples() const {
         return (*this)[3];
     }
 
-    constexpr const U64& numberOfPolarizations() const {
+    __host__ __device__ constexpr const U64& numberOfPolarizations() const {
         return (*this)[4];
     }
 
-    PhasorShape operator*(const PhasorShape& other) const {
+    __host__ __device__ PhasorShape operator*(const PhasorShape& other) const {
         return PhasorShape(Shape::operator*(other));
     }
 
-    PhasorShape operator/(const PhasorShape& other) const {
+    __host__ __device__ PhasorShape operator/(const PhasorShape& other) const {
         return PhasorShape(Shape::operator/(other));
     }
 
@@ -108,19 +108,19 @@ struct DelayShape : public Shape<2> {
 
     using Shape::Shape;
 
-    constexpr const U64& numberOfBeams() const {
+    __host__ __device__ constexpr const U64& numberOfBeams() const {
         return (*this)[0];
     }
 
-    constexpr const U64& numberOfAntennas() const {
+    __host__ __device__ constexpr const U64& numberOfAntennas() const {
         return (*this)[1];
     }
 
-    DelayShape operator*(const DelayShape& other) const {
+    __host__ __device__ DelayShape operator*(const DelayShape& other) const {
         return DelayShape(Shape::operator*(other));
     }
 
-    DelayShape operator/(const DelayShape& other) const {
+    __host__ __device__ DelayShape operator/(const DelayShape& other) const {
         return DelayShape(Shape::operator/(other));
     }
 
@@ -143,11 +143,11 @@ struct VectorShape : public Shape<1> {
 
     using Shape::Shape;
 
-    VectorShape operator*(const VectorShape& other) const {
+    __host__ __device__ VectorShape operator*(const VectorShape& other) const {
         return VectorShape(Shape::operator*(other));
     }
 
-    VectorShape operator/(const VectorShape& other) const {
+    __host__ __device__ VectorShape operator/(const VectorShape& other) const {
         return VectorShape(Shape::operator/(other));
     }
 

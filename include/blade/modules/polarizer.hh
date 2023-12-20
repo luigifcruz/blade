@@ -11,13 +11,9 @@ class BLADE_API Polarizer : public Module {
  public:
     // Configuration
 
-    enum class Mode : uint8_t {
-        BYPASS,
-        XY2LR,
-    };
-
     struct Config {
-        Mode mode = Mode::XY2LR; 
+        POL inputPolarization = POL::XY;
+        POL outputPolarization = POL::LR;
         U64 blockSize = 512;
     };
 
@@ -47,15 +43,18 @@ class BLADE_API Polarizer : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::MODIFIER;
+    constexpr Taint getTaint() const {
+        return Taint::MODIFIER;
+    }
+
+    std::string name() const {
+        return "Polarizer";
     }
 
     // Constructor & Processing
 
-    explicit Polarizer(const Config& config, const Input& input,
-                       const cudaStream_t& stream);
-    Result process(const cudaStream_t& stream) final;
+    explicit Polarizer(const Config& config, const Input& input, const Stream& stream = {});
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  private:
     // Variables

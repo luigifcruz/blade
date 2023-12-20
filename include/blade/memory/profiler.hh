@@ -3,9 +3,8 @@
 
 #include "blade/macros.hh"
 #include "blade/memory/types.hh"
-#include "blade/memory/utils.hh"
 
-namespace Blade::Memory {
+namespace Blade {
 
 class BLADE_API Profiler {
  public:
@@ -25,7 +24,7 @@ class BLADE_API Profiler {
         U64 allocatedUnifiedTensors;
         U64 deallocatedUnifiedTensors;
     };
-    
+
     Profiler(Profiler const&) = delete;
     void operator=(Profiler const&) = delete;
 
@@ -74,7 +73,7 @@ class BLADE_API Profiler {
  private:
     Capture capture;
     bool _isCapturing;
-    
+
     Profiler() : _isCapturing(false) {}
 
     void startCapture();
@@ -90,6 +89,6 @@ class BLADE_API Profiler {
     void registerUnifiedDeallocation(const U64& byteSize);
 };
 
-}  // namespace Blade::Memory
+}  // namespace Blade
 
 #endif

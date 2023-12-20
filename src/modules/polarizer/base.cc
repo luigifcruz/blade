@@ -12,7 +12,7 @@ namespace Blade::Modules {
 template<typename IT, typename OT>
 Polarizer<IT, OT>::Polarizer(const Config& config, 
                              const Input& input, 
-                             const cudaStream_t& stream)
+                             const Stream& stream)
         : Module(polarizer_program),
           config(config),
           input(input) {
@@ -45,12 +45,12 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
     }
 
     // Link output buffers.
-    if (config.mode == Mode::BYPASS) {
+    if (config.inputPolarization == config.outputPolarization) {
         BL_INFO("Bypass: Enabled");
     }
 
     // Link output buffer or link input with output.
-    BL_CHECK_THROW(Memory::Link(output.buf, input.buf));
+    BL_CHECK_THROW(Link(output.buf, input.buf));
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
@@ -59,8 +59,8 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 }
 
 template<typename IT, typename OT>
-Result Polarizer<IT, OT>::process(const cudaStream_t& stream) {
-    if (config.mode == Mode::BYPASS) {
+Result Polarizer<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
+    if (config.inputPolarization == config.outputPolarization) {
         return Result::SUCCESS;
     }
 

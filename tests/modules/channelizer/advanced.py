@@ -1,61 +1,55 @@
 import sys
-import time
-import blade as bl
 import numpy as np
+import blade as bl
 
-class Test(bl.Pipeline):
-    channelizer: bl.Channelizer
+@bl.runner
+class Pipeline:
+    def __init__(self, input_shape, output_shape, config):
+        self.input.buf = bl.array_tensor(input_shape, dtype=bl.cf32)
+        self.output.buf = bl.array_tensor(output_shape, dtype=bl.cf32)
 
-    def __init__(self, input_shape, rate):
-        bl.Pipeline.__init__(self)
-        self.input = bl.cuda.cf32.ArrayTensor(input_shape)
-        _config = bl.Channelizer.Config(rate, 512)
-        _input = bl.Channelizer.Input(self.input)
-        self.channelizer = self.connect(_config, _input)
+        self.module.channelizer = bl.module(bl.channelizer, config, self.input.buf)
 
-    def run(self, input: bl.cpu.cf32.ArrayTensor,
-                  output: bl.cpu.cf32.ArrayTensor):
-        self.copy(self.channelizer.input(), input)
-        self.compute()
-        self.copy(output, self.channelizer.output())
-        self.synchronize()
+    def transfer_in(self, buf):
+        self.copy(self.input.buf, buf)
 
-def trial(A, F, T, P, C):
+    def transfer_out(self, buf):
+        self.copy(self.output.buf, self.module.channelizer.get_output())
+        self.copy(buf, self.output.buf)
+
+
+def test(A, F, T, P, C):
     input_shape = (A, F, T, P)
     output_shape = (A, F * C, T // C, P)
 
-    # Initialize Blade pipeline.
-    mod = Test(input_shape, C)
+    config = {
+        "rate": C,
+    }
 
-    # Generate test data with Python.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), input_shape)
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), input_shape)
-    input = np.array(_a + _b * 1j).astype(np.complex64)
+    host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)
+    host_output = bl.array_tensor(output_shape, dtype=bl.cf32, device=bl.cpu)
 
-    # Compute the FFT sizes.
-    nspecs = T // C
+    bl_input = host_input.as_numpy()
+    bl_output = host_output.as_numpy()
 
-    # Define output buffer.
-    _a = np.random.uniform(-int(2**16/2), int(2**16/2), output_shape)
-    _b = np.random.uniform(-int(2**16/2), int(2**16/2), output_shape)
-    output = np.array(_a + _b * 1j).astype(np.complex64)
+    np.copyto(bl_input, np.random.random(size=input_shape) + 1j*np.random.random(size=input_shape))
+    np.copyto(bl_output, np.random.random(size=output_shape) + 1j*np.random.random(size=output_shape))
+ 
+    #
+    # Blade Implementation
+    #
 
-    # Import test data from Python to Blade.
-    bl_input = bl.cpu.cf32.ArrayTensor(input_shape)
-    bl_output = bl.cpu.cf32.ArrayTensor(output_shape)
+    pipeline = Pipeline(input_shape, output_shape, config)
+    pipeline(host_input, host_output)
 
-    np.copyto(bl_input.asnumpy(), input)
-    np.copyto(bl_output.asnumpy(), output)
+    #
+    # Python Implementation
+    #
 
-    # Channelize with Blade.
-    start = time.time()
-    mod.run(bl_input, bl_output)
-    print(f"Channelize with Blade took {time.time()-start:.2f} s.")
+    py_output = np.zeros(output_shape, dtype=np.complex64)
 
-    # Channelize with Numpy.
-    start = time.time()
     for ibeam in range(A):
-        beam = input[ibeam]
+        beam = bl_input[ibeam]
 
         for ichan in range(F):
             time_pol = beam[ichan]
@@ -63,22 +57,24 @@ def trial(A, F, T, P, C):
             for ipol in range(P):
                 time_arr = time_pol[:, ipol]
 
-                for ispec in range(nspecs):
-                    output[ibeam,
-                            ichan*C :
-                            (ichan+1)*C,
-                            ispec, ipol] =\
-                            np.fft.fftshift(np.fft.fft(time_arr[ispec*C:(ispec+1)*C]))
-    print(f"Channelize with Numpy took {time.time()-start:.2f} s.")
+                for ispec in range(T // C):
+                    py_output[ibeam,
+                              ichan*C :
+                              (ichan+1)*C,
+                              ispec, ipol] =\
+                              np.fft.fftshift(np.fft.fft(time_arr[ispec*C:(ispec+1)*C]))
 
-    # Check both answers.
-    assert np.allclose(bl_output.asnumpy(), output, rtol=0.01)
+    #
+    # Compare Results
+    #
+
+    assert np.allclose(bl_output, py_output, rtol=0.01)
     print("Test successfully completed!")
 
 
 if __name__ == "__main__":
-    trial(int(sys.argv[1]),
-          int(sys.argv[2]),
-          int(sys.argv[3]), 
-          int(sys.argv[4]), 
-          int(sys.argv[5]))
+    test(int(sys.argv[1]),
+         int(sys.argv[2]),
+         int(sys.argv[3]), 
+         int(sys.argv[4]), 
+         int(sys.argv[5]))

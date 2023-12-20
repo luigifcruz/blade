@@ -6,7 +6,6 @@ ldr_lst = {}
 subdir('radiointerferometry')
 subdir('guppiraw')
 subdir('bfr5')
-subdir('cli11')
 subdir('benchmark')
 subdir('gtest')
 

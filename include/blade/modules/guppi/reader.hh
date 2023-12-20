@@ -57,7 +57,7 @@ class BLADE_API Reader : public Module {
         return this->output.stepDut1;
     }
 
-    const ArrayShape getTotalOutputBufferShape() const {
+    ArrayShape getTotalOutputBufferShape() const {
         return ArrayShape({
             this->getDatashape()->n_aspect,
             this->getDatashape()->n_aspectchan,
@@ -66,7 +66,7 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    const ArrayShape getStepOutputBufferShape() const {
+    ArrayShape getStepOutputBufferShape() const {
         return ArrayShape({
             this->config.stepNumberOfAspects,
             this->config.stepNumberOfFrequencyChannels,
@@ -75,29 +75,32 @@ class BLADE_API Reader : public Module {
         });
     }
 
-    const U64 getNumberOfSteps() {
+    U64 getNumberOfSteps() {
         return this->getTotalOutputBufferShape().size() / 
                this->getStepOutputBufferShape().size();
     }
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::PRODUCER; 
+    constexpr Taint getTaint() const {
+        return Taint::PRODUCER; 
+    }
+
+    std::string name() const {
+        return "Guppi Reader";
     }
 
     // Constructor & Processing
 
-    explicit Reader(const Config& config, const Input& input, 
-                    const cudaStream_t& stream);
-    Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
+    explicit Reader(const Config& config, const Input& input, const Stream& stream = {});
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
     // Miscellaneous 
 
-    const F64 getTotalBandwidth() const;
-    const F64 getChannelBandwidth() const;
-    const U64 getChannelStartIndex() const;
-    const F64 getObservationFrequency() const;
+    F64 getTotalBandwidth() const;
+    F64 getChannelBandwidth() const;
+    U64 getChannelStartIndex() const;
+    F64 getObservationFrequency() const;
 
  private:
     // Variables 

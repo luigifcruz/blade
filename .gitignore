@@ -3,3 +3,7 @@
 build
 __pycache__
 .DS_Store
+.mesonpy*
+
+subprojects/*
+!subprojects/fmt.wrap

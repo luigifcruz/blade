@@ -51,17 +51,20 @@ class BLADE_API Generic : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER | 
-               MemoryTaint::PRODUCER;
+    constexpr Taint getTaint() const {
+        return Taint::CONSUMER | 
+               Taint::PRODUCER;
+    }
+
+    std::string name() const {
+        return "Beamformer";
     }
 
     // Constructor & Processing 
 
-    explicit Generic(const Config& config, const Input& input,
-                     const cudaStream_t& stream);
+    explicit Generic(const Config& config, const Input& input, const Stream& stream = {});
     virtual ~Generic() = default;
-    Result process(const cudaStream_t& stream) final;
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  protected:
     // Variables

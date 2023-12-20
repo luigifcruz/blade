@@ -11,7 +11,7 @@ namespace Blade::Modules::Phasor {
 template<typename OT>
 Generic<OT>::Generic(const Config& config, 
                      const Input& input,
-                     const cudaStream_t& stream)
+                     const Stream& stream)
         : Module(phasor_program),
           config(config),
           input(input),
@@ -32,7 +32,7 @@ Generic<OT>::Generic(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (Memory::Profiler::IsCapturing()) {
+    if (Profiler::IsCapturing()) {
         BL_WARN("Capturing: Early setup return.");
         return;
     }

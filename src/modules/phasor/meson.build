@@ -18,6 +18,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'Phasor ATA': all_deps_found}
+sum_lst += {'[ATA] Phasor': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_ATA_PHASOR', all_deps_found)

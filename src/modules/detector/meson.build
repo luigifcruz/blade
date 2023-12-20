@@ -16,6 +16,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'Detector': all_deps_found}
+sum_lst += {'[GEN] Detector': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_DETECTOR', all_deps_found)

@@ -1,2 +1,0 @@
-subdir('ata')
-subdir('generic')

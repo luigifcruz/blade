@@ -8,6 +8,7 @@
 
 namespace Blade::Modules {
 
+// TODO: Add support for stepped integration.
 template<typename IT, typename OT>
 class BLADE_API Detector : public Module {
  public:
@@ -46,17 +47,19 @@ class BLADE_API Detector : public Module {
 
     // Taint Registers
 
-    constexpr const MemoryTaint getMemoryTaint() {
-        return MemoryTaint::CONSUMER | 
-               MemoryTaint::PRODUCER;
+    constexpr Taint getTaint() const {
+        return Taint::CONSUMER | 
+               Taint::PRODUCER;
+    }
+
+    std::string name() const {
+        return "Detector";
     }
 
     // Constructor & Processing
 
-    explicit Detector(const Config& config, const Input& input, 
-                      const cudaStream_t& stream);
-    Result preprocess(const cudaStream_t& stream, const U64& currentComputeCount) final;
-    Result process(const cudaStream_t& stream) final;
+    explicit Detector(const Config& config, const Input& input, const Stream& stream = {});
+    Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  private:
     // Variables 
@@ -65,16 +68,13 @@ class BLADE_API Detector : public Module {
     const Input input;
     Output output;
 
-    U64 apparentIntegrationSize;
-    Tensor<Device::CUDA, BOOL> ctrlResetTensor;
-
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {
         return ArrayShape({
             getInputBuffer().shape().numberOfAspects(),
             getInputBuffer().shape().numberOfFrequencyChannels(),
-            getInputBuffer().shape().numberOfTimeSamples() / apparentIntegrationSize,
+            getInputBuffer().shape().numberOfTimeSamples() / config.integrationSize,
             config.numberOfOutputPolarizations,
         });
     }

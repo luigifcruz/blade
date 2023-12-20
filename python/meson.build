@@ -1,26 +1,34 @@
-deps = [
-    dependency('fmt', version: '>=6.1', required: false),
-    dependency('pybind11', version: '>=2.4', required: false),
-]
-
 py = import('python').find_installation('python3', required: false)
 
-deps += py.dependency()
+py_build_path = meson.current_build_dir()
+py_install_path = join_paths(py.get_install_dir(), 'blade')
 
-has_python = py.found()
-foreach x_dep : deps
-    has_python = has_python and x_dep.found()
-endforeach
+subdir('blade')
 
-if has_python
-    py.extension_module(
+if py.found()
+    install_subdir(
         'blade',
-        sources: 'bindings.cc',
-        include_directories: inc_lst,
-        dependencies: deps + dep_lst,
-        link_with: lib_blade,
-        install: true,
-        install_dir: py.get_install_dir()
+        install_dir: py.get_install_dir(),
+        exclude_files: [
+            'ext_beamformer.cc',
+            'ext_bfr5.cc',
+            'ext_cast.cc',
+            'ext_channelizer.cc',
+            'ext_const.cc',
+            'ext_copy.cc',
+            'ext_duplicate.cc',
+            'ext_detector.cc',
+            'ext_gather.cc',
+            'ext_guppi.cc',
+            'ext_hidden.cc',
+            'ext_mem.cc',
+            'ext_modeb.cc',
+            'ext_modeh.cc',
+            'ext_permutation.cc',
+            'ext_phasor.cc',
+            'ext_pipeline.cc',
+            'ext_polarizer.cc',
+            'ext_runner.cc',
+        ]
     )
-    python_path = meson.current_build_dir()
 endif

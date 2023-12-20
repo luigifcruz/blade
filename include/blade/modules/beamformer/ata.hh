@@ -10,7 +10,7 @@ class BLADE_API ATA : public Generic<IT, OT> {
  public:
     explicit ATA(const typename Generic<IT, OT>::Config& config,
                  const typename Generic<IT, OT>::Input& input,
-                 const cudaStream_t& stream);
+                 const Stream& stream = {});
 
  protected:
     const ArrayShape getOutputBufferShape() const {

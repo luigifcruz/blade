@@ -16,6 +16,6 @@ if all_deps_found
     ])
 endif
 
-sum_lst += {'Cast': all_deps_found}
+sum_lst += {'[GEN] Cast': all_deps_found}
 
 cfg_lst.set('BLADE_MODULE_CAST', all_deps_found)

@@ -10,7 +10,7 @@ class BLADE_API MeerKAT : public Generic<IT, OT> {
  public:
     explicit MeerKAT(const typename Generic<IT, OT>::Config& config,
                      const typename Generic<IT, OT>::Input& input,
-                     const cudaStream_t& stream);
+                     const Stream& stream = {});
 
  protected:
     const ArrayShape getOutputBufferShape() const {

@@ -12,7 +12,7 @@ namespace Blade {
 class CudaBenchmark {
  protected:
     CudaBenchmark() {
-        cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
+        cudaStreamCreateWithFlags(stream, cudaStreamNonBlocking);
     }
 
     ~CudaBenchmark() {
@@ -37,7 +37,7 @@ class CudaBenchmark {
         return Result::SUCCESS;
     }
 
-    cudaStream_t& getStream() {
+    Stream& getStream() {
         return stream;
     }
 
@@ -45,26 +45,29 @@ class CudaBenchmark {
     static void Create(std::shared_ptr<Block>& module,
                        const typename Block::Config& config,
                        const typename Block::Input& input, 
-                       const cudaStream_t& stream) {
+                       const Stream& stream) {
         module = std::make_unique<Block>(config, input, stream);
     }
 
  private:
     cudaEvent_t start, stop;
-    cudaStream_t stream;
+    Stream stream;
     float elapsedTime;
 };
 
-static inline Result InitAndProfile(const auto& func, benchmark::State& state) {
-    Memory::Profiler::StartCapture();
+static inline void InitAndProfile(const auto& func, benchmark::State& state) {
+    // Capture memory usage.
+    Profiler::StartCapture();
     func();
-    const auto& capture = Memory::Profiler::StopCapture();
+    const auto& capture = Profiler::StopCapture();
 
+    // Log memory usage.
     state.counters["cpuMem"] = capture.allocatedCpuMemory;
     state.counters["cudaMem"] = capture.allocatedCudaMemory;
     state.counters["unifiedMem"] = capture.allocatedUnifiedMemory;
 
-    return func();
+    // Construct without capturing.
+    func();
 }
 
 }  // namespace Blade

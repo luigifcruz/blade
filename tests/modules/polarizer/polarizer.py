@@ -1,69 +1,66 @@
-import time
-import blade as bl
 import numpy as np
-from random import random
+import blade as bl
 
-class Test(bl.Pipeline):
-    polarizer: bl.Polarizer
+@bl.runner
+class Pipeline:
+    def __init__(self, shape, config):
+        self.input.buf = bl.array_tensor(shape, dtype=bl.cf32)
+        self.output.buf = bl.array_tensor(shape, dtype=bl.cf32)
 
-    def __init__(self, input_shape, config: bl.Polarizer.Config):
-        bl.Pipeline.__init__(self)
-        self.input = bl.cuda.cf32.ArrayTensor(input_shape)
-        _config = config
-        _input = bl.Polarizer.Input(self.input)
-        self.polarizer = self.connect(_config, _input)
+        self.module.polarizer = bl.module(bl.polarizer, config, self.input.buf)
 
-    def run(self, input: bl.cpu.cf32,
-                  output: bl.cpu.cf32):
-        self.copy(self.polarizer.input(), input)
-        self.compute()
-        self.copy(output, self.polarizer.output())
-        self.synchronize()
+    def transfer_in(self, buf):
+        self.copy(self.input.buf, buf)
+
+    def transfer_out(self, buf):
+        self.copy(self.output.buf, self.module.polarizer.get_output())
+        self.copy(buf, self.output.buf)
 
 
 if __name__ == "__main__":
     shape = (2, 192, 8750, 2)
 
+    config = {
+        'inputPolarization': bl.pol.xy,
+        'outputPolarization': bl.pol.lr,
+    }
+
+    host_input = bl.array_tensor(shape, dtype=bl.cf32, device=bl.cpu)
+    host_output = bl.array_tensor(shape, dtype=bl.cf32, device=bl.cpu)
+
+    bl_input = host_input.as_numpy()
+    bl_output = host_output.as_numpy()
+
+    np.copyto(bl_input, np.random.random(size=shape) + 1j*np.random.random(size=shape))
+
     #
     # Blade Implementation
     #
 
-    config = bl.Polarizer.Config(
-        mode = bl.Polarizer.Mode.XY2LR,
-        block_size = 512
-    )
-
-    mod = Test(shape, config)
-
-    bl_input_raw = bl.cpu.cf32.ArrayTensor(shape)
-    bl_output_raw = bl.cpu.cf32.ArrayTensor(shape)
-
-    bl_input = bl_input_raw.asnumpy()
-    bl_output = bl_output_raw.asnumpy()
-    np.copyto(bl_input, np.random.random(size=shape) + 1j*np.random.random(size=shape))
-
-    start = time.time()
-    mod.run(bl_input_raw, bl_output_raw)
-    print(f"Detection with Blade took {time.time()-start:.2f} s.")
+    pipeline = Pipeline(shape, config)
+    pipeline(host_input, host_output)
 
     #
     # Python Implementation
     #
 
-    py_input = bl_input.flatten().view(np.complex64)
-    py_output = np.zeros(len(bl_input_raw.shape()), dtype=np.complex64)
-
-    start = time.time()
-    py_output[0::2] = py_input[0::2] + 1j * py_input[1::2]
-    py_output[1::2] = py_input[0::2] - 1j * py_input[1::2]
-    print(f"Detection with Python took {time.time()-start:.2f} s.")
-
-    py_output = py_output.view(np.complex64)
-    py_output = py_output.reshape(shape)
+    py_output = np.zeros(shape, dtype=np.complex64)
+    py_output[..., 0] = bl_input[..., 0] + 1j * bl_input[..., 1]
+    py_output[..., 1] = bl_input[..., 0] - 1j * bl_input[..., 1]
 
     #
     # Compare Results
     #
+
+    print("Top 10 differences:")
+    diff = np.abs(bl_output - py_output)
+    diff = diff.flatten()
+    diff.sort()
+    print(diff[-10:])
+    print("")
+    print("Average difference: ", np.mean(diff))
+    print("Maximum difference: ", np.max(diff))
+    print("Minimum difference: ", np.min(diff))
 
     assert np.allclose(bl_output, py_output, rtol=0.1)
     print("Test successfully completed!")

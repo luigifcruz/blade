@@ -8,7 +8,7 @@ namespace Blade::Modules::Bfr5 {
 
 Reader::Reader(const Config& config,
                const Input& input,
-               const cudaStream_t& stream) 
+               const Stream& stream) 
         : Module(bfr5_program),
           config(config),
           input(input) {
@@ -27,7 +27,7 @@ Reader::Reader(const Config& config,
     antennaPositions.resize(getTotalShape().numberOfAspects());
     antennaCalibrations = ArrayTensor<Device::CPU, CF64>(getAntennaCalibrationsShape());
 
-    if (Memory::Profiler::IsCapturing()) {
+    if (Profiler::IsCapturing()) {
         BL_WARN("Capturing: Early setup return.");
         return;
     }
