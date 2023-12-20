@@ -22,7 +22,7 @@ jobs:
         run: docker build . --no-cache --file Dockerfile --tag blade:latest
 
       - name: Run Python build test.
-        run: docker run --gpus all --rm blade bash -c "cd blade && pip install -v . && python -c 'import blade'"
+        run: docker run --gpus all --rm blade bash -c "cd blade && pip install -v . && python3 -c 'import blade'"
 
       - name: Run ninja test.
         run: docker run --gpus all --rm blade bash -c "cd blade/build && ninja test"
