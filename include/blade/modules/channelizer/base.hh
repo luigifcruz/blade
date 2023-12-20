@@ -7,8 +7,6 @@
 #include "blade/base.hh"
 #include "blade/module.hh"
 
-#include "blade/modules/channelizer/callback.hh"
-
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
@@ -75,7 +73,6 @@ class BLADE_API Channelizer : public Module {
 
     cufftHandle plan;
     std::string kernel_key;
-    std::unique_ptr<Internal::Callback> callback;
 
     // Expected Shape
 

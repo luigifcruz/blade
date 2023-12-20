@@ -46,5 +46,15 @@ if cfg_lst.get('BLADE_MODULE_CHANNELIZER', false)
             timeout: 0,
             env: 'PYTHONPATH=@0@'.format(py_build_path),
         )
+
+        test(
+            'test-modules-channelizer-fail-case-3',
+            py,
+            args: [files('advanced.py'), '8', '128', '1025', '4', '1025'],
+            is_parallel: false,
+            should_fail: true,
+            timeout: 0,
+            env: 'PYTHONPATH=@0@'.format(py_build_path),
+        )
     endif
 endif

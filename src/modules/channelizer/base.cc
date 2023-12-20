@@ -34,6 +34,13 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
+    if (getInputBuffer().shape().numberOfPolarizations() != 2 and 
+        getInputBuffer().shape().numberOfPolarizations() != 1) {
+        BL_FATAL("Number of polarizations ({}) of the input should be one or two.", 
+                 getInputBuffer().shape().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+
     // Link input with output (in-place operation).
     BL_CHECK_THROW(Link(output.buf, input.buf, getOutputBufferShape()));
 
@@ -85,8 +92,24 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
         BL_FATAL("Failed to set cuFFT stream.");
     });
 
-    // Install callbacks.
-    callback = std::make_unique<Internal::Callback>(plan, input.buf.shape().numberOfPolarizations());
+    BL_CHECK_THROW(
+        createKernel(
+            // Kernel name.
+            "main",
+            // Kernel function key.
+            "pre_channelizer",
+            // Kernel grid & block size.
+            PadGridSize(
+                getInputBuffer().size(),
+                config.blockSize
+            ),
+            config.blockSize,
+            // Kernel templates.
+            getInputBuffer().shape().numberOfPolarizations() * 2,
+            getInputBuffer().shape().numberOfPolarizations(),
+            getInputBuffer().size()
+        )
+    );
 }
 
 template<typename IT, typename OT>
@@ -101,6 +124,8 @@ Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& s
     if (config.rate == 1) {
         return Result::SUCCESS;
     }
+
+    BL_CHECK(this->runKernel("main", stream, input.buf.data(), output.buf.data()));
 
     cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
     cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 

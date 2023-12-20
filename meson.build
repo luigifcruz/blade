@@ -20,11 +20,8 @@ cfg_lst = configuration_data(
 )
 src_lst = []
 dep_lst = [
-    dependency('cuda', version: '>=11', modules: ['nvrtc', 'cudart', 'cuda', 'culibos']),
+    dependency('cuda', version: '>=11', modules: ['nvrtc', 'cuda', 'culibos', 'cudart', 'cufft']),
     dependency('fmt', version: '>=9.1', fallback: 'fmt', default_options: ['default_library=static']),
-]
-static_dep_lst = [
-    dependency('cuda', version: '>=11', modules: ['cufft_static']),
 ]
 inc_lst = [
     include_directories('include'),
@@ -42,9 +39,8 @@ lib_blade = library(
     'blade',
     src_lst,
     include_directories: inc_lst,
-    dependencies: dep_lst + static_dep_lst,
+    dependencies: dep_lst,
     gnu_symbol_visibility: 'hidden',
-    cuda_args: ['-dc'],
     install: not is_static,
 )
 

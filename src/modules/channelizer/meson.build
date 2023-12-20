@@ -9,7 +9,6 @@ endforeach
 if all_deps_found
     src_lst += files([
         'base.cc',
-        'callback.cu',
     ])
 
     jit_lst += files([
