@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703111741561,
+  "lastUpdate": 1703112400819,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -224,6 +224,234 @@ window.BENCHMARK_DATA = {
             "value": 138356.99352977774,
             "unit": "ns/iter",
             "extra": "iterations: 4592\ncpu: 145227.46341463478 ns\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "066482a56dd5a89ebc6c8c75ae98a788b5dee039",
+          "message": "Merge pull request #60 from luigifcruz/dev\n\n[V1.0] Development Work",
+          "timestamp": "2023-12-20T19:37:32-03:00",
+          "tree_id": "7facbc7f9032132eb8833d0aa465b7fa4e9c4971",
+          "url": "https://github.com/luigifcruz/blade/commit/066482a56dd5a89ebc6c8c75ae98a788b5dee039"
+        },
+        "date": 1703112399625,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::NOOP>/1048576/manual_time",
+            "value": 6016.413413353688,
+            "unit": "ns/iter",
+            "extra": "iterations: 103442\ncpu: 12740.598006612403 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::NOOP>/2097152/manual_time",
+            "value": 8674.478854472613,
+            "unit": "ns/iter",
+            "extra": "iterations: 81718\ncpu: 15601.020007831812 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::ADD>/1048576/manual_time",
+            "value": 37862.29002851533,
+            "unit": "ns/iter",
+            "extra": "iterations: 18369\ncpu: 44869.77456584463 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::ADD>/2097152/manual_time",
+            "value": 71135.50434031627,
+            "unit": "ns/iter",
+            "extra": "iterations: 8693\ncpu: 78125.72713677667 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::ADD>/1048576/manual_time",
+            "value": 71532.20991543523,
+            "unit": "ns/iter",
+            "extra": "iterations: 8765\ncpu: 78574.27027952082 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::ADD>/2097152/manual_time",
+            "value": 138538.47311765933,
+            "unit": "ns/iter",
+            "extra": "iterations: 4588\ncpu: 145540.36442894506 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::ADD>/1048576/manual_time",
+            "value": 135259.8252232883,
+            "unit": "ns/iter",
+            "extra": "iterations: 5047\ncpu: 142275.25678620973 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::ADD>/2097152/manual_time",
+            "value": 271049.01788808964,
+            "unit": "ns/iter",
+            "extra": "iterations: 2503\ncpu: 277953.14103076287 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::ADD>/1048576/manual_time",
+            "value": 71648.45964343855,
+            "unit": "ns/iter",
+            "extra": "iterations: 8730\ncpu: 78678.65395188986 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::ADD>/2097152/manual_time",
+            "value": 138378.13971708293,
+            "unit": "ns/iter",
+            "extra": "iterations: 4578\ncpu: 145388.60659676685 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::SUB>/1048576/manual_time",
+            "value": 37910.47093899898,
+            "unit": "ns/iter",
+            "extra": "iterations: 18115\ncpu: 44879.32354402434 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::SUB>/2097152/manual_time",
+            "value": 71143.09582013133,
+            "unit": "ns/iter",
+            "extra": "iterations: 8800\ncpu: 78160.79204545452 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::SUB>/1048576/manual_time",
+            "value": 71583.27945351558,
+            "unit": "ns/iter",
+            "extra": "iterations: 8776\ncpu: 78570.83397903363 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::SUB>/2097152/manual_time",
+            "value": 138172.3774595431,
+            "unit": "ns/iter",
+            "extra": "iterations: 4588\ncpu: 145178.84677419357 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::SUB>/1048576/manual_time",
+            "value": 135517.3993901482,
+            "unit": "ns/iter",
+            "extra": "iterations: 4718\ncpu: 142531.89359898283 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::SUB>/2097152/manual_time",
+            "value": 270606.56733528076,
+            "unit": "ns/iter",
+            "extra": "iterations: 2503\ncpu: 277548.7419097085 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::SUB>/1048576/manual_time",
+            "value": 71627.01136286672,
+            "unit": "ns/iter",
+            "extra": "iterations: 8731\ncpu: 78624.3704043067 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::SUB>/2097152/manual_time",
+            "value": 138481.12699438448,
+            "unit": "ns/iter",
+            "extra": "iterations: 4575\ncpu: 145512.9357377051 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::MULT>/1048576/manual_time",
+            "value": 37849.96597906471,
+            "unit": "ns/iter",
+            "extra": "iterations: 18107\ncpu: 44881.48820898003 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::MULT>/2097152/manual_time",
+            "value": 71164.4150151128,
+            "unit": "ns/iter",
+            "extra": "iterations: 8816\ncpu: 78156.28516333942 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::MULT>/1048576/manual_time",
+            "value": 71567.44191709552,
+            "unit": "ns/iter",
+            "extra": "iterations: 8808\ncpu: 78579.92177565853 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::MULT>/2097152/manual_time",
+            "value": 138223.69349658414,
+            "unit": "ns/iter",
+            "extra": "iterations: 4583\ncpu: 145228.0931704122 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::MULT>/1048576/manual_time",
+            "value": 135540.0081495373,
+            "unit": "ns/iter",
+            "extra": "iterations: 4711\ncpu: 142582.98514115898 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::MULT>/2097152/manual_time",
+            "value": 270795.745934417,
+            "unit": "ns/iter",
+            "extra": "iterations: 2502\ncpu: 277713.2505995205 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::MULT>/1048576/manual_time",
+            "value": 71651.42252804496,
+            "unit": "ns/iter",
+            "extra": "iterations: 8727\ncpu: 78694.43657614289 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::MULT>/2097152/manual_time",
+            "value": 138401.28312493148,
+            "unit": "ns/iter",
+            "extra": "iterations: 4579\ncpu: 145338.68552085565 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::DIV>/1048576/manual_time",
+            "value": 37844.456720708964,
+            "unit": "ns/iter",
+            "extra": "iterations: 18361\ncpu: 44821.602309242495 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F16, ArithmeticOp::DIV>/2097152/manual_time",
+            "value": 71074.09541892304,
+            "unit": "ns/iter",
+            "extra": "iterations: 8817\ncpu: 78062.53498922514 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::DIV>/1048576/manual_time",
+            "value": 71594.71933895934,
+            "unit": "ns/iter",
+            "extra": "iterations: 8733\ncpu: 78551.6213214243 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F32, ArithmeticOp::DIV>/2097152/manual_time",
+            "value": 138307.57145339224,
+            "unit": "ns/iter",
+            "extra": "iterations: 4584\ncpu: 145321.96596858697 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::DIV>/1048576/manual_time",
+            "value": 147706.02708973092,
+            "unit": "ns/iter",
+            "extra": "iterations: 4360\ncpu: 154701.09747706394 ns\nthreads: 1"
+          },
+          {
+            "name": "OpsComplexKernelBenchmark<F64, ArithmeticOp::DIV>/2097152/manual_time",
+            "value": 294086.9713553589,
+            "unit": "ns/iter",
+            "extra": "iterations: 2305\ncpu: 301123.3375271139 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::DIV>/1048576/manual_time",
+            "value": 71664.28803305003,
+            "unit": "ns/iter",
+            "extra": "iterations: 9378\ncpu: 78665.05854126651 ns\nthreads: 1"
+          },
+          {
+            "name": "CuComplexKernelBenchmark<ArithmeticOp::DIV>/2097152/manual_time",
+            "value": 138401.78179628876,
+            "unit": "ns/iter",
+            "extra": "iterations: 4572\ncpu: 145416.55730533705 ns\nthreads: 1"
           }
         ]
       }
