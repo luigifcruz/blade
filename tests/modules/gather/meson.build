@@ -11,7 +11,6 @@ if cfg_lst.get('BLADE_MODULE_GATHER', false)
         )
 
         # VLA-like accumulation.
-        # TODO: Check this value.
         test(
             'test-modules-gather-vla',
             py,
