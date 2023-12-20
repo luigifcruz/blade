@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1703113422296,
+  "lastUpdate": 1703113483237,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -994,6 +994,48 @@ window.BENCHMARK_DATA = {
             "value": 11.008572763671875,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2817.935093999999 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "066482a56dd5a89ebc6c8c75ae98a788b5dee039",
+          "message": "Merge pull request #60 from luigifcruz/dev\n\n[V1.0] Development Work",
+          "timestamp": "2023-12-20T19:37:32-03:00",
+          "tree_id": "7facbc7f9032132eb8833d0aa465b7fa4e9c4971",
+          "url": "https://github.com/luigifcruz/blade/commit/066482a56dd5a89ebc6c8c75ae98a788b5dee039"
+        },
+        "date": 1703113481973,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.36511054296875,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3165.1257434999998 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 88.25702022265625,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 22308.408436 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.008122259765624,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2817.923417500001 ms\nthreads: 1"
           }
         ]
       }
