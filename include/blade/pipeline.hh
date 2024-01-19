@@ -1,7 +1,6 @@
 #ifndef BLADE_PIPELINE_HH
 #define BLADE_PIPELINE_HH
 
-#include <span>
 #include <string>
 #include <memory>
 #include <vector>

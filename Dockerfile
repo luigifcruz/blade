@@ -4,9 +4,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt update --fix-missing
 
-COPY . /blade
-WORKDIR /blade
-
 #
 # This is copy-pasta from the README.md file.
 # Update this as the README.md file changes.
@@ -20,6 +17,9 @@ RUN apt install -y libbenchmark-dev libgtest-dev
 RUN python3 -m pip install numpy astropy pandas
 
 ###
+
+COPY . /blade
+WORKDIR /blade
 
 RUN rm -fr build
 RUN git submodule update --init --recursive
