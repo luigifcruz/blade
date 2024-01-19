@@ -38,7 +38,7 @@ All frequency values are in Hertz and all angles are in radians!
 Don't worry, it is not difficult! Follow the instructions below to compile it on your system. Keep in mind that BLADE requires a Linux system with an NVIDIA Graphics Card. A Docker image is also available for building and testing BLADE. To build it, run `docker build -t blade .` and to run it, run `docker run --rm -it --gpus all blade bash`. The Docker image is based on Ubuntu 22.04 and contains all the dependencies required to build and test BLADE. The [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) is required to run this image.
 
 ### Step 1: Dependencies
-BLADE requires a C++20 compiler (>GCC-10 or >Clang 13.0), the [Meson](https://mesonbuild.com) build system, [Ninja Build](https://ninja-build.org), and [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit). Follow the instructions below to install the dependencies and build BLADE from source.
+BLADE requires a C++20 compiler (>GCC-11 or >Clang 14.0), the [Meson](https://mesonbuild.com) build system, [Ninja Build](https://ninja-build.org), and [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (CUDA >11.7). Follow the instructions below to install the dependencies and build BLADE from source.
 
 #### Ubuntu 22.04
 Core dependencies (you probably already have them).
