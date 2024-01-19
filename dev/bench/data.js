@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705630852463,
+  "lastUpdate": 1705630913056,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -2548,6 +2548,48 @@ window.BENCHMARK_DATA = {
             "value": 11.025843082031251,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2822.464824499999 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df5f9185646fef36256e141c0a7818c6b931cba3",
+          "message": "Merge pull request #66 from luigifcruz/v1.0.1\n\nV1.0.1\r\n\r\n- Remove unnecessary <span> include. \r\n- Change workdir place in Dockerfile.",
+          "timestamp": "2024-01-18T22:22:46-03:00",
+          "tree_id": "169d76a8efa9b55fe86bb795751030eeb8bcd7a6",
+          "url": "https://github.com/luigifcruz/blade/commit/df5f9185646fef36256e141c0a7818c6b931cba3"
+        },
+        "date": 1705630912012,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.382897142578125,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3165.4459144999996 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 88.17277755078125,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 22275.5423785 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.026673548828127,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2822.709089 ms\nthreads: 1"
           }
         ]
       }
