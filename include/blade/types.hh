@@ -3,7 +3,6 @@
 
 #include <cuda_runtime.h>
 
-#include <span>
 #include <complex>
 
 #include "blade_config.hh"

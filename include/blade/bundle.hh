@@ -1,7 +1,6 @@
 #ifndef BLADE_BUNDLE_HH
 #define BLADE_BUNDLE_HH
 
-#include <span>
 #include <string>
 #include <memory>
 #include <vector>
