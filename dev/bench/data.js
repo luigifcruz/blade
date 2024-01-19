@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705627558240,
+  "lastUpdate": 1705627619308,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -1516,6 +1516,48 @@ window.BENCHMARK_DATA = {
             "value": 11.008122259765624,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2817.923417500001 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1946561f4d860df2ae1c23e94a80c1d1d3c45a91",
+          "message": "Add minimal CUDA version.",
+          "timestamp": "2024-01-18T21:59:18-03:00",
+          "tree_id": "60dea43b99c4d915f05924c78f1e961afe5376ca",
+          "url": "https://github.com/luigifcruz/blade/commit/1946561f4d860df2ae1c23e94a80c1d1d3c45a91"
+        },
+        "date": 1705627617742,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.358883833984375,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3159.3790299999996 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 88.23610683398438,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 22284.2425295 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.011184380859376,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2818.744893000002 ms\nthreads: 1"
           }
         ]
       }
