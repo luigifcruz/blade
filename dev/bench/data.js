@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1705629227992,
+  "lastUpdate": 1705629288684,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -2030,6 +2030,44 @@ window.BENCHMARK_DATA = {
             "value": 11.011184380859376,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2818.744893000002 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "luigifcruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "name": "luigifcruz",
+            "username": "luigifcruz"
+          },
+          "id": "9e89758e3f332706120f1593390ba6ee5e2b0b81",
+          "message": "V1.0.1",
+          "timestamp": "2024-01-18T16:19:59Z",
+          "url": "https://github.com/luigifcruz/blade/pull/66/commits/9e89758e3f332706120f1593390ba6ee5e2b0b81"
+        },
+        "date": 1705629287601,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.367783230468751,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3165.8476505 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 88.44291044921874,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 22368.268203 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.025843082031251,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2822.464824499999 ms\nthreads: 1"
           }
         ]
       }
