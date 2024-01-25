@@ -1,7 +1,7 @@
 [build-system]
 requires = [
   "numpy",
-  "meson >= 1.0.0",
+  "meson >= 1.0.1",
   "meson-python >= 0.14.0",
 ]
 build-backend = "mesonpy"
