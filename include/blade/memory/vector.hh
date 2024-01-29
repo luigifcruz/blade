@@ -39,9 +39,7 @@ struct Vector {
                _unified(unified) {
         BL_TRACE("Vector allocated and created: {}", shape);
 
-        BL_CUDA_CHECK_THROW(cudaMallocManaged(&_refs, sizeof(U64)), [&]{
-            BL_FATAL("Failed to allocate managed CUDA memory: {}", err);
-        });
+        _refs = new U64;
         *_refs = 1;
 
 #ifndef __CUDA_ARCH__
@@ -229,9 +227,7 @@ struct Vector {
         if (--(*_refs) == 0) {
             BL_TRACE("Deleting vector.");
 
-            if (cudaFree(_refs) != cudaSuccess) {
-                BL_FATAL("Failed to deallocate CUDA memory.");
-            }
+            delete _refs;
 
 #ifndef __CUDA_ARCH__
             if (Profiler::IsCapturing()) {
