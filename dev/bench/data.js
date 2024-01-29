@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706559268918,
+  "lastUpdate": 1706559320213,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -3070,6 +3070,48 @@ window.BENCHMARK_DATA = {
             "value": 11.026673548828127,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2822.709089 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "code@radonn.co.za",
+            "name": "Ross Donnachie",
+            "username": "radonnachie"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b15b4b8a085107e5ab04f24504a4b8f77ac30a16",
+          "message": "*^ memory/vector._refs host pointer (#67)\n\n* *^ memory/vector._refs host pointer\r\nfixing seg-faults seen under WSL2 docker runs by @radonnachie\r\n\r\n* @ minor version bump",
+          "timestamp": "2024-01-29T16:45:01-03:00",
+          "tree_id": "f69c2306cac2f3c40049af17abf65129c4c0bf2d",
+          "url": "https://github.com/luigifcruz/blade/commit/b15b4b8a085107e5ab04f24504a4b8f77ac30a16"
+        },
+        "date": 1706559318937,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.365083328124998,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3160.8362165 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 69.1484728515625,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 17700.744611 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.023394400390625,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2821.695034000001 ms\nthreads: 1"
           }
         ]
       }
