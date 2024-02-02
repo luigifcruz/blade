@@ -7,7 +7,7 @@ jitify_comp = executable(
 
 jitify_command_opts = [
     jitify_comp,
-    '--std=c++20',
+    '--std=c++17',
     '-I/usr/cuda/include',
     '-I/usr/local/cuda/include',
     '-I/opt/cuda/include',
