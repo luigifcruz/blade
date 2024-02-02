@@ -6,6 +6,7 @@
 #include <complex>
 #include <cstdlib>
 
+#include <cuda.h>
 #include <cuda_fp16.h>
 
 #include "blade/logger.hh"
