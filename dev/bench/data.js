@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1706918999746,
+  "lastUpdate": 1706919056295,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -3592,6 +3592,48 @@ window.BENCHMARK_DATA = {
             "value": 11.023394400390625,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2821.695034000001 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca24dbcf45a5ba9e8f4420dfd64ffb6f47c3bd2a",
+          "message": "Merge pull request #68 from luigifcruz/v1.0.3\n\nBetter compatibility with older CUDA versions.",
+          "timestamp": "2024-02-02T20:32:54-03:00",
+          "tree_id": "2c50ecd650050f409cde9589479bcabb763cc4e9",
+          "url": "https://github.com/luigifcruz/blade/commit/ca24dbcf45a5ba9e8f4420dfd64ffb6f47c3bd2a"
+        },
+        "date": 1706919055219,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.3638762109375,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3160.138083 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 79.51469090429688,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 20282.6843655 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.022379666015626,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2821.496013000001 ms\nthreads: 1"
           }
         ]
       }
