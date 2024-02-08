@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707420796682,
+  "lastUpdate": 1707420847079,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -4114,6 +4114,48 @@ window.BENCHMARK_DATA = {
             "value": 11.022379666015626,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2821.496013000001 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0269e06ca01d02d52b8269b075a2d1605c4b5bae",
+          "message": "[V1.0.4] Replace `fmtlib` dependency with internal headers. (#69)\n\n* Add internal fmtlib.\r\n\r\n* Bump version.",
+          "timestamp": "2024-02-08T16:07:09-03:00",
+          "tree_id": "1a69d8fb1ec1676b6c40b73b563e7d6231b9ca03",
+          "url": "https://github.com/luigifcruz/blade/commit/0269e06ca01d02d52b8269b075a2d1605c4b5bae"
+        },
+        "date": 1707420846214,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.341547935546874,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3154.4371014999997 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 68.86659673828125,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 17622.104323000003 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.032935142578125,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2824.3073900000013 ms\nthreads: 1"
           }
         ]
       }
