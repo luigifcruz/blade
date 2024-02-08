@@ -17,7 +17,7 @@ Writer<IT>::Writer(const Config& config,
           writeCounter(0),
           fileDescriptor(0) {
     // Open output file.
-    auto filepath = fmt::format("{}.{:04}.raw", this->config.filepath, this->fileId % 10000);
+    auto filepath = bl::fmt::format("{}.{:04}.raw", this->config.filepath, this->fileId % 10000);
     this->fileDescriptor = open(filepath.c_str(), O_WRONLY | O_CREAT | (this->config.directio ? O_DIRECT : 0), 0644);
     if (this->fileDescriptor < 1) {
         BL_FATAL("Could not open '{}': {}\n", filepath, this->fileDescriptor);

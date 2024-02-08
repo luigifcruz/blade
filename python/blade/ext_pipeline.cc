@@ -24,7 +24,7 @@ NB_MODULE(_pipeline_impl, m) {
         .def("add_module", &Pipeline::addModule)
         .def("will_output", &Pipeline::willOutput)
         .def("__repr__", [](Pipeline& obj){
-            return fmt::format("Pipeline(current_step_count={}, steps_per_cycle={}, lifetime_cycles={})",
+            return bl::fmt::format("Pipeline(current_step_count={}, steps_per_cycle={}, lifetime_cycles={})",
                             obj.computeCurrentStepCount(), obj.computeStepsPerCycle(), obj.computeLifetimeCycles());
         });
 }

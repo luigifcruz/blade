@@ -33,7 +33,7 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
                 obj[index] = val;
             })
             .def("__repr__", [](ClassType& obj){
-                return fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
+                return bl::fmt::format("Vector({}, dtype={}, device={}, unified={}, hash={})",
                                    obj.shape(), obj.type(), obj.device(), obj.unified(), obj.hash());
             })
             .def_prop_ro("device", [](ClassType& obj){
@@ -49,7 +49,7 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
                 return obj.shape();
             }, nb::rv_policy::reference);
 
-    nb::class_<Duet<ClassType>>(m, fmt::format("{}_duet", name).c_str())
+    nb::class_<Duet<ClassType>>(m, bl::fmt::format("{}_duet", name).c_str())
         .def(nb::init<const typename ShapeType::Type&, const bool&>(), "shape"_a, "unified"_a = false)
         .def("set", &Duet<ClassType>::set)
         .def("at", &Duet<ClassType>::at, nb::rv_policy::reference)
@@ -127,7 +127,7 @@ NB_MODULE(_mem_impl, m) {
             return obj[index];
         }, nb::rv_policy::reference)
         .def("__repr__", [](ArrayShape& obj){
-            return fmt::format("ArrayShape(shape={})", obj);
+            return bl::fmt::format("ArrayShape(shape={})", obj);
         })
         .def("__len__", [](ArrayShape& obj){
             return obj.size();
@@ -155,7 +155,7 @@ NB_MODULE(_mem_impl, m) {
             return obj[index];
         }, nb::rv_policy::reference)
         .def("__repr__", [](PhasorShape& obj){
-            return fmt::format("PhasorShape(shape={})", obj);
+            return bl::fmt::format("PhasorShape(shape={})", obj);
         })
         .def("__len__", [](PhasorShape& obj){
             return obj.size();
@@ -168,7 +168,7 @@ NB_MODULE(_mem_impl, m) {
             return obj[index];
         }, nb::rv_policy::reference)
         .def("__repr__", [](VectorShape& obj){
-            return fmt::format("VectorShape(shape={})", obj);
+            return bl::fmt::format("VectorShape(shape={})", obj);
         })
         .def("__len__", [](VectorShape& obj){
             return obj.size();
@@ -187,7 +187,7 @@ NB_MODULE(_mem_impl, m) {
             return obj[index];
         }, nb::rv_policy::reference)
         .def("__repr__", [](DelayShape& obj){
-            return fmt::format("DelayShape(shape={})", obj);
+            return bl::fmt::format("DelayShape(shape={})", obj);
         })
         .def("__len__", [](DelayShape& obj){
             return obj.size();

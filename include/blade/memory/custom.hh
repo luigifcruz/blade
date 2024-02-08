@@ -40,11 +40,11 @@ struct ArrayShape : public Shape<4> {
  private:
 #ifndef __CUDA_ARCH__
     friend std::ostream& operator<<(std::ostream& os, const ArrayShape& shape) {
-        return os << fmt::format("[A: {}, F: {}, T: {}, P: {}]", 
-                                   shape.numberOfAspects(),
-                                   shape.numberOfFrequencyChannels(),
-                                   shape.numberOfTimeSamples(),
-                                   shape.numberOfPolarizations()); 
+        return os << bl::fmt::format("[A: {}, F: {}, T: {}, P: {}]", 
+                                     shape.numberOfAspects(),
+                                     shape.numberOfFrequencyChannels(),
+                                     shape.numberOfTimeSamples(),
+                                     shape.numberOfPolarizations()); 
     }
 #endif
 };
@@ -89,12 +89,12 @@ struct PhasorShape : public Shape<5> {
  private:
 #ifndef __CUDA_ARCH__
     friend std::ostream& operator<<(std::ostream& os, const PhasorShape& shape) {
-        return os << fmt::format("[B: {}, A: {}, F: {}, T: {}, P: {}]", 
-                                   shape.numberOfBeams(), 
-                                   shape.numberOfAntennas(),
-                                   shape.numberOfFrequencyChannels(),
-                                   shape.numberOfTimeSamples(),
-                                   shape.numberOfPolarizations()); 
+        return os << bl::fmt::format("[B: {}, A: {}, F: {}, T: {}, P: {}]", 
+                                     shape.numberOfBeams(), 
+                                     shape.numberOfAntennas(),
+                                     shape.numberOfFrequencyChannels(),
+                                     shape.numberOfTimeSamples(),
+                                     shape.numberOfPolarizations()); 
     }
 #endif
 };
@@ -127,9 +127,9 @@ struct DelayShape : public Shape<2> {
  private:
 #ifndef __CUDA_ARCH__
     friend std::ostream& operator<<(std::ostream& os, const DelayShape& shape) {
-        return os << fmt::format("[B: {}, A: {}]", 
-                                   shape.numberOfBeams(), 
-                                   shape.numberOfAntennas()); 
+        return os << bl::fmt::format("[B: {}, A: {}]", 
+                                     shape.numberOfBeams(), 
+                                     shape.numberOfAntennas()); 
     }
 #endif
 };
@@ -154,7 +154,7 @@ struct VectorShape : public Shape<1> {
  private:
 #ifndef __CUDA_ARCH__
     friend std::ostream& operator<<(std::ostream& os, const VectorShape& shape) {
-        return os << fmt::format("[{}]", shape[0]);
+        return os << bl::fmt::format("[{}]", shape[0]);
     }
 #endif
 };
@@ -165,10 +165,10 @@ using Tensor = Vector<DeviceId, DataType, VectorShape>;
 }  // namespace Blade
 
 #ifndef __CUDA_ARCH__
-template <> struct fmt::formatter<Blade::ArrayShape> : ostream_formatter {};
-template <> struct fmt::formatter<Blade::PhasorShape> : ostream_formatter {};
-template <> struct fmt::formatter<Blade::DelayShape> : ostream_formatter {};
-template <> struct fmt::formatter<Blade::VectorShape> : ostream_formatter {};
+template <> struct bl::fmt::formatter<Blade::ArrayShape> : ostream_formatter {};
+template <> struct bl::fmt::formatter<Blade::PhasorShape> : ostream_formatter {};
+template <> struct bl::fmt::formatter<Blade::DelayShape> : ostream_formatter {};
+template <> struct bl::fmt::formatter<Blade::VectorShape> : ostream_formatter {};
 #endif 
 
 #endif

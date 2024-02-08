@@ -68,7 +68,7 @@ NB_MODULE(_runner_impl, m) {
             .def("dequeue", &Runner::dequeue,
                  "callback"_a)
             .def("__repr__", [](Runner& obj){
-                return fmt::format("Runner()");
+                return bl::fmt::format("Runner()");
             });
 
     NB_SUBMODULE_COPY(mm);

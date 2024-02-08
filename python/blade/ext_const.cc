@@ -25,7 +25,7 @@ NB_MODULE(_const_impl, m) {
             stream = &_stream;
         })
         .def("__repr__", [](Stream& obj){
-            return fmt::format("Stream()");
+            return bl::fmt::format("Stream()");
         });
 
     nb::enum_<POL>(m, "pol")
@@ -47,7 +47,7 @@ NB_MODULE(_const_impl, m) {
         .def_rw("y", &XYZ::Y)
         .def_rw("z", &XYZ::Z)
         .def("__repr__", [](XYZ& obj){
-            return fmt::format("XYZ(x={}, y={}, z={})", obj.X, obj.Y, obj.Z);
+            return bl::fmt::format("XYZ(x={}, y={}, z={})", obj.X, obj.Y, obj.Z);
         });
     nb::implicitly_convertible<std::tuple<F64, F64, F64>, XYZ>();
 
@@ -61,7 +61,7 @@ NB_MODULE(_const_impl, m) {
         .def_rw("v", &UVW::V)
         .def_rw("w", &UVW::W)
         .def("__repr__", [](UVW& obj){
-            return fmt::format("UVW(u={}, v={}, w={})", obj.U, obj.V, obj.W);
+            return bl::fmt::format("UVW(u={}, v={}, w={})", obj.U, obj.V, obj.W);
         });
     nb::implicitly_convertible<std::tuple<F64, F64, F64>, UVW>();
 
@@ -75,7 +75,7 @@ NB_MODULE(_const_impl, m) {
         .def_rw("lat", &LLA::LAT)
         .def_rw("alt", &LLA::ALT)
         .def("__repr__", [](LLA& obj){
-            return fmt::format("LLA(lon={}, lat={}, alt={})", obj.LON, obj.LAT, obj.ALT);
+            return bl::fmt::format("LLA(lon={}, lat={}, alt={})", obj.LON, obj.LAT, obj.ALT);
         });
     nb::implicitly_convertible<std::tuple<F64, F64, F64>, LLA>();
 
@@ -88,7 +88,7 @@ NB_MODULE(_const_impl, m) {
         .def_rw("ra", &RA_DEC::RA)
         .def_rw("dec", &RA_DEC::DEC)
         .def("__repr__", [](RA_DEC& obj){
-            return fmt::format("RA_DEC(ra={}, dec={})", obj.RA, obj.DEC);
+            return bl::fmt::format("RA_DEC(ra={}, dec={})", obj.RA, obj.DEC);
         });
     nb::implicitly_convertible<std::tuple<F64, F64>, RA_DEC>();
 
@@ -101,7 +101,7 @@ NB_MODULE(_const_impl, m) {
         .def_rw("ha", &HA_DEC::HA)
         .def_rw("dec", &HA_DEC::DEC)
         .def("__repr__", [](HA_DEC& obj){
-            return fmt::format("HA_DEC(ha={}, dec={})", obj.HA, obj.DEC);
+            return bl::fmt::format("HA_DEC(ha={}, dec={})", obj.HA, obj.DEC);
         });
     nb::implicitly_convertible<std::tuple<F64, F64>, HA_DEC>();
 }

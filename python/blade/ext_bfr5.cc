@@ -35,7 +35,7 @@ void NB_SUBMODULE(auto& m, const auto& name) {
         .def("get_beam_coordinates", &Class::getBeamCoordinates, nb::rv_policy::reference)
         .def("get_antenna_calibrations", &Class::getAntennaCalibrations, nb::rv_policy::reference)
         .def("__repr__", [](Class& obj){
-            return fmt::format("Bfr5Reader()");
+            return bl::fmt::format("Bfr5Reader()");
         });
 }
 

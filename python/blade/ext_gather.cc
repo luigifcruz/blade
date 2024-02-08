@@ -42,7 +42,7 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
         .def("get_input", &Class::getInputBuffer, nb::rv_policy::reference)
         .def("get_output", &Class::getOutputBuffer, nb::rv_policy::reference)
         .def("__repr__", [](Class& obj){
-            return fmt::format("Gather()");
+            return bl::fmt::format("Gather()");
         });
 }
 
