@@ -26,13 +26,13 @@ NB_MODULE(_hidden_impl, m) {
     // Add module type.
     nb::class_<Module>(m, "module")
         .def("__repr__", [](Module& obj) {
-            return fmt::format("Module()");
+            return bl::fmt::format("Module()");
         });
 
     // Add bundle type.
     nb::class_<Bundle>(m, "bundle")
         .def("modules", &Bundle::getModules)
         .def("__repr__", [](Bundle& obj) {
-            return fmt::format("Bundle()");
+            return bl::fmt::format("Bundle()");
         });
 }

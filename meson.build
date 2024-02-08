@@ -1,7 +1,7 @@
 project(
     'blade',
     ['cpp', 'c', 'cuda'],
-    version: '1.0.3',
+    version: '1.0.4',
     default_options: [
         'buildtype=release',
         'cpp_std=c++20',
@@ -21,7 +21,6 @@ cfg_lst = configuration_data(
 src_lst = []
 dep_lst = [
     dependency('cuda', version: '>=11', modules: ['nvrtc', 'cuda', 'culibos', 'cudart', 'cufft']),
-    dependency('fmt', version: '>=9.1', fallback: 'fmt', default_options: ['default_library=static']),
 ]
 inc_lst = [
     include_directories('include'),

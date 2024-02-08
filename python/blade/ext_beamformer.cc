@@ -63,7 +63,7 @@ void NB_SUBMODULE_GENERIC(auto& m, const auto& in_name, const auto& out_name) {
         .def("get_input_phasors", &GenericClass::getInputPhasors, nb::rv_policy::reference)
         .def("get_output", &GenericClass::getOutputBuffer, nb::rv_policy::reference)
         .def("__repr__", [](GenericClass& obj){
-            return fmt::format("Beamformer()");
+            return bl::fmt::format("Beamformer()");
         });
 }
 

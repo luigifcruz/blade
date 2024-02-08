@@ -80,7 +80,7 @@ void NB_SUBMODULE_GENERIC(auto& m, const auto& out_name) {
         .def("get_delays", &GenericClass::getOutputDelays, nb::rv_policy::reference)
         .def("get_phasors", &GenericClass::getOutputPhasors, nb::rv_policy::reference)
         .def("__repr__", [](GenericClass& obj){
-            return fmt::format("Phasor()");
+            return bl::fmt::format("Phasor()");
         });
 }
 

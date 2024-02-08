@@ -9,7 +9,7 @@ using namespace Blade;
 void PrintVarDebug(const std::string& varName, const auto& a) {
     BL_DEBUG("{} | data = {}, size = {}, refs = {}, ptr = {}", 
              varName, a.data() != nullptr, a.size(), a.refs(), 
-             fmt::ptr(a.data()));
+             bl::fmt::ptr(a.data()));
 }
 
 int main() {

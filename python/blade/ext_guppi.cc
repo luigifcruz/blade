@@ -50,7 +50,7 @@ void NB_SUBMODULE_READER(auto& m, const auto& name, const auto& typeName) {
         .def("get_channel_start_index", &Class::getChannelStartIndex)
         .def("get_observation_frequency", &Class::getObservationFrequency)
         .def("__repr__", [](Class& obj){
-            return fmt::format("GuppiReader()");
+            return bl::fmt::format("GuppiReader()");
         });
 }
 
@@ -88,7 +88,7 @@ void NB_SUBMODULE_WRITER(auto& m, const auto& name, const auto& typeName) {
             return instance.headerPut(key, value);
         })
         .def("__repr__", [](Class& obj){
-            return fmt::format("GuppiWriter()");
+            return bl::fmt::format("GuppiWriter()");
         });
 }
 

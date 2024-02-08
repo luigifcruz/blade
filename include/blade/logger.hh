@@ -5,27 +5,90 @@
 
 #include <iostream>
 
-#include <fmt/ostream.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/color.h>
-#include <fmt/ranges.h>
+#ifndef BL_FMT_INCLUDED
+#define BL_FMT_INCLUDED
+
+//
+// Create a namespace alias for fmt.
+// This is done to avoid conflicts with other libraries that use fmt.
+// I really don't like this, but it's the least janky way I could think.
+// TODO: Replace this with <format> when it is generally available.
+//
+
+#ifdef FMT_BEGIN_NAMESPACE
+#undef FMT_BEGIN_NAMESPACE
+#undef FMT_END_NAMESPACE
+#endif
+
+#ifdef FMT_USE_INT128
+#undef FMT_USE_INT128
+#endif
+#define FMT_USE_INT128 0
+
+#define FMT_BEGIN_NAMESPACE \
+    namespace bl {         \
+    namespace fmt {         \
+    inline namespace v10 {
+#define FMT_END_NAMESPACE   \
+    }                       \
+    }                       \
+    }
+
+#undef FMT_ARGS_H_
+#undef FMT_CHRONO_H_
+#undef FMT_COLOR_H_
+#undef FMT_COMPILE_H_
+#undef FMT_CORE_H_
+#undef FMT_FORMAT_INL_H_
+#undef FMT_FORMAT_H_
+#undef FMT_OS_H_
+#undef FMT_OSTREAM_H_
+#undef FMT_PRINTF_H_
+#undef FMT_RANGES_H_
+#undef FMT_STD_H_
+#undef FMT_XCHAR_H_
+
+#define FMT_HEADER_ONLY
+#include "blade/utils/fmt/format.h"
+#include "blade/utils/fmt/color.h"
+#include "blade/utils/fmt/ostream.h"
+#include "blade/utils/fmt/ranges.h"
+
+
+#undef FMT_BEGIN_NAMESPACE
+#undef FMT_END_NAMESPACE
+
+#undef FMT_ARGS_H_
+#undef FMT_CHRONO_H_
+#undef FMT_COLOR_H_
+#undef FMT_COMPILE_H_
+#undef FMT_CORE_H_
+#undef FMT_FORMAT_INL_H_
+#undef FMT_FORMAT_H_
+#undef FMT_OS_H_
+#undef FMT_OSTREAM_H_
+#undef FMT_PRINTF_H_
+#undef FMT_RANGES_H_
+#undef FMT_STD_H_
+#undef FMT_XCHAR_H_
+
+#endif  // BL_FMT_INCLUDED
 
 #include "blade_config.hh"
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define BL_LOG_HEAD_DECR fmt::emphasis::bold
-#define BL_LOG_HEAD_NAME fmt::format(BL_LOG_HEAD_DECR, "BLADE ")
-#define BL_LOG_HEAD_FILE fmt::format(BL_LOG_HEAD_DECR, "[{}@{}] ", __FILENAME__, __LINE__)
-#define BL_LOG_HEAD_TRACE fmt::format(BL_LOG_HEAD_DECR, "[TRACE] ")
-#define BL_LOG_HEAD_DEBUG fmt::format(BL_LOG_HEAD_DECR, "[DEBUG] ")
-#define BL_LOG_HEAD_WARN fmt::format(BL_LOG_HEAD_DECR, "[WARN]  ")
-#define BL_LOG_HEAD_INFO fmt::format(BL_LOG_HEAD_DECR, "[INFO]  ")
-#define BL_LOG_HEAD_ERROR fmt::format(BL_LOG_HEAD_DECR, "[ERROR] ")
-#define BL_LOG_HEAD_FATAL fmt::format(BL_LOG_HEAD_DECR, "[FATAL] ")
+#define BL_LOG_HEAD_DECR bl::fmt::emphasis::bold
+#define BL_LOG_HEAD_NAME bl::fmt::format(BL_LOG_HEAD_DECR, "BLADE ")
+#define BL_LOG_HEAD_FILE bl::fmt::format(BL_LOG_HEAD_DECR, "[{}@{}] ", __FILENAME__, __LINE__)
+#define BL_LOG_HEAD_TRACE bl::fmt::format(BL_LOG_HEAD_DECR, "[TRACE] ")
+#define BL_LOG_HEAD_DEBUG bl::fmt::format(BL_LOG_HEAD_DECR, "[DEBUG] ")
+#define BL_LOG_HEAD_WARN bl::fmt::format(BL_LOG_HEAD_DECR, "[WARN]  ")
+#define BL_LOG_HEAD_INFO bl::fmt::format(BL_LOG_HEAD_DECR, "[INFO]  ")
+#define BL_LOG_HEAD_ERROR bl::fmt::format(BL_LOG_HEAD_DECR, "[ERROR] ")
+#define BL_LOG_HEAD_FATAL bl::fmt::format(BL_LOG_HEAD_DECR, "[FATAL] ")
 
-#define BL_LOG_HEAD_SEPR fmt::format(BL_LOG_HEAD_DECR, "| ")
+#define BL_LOG_HEAD_SEPR bl::fmt::format(BL_LOG_HEAD_DECR, "| ")
 
 #ifndef BL_DISABLE_PRINT
 #define BL_DISABLE_PRINT() std::cout.setstate(std::ios_base::failbit);
@@ -36,7 +99,7 @@
 #endif
 
 #if defined(BL_LOG_DOMAIN)
-#define BL_LOG_DOMAIN_STR fmt::format(BL_LOG_HEAD_DECR, "[{}] ", BL_LOG_DOMAIN)
+#define BL_LOG_DOMAIN_STR bl::fmt::format(BL_LOG_HEAD_DECR, "[{}] ", BL_LOG_DOMAIN)
 #else
 #define BL_LOG_DOMAIN_STR ""
 #endif
@@ -44,7 +107,7 @@
 #ifndef BL_TRACE
 #ifndef NDEBUG
 #define BL_TRACE(...) if (getenv("TRACE")) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_TRACE << BL_LOG_DOMAIN_STR << \
-        BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::white), __VA_ARGS__) << std::endl;
+        BL_LOG_HEAD_SEPR << bl::fmt::format(bl::fmt::fg(bl::fmt::color::white), __VA_ARGS__) << std::endl;
 #else
 #define BL_TRACE(...)
 #endif
@@ -53,7 +116,7 @@
 #ifndef BL_DEBUG
 #ifndef NDEBUG
 #define BL_DEBUG(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_DEBUG << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
-        fmt::format(fg(fmt::color::orange), __VA_ARGS__) << std::endl;
+        bl::fmt::format(bl::fmt::fg(bl::fmt::color::orange), __VA_ARGS__) << std::endl;
 #else
 #define BL_DEBUG(...)
 #endif
@@ -61,22 +124,22 @@
 
 #ifndef BL_WARN
 #define BL_WARN(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_WARN << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
-        fmt::format(fg(fmt::color::yellow), __VA_ARGS__) << std::endl;
+        bl::fmt::format(bl::fmt::fg(bl::fmt::color::yellow), __VA_ARGS__) << std::endl;
 #endif
 
 #ifndef BL_INFO
 #define BL_INFO(...) std::cout << BL_LOG_HEAD_NAME << BL_LOG_HEAD_INFO << BL_LOG_HEAD_SEPR << BL_LOG_DOMAIN_STR << \
-        fmt::format(fg(fmt::color::cyan), __VA_ARGS__) << std::endl;
+        bl::fmt::format(bl::fmt::fg(bl::fmt::color::cyan), __VA_ARGS__) << std::endl;
 #endif
 
 #ifndef BL_ERROR
 #define BL_ERROR(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_ERROR << BL_LOG_DOMAIN_STR << \
-        BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::red), __VA_ARGS__) << std::endl;
+        BL_LOG_HEAD_SEPR << bl::fmt::format(bl::fmt::fg(bl::fmt::color::red), __VA_ARGS__) << std::endl;
 #endif
 
 #ifndef BL_FATAL
 #define BL_FATAL(...) std::cerr << BL_LOG_HEAD_NAME << BL_LOG_HEAD_FILE << BL_LOG_HEAD_FATAL << BL_LOG_DOMAIN_STR << \
-        BL_LOG_HEAD_SEPR << fmt::format(fg(fmt::color::magenta), __VA_ARGS__) << std::endl;
+        BL_LOG_HEAD_SEPR << bl::fmt::format(bl::fmt::fg(bl::fmt::color::magenta), __VA_ARGS__) << std::endl;
 #endif
 
 inline void BL_LOG_PRINT_ET() {
