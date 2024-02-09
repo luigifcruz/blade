@@ -75,7 +75,7 @@ enum class Result : uint8_t {
     if (val != cudaSuccess) { \
         const char* err = cudaGetErrorString(val); \
         callback(); \
-        return Result::CUDA_ERROR; \
+        return Blade::Result::CUDA_ERROR; \
     } \
 }
 #endif
@@ -86,7 +86,7 @@ enum class Result : uint8_t {
     if (val != cudaSuccess) { \
         const char* err = cudaGetErrorString(val); \
         callback(); \
-        throw Result::CUDA_ERROR; \
+        throw Blade::Result::CUDA_ERROR; \
     } \
 }
 #endif
@@ -96,7 +96,7 @@ enum class Result : uint8_t {
     cufftResult err = (x); \
     if (err != CUFFT_SUCCESS) { \
         callback(); \
-        return Result::CUDA_ERROR; \
+        return Blade::Result::CUDA_ERROR; \
     } \
 }
 #endif
@@ -106,15 +106,15 @@ enum class Result : uint8_t {
     cufftResult err = (x); \
     if (err != CUFFT_SUCCESS) { \
         callback(); \
-        throw Result::CUDA_ERROR; \
+        throw Blade::Result::CUDA_ERROR; \
     } \
 }
 #endif
 
 #ifndef BL_CHECK
 #define BL_CHECK(x) { \
-    Result val = (x); \
-    if (val != Result::SUCCESS) { \
+    Blade::Result val = (x); \
+    if (val != Blade::Result::SUCCESS) { \
         if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
             return val; \
         } \
@@ -124,8 +124,8 @@ enum class Result : uint8_t {
 
 #ifndef BL_CHECK_THROW
 #define BL_CHECK_THROW(x) { \
-    Result val = (x); \
-    if (val != Result::SUCCESS) { \
+    Blade::Result val = (x); \
+    if (val != Blade::Result::SUCCESS) { \
         if (!(static_cast<uint8_t>(val) & (1 << 4))) { \
             printf("Function %s (%s@%d) throwed!\n", __func__, __FILE__, __LINE__); \
             throw val; \
@@ -138,7 +138,7 @@ enum class Result : uint8_t {
 #define BL_ASSERT(x) { \
     bool val = (x); \
     if (val != true) { \
-        return Result::ASSERTION_ERROR; \
+        return Blade::Result::ASSERTION_ERROR; \
     } \
 }
 #endif
