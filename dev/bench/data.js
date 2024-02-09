@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707493117720,
+  "lastUpdate": 1707494137601,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -4054,6 +4054,258 @@ window.BENCHMARK_DATA = {
             "value": 2.0787855266064525,
             "unit": "ms/iter",
             "extra": "iterations: 16384\ncpu: 2.087251828674322 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c1bb182fc075506eef3d8986594b6eb02d233fd",
+          "message": "Update Blade version to 1.0.5 and fix namespace in macros.hh. (#70)",
+          "timestamp": "2024-02-09T12:29:17-03:00",
+          "tree_id": "1a4ae33d9315a4a513261067f249d7dcdedda67f",
+          "url": "https://github.com/luigifcruz/blade/commit/5c1bb182fc075506eef3d8986594b6eb02d233fd"
+        },
+        "date": 1707494136707,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_Cast_Compute_CF32_CF32/2/iterations:16384/manual_time",
+            "value": 0.002118236285257591,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.009407445556640625 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CF32_CF32/16/iterations:16384/manual_time",
+            "value": 0.00214244331750435,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.009465786010742189 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CF32_CF32/64/iterations:16384/manual_time",
+            "value": 0.0021352030859303484,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.009372385131835938 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF32/2/iterations:16384/manual_time",
+            "value": 0.17902099140609806,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.18703062115478516 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF32/16/iterations:16384/manual_time",
+            "value": 1.3302102788799175,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.3385027346801757 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF32/64/iterations:16384/manual_time",
+            "value": 5.285792937399947,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 5.294343985900879 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF16/2/iterations:16384/manual_time",
+            "value": 0.1291117465611613,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.13726989001464854 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF16/16/iterations:16384/manual_time",
+            "value": 0.93479406512742,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.9430275663452137 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Cast_Compute_CI8_CF16/64/iterations:16384/manual_time",
+            "value": 3.699414738264295,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 3.7079906240234366 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Channelizer_Compute/16/8192/iterations:16384/manual_time",
+            "value": 6.573975271180643,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 6.582655472961426 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/2/8/4/iterations:16384/manual_time",
+            "value": 0.30864788753426353,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.3162404603271468 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/16/8/4/iterations:16384/manual_time",
+            "value": 2.3458109248366554,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.3487838720703156 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/2/32/4/iterations:16384/manual_time",
+            "value": 0.7488399132355994,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.7565528469238303 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/16/32/4/iterations:16384/manual_time",
+            "value": 5.980228837557888,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 5.983963882263184 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/2/64/4/iterations:16384/manual_time",
+            "value": 0.7958472708757824,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.8041392100830089 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/16/64/4/iterations:16384/manual_time",
+            "value": 6.35414347675578,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 6.362749047607419 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/2/64/1/iterations:16384/manual_time",
+            "value": 0.36827438666087176,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.37645293615722747 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Detector_Compute/16/64/1/iterations:16384/manual_time",
+            "value": 2.874034216176824,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.882454736938475 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Polarizer_Compute_CF32_CF32/2/5/iterations:16384/manual_time",
+            "value": 0.27789527563193417,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.2862201641845655 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Polarizer_Compute_CF32_CF32/16/5/iterations:16384/manual_time",
+            "value": 2.136199160602814,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.1448096926269535 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Polarizer_Compute_CF16_CF16/2/5/iterations:16384/manual_time",
+            "value": 0.15170153083232663,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.15998724945068266 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Polarizer_Compute_CF16_CF16/16/5/iterations:16384/manual_time",
+            "value": 1.1167470554411807,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.1252566633911179 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Gather_Compute_CF32_CF32/2/64/192/8192/iterations:16384/manual_time",
+            "value": 0.6458424593880352,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.6541452776489265 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Gather_Compute_CF32_CF32/2/64/131072/1/iterations:16384/manual_time",
+            "value": 0.29231257232886776,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.30038192590332163 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Gather_Compute_F16_F16/2/64/192/8192/iterations:16384/manual_time",
+            "value": 0.3271066533034883,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.33537424536132787 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Gather_Compute_F16_F16/2/64/131072/1/iterations:16384/manual_time",
+            "value": 0.2578325193169917,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.26585019958496464 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Duplicate_Compute_CF32_CF32/iterations:16384/manual_time",
+            "value": 2.5778902074335974,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.586406882446289 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Duplicate_Compute_F32_F32/iterations:16384/manual_time",
+            "value": 1.2922071446368477,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.3006010626220728 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Permutation_Compute/0/1/2/3/iterations:16384/manual_time",
+            "value": 0.5687746634386315,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.5769917911987305 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Permutation_Compute/0/2/1/3/iterations:16384/manual_time",
+            "value": 0.8423055426760584,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 0.8506969972534167 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_Permutation_Compute/0/2/3/1/iterations:16384/manual_time",
+            "value": 1.2865732727718182,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.2949842955322297 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerATA_Compute/1/20/iterations:16384/manual_time",
+            "value": 1.3357348571148009,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.3441130944824229 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerATA_Compute/2/20/iterations:16384/manual_time",
+            "value": 1.4110278851617863,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.4194630236206083 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerATA_Compute/8/20/iterations:16384/manual_time",
+            "value": 1.8287598764601398,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.8372553720703149 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerATA_Compute/1/42/iterations:16384/manual_time",
+            "value": 2.7080188093009383,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.7165099047851555 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerMEERKAT_Compute/1/20/iterations:16384/manual_time",
+            "value": 1.3365379359626672,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.345242424804688 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerMEERKAT_Compute/2/20/iterations:16384/manual_time",
+            "value": 1.4088477110902886,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 1.4172995502319332 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BeamformerMEERKAT_Compute/8/20/iterations:16384/manual_time",
+            "value": 2.0192340515023943,
+            "unit": "ms/iter",
+            "extra": "iterations: 16384\ncpu: 2.0277319338378867 ms\nthreads: 1"
           }
         ]
       }
