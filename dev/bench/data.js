@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1707494137601,
+  "lastUpdate": 1707494193531,
   "repoUrl": "https://github.com/luigifcruz/blade",
   "entries": {
     "Memory Benchmark": [
@@ -4636,6 +4636,48 @@ window.BENCHMARK_DATA = {
             "value": 11.032935142578125,
             "unit": "ms/iter",
             "extra": "iterations: 2\ncpu: 2824.3073900000013 ms\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "luigifcruz@gmail.com",
+            "name": "Luigi Cruz",
+            "username": "luigifcruz"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5c1bb182fc075506eef3d8986594b6eb02d233fd",
+          "message": "Update Blade version to 1.0.5 and fix namespace in macros.hh. (#70)",
+          "timestamp": "2024-02-09T12:29:17-03:00",
+          "tree_id": "1a4ae33d9315a4a513261067f249d7dcdedda67f",
+          "url": "https://github.com/luigifcruz/blade/commit/5c1bb182fc075506eef3d8986594b6eb02d233fd"
+        },
+        "date": 1707494192388,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "BM_BundleATAModeB/iterations:2/manual_time",
+            "value": 12.383561757812501,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 3165.6334185 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeBH/iterations:2/manual_time",
+            "value": 79.338088859375,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 20241.232431499997 ms\nthreads: 1"
+          },
+          {
+            "name": "BM_BundleATAModeH/iterations:2/manual_time",
+            "value": 11.027031136718751,
+            "unit": "ms/iter",
+            "extra": "iterations: 2\ncpu: 2822.702727500001 ms\nthreads: 1"
           }
         ]
       }
