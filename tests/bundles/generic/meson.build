@@ -22,4 +22,16 @@ if cfg_lst.get('BLADE_BUNDLE_GENERIC_MODE_X', false)
             env: 'PYTHONPATH=@0@'.format(py_build_path),
         )
     endif
+
+    test(
+        'test-x-cpp',
+         executable(
+            'test-x-cpp', 
+            ['mode_x.cpp'],
+            dependencies: lib_blade_dep,
+            cuda_args: cuda_args,
+        ),
+        is_parallel: false,
+        timeout: 0,
+    )
 endif

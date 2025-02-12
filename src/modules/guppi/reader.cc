@@ -144,7 +144,7 @@ Result Reader<OT>::process(const U64& currentStepCount, const Stream& stream) {
               (0.5 * getBlockMeta(&gr_iterate)->piperblk)) *
               this->getDatashape()->n_time));
 
-    this->output.stepJulianDate[0] = calc_julian_date_from_unix(unixDate);
+    this->output.stepJulianDate[0] = calc_julian_date_from_unix_sec(unixDate);
 
     // Query internal library DUT1 value.
     this->output.stepDut1[0] = getBlockMeta(&gr_iterate)->dut1;

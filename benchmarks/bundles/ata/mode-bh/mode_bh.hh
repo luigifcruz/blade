@@ -149,7 +149,7 @@ class BenchmarkRunner {
         BL_DEBUG("Configuring Pipeline.");
         config = {
             .inputShape = ArrayShape({ 20, 192, 8192, 2 }),
-            .outputShape = ArrayShape({ 2+1, 192*8192*8, 1, 1 }),
+            .outputShape = ArrayShape({ 2+1, 192*8192*32, 1, 1 }),
 
             .preBeamformerPolarizerConvertToCircular = false,
 
