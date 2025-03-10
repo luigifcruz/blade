@@ -47,15 +47,6 @@ class BLADE_API Runner : public Pipeline {
         return Copy(dst[headIndex], src.at(headIndex), stream(headIndex));
     }
 
-    Result synchroniseHead() {
-        BL_CHECK(synchronize(headIndex));
-        return Result::SUCCESS;
-    } 
-
-    U64 getHeadIndex() {
-        return headIndex;
-    }
-
  private:
     U64 headIndex;
     std::queue<std::tuple<U64, U64, U64, bool>> queue;

@@ -27,7 +27,7 @@ if cfg_lst.get('BLADE_BUNDLE_GENERIC_MODE_X', false)
         'test-x-cpp',
          executable(
             'test-x-cpp', 
-            ['mode_x.cpp'],
+            ['mode_x.cc'],
             dependencies: lib_blade_dep,
             cuda_args: cuda_args,
         ),

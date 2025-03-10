@@ -40,29 +40,6 @@ class ModeXRunner : public Runner {
         return Result::SUCCESS;
     }
 
-    Result transferInSynchronised(const ArrayTensor<Device::CPU, IT>& cpuInputBuffer) {
-        // BL_CHECK(this->copy(inputBuffer, cpuInputBuffer));
-        // return synchroniseHead();
-
-        if (inputBuffer[getHeadIndex()].size() != cpuInputBuffer.size()) {
-            BL_FATAL("Size mismatch between source and destination ({}, {}).",
-                    cpuInputBuffer.size(), inputBuffer[getHeadIndex()].size());
-        }
-
-        if (inputBuffer[getHeadIndex()].shape() != cpuInputBuffer.shape()) {
-            BL_FATAL("Shape mismatch between source ({}) and destination ({}).",
-                    cpuInputBuffer.shape(), inputBuffer[getHeadIndex()].shape());
-        }
-        
-
-        BL_CUDA_CHECK(cudaMemcpy(inputBuffer[getHeadIndex()].data(), cpuInputBuffer.data(), cpuInputBuffer.size_bytes(),
-                    cudaMemcpyHostToDevice), [&]{
-            BL_FATAL("Can't copy data: {}", err);
-            return Result::CUDA_ERROR;
-        });
-        return Result::SUCCESS;
-    }
-
     Result transferResult() {
         BL_CHECK(this->copy(outputBuffer, pipeline->getOutputBuffer()));
         return Result::SUCCESS;
