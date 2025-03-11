@@ -72,10 +72,12 @@ int main() {
     const U64 nof_prechannelizer_gathers = 2;
     const U64 nof_integrations = 8192;
 
+    // 65536/(16e6) = 4.096 ms
+
     ModeXRunner::Config config = {
         .inputShape = ArrayShape({ nof_antennas, nof_channels, nof_samples, nof_polarizations }),
         .outputShape = ArrayShape({ nof_antennas*(nof_antennas+1)/2, nof_samples*nof_prechannelizer_gathers, 1, nof_polarizations*nof_polarizations }),
-    }; // 65536/(16e6) = 4.096 ms
+    };
 
     auto pipeline = std::make_shared<ModeXRunner>(config, nof_prechannelizer_gathers, nof_integrations);
 
@@ -147,7 +149,6 @@ int main() {
     }
 
     while (iterations < totalIterations) {
-
         auto inputCallback = [&](){
             return pipeline->transferIn(inputBuffer[enqueueCount++ % inputBuffer.size()]);
         };
@@ -165,10 +166,7 @@ int main() {
         pipeline->dequeue([&](const U64& inputId, 
                               const U64& outputId,
                               const bool& didOutput){
-            // BL_INFO("Input ID: {} | Output ID: {} | Did Output: {}", inputId, outputId, didOutput);
             if (didOutput) {
-                // BL_INFO("Input:  {}", inputBuffer[inputId % 2])
-                // BL_INFO("Output: {}", outputBuffer[outputId % 2]);
                 for (U64 a = 0; a < 4; a++) {
                     BL_INFO(
                         "Auto#{} (@{})",
@@ -200,7 +198,6 @@ int main() {
         });
         clock_gettime(CLOCK_MONOTONIC, &timestamp_stop);
         int64_t ns_elapsed = (((int64_t)timestamp_stop.tv_sec-timestamp_start.tv_sec)*1000000000+(timestamp_stop.tv_nsec-timestamp_start.tv_nsec));
-        // BL_INFO("#{} (e: {}, d: {}): {} ns", iterations, enqueueCount, dequeueCount, ns_elapsed);
     }
 
     BL_INFO("Example pipeline finished.");
