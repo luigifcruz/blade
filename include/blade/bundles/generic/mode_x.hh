@@ -58,22 +58,30 @@ class BLADE_API ModeX : public Bundle {
          : Bundle(stream), config(config), input(input) {
         BL_DEBUG("Initializing Mode-X Bundle.");
 
-        BL_DEBUG("Instantiating stacker module.");
-        this->connect(stacker, {
-            .axis = 2,
-            .multiplier = config.preCorrelatorStackerMultiplier,
+        if (config.preCorrelatorStackerMultiplier != 1) {
+            BL_DEBUG("Instantiating stacker module.");
+            this->connect(stacker, {
+                .axis = 2,
+                .multiplier = config.preCorrelatorStackerMultiplier,
 
-            .blockSize = config.stackerBlockSize,
-        }, {
-            .buf = input.buffer,
-        });
-
-        BL_DEBUG("Instantiating input caster module.");
-        this->connect(inputCaster, {
-            .blockSize = config.casterBlockSize,
-        }, {
-            .buf = stacker->getOutputBuffer(),
-        });
+                .blockSize = config.stackerBlockSize,
+            }, {
+                .buf = input.buffer,
+            });
+            BL_DEBUG("Instantiating input caster module.");
+            this->connect(inputCaster, {
+                .blockSize = config.casterBlockSize,
+            }, {
+                .buf = stacker->getOutputBuffer(),
+            });
+        } else {
+            BL_DEBUG("Bypassing stacker module. Instantiating input caster module.");
+            this->connect(inputCaster, {
+                .blockSize = config.casterBlockSize,
+            }, {
+                .buf = input.buffer,
+            });
+        }
 
         BL_DEBUG("Instantiating channelizer module.");
         this->connect(channelizer, {

@@ -3,6 +3,19 @@
 using namespace Blade;
 namespace bm = benchmark;
 
+// F32 -> F32
+
+static void BM_Integrator_Compute_F32_F32(bm::State& state) {
+    IntegratorTest<Modules::Integrator, F32, F32> mud;
+    BL_CHECK_THROW(mud.run(state));
+}
+
+BENCHMARK(BM_Integrator_Compute_F32_F32)
+    ->Iterations(2<<13)
+    ->Args({2, 8192*64*192, 1, 1, 32})
+    ->UseManualTime()
+    ->Unit(bm::kMillisecond);
+
 // CF32 -> CF32
 
 static void BM_Integrator_Compute_CF32_CF32(bm::State& state) {

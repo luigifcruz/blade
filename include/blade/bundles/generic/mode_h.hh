@@ -6,6 +6,7 @@
 #include "blade/modules/channelizer/base.hh"
 #include "blade/modules/detector.hh"
 #include "blade/modules/caster.hh"
+#include "blade/modules/integrator.hh"
 #include "blade/modules/polarizer.hh"
 
 namespace Blade::Bundles::Generic {
@@ -83,7 +84,7 @@ class BLADE_API ModeH : public Bundle {
 
         BL_DEBUG("Instantiating detector module.");
         this->connect(detector, {
-            .integrationRate = config.detectorIntegrationRate,
+            .integrationRate = 1,
             .numberOfOutputPolarizations = config.detectorNumberOfOutputPolarizations,
 
             .blockSize = config.detectorBlockSize,
@@ -91,11 +92,20 @@ class BLADE_API ModeH : public Bundle {
             .buf = polarizer->getOutputBuffer(),
         });
 
+        
+        BL_DEBUG("Instatiating integrator module.")
+        this->connect(integrator, {
+            .size = 1,
+            .rate = config.detectorIntegrationRate,
+        }, {
+            .buf = detector->getOutputBuffer(),
+        });
+
         BL_DEBUG("Instantiating output caster from F32 to {}.", TypeInfo<OT>::name);
         this->connect(outputCaster, {
             .blockSize = config.casterBlockSize,
         }, {
-            .buf = detector->getOutputBuffer(),
+            .buf = integrator->getOutputBuffer(),
         });
 
         if (getOutputBuffer().shape() != config.outputShape) {
@@ -120,6 +130,9 @@ class BLADE_API ModeH : public Bundle {
 
     using Detector = typename Modules::Detector<CF32, F32>;
     std::shared_ptr<Detector> detector;
+
+    using Integrator = typename Modules::Integrator<F32, F32>;
+    std::shared_ptr<Integrator> integrator;
 
     using OutputCaster = typename Modules::Caster<F32, OT>;
     std::shared_ptr<OutputCaster> outputCaster;
