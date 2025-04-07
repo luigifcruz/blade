@@ -27,7 +27,10 @@ class alignas(2 * sizeof(T)) complex {
 
     template <typename U, typename = std::enable_if_t<std::is_same<U, float>::value  ||
                                                       std::is_same<U, double>::value ||
-                                                      std::is_same<U, int8_t>::value>>
+                                                      std::is_same<U, int8_t>::value ||
+                                                      std::is_same<U, int16_t>::value ||
+                                                      std::is_same<U, int32_t>::value ||
+                                                      std::is_same<U, int64_t>::value>>
     __host__ __device__ explicit complex(const complex<U>& rhs) : _real(static_cast<T>(rhs.real())), _imag(static_cast<T>(rhs.imag())) {}
     // TODO: Add support for half to float/double conversion.
 
