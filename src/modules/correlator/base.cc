@@ -54,6 +54,24 @@ Correlator<IT, OT>::Correlator(const Config& config,
     const U64 BLOCK_X = (optimizeTimeDomain) ? 1 : config.blockSize;
     const U64 BLOCK_Y = (optimizeTimeDomain) ? config.blockSize : 1;
 
+    // Process calculation mode.
+
+    const std::string calculationDataType = [&]{
+        switch (config.calculationMode) {
+            case CALC_MODE::INTEGER:
+                return TypeInfo<CI32>::name;
+            case CALC_MODE::SINGLE_PRECISION_FP:
+                return TypeInfo<CF32>::name;
+            case CALC_MODE::DOUBLE_PRECISION_FP:
+                return TypeInfo<CF64>::name;
+            default:
+                BL_FATAL("Unsupported calculation mode.");
+                BL_CHECK_THROW(Result::ERROR);
+        }
+
+        return "";
+    }();
+
     // Check block size configuration values.
 
     if ((getInputBuffer().shape().numberOfFrequencyChannels() % BLOCK_X) != 0) {
@@ -92,7 +110,7 @@ Correlator<IT, OT>::Correlator(const Config& config,
             // Kernel templates.
             TypeInfo<IT>::name,
             TypeInfo<OT>::name,
-            TypeInfo<CF32>::name,
+            calculationDataType,
             getInputBuffer().shape().numberOfAspects(),
             getInputBuffer().shape().numberOfFrequencyChannels(),
             getInputBuffer().shape().numberOfTimeSamples(),
