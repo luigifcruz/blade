@@ -16,6 +16,8 @@ class BLADE_API Correlator : public Module {
     struct Config {
         U64 integrationRate = 1;
         U64 conjugateAntennaIndex = 1;
+        bool useSharedMemory = false;
+        CALC_MODE calculationMode = CALC_MODE::DOUBLE_PRECISION_FP;
 
         U64 blockSize = 32;
     };

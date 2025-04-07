@@ -20,8 +20,12 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     nb::class_<typename Class::Config>(mod, "config")
         .def(nb::init<const U64&,
                       const U64&,
+                      const bool&,
+                      const CALC_MODE&,
                       const U64&>(), "integration_rate"_a,
                                      "conjugate_antenna_index"_a = 1,
+                                     "use_shared_memory"_a = false,
+                                     "calculation_mode"_a = CALC_MODE::DOUBLE_PRECISION_FP,
                                      "block_size"_a = 512);
 
     nb::class_<typename Class::Input>(mod, "input")
