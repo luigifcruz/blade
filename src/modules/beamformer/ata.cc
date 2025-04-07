@@ -11,12 +11,12 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         : Generic<IT, OT>(config, input, stream) {
     // Check configuration values.
     if (this->getInputPhasors().shape().numberOfBeams() > config.blockSize) {
-        BL_FATAL("The block size ({}) is smaller than the number of beams ({}).", 
+        BL_FATAL("The block size ({}) is smaller than the number of beams ({}).",
                 config.blockSize, this->getInputPhasors().shape().numberOfBeams());
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().shape().numberOfFrequencyChannels() != 
+    if (this->getInputPhasors().shape().numberOfFrequencyChannels() !=
         this->getInputBuffer().shape().numberOfFrequencyChannels()) {
         BL_FATAL("Number of frequency channels mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().shape().numberOfFrequencyChannels(),
@@ -24,7 +24,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().shape().numberOfPolarizations() != 
+    if (this->getInputPhasors().shape().numberOfPolarizations() !=
         this->getInputBuffer().shape().numberOfPolarizations()) {
         BL_FATAL("Number of polarizations mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().shape().numberOfPolarizations(),
@@ -32,7 +32,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (this->getInputPhasors().shape().numberOfAntennas() != 
+    if (this->getInputPhasors().shape().numberOfAntennas() !=
         this->getInputBuffer().shape().numberOfAspects()) {
         BL_FATAL("Number of antennas mismatch between phasors ({}) and buffer ({}).",
                 this->getInputPhasors().shape().numberOfAntennas(),
@@ -43,7 +43,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
     // Configure kernels.
     BL_CHECK_THROW(
         this->createKernel(
-            // Kernel name. 
+            // Kernel name.
             "main",
             // Kernel function key.
             "ATA",
@@ -51,6 +51,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
             dim3(this->getInputBuffer().shape().numberOfFrequencyChannels(),
                  this->getInputBuffer().shape().numberOfTimeSamples() / config.blockSize),
             config.blockSize,
+            0,
             // Kernel templates.
             this->getInputPhasors().shape().numberOfBeams(),
             this->getInputPhasors().shape().numberOfAntennas(),
@@ -67,7 +68,7 @@ ATA<IT, OT>::ATA(const typename Generic<IT, OT>::Config& config,
     this->output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
-    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(),
                                this->getOutputBuffer().shape());
 }
 

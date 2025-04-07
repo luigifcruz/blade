@@ -62,6 +62,7 @@ Detector<IT, OT>::Detector(const Config& config,
                 config.blockSize
             ),
             config.blockSize,
+            0,
             // Kernel templates.
             getInputBuffer().size() / getInputBuffer().shape().numberOfPolarizations(),
             config.integrationRate

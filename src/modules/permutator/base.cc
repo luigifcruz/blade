@@ -52,6 +52,7 @@ Permutator<IT, OT>::Permutator(const Config& config,
                 config.blockSize
             ),
             config.blockSize,
+            0,
             // Kernel templates.
             TypeInfo<IT>::cudaName
         )
@@ -62,7 +63,7 @@ Permutator<IT, OT>::Permutator(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
     BL_INFO("Indexes: {}", config.indexes);
 }

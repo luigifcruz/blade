@@ -43,6 +43,7 @@ class Module {
                         const std::string& key,
                         const dim3& gridSize,
                         const dim3& blockSize,
+                        const int& sharedMemorySize,
                         const auto... templateArguments) {
         if ((blockSize.x * blockSize.y * blockSize.z) > 1024) {
             BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
@@ -55,9 +56,28 @@ class Module {
                     "is a multiple of 32.", blockSize.x, blockSize.y, blockSize.z);
         }
 
+        if (sharedMemorySize != 0) {
+            int maxOptinSharedMem = 0;
+
+            CUdevice device;
+            cuDeviceGet(&device, 0);
+            cuDeviceGetAttribute(&maxOptinSharedMem,
+                                 CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK_OPTIN,
+                                 device);
+
+            if (maxOptinSharedMem < sharedMemorySize) {
+                BL_FATAL("The requested shared memory size {} KB is larger than hardware limit {} KB.",
+                        sharedMemorySize / 1024, maxOptinSharedMem / 1024);
+               return Result::ERROR;
+            }
+
+            BL_INFO("Allocating dynamic shared memory of size {} KB from {} KB limit.", sharedMemorySize / 1024, maxOptinSharedMem / 1024);
+        }
+
         kernels.insert({name, {
             .gridSize = gridSize,
             .blockSize = blockSize,
+            .sharedMemorySize = sharedMemorySize,
             .key = Template(key).instantiate(templateArguments...),
         }});
 
@@ -69,9 +89,15 @@ class Module {
                      auto... kernelArguments) {
         const auto& kernel = kernels[name];
 
+        if (kernel.sharedMemorySize != 0) {
+            cache
+                .get_kernel(kernel.key)
+                ->set_attribute(CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES, kernel.sharedMemorySize);
+        }
+
         cache
             .get_kernel(kernel.key)
-            ->configure(kernel.gridSize, kernel.blockSize, 0, stream)
+            ->configure(kernel.gridSize, kernel.blockSize, kernel.sharedMemorySize, stream)
             ->launch(kernelArguments...);
 
         BL_CUDA_CHECK_KERNEL([&]{
@@ -108,6 +134,7 @@ class Module {
     struct Kernel {
         dim3 gridSize;
         dim3 blockSize;
+        int sharedMemorySize;
         std::string key;
     };
 

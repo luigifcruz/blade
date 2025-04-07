@@ -42,6 +42,7 @@ Integrator<IT, OT>::Integrator(const Config& config,
                 config.blockSize
             ),
             config.blockSize,
+            0,
             // Kernel templates.
             TypeInfo<IT>::name,
             TypeInfo<OT>::name,
