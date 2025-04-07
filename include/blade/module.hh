@@ -44,13 +44,13 @@ class Module {
                         const dim3& gridSize,
                         const dim3& blockSize,
                         const auto... templateArguments) {
-        if (blockSize.x > 1024) {
+        if ((blockSize.x * blockSize.y * blockSize.z) > 1024) {
             BL_FATAL("The block size ({}, {}, {}) is larger than hardware limit (1024).",
                     blockSize.x, blockSize.y, blockSize.z);
             return Result::ERROR;
         }
 
-        if ((blockSize.x % 32) != 0) {
+        if (((blockSize.x * blockSize.y * blockSize.z) % 32) != 0) {
             BL_WARN("Best performance is achieved when the block size ({}, {}, {}) "
                     "is a multiple of 32.", blockSize.x, blockSize.y, blockSize.z);
         }
