@@ -1,3 +1,4 @@
+#include "blade/logger.hh"
 #define BL_LOG_DOMAIN "M::CORRELATOR"
 
 #include "blade/modules/correlator.hh"
@@ -59,6 +60,7 @@ Correlator<IT, OT>::Correlator(const Config& config,
     const std::string calculationDataType = [&]{
         switch (config.calculationMode) {
             case CALC_MODE::INTEGER:
+                BL_WARN("Integer calculation is in beta.");
                 return TypeInfo<CI32>::name;
             case CALC_MODE::SINGLE_PRECISION_FP:
                 return TypeInfo<CF32>::name;
@@ -68,7 +70,6 @@ Correlator<IT, OT>::Correlator(const Config& config,
                 BL_FATAL("Unsupported calculation mode.");
                 BL_CHECK_THROW(Result::ERROR);
         }
-
         return "";
     }();
 
@@ -84,6 +85,11 @@ Correlator<IT, OT>::Correlator(const Config& config,
         BL_FATAL("Number of time sample ({}) should be divisible by block size ({}).",
                  getInputBuffer().shape().numberOfTimeSamples(), BLOCK_Y);
         BL_CHECK_THROW(Result::ERROR);
+    }
+
+    // TODO: Support shared memory for frequency domain.
+    if (config.useSharedMemory && optimizeTimeDomain) {
+        BL_WARN("Shared memory is not supported when number of channels is larger than time samples. Disabling shared memory.");
     }
 
     // Configure kernel instantiation.
@@ -106,7 +112,7 @@ Correlator<IT, OT>::Correlator(const Config& config,
             getInputBuffer().shape().numberOfTimeSamples() *
             getInputBuffer().shape().numberOfPolarizations() *
             sizeof(IT) *
-            ((config.useSharedMemory) ? 1 : 0),
+            ((config.useSharedMemory && optimizeTimeDomain) ? 1 : 0),
             // Kernel templates.
             TypeInfo<IT>::name,
             TypeInfo<OT>::name,
@@ -118,7 +124,7 @@ Correlator<IT, OT>::Correlator(const Config& config,
             BLOCK_X,
             BLOCK_Y,
             config.conjugateAntennaIndex,
-            config.useSharedMemory
+            config.useSharedMemory && optimizeTimeDomain
         )
     );
 
