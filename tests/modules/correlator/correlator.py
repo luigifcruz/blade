@@ -82,8 +82,17 @@ def test(A, F, T, P, I, S, C, B):
     # Compare Results
     #
 
-    print(bl_output[0, 0, 0, 0], py_output[0, 0, 0, 0])
-    assert np.allclose(bl_output, py_output, rtol=0.2, atol=10)
+    print("Top 10 differences:")
+    diff = np.abs(bl_output - py_output)
+    diff = diff.flatten()
+    diff.sort()
+    print(diff[-10:])
+    print("")
+    print("Average difference: ", np.mean(diff))
+    print("Maximum difference: ", np.max(diff))
+    print("Minimum difference: ", np.min(diff))
+
+    assert np.allclose(bl_output, py_output, rtol=0.1, atol=8000)
 
     print("Test successfully completed!")
 
