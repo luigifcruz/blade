@@ -1,4 +1,5 @@
 #include "blade/memory/base.hh"
+#include <type_traits>
 
 using namespace Blade;
 
@@ -99,6 +100,13 @@ __global__ void correlator(const ArrayTensor<Device::CUDA, IT> input,
                 sumYX += static_cast<OT>(AVAY.conj() * AVBX);  // Ay'Bx
                 sumYY += static_cast<OT>(AVAY.conj() * AVBY);  // Ay'By
             }
+        }
+
+        if constexpr (std::is_same<XT, CF32>::value) {
+            sumXX = OT{sumXX.real(), 0.0f};
+            sumXY = OT{sumXY.real(), 0.0f};
+            sumYX = OT{sumYX.real(), 0.0f};
+            sumYY = OT{sumYY.real(), 0.0f};
         }
 
         const U64 OUTPUT_INDEX = (BASELINE_INDEX * C * OUTPUT_POLS) + (CI * OUTPUT_POLS);

@@ -88,7 +88,7 @@ Correlator<IT, OT>::Correlator(const Config& config,
     }
 
     // TODO: Support shared memory for frequency domain.
-    if (config.useSharedMemory && optimizeTimeDomain) {
+    if (!(config.useSharedMemory && optimizeTimeDomain)) {
         BL_WARN("Shared memory is not supported when number of channels is larger than time samples. Disabling shared memory.");
     }
 
