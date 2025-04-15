@@ -90,23 +90,16 @@ __global__ void correlator(const ArrayTensor<Device::CUDA, IT> input,
             AVBY = static_cast<XT>(input[ANTENNA_B_INDEX + 1]);  // Antenna Voltage B Pol Y
 
             if constexpr (CONJUGATE_ANTENNA == 1) {
-                sumXX += static_cast<OT>(AVAX * AVBX.conj());  // AxBx'
-                sumXY += static_cast<OT>(AVAX * AVBY.conj());  // AxBy'
-                sumYX += static_cast<OT>(AVAY * AVBX.conj());  // AyBx'
-                sumYY += static_cast<OT>(AVAY * AVBY.conj());  // AyBy'
+                sumXX += static_cast<OT>(AVAX ^ AVBX);  // AxBx'
+                sumXY += static_cast<OT>(AVAX ^ AVBY);  // AxBy'
+                sumYX += static_cast<OT>(AVAY ^ AVBX);  // AyBx'
+                sumYY += static_cast<OT>(AVAY ^ AVBY);  // AyBy'
             } else {
-                sumXX += static_cast<OT>(AVAX.conj() * AVBX);  // Ax'Bx
-                sumXY += static_cast<OT>(AVAX.conj() * AVBY);  // Ax'By
-                sumYX += static_cast<OT>(AVAY.conj() * AVBX);  // Ay'Bx
-                sumYY += static_cast<OT>(AVAY.conj() * AVBY);  // Ay'By
+                sumXX += static_cast<OT>(AVBX ^ AVAX);  // Ax'Bx
+                sumXY += static_cast<OT>(AVBY ^ AVAX);  // Ax'By
+                sumYX += static_cast<OT>(AVBX ^ AVAY);  // Ay'Bx
+                sumYY += static_cast<OT>(AVBY ^ AVAY);  // Ay'By
             }
-        }
-
-        if constexpr (std::is_same<XT, CF32>::value) {
-            sumXX = OT{sumXX.real(), 0.0f};
-            sumXY = OT{sumXY.real(), 0.0f};
-            sumYX = OT{sumYX.real(), 0.0f};
-            sumYY = OT{sumYY.real(), 0.0f};
         }
 
         const U64 OUTPUT_INDEX = (BASELINE_INDEX * C * OUTPUT_POLS) + (CI * OUTPUT_POLS);
