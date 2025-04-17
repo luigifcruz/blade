@@ -15,7 +15,7 @@ template<Device DeviceType, typename DataType, typename ShapeType>
 void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
     using ClassType = Vector<DeviceType, DataType, ShapeType>;
 
-    auto mm = 
+    auto mm =
         nb::class_<ClassType>(m, name)
             .def(nb::init<>())
             .def(nb::init<const ShapeType&, const bool&>(), "shape"_a, "unified"_a = false)
@@ -56,10 +56,13 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
         .def("__getitem__", &Duet<ClassType>::operator[], nb::rv_policy::reference)
         .def("__call__", &Duet<ClassType>::operator ClassType&, nb::rv_policy::reference);
 
-    // TODO: Add support for all formats.
-    if constexpr (!std::is_same<F16, DataType>::value &&
-                  !std::is_same<CF16, DataType>::value && 
-                  !std::is_same<CI8, DataType>::value) {
+    // TODO: Implement F16 and CF16 'as_numpy()' method.
+
+    if constexpr (std::is_same<I8, DataType>::value ||
+                  std::is_same<F32, DataType>::value ||
+                  std::is_same<F64, DataType>::value ||
+                  std::is_same<CF32, DataType>::value ||
+                  std::is_same<CF64, DataType>::value) {
         mm.def("as_numpy", [](ClassType& obj){
             ClassType* p = new ClassType(obj);
             nb::capsule deleter(p, [](void *p) noexcept {
@@ -69,16 +72,56 @@ void NB_SUBMODULE_VECTOR(auto& m, const auto& name) {
             auto* value = p->data();
             const U64* shape = p->shape().data();
             constexpr const U64 ndims = std::tuple_size<typename ShapeType::Type>::value;
-            int32_t device_type = (DeviceType == Device::CUDA) ? nb::device::cuda::value : 
+            int32_t device_type = (DeviceType == Device::CUDA) ? nb::device::cuda::value :
                                                                  nb::device::cpu::value;
 
-            return nb::ndarray<nb::numpy, DataType, nb::shape<ndims>>(value, 
-                                                                      ndims, 
-                                                                      shape, 
+            return nb::ndarray<nb::numpy, DataType, nb::shape<ndims>>(value,
+                                                                      ndims,
+                                                                      shape,
                                                                       deleter,
                                                                       nullptr,
-                                                                      nb::dtype<DataType>(), 
+                                                                      nb::dtype<DataType>(),
                                                                       device_type);
+        }, nb::rv_policy::reference);
+    }
+
+    if constexpr (std::is_same<CI8, DataType>::value) {
+        mm.def("as_numpy", [](ClassType& obj){
+            constexpr const U64 ndims = std::tuple_size<typename ShapeType::Type>::value + 1;
+
+            struct ClassTypeWrapper {
+                ClassType* p;
+                U64* shape;
+            };
+
+            ClassTypeWrapper* wrap = new ClassTypeWrapper();
+            wrap->p = new ClassType(obj);
+            wrap->shape = new U64[ndims];
+            nb::capsule deleter(wrap, [](void *tmp) noexcept {
+                auto* wrap = reinterpret_cast<ClassTypeWrapper*>(tmp);
+                delete wrap->p;
+                delete[] wrap->shape;
+                delete wrap;
+            });
+
+            auto* value = wrap->p->data();
+            int32_t device_type = (DeviceType == Device::CUDA) ? nb::device::cuda::value :
+                                                                 nb::device::cpu::value;
+
+            for (U64 i = 0; i < ndims - 1; i++) {
+                wrap->shape[i] = wrap->p->shape()[i];
+            }
+            wrap->shape[ndims - 1] = 2;
+
+            return nb::ndarray<nb::numpy,
+                               typename TypeInfo<DataType>::subtype,
+                               nb::shape<ndims>>(value,
+                                                 ndims,
+                                                 reinterpret_cast<const U64*>(wrap->shape),
+                                                 deleter,
+                                                 nullptr,
+                                                 nb::dtype<typename TypeInfo<DataType>::subtype>(),
+                                                 device_type);
         }, nb::rv_policy::reference);
     }
 }

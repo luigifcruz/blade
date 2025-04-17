@@ -49,5 +49,6 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
 }
 
 NB_MODULE(_correlator_impl, m) {
+    NB_SUBMODULE<CI8, CF32>(m, "in_ci8", "out_cf32");
     NB_SUBMODULE<CF32, CF32>(m, "in_cf32", "out_cf32");
 }
