@@ -10,8 +10,8 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Polarizer<IT, OT>::Polarizer(const Config& config, 
-                             const Input& input, 
+Polarizer<IT, OT>::Polarizer(const Config& config,
+                             const Input& input,
                              const Stream& stream)
         : Module(polarizer_program),
           config(config),
@@ -19,7 +19,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
     if constexpr (!std::is_same<IT, OT>::value) {
         BL_FATAL("This module requires the type of the input "
                  "({}) and output ({}) to be the same.",
-                 TypeInfo<IT>::name, TypeInfo<OT>::name); 
+                 TypeInfo<IT>::name, TypeInfo<OT>::name);
         BL_INFO("Contact the maintainer if this "
                 "functionality is required.");
         BL_CHECK_THROW(Result::ERROR);
@@ -38,7 +38,7 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
         U64 outputPolarizationSize = 0;
         std::string kernelName = "none";
 
-        if ((config.inputPolarization == POL::XY) and 
+        if ((config.inputPolarization == POL::XY) and
             (config.outputPolarization == POL::LR)) {
                 kernelName = "polarizer_xy_lr";
                 inputPolarizationSize = 2;
@@ -75,10 +75,11 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
                 kernelName,
                 // Kernel grid & block size.
                 PadGridSize(
-                    getInputBuffer().size(), 
+                    getInputBuffer().size(),
                     config.blockSize
                 ),
                 config.blockSize,
+                0,
                 // Kernel templates.
                 TypeInfo<IT>::name,
                 TypeInfo<OT>::name
@@ -105,8 +106,9 @@ Polarizer<IT, OT>::Polarizer(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
+    BL_INFO("Polarization: {} -> {}", config.inputPolarization, config.outputPolarization);
 }
 
 template<typename IT, typename OT>

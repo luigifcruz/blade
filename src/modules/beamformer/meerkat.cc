@@ -6,13 +6,13 @@ namespace Blade::Modules::Beamformer {
 
 template<typename IT, typename OT>
 MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
-                         const typename Generic<IT, OT>::Input& input, 
+                         const typename Generic<IT, OT>::Input& input,
                          const Stream& stream)
         : Generic<IT, OT>(config, input, stream) {
     // Configure kernels.
     BL_CHECK_THROW(
         this->createKernel(
-            // Kernel name. 
+            // Kernel name.
             "main",
             // Kernel function key.
             "MeerKAT",
@@ -20,6 +20,7 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
             dim3(this->getInputBuffer().shape().numberOfFrequencyChannels(),
                  this->getInputBuffer().shape().numberOfTimeSamples() / config.blockSize),
             config.blockSize,
+            0,
             // Kernel templates.
             this->getInputPhasors().shape().numberOfBeams(),
             this->getInputPhasors().shape().numberOfAntennas(),
@@ -36,7 +37,7 @@ MeerKAT<IT, OT>::MeerKAT(const typename Generic<IT, OT>::Config& config,
     this->output.buf = ArrayTensor<Device::CUDA, OT>(getOutputBufferShape());
 
     // Print configuration values.
-    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", this->getInputBuffer().shape(),
                                this->getOutputBuffer().shape());
 }
 

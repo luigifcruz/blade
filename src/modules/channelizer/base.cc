@@ -7,7 +7,7 @@
 namespace Blade::Modules {
 
 template<typename IT, typename OT>
-Channelizer<IT, OT>::Channelizer(const Config& config, 
+Channelizer<IT, OT>::Channelizer(const Config& config,
                                  const Input& input,
                                  const Stream& stream)
         : Module(channelizer_program),
@@ -34,9 +34,9 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
         BL_CHECK_THROW(Result::ERROR);
     }
 
-    if (getInputBuffer().shape().numberOfPolarizations() != 2 and 
+    if (getInputBuffer().shape().numberOfPolarizations() != 2 and
         getInputBuffer().shape().numberOfPolarizations() != 1) {
-        BL_FATAL("Number of polarizations ({}) of the input should be one or two.", 
+        BL_FATAL("Number of polarizations ({}) of the input should be one or two.",
                  getInputBuffer().shape().numberOfPolarizations());
         BL_CHECK_THROW(Result::ERROR);
     }
@@ -46,7 +46,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
     BL_INFO("FFT Size: {}", config.rate);
 
@@ -59,7 +59,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     int rank = 1;
 
     // FFT size for each dimension.
-    int n[] = { static_cast<int>(config.rate) }; 
+    int n[] = { static_cast<int>(config.rate) };
 
     // Distance between successive input element and output element.
     int istride = getInputBuffer().shape().numberOfPolarizations();
@@ -70,7 +70,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
     int odist = (config.rate * getInputBuffer().shape().numberOfPolarizations());
 
     // Input size with pitch, this is ignored for 1D tansformations.
-    int inembed[] = { 0 }; 
+    int inembed[] = { 0 };
     int onembed[] = { 0 };
 
     // Number of batched FFTs.
@@ -104,6 +104,7 @@ Channelizer<IT, OT>::Channelizer(const Config& config,
                 config.blockSize
             ),
             config.blockSize,
+            0,
             // Kernel templates.
             getInputBuffer().shape().numberOfPolarizations() * 2,
             getInputBuffer().shape().numberOfPolarizations(),
@@ -127,8 +128,8 @@ Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& s
 
     BL_CHECK(this->runKernel("main", stream, input.buf.data(), output.buf.data()));
 
-    cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data()); 
-    cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data()); 
+    cufftComplex* input_ptr = reinterpret_cast<cufftComplex*>(input.buf.data());
+    cufftComplex* output_ptr = reinterpret_cast<cufftComplex*>(output.buf.data());
 
     cufftSetStream(plan, stream);
     for (U64 pol = 0; pol < getInputBuffer().shape().numberOfPolarizations(); pol++) {

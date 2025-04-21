@@ -2,6 +2,7 @@
 #define BLADE_BENCHMARK_CORRELATOR_GENERIC_HH
 
 #include "../../helper.hh"
+#include "blade/types.hh"
 
 namespace Blade {
 
@@ -18,10 +19,33 @@ class CorrelatorTest : CudaBenchmark {
         const U64 T = state.range(2);
         const U64 P = state.range(3);
         const U64 integrationRate = state.range(4);
-        const U64 blockSize = state.range(5);
+        const U64 sharedMemory = state.range(5);
+        const U64 calcMode = state.range(6);
+        const U64 blockSize = state.range(7);
+
+        state.SetLabel(bl::fmt::format("[{}, {}, {}, {}], "
+                                       "Integration Size: {}, "
+                                       "Shared Memory: {}, "
+                                       "Calculation Mode: {}, "
+                                       "Block Size: {}", A, F, T, P,
+                                                         integrationRate,
+                                                         sharedMemory,
+                                                         calcMode,
+                                                         blockSize));
 
         InitAndProfile([&](){
             config.integrationRate = integrationRate;
+            config.useSharedMemory = sharedMemory;
+            config.calculationMode = [&]{
+                switch (calcMode) {
+                    case 0: return CALC_MODE::INTEGER;
+                    case 1: return CALC_MODE::SINGLE_PRECISION_FP;
+                    case 2: return CALC_MODE::DOUBLE_PRECISION_FP;
+                    default:
+                        throw std::invalid_argument("Invalid calculation mode");
+                }
+            }();
+
             config.blockSize = blockSize;
 
             deviceInputBuf = ArrayTensor<Device::CUDA, IT>({A, F, T, P});

@@ -29,6 +29,7 @@ Caster<IT, OT>::Caster(const Config& config,
                 config.blockSize
             ),
             config.blockSize,
+            0,
             // Kernel templates.
             TypeInfo<typename TypeInfo<IT>::subtype>::cudaName,
             TypeInfo<typename TypeInfo<OT>::subtype>::cudaName,
@@ -36,7 +37,7 @@ Caster<IT, OT>::Caster(const Config& config,
         )
     );
 
-    if ((TypeInfo<IT>::is_complex and !TypeInfo<OT>::is_complex) or 
+    if ((TypeInfo<IT>::is_complex and !TypeInfo<OT>::is_complex) or
         (!TypeInfo<IT>::is_complex and TypeInfo<OT>::is_complex)) {
         BL_FATAL("Cannot cast between complex and non-complex types.");
         BL_CHECK_THROW(Result::ERROR);
@@ -52,7 +53,7 @@ Caster<IT, OT>::Caster(const Config& config,
 
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
-    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
+    BL_INFO("Shape: {} -> {}", getInputBuffer().shape(),
                                getOutputBuffer().shape());
 }
 

@@ -2,6 +2,7 @@
 #include <nanobind/stl/string.h>
 
 #include "blade/base.hh"
+#include "blade/types.hh"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -35,6 +36,12 @@ NB_MODULE(_const_impl, m) {
         .value("r", POL::R)
         .value("xy", POL::XY)
         .value("lr", POL::LR)
+        .export_values();
+
+    nb::enum_<CALC_MODE>(m, "calc_mode")
+        .value("integer", CALC_MODE::INTEGER)
+        .value("single_precision_fp", CALC_MODE::SINGLE_PRECISION_FP)
+        .value("double_precision_fp", CALC_MODE::DOUBLE_PRECISION_FP)
         .export_values();
 
     nb::class_<XYZ>(m, "xyz", nb::dynamic_attr())

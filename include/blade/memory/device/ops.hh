@@ -21,11 +21,18 @@ namespace Blade::ops {
 template<typename T>
 class alignas(2 * sizeof(T)) complex {
  public:
+    using subtype = T;
+
     __host__ __device__ complex() : _real(0), _imag(0) {}
     __host__ __device__ complex(T r) : _real(r), _imag(0) {}
     __host__ __device__ complex(T r, T i) : _real(r), _imag(i) {}
 
-    template <typename U, typename = std::enable_if_t<std::is_same<U, float>::value || std::is_same<U, double>::value>>
+    template <typename U, typename = std::enable_if_t<std::is_same<U, float>::value  ||
+                                                      std::is_same<U, double>::value ||
+                                                      std::is_same<U, int8_t>::value ||
+                                                      std::is_same<U, int16_t>::value ||
+                                                      std::is_same<U, int32_t>::value ||
+                                                      std::is_same<U, int64_t>::value>>
     __host__ __device__ explicit complex(const complex<U>& rhs) : _real(static_cast<T>(rhs.real())), _imag(static_cast<T>(rhs.imag())) {}
     // TODO: Add support for half to float/double conversion.
 
@@ -42,6 +49,11 @@ class alignas(2 * sizeof(T)) complex {
                           _real * rhs._imag + _imag * rhs._real);
     }
 
+    __host__ __device__ complex<T> operator^(const complex<T>& rhs) const {
+        return complex<T>(_real * rhs._real + _imag * rhs._imag,
+                          _imag * rhs._real - _real * rhs._imag);
+    }
+
     __host__ __device__ complex<T> operator/(const complex<T>& rhs) const {
         T denom = rhs._real * rhs._real + rhs._imag * rhs._imag;
         T real = (_real * rhs._real + _imag * rhs._imag) / denom;
@@ -52,6 +64,7 @@ class alignas(2 * sizeof(T)) complex {
     __host__ __device__ complex<T>& operator+=(const complex<T>& rhs) {
         _real += rhs._real;
         _imag += rhs._imag;
+
         return *this;
     }
 
@@ -127,9 +140,25 @@ class alignas(2 * sizeof(T)) complex {
         atomicAdd(&_imag, rhs._imag);
     }
 
+    __host__ __device__ void atomic_add_real(const T& rhs) {
+        atomicAdd(&_real, rhs);
+    }
+
+    __host__ __device__ void atomic_add_imag(const T& rhs) {
+        atomicAdd(&_imag, rhs);
+    }
+
     __host__ __device__ void atomic_sub(const complex<T>& rhs) {
         atomicSub(&_real, rhs._real);
         atomicSub(&_imag, rhs._imag);
+    }
+
+    __host__ __device__ void atomic_sub_real(const T& rhs) {
+        atomicSub(&_real, rhs);
+    }
+
+    __host__ __device__ void atomic_sub_imag(const T& rhs) {
+        atomicSub(&_imag, rhs);
     }
 
  private:
