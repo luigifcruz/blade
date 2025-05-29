@@ -1,4 +1,3 @@
-#include "blade/logger.hh"
 #define BL_LOG_DOMAIN "M::CORRELATOR"
 
 #include "blade/modules/correlator.hh"

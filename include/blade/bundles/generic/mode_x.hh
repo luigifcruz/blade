@@ -21,9 +21,11 @@ class BLADE_API ModeX : public Bundle {
         ArrayShape inputShape;
         ArrayShape outputShape;
 
-        U64 preCorrelatorStackerMultiplier = 1;
+        U64 preChannelizerStackerMultiplier = 1;
 
         bool channelizerBypass = false;
+
+        U64 preCorrelatorStackerMultiplier = 1;
 
         U64 correlatorIntegrationRate = 1;
         U64 correlatorConjugateAntennaIndex = 1;
@@ -54,7 +56,7 @@ class BLADE_API ModeX : public Bundle {
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
         if (config.channelizerBypass) {
-            return bypass_correlator->getOutputBuffer();
+            return bypassCorrelator->getOutputBuffer();
         } else {
             return correlator->getOutputBuffer();
         }
@@ -67,74 +69,63 @@ class BLADE_API ModeX : public Bundle {
         BL_DEBUG("Initializing Mode-X Bundle.");
 
         if (config.channelizerBypass) {
-            if (config.preCorrelatorStackerMultiplier != 1) {
-                BL_DEBUG("Instantiating stacker module.");
-                this->connect(stacker, {
-                    .axis = 2,
-                    .multiplier = config.preCorrelatorStackerMultiplier,
+            BL_DEBUG("Instantiating pre-correlator stacker module.");
+            this->connect(bypassPreCorrelatorStacker, {
+                .axis = 2,
+                .multiplier = config.preCorrelatorStackerMultiplier,
 
-                    .blockSize = config.stackerBlockSize,
-                }, {
-                    .buf = input.buffer,
-                });
-                BL_DEBUG("Instantiating correlator module.");
-                this->connect(bypass_correlator, {
-                    .integrationRate = config.correlatorIntegrationRate,
-                    .conjugateAntennaIndex = config.correlatorConjugateAntennaIndex,
-                    .useSharedMemory = config.correlatorUseSharedMemory,
-                    .calculationMode = config.correlatorCalculationMode,
+                .blockSize = config.stackerBlockSize,
+            }, {
+                .buf = input.buffer,
+            });
 
-                    .blockSize = config.correlatorBlockSize,
-                }, {
-                    .buf = stacker->getOutputBuffer(),
-                });
-            } else {
-                BL_DEBUG("Instantiating correlator module.");
-                this->connect(bypass_correlator, {
-                    .integrationRate = config.correlatorIntegrationRate,
-                    .conjugateAntennaIndex = config.correlatorConjugateAntennaIndex,
-                    .useSharedMemory = config.correlatorUseSharedMemory,
-                    .calculationMode = config.correlatorCalculationMode,
+            BL_DEBUG("Instantiating correlator module.");
+            this->connect(bypassCorrelator, {
+                .integrationRate = config.correlatorIntegrationRate,
+                .conjugateAntennaIndex = config.correlatorConjugateAntennaIndex,
+                .useSharedMemory = config.correlatorUseSharedMemory,
+                .calculationMode = config.correlatorCalculationMode,
 
-                    .blockSize = config.correlatorBlockSize,
-                }, {
-                    .buf = input.buffer,
-                });
-            }
+                .blockSize = config.correlatorBlockSize,
+            }, {
+                .buf = bypassPreCorrelatorStacker->getOutputBuffer(),
+            });
         } else {
-            if (config.preCorrelatorStackerMultiplier != 1) {
-                BL_DEBUG("Instantiating stacker module.");
-                this->connect(stacker, {
-                    .axis = 2,
-                    .multiplier = config.preCorrelatorStackerMultiplier,
+            BL_DEBUG("Instantiating pre-channelizer stacker module.");
+            this->connect(preChannelizerStacker, {
+                .axis = 2,
+                .multiplier = config.preChannelizerStackerMultiplier,
 
-                    .blockSize = config.stackerBlockSize,
-                }, {
-                    .buf = input.buffer,
-                });
-                BL_DEBUG("Instantiating input caster module.");
-                this->connect(inputCaster, {
-                    .blockSize = config.casterBlockSize,
-                }, {
-                    .buf = stacker->getOutputBuffer(),
-                });
-            } else {
-                BL_DEBUG("Bypassing stacker module. Instantiating input caster module.");
-                this->connect(inputCaster, {
-                    .blockSize = config.casterBlockSize,
-                }, {
-                    .buf = input.buffer,
-                });
-            }
+                .blockSize = config.stackerBlockSize,
+            }, {
+                .buf = input.buffer,
+            });
+
+            BL_DEBUG("Instantiating input caster module.");
+            this->connect(inputCaster, {
+                .blockSize = config.casterBlockSize,
+            }, {
+                .buf = preChannelizerStacker->getOutputBuffer(),
+            });
 
             BL_DEBUG("Instantiating channelizer module.");
             this->connect(channelizer, {
                 .rate = config.inputShape.numberOfTimeSamples() *
-                        config.preCorrelatorStackerMultiplier,
+                        config.preChannelizerStackerMultiplier,
 
                 .blockSize = config.channelizerBlockSize,
             }, {
                 .buf = inputCaster->getOutputBuffer(),
+            });
+
+            BL_DEBUG("Instantiating pre-correlator stacker module.");
+            this->connect(preCorrelatorStacker, {
+                .axis = 2,
+                .multiplier = config.preCorrelatorStackerMultiplier,
+
+                .blockSize = config.stackerBlockSize,
+            }, {
+                .buf = channelizer->getOutputBuffer(),
             });
 
             BL_DEBUG("Instantiating correlator module.");
@@ -146,7 +137,7 @@ class BLADE_API ModeX : public Bundle {
 
                 .blockSize = config.correlatorBlockSize,
             }, {
-                .buf = channelizer->getOutputBuffer(),
+                .buf = preCorrelatorStacker->getOutputBuffer(),
             });
         }
 
@@ -161,8 +152,8 @@ class BLADE_API ModeX : public Bundle {
     const Config config;
     Input input;
 
-    using Stacker = typename Modules::Stacker<IT, IT>;
-    std::shared_ptr<Stacker> stacker;
+    using PreChannelizerStacker = typename Modules::Stacker<IT, IT>;
+    std::shared_ptr<PreChannelizerStacker> preChannelizerStacker;
 
     using InputCaster = typename Modules::Caster<IT, CF32>;
     std::shared_ptr<InputCaster> inputCaster;
@@ -170,11 +161,17 @@ class BLADE_API ModeX : public Bundle {
     using PreChannelizer = typename Modules::Channelizer<CF32, CF32>;
     std::shared_ptr<PreChannelizer> channelizer;
 
+    using PreCorrelatorStacker = typename Modules::Stacker<CF32, CF32>;
+    std::shared_ptr<PreCorrelatorStacker> preCorrelatorStacker;
+
     using Correlator = typename Modules::Correlator<CF32, CF32>;
     std::shared_ptr<Correlator> correlator;
 
+    using BypassPreCorrelatorStacker = typename Modules::Stacker<IT, IT>;
+    std::shared_ptr<BypassPreCorrelatorStacker> bypassPreCorrelatorStacker;
+
     using BypassCorrelator = typename Modules::Correlator<IT, CF32>;
-    std::shared_ptr<BypassCorrelator> bypass_correlator;
+    std::shared_ptr<BypassCorrelator> bypassCorrelator;
 };
 
 }  // namespace Blade::Bundles::Generic

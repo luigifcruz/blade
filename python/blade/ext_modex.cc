@@ -27,6 +27,8 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                       const bool&,
 
                       const U64&,
+
+                      const U64&,
                       const U64&,
                       const bool&,
                       const CALC_MODE&,
@@ -38,9 +40,11 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                                      "input_shape"_a,
                                      "output_shape"_a,
 
-                                     "pre_correlator_stacker_rate"_a,
+                                     "pre_channelizer_stacker_rate"_a,
 
                                      "channelizer_bypass"_a,
+
+                                     "pre_correlator_stacker_rate"_a,
 
                                      "correlator_integration_rate"_a,
                                      "correlator_conjugate_antenna_index"_a,
