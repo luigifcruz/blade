@@ -63,6 +63,7 @@ class BLADE_API Pipeline {
 
     void addModule(const std::shared_ptr<Module>& module);
 
+    Result compile(const U64& index);
     Result compute(const U64& index);
     Result synchronize(const U64& index);
     Result record(const U64& index);

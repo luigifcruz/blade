@@ -81,6 +81,9 @@ class BLADE_API Generic : public Module {
     explicit Generic(const Config& config, const Input& input, const Stream& stream = {});
     virtual ~Generic() = default;
     virtual Result process(const U64& currentComputeCount, const Stream& stream = {}) = 0;
+    virtual Result compile(const Stream& stream = {}) {
+        return Result::SUCCESS;
+    };
 
  protected:
     // Variables

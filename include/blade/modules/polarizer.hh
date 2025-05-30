@@ -58,6 +58,7 @@ class BLADE_API Polarizer : public Module {
 
     explicit Polarizer(const Config& config, const Input& input, const Stream& stream = {});
     Result process(const U64& currentStepCount, const Stream& stream = {}) final;
+    Result compile(const Stream& stream = {}) final;
 
  private:
     // Variables

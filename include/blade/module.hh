@@ -36,6 +36,10 @@ class Module {
         return Result::SUCCESS;
     }
 
+    virtual Result compile(const Stream& stream = {}) {
+        return this->compileKernel("main", stream);
+    }
+
  protected:
     jitify2::ProgramCache<> cache;
 
@@ -80,6 +84,18 @@ class Module {
             .sharedMemorySize = sharedMemorySize,
             .key = Template(key).instantiate(templateArguments...),
         }});
+
+        return Result::SUCCESS;
+    }
+
+    Result compileKernel(const std::string& name,
+                     const Stream& stream) {
+        const auto& kernel = kernels[name];
+        BL_DEBUG("Compiling {}, {}", name, kernel.key);
+
+        cache
+            .get_kernel(kernel.key)
+            ->configure(kernel.gridSize, kernel.blockSize, kernel.sharedMemorySize, stream);
 
         return Result::SUCCESS;
     }
