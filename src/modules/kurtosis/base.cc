@@ -3,6 +3,8 @@
 #include <type_traits>
 #include <typeindex>
 
+#include <fstream>
+
 #include "blade/modules/kurtosis.hh"
 
 #include "kurtosis.jit.hh"
@@ -31,17 +33,21 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
             ),
             */
             dim3( // grid dimensions (?)
-                config.blockSize
+                config.nAnts,
+                2
             ),
             dim3( // threads per block
-                28,
-                2
+                160 //config.nChans
             ),
             0,
             // Kernel templates.
             TypeInfo<IT>::name,
             TypeInfo<OT>::name,
-            config.debugMode
+            config.debugMode,
+            config.nAnts, 
+            config.nChans, 
+            8192, 
+            2
         )
     );
 
@@ -61,11 +67,55 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
 
     // Link output buffer or link input with output.
     BL_CHECK_THROW(Link(output.buf, input.buf));
-
+    
+    // 32 comes from 8192 / 256
+    // we are deciding to do blocks of 256 for kurtosis
+    this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nAnts, config.nChans, 8192 / config.subblocksize, config.nPols}, true);
+   
+    this->maskCounter = 0;
+    this->maskOutFile.open("/home/gsingh/temp/blade_out.bin", std::ios::binary);
+    
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
                               getOutputBuffer().shape());
+    BL_INFO("Output Mask Shape: {}", getOutputMask().shape());
+}
+
+template<typename IT, typename OT>
+Result Kurtosis<IT, OT>::writeMaskToDisk() {
+    // mask write implementation
+
+    int masksize = config.nAnts * config.nChans * (8192 / config.subblocksize) * config.nPols;
+    
+    // std::ofstream outputFile("/home/gsingh/temp/blade_out.bin", std::ios::out | std::ios::binary);
+    // printf("writing from %p\n", this->output.mask);
+    for (int i = 0; i < masksize; i = i + 8) {
+        /*
+        U8 out = this->output.mask[i] + (this->output.mask[i + 1] << 1) + (this->output.mask[i + 2] << 2) + 
+            (this->output.mask[i + 3] << 3) + (this->output.mask[i + 4] << 4) + (this->output.mask[i + 5] << 5) +
+            (this->output.mask[i + 6] << 6) + (this->output.mask[i + 7] << 7);
+        */
+        // printf("%d\n", this->output.mask[i]);
+        U8 out = this->output.mask[i] + this->output.mask[i + 1] + this->output.mask[i + 2] +
+            this->output.mask[i + 3] + this->output.mask[i + 4] + this->output.mask[i + 5] + 
+            this->output.mask[i + 6] + this->output.mask[i + 7];
+        // printf("%d %d\n", i, out);
+        this->maskOutFile.write(reinterpret_cast<const char*>(&out), sizeof(U8));
+
+    }
+    // printf("done writing\n");
+    // outputFile.close();
+    return Result::SUCCESS;
+}
+
+template<typename IT, typename OT>
+Kurtosis<IT, OT>::~Kurtosis() {
+    // destructor
+    if (this->maskCounter != 0) {
+        this->writeMaskToDisk();
+    }
+    // this->maskOutFile.close();
 }
 
 template<typename IT, typename OT>
@@ -76,14 +126,27 @@ Result Kurtosis<IT, OT>::process(const U64& currentStepCount, const Stream& stre
     }
     */
 
+    // check mask flag/counter
+    // if 0 nothing
+    // else call this->writeMaskToDisk();
+
+    if (this->maskCounter != 0) {
+        this->writeMaskToDisk();
+    }
+    this->maskCounter = 1;
+    
     return this->runKernel("main", 
             stream, 
-            input.buf.data(), 
+            input.buf.data(),
+            output.mask.data()
+            );
+            /*
             getInputBuffer().shape().numberOfAspects(), 
             getInputBuffer().shape().numberOfFrequencyChannels(), 
             getInputBuffer().shape().numberOfTimeSamples(), 
             getInputBuffer().shape().numberOfPolarizations()
         );
+        */
 }
 
 template class BLADE_API Kurtosis<CF32, CF32>;

@@ -1,198 +1,242 @@
 #include "blade/memory/base.hh"
 #include "cuComplex.h"
 
-/*
-#include <thrust/memory.h>
-#include <thrust/host_vector.h>
-#include <thrust/sort.h>
-*/
+#define block_size 256
+#define minv 0.00390625
+
+#define nsamps_lo 255
+#define nsamps_hi 257
+
+#define quotient 1.00784313726
+#define qinv 0.9922178988
+
+// assuming M = 256, stddev = 5
+#define sklim_lower 0.526881
+#define sklim_upper 2.18694
+
+// sklim lower mod: (1 / M) * (Qinv * sklower + 1)
+// sklim upper mod: (1 / M) * (Qinv * skupper + 1)
+#define sklim_lower_mod 0.005948362339
+#define sklim_upper_mod 0.01238250395
 
 using namespace Blade;
 
-// organized by powers of two starting at 8
-// eg index 0 is 2^(0 + 8) = 256
-// and in ascending order of stddev
-float SKLIM_VALS[] = {
-    // STD 3, CHUNK 256
-    0.698159, 1.49597,
-    // STD 3, CHUNK 512
-    0.775046, 1.32542,
-    // STD 3, CHUNK 1024
-    0.834186, 1.21695,
-
-    // STD 4, CHUNK 256
-    0.613738, 1.784,
-    // STD 4, CHUNK 512
-    0.711612, 1.48684,
-    // STD 5, CHUNK 1024
-    0.786484, 1.31218,
-
-    // STD 5, CHUNK 256
-    0.526881, 2.18694,
-    // STD 5, CHUNK 512
-    0.649093, 1.69044,
-    // STD 5, CHUNK 1024
-    0.740405, 1.42332
-};
-
-
 // CUDA kernel to compute sk_array
-template<typename IT, typename OT, bool debugMode>
-__global__ void compute_sk_array(
-    cuFloatComplex* block,
-    int N_ANTS, int N_CHANS, int N_SAMPS, int N_POLS) {//, int m) {
-
-    float sklim_lower, sklim_upper;
+template<typename IT, typename OT, bool debugMode,
+    int N_ANTS, int N_CHANS, int N_SAMPS, int N_POLS>
+__global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
     // let's assume STDDEV of 5 for now
 
-    int block_size = 256;
-
-    switch (block_size) {
-        case 256:
-            sklim_lower = 0.526881;
-            sklim_upper = 2.18694;
-            break;
-        case 512:
-            sklim_lower = 0.649093;
-            sklim_upper = 1.69044;
-            break;
-        case 1024:
-            sklim_lower = 0.740405;
-            sklim_upper = 1.42332;
-            break;
-        case 2048:
-            sklim_lower = 0.808641;
-            sklim_upper = 1.27145;
-            break;
-        case 8192:
-            sklim_lower = 0.898022;
-            sklim_upper = 1.12164;
-        default:
-            break;
+    float repl;
+    if constexpr (debugMode) {
+        repl = 100.0f;
+    }
+    else {
+        repl = 0.0f;
     }
 
+    /*
+    int start = blockIdx.x * 1024 + threadIdx.x;
+    int n = (N_ANTS * N_CHANS * N_SAMPS * N_POLS) / 65536;
+    for (int j = start * n; j < start * n + n; j = j + 4) {
+        asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
+                    :
+                    : "l"(block + j), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
+        asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
+                    :
+                    : "l"(block + j + 2), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
+    }
+    return;
+    */
+
     // Compute indices
-    int ant = threadIdx.x;    // Antenna index
-    int chan = blockIdx.x; // blockIdx.y;   // Channel index
-    int pol = threadIdx.y;   // Polarization index
+    /*
+    int chan = threadIdx.x;
+    if (ant >= N_ANTS) {
+        ant = ant - N_ANTS;
+        ant = ant * 5 + chan / 32;
+        if (ant >= N_ANTS) {
+            return;
+        }
+        chan = 160 + (chan % 32);
+    }
+    */
+    int ant = blockIdx.x;
+    int chan = threadIdx.x + blockIdx.y * 160;
+    if (chan >= N_CHANS) {
+        return;
+    }
+    // int pol = threadIdx.y;
+    // int init_samp_start = 256 * threadIdx.y;
 
     //printf("%d %d %d %.5f %.5f\n", ant, chan, N_SAMPS, sklim_upper, sklim_lower);
 
-    float s1, s2, v2, sk, x, y;
-    float nsamps_lo = block_size - 1.0f;
-    float nsamps_hi = block_size + 1.0f;
-    float quotient = ((nsamps_hi) / (nsamps_lo));
+    // sk accumulators
+    // float s[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    // const int n = 256 * 192;
+    float v2_1, v2_2, sk_1, sk_2;
+    float s1_1, s2_1, s1_2, s2_2;
+    //float s1_1, s2_1, v2_1, sk_1, s1_2, s2_2, v2_2, sk_2;
+    float x1, y1, x2, y2;
+    // float nsamps_lo = block_size - 1.0f;
+    // float nsamps_hi = block_size + 1.0f;
+    // float quotient = ((nsamps_hi) / (nsamps_lo));
 
-    // thrust::host_vector<int> re_arr(256 * 192);
-    // thrust::host_vector<int> im_arr(256 * 192);
+    int idx1, baseidx, intermediate_base;
 
-    // float* re_arr = (float*)malloc(sizeof(float) * n);
-    // float* im_arr = (float*)malloc(sizeof(float) * n);
-    // int med_arr_ind = 0;
 
+    int threadbaseidx = (ant * N_CHANS + chan) * N_SAMPS;
+
+    float skvals[64];
+    int skind = 0;
     for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
-    // for (int pol = 0; pol < N_POLS; pol++) {
-        if (ant < N_ANTS && chan < N_CHANS) {
+    // for (int samp_start = init_samp_start; samp_start < init_samp_start + 256; samp_start = samp_start + block_size) {
+        // for (int pol = 0; pol < N_POLS; pol++) {
             //printf("%d %d %d %d : %d %d %d\n", N_ANTS, N_CHANS, N_SAMPS, N_POLS, ant, chan, pol);
 
             // zero-out sums
-            s1 = 0.0f;
-            s2 = 0.0f;
 
+            /*
+            asm volatile ("st.local.v4.f32 [%0], {%1, %2, %3, %4};"
+                        :
+                        : "l"(s), "f"(0.0f), "f"(0.0f), "f"(0.0f), "f"(0.0f));
+
+            */
+            s1_1 = 0;
+            s2_1 = 0;
+
+            s1_2 = 0;
+            s2_2 = 0;
 
             // printf("here 1 %d %d %d\n", ant, chan, pol);
             // Compute s1 (sum of elements) and s2 (sum of squares)
-            int baseidx = (ant * N_CHANS + chan) * N_SAMPS + samp_start;
+            // int baseidx = (ant * N_CHANS + chan) * N_SAMPS + samp_start;
+            baseidx = threadbaseidx + samp_start;
+            // intermediate_base = baseidx * N_POLS + pol;
+            intermediate_base = baseidx * N_POLS;
+            idx1 = intermediate_base;
+            // idx2 = intermediate_base + 1;
+
             for (int samp = 0; samp < block_size; samp++) {
-                int idx = (baseidx + samp) * N_POLS + pol;
-                cuFloatComplex value = block[idx];
-                x = value.x;
-                y = value.y;
+                // int idx = (baseidx + samp) * N_POLS + pol;
+                // cuFloatComplex value = block[idx];
+                
+                /*
+                x1 = block[idx1].x;
+                y1 = block[idx1].y;
+
+                x2 = block[idx2].x;
+                y2 = block[idx2].y;
+                */
+
+
+                asm volatile(
+                    "ld.global.v4.f32 {%0, %1, %2, %3}, [%4];"
+                    : "=f"(x1), "=f"(y1), "=f"(x2), "=f"(y2)
+                    : "l"(block + idx1)
+                    );
+
                 // printf("\t\t%.5f %.5f\n", x, y);
                 //v2 = value.x * value.x + value.y * value.y;
-                v2 = x * x + y * y;
-                s1 += v2;
-                s2 += v2 * v2;
+                
+                // pol 1
+                // v2_1 = block[idx1].x * block[idx1].x;
+                // v2_1 = fmaf(block[idx1].y, block[idx1].y, v2_1);
+                x1 = x1 * x1;
+                y1 = y1 * y1;
+                x2 = x2 * x2;
+                y2 = y2 * y2;
+
+                v2_1 = x1 + y1;
+                v2_2 = x2 + y2;
+                
+                s1_1 += v2_1;
+                s1_2 += v2_2;
+                //s[0] += v2_1;
+                //s[1] += v2_2;
+
+                s2_1 = fmaf(v2_1, v2_1, s2_1);
+                s2_2 = fmaf(v2_2, v2_2, s2_2);
+
+                // s[2] = fmaf(v2_1, v2_1, s[2]);
+                // s[3] = fmaf(v2_2, v2_2, s[3]);
+
+                // pol 2
+                // v2_2 = block[idx2].x * block[idx2].x;
+                // v2_2 = fmaf(block[idx2].y, block[idx2].y, v2_2);
+
+                idx1 = idx1 + N_POLS;
+                // idx2 = idx1 + 1;
             }
 
             //printf("\ts1 s2 quotient bsize : %.5f %.5f %.5f %d\n", s1, s2, quotient, block_size);
             // Compute sk value
-            sk = quotient * ((block_size * (s2 / (s1 * s1))) - 1.0f);
             
-            // based on sk we can zap the channel
-            //printf("\tsk: %.5f\texp %.5f - %.5f\n", sk, sklim_lower, sklim_upper); 
-            //if (1 == 1) {
-            if (sk > sklim_upper || sk < sklim_lower) {
-                // compute block median
-                /*
-                med_arr_ind = 0;
+            // sk_1 = quotient * ((block_size * (s2_1 / (s1_1 * s1_1))) - 1.0f);
+            // sk_2 = quotient * ((block_size * (s2_2 / (s1_2 * s1_2))) - 1.0f);
 
-                int medianbase = ant * N_CHANS * N_SAMPS * N_POLS;
-                int timeoffset = samp_start * N_POLS + pol;
-                int chanprod = N_SAMPS * N_POLS;
-
-                // float x, y;
-
-                for (int chanidx = 0; chanidx < N_CHANS; chanidx++) {
-                    int median_baseind = medianbase + (chanidx * chanprod) + timeoffset;
-                    for (int samp = 0; samp < block_size; samp++) {
-                        //int ind = medianbase + (chanidx * chanprod) + timeoffset + samp * N_POLS;
-                        median_baseind += N_POLS;
-                        // x = block[median_baseind].x;
-                        // y = block[median_baseind].y;
-
-                        re_arr[med_arr_ind] = block[median_baseind].x;
-                        im_arr[med_arr_ind] = block[median_baseind].y;
-                        med_arr_ind++;
-                    }
-                }
-                */
-
-                // thrust::sort(re_arr, re_arr + n);
-                // thrust::sort(im_arr, im_arr + n);
-                // heapSort(re_arr, n);
-                // heapSort(im_arr, n);
-
-                // TODO
-                float repl_x;
-                float repl_y;
-                // float repl_x = re_arr[n / 2];
-                // float repl_y = im_arr[n / 2];
-
-                if constexpr (debugMode) {
-                    repl_x = 100.0f;
-                    repl_y = 100.0f;
-                } else {
-                    repl_x = 0.0f;
-                    repl_y = 0.0f;
-                }
-                
-                int chan_start = baseidx * N_POLS + pol;
-                for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                    block[j].x = repl_x;
-                    block[j].y = repl_y;
-                }
-            }
-        }
+            sk_1 = s2_1 / (s1_1 * s1_1);
+            sk_2 = s2_2 / (s1_2 * s1_2);
+            // sk_1 = s[2] / (s[0] * s[0]);
+            // sk_2 = s[3] / (s[1] * s[1]);
+            skvals[skind++] = sk_1;
+            skvals[skind++] = sk_2;
     }
 
-    // free(re_arr);
-    // free(im_arr);
+
+    int chan_start;
+    int zap1, zap2;
+    skind = 0;
+    int maskidx1;
+
+    for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
+    // for (int samp_start = init_samp_start; samp_start < init_samp_start + 256; samp_start = samp_start + block_size) {
+            intermediate_base = (threadbaseidx + samp_start) * N_POLS;
+
+            // based on sk we can zap the channel
+            //printf("\tsk: %.5f\texp %.5f - %.5f\n", sk, sklim_lower, sklim_upper);
+
+            sk_1 = skvals[skind++];
+            sk_2 = skvals[skind++];
+            zap1 = sk_1 < sklim_lower_mod || sk_1 > sklim_upper_mod;
+            zap2 = sk_2 < sklim_lower_mod || sk_2 > sklim_upper_mod;
+
+            maskidx1 = ((ant * N_CHANS + chan) * (N_SAMPS / block_size) + (samp_start / block_size)) * N_POLS;
+
+            mask[maskidx1] = 0;
+            mask[maskidx1 + 1] = 0;
+            if (zap1 && zap2) {
+                mask[maskidx1] = 1 << (maskidx1 % 8);
+                mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
+
+                chan_start = intermediate_base;
+                for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
+                    asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
+                                :
+                                : "l"(block + j), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
+                }
+            }
+            else if (zap1) {
+                mask[maskidx1] = 1 << (maskidx1 % 8);
+
+                chan_start = intermediate_base;
+                for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
+                    block[j].x = repl;
+                    block[j].y = repl;
+                }
+            }
+            else if (zap2) {
+                mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
+                chan_start = intermediate_base + 1;
+                for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
+                    block[j].x = repl;
+                    block[j].y = repl;
+                }
+            }
+            // printf("%d %d\n", mask[maskidx1], mask[maskidx1 + 1]);
+            
+        // }
+    }
+
 }
 
-/*
-// Host function to call the kernel
-template<typename IT, typename OT>
-__global__ void get_sk_array(
-    cuFloatComplex* d_block,
-    int N_ANTS, int N_CHANS, int N_SAMPS, int N_POLS) {//, int m) {
-
-    dim3 gridDim(N_ANTS, N_CHANS);    // One block per antenna and channel
-    dim3 blockDim(N_POLS);           // One thread per polarization
-
-    compute_sk_array<<<gridDim, blockDim>>>(
-        d_block, N_ANTS, N_CHANS, N_SAMPS, N_POLS);//, m);
-}
-*/

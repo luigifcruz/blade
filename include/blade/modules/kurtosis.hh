@@ -15,7 +15,11 @@ class BLADE_API Kurtosis : public Module {
         // POL inputPolarization = POL::XY;
         // POL outputPolarization = POL::LR;
         bool debugMode = false;
-        U64 blockSize = 512;
+        int nAnts = 28;
+        int nPols = 2;
+        int nChans = 192;
+        int subblocksize = 256;
+        // U64 blockSize = 256;
     };
 
     constexpr const Config& getConfig() const {
@@ -36,10 +40,15 @@ class BLADE_API Kurtosis : public Module {
 
     struct Output {
         ArrayTensor<Device::CUDA, OT> buf;
+        ArrayTensor<Device::CUDA, U8> mask;
     };
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() const {
         return this->output.buf;
+    }
+
+    constexpr const ArrayTensor<Device::CUDA, U8>& getOutputMask() const {
+        return this->output.mask;
     }
 
     // Taint Registers
@@ -55,6 +64,7 @@ class BLADE_API Kurtosis : public Module {
     // Constructor & Processing
 
     explicit Kurtosis(const Config& config, const Input& input, const Stream& stream = {});
+    ~Kurtosis();
     Result process(const U64& currentStepCount, const Stream& stream = {}) final;
 
  private:
@@ -63,12 +73,16 @@ class BLADE_API Kurtosis : public Module {
     const Config config;
     const Input input;
     Output output;
+    int maskCounter;
+    std::ofstream maskOutFile;
 
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {
         return getInputBuffer().shape();
     }
+
+    Result writeMaskToDisk();
 };
 
 }  // namespace Blade::Modules

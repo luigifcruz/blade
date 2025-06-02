@@ -60,11 +60,10 @@ if __name__ == "__main__":
     # bl_phasors = host_phasors.as_numpy()
     bl_output = host_output.as_numpy()
 
-    sample_input = np.random.normal(size=input_shape)+2j*np.random.normal(size=input_shape)
+    sample_input = 1 * np.random.normal(size=input_shape) + 2j * np.random.normal(size=input_shape)
     
     # sample pollution
-    # sample_input[0, 0, 0:10, 0] = 100 + 100j
-
+    # sample_input[0, 0, 0, 0] = 100 + 100j
 
     # np.copyto(bl_input, np.random.random(size=input_shape)+1j*np.random.random(size=input_shape))
     np.copyto(bl_input, sample_input)
