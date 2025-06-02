@@ -128,6 +128,7 @@ Result Channelizer<IT, OT>::compile(const Stream& stream) {
 
     BL_DEBUG("Compiling FFT Size: {}", config.rate);
     BL_CHECK(this->compileKernel("main", stream));
+    return Result::SUCCESS;
 }
 
 template<typename IT, typename OT>
