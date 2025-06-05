@@ -52,13 +52,15 @@ class BenchmarkRunner {
             .inputShape = ArrayShape({ 28, 192, 8192, 2 }),
             .outputShape = ArrayShape({ 406, 192, 1, 4 }),
 
-            .preCorrelatorStackerMultiplier = 1,
+            .preChannelizerStackerMultiplier = 1,
 
             .channelizerBypass = true,
 
+            .preCorrelatorStackerMultiplier = 1,
+
             .correlatorIntegrationRate = 1,
             .correlatorUseSharedMemory = true,
-            .correlatorCalculationMode = CALC_MODE::SINGLE_PRECISION_FP,
+            .correlatorCalculationMode = CALC_MODE::INTEGER,
             .correlatorBlockSize = 64,
         };
         pipeline = std::make_shared<Benchmark<IT, OT>>(config);
