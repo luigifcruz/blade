@@ -12,8 +12,9 @@ class BLADE_API Integrator : public Module {
     // Configuration
 
     struct Config {
-        U64 size = 1;  // Number of time samples to integrate within one block.
+        U64 size = 1;  // Number of indices to integrate within one block.
         U64 rate = 1;  // Number of blocks to integrate together.
+        U64 axis = 2;  // The block axis to integrate on, defaulting to T
 
         U64 blockSize = 512;
     };
@@ -62,6 +63,7 @@ class BLADE_API Integrator : public Module {
 
     explicit Integrator(const Config& config, const Input& input, const Stream& stream = {});
     Result process(const U64& currentStepCount, const Stream& stream = {}) final;
+    Result compile(const Stream& stream = {}) final;
 
  private:
     // Variables
@@ -73,14 +75,9 @@ class BLADE_API Integrator : public Module {
     U64 computeRatio;
 
     const ArrayShape getOutputBufferShape() const {
-        const auto& in = getInputBuffer().shape();
-
-        return ArrayShape({
-            static_cast<U64>(in.numberOfAspects()),
-            static_cast<U64>(in.numberOfFrequencyChannels()),
-            static_cast<U64>(in.numberOfTimeSamples() / config.size),
-            static_cast<U64>(in.numberOfPolarizations()),
-        });
+        ArrayShape::Type shape = getInputBuffer().shape();
+        shape[config.axis] /= config.size;
+        return shape;
     }
 };
 
