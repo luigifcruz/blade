@@ -9,6 +9,7 @@
 #include "blade/modules/caster.hh"
 #include "blade/modules/channelizer/base.hh"
 #include "blade/modules/correlator.hh"
+#include "blade/modules/integrator.hh"
 
 namespace Blade::Bundles::Generic {
 
@@ -31,6 +32,8 @@ class BLADE_API ModeX : public Bundle {
         U64 correlatorConjugateAntennaIndex = 1;
         bool correlatorUseSharedMemory = false;
         CALC_MODE correlatorCalculationMode = CALC_MODE::DOUBLE_PRECISION_FP;
+
+        U64 postCorrelatorFrequencyIntegrationRate = 1;
 
         U64 stackerBlockSize = 512;
         U64 casterBlockSize = 512;
@@ -141,6 +144,16 @@ class BLADE_API ModeX : public Bundle {
             });
         }
 
+        BL_DEBUG("Instantiating post-correlator frequency-integration module.");
+        this->connect(postCorrelatorFrequencyIntegrator, {
+            .size = config.postCorrelatorFrequencyIntegrationRate,
+            .axis = 1, // F
+
+            .blockSize = config.stackerBlockSize,
+        }, {
+            .buf = channelizer->getOutputBuffer(),
+        });
+
         if (getOutputBuffer().shape() != config.outputShape) {
             BL_FATAL("Expected output buffer size ({}) mismatch with actual size ({}).",
                      config.outputShape, getOutputBuffer().shape());
@@ -172,6 +185,9 @@ class BLADE_API ModeX : public Bundle {
 
     using BypassCorrelator = typename Modules::Correlator<IT, CF32>;
     std::shared_ptr<BypassCorrelator> bypassCorrelator;
+
+    using CorrelatorIntegrator = typename Modules::Integrator<CF32, CF32>;
+    std::shared_ptr<CorrelatorIntegrator> postCorrelatorFrequencyIntegrator;
 };
 
 }  // namespace Blade::Bundles::Generic

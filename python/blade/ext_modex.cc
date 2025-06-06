@@ -34,6 +34,8 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                       const CALC_MODE&,
 
                       const U64&,
+
+                      const U64&,
                       const U64&,
                       const U64&,
                       const U64&>(),
@@ -50,6 +52,8 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                                      "correlator_conjugate_antenna_index"_a,
                                      "correlator_use_shared_memory"_a,
                                      "correlator_calculation_mode"_a,
+
+                                     "post_correlator_frequency_integration_rate"_a = 1,
 
                                      "stacker_block_size"_a = 512,
                                      "caster_block_size"_a = 512,
