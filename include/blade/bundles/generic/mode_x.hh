@@ -58,11 +58,7 @@ class BLADE_API ModeX : public Bundle {
     // Output
 
     constexpr const ArrayTensor<Device::CUDA, OT>& getOutputBuffer() {
-        if (config.channelizerBypass) {
-            return bypassCorrelator->getOutputBuffer();
-        } else {
-            return correlator->getOutputBuffer();
-        }
+        return postCorrelatorFrequencyIntegrator->getOutputBuffer();
     }
 
     // Constructor
@@ -151,7 +147,7 @@ class BLADE_API ModeX : public Bundle {
 
             .blockSize = config.stackerBlockSize,
         }, {
-            .buf = channelizer->getOutputBuffer(),
+            .buf = correlator->getOutputBuffer(),
         });
 
         if (getOutputBuffer().shape() != config.outputShape) {
