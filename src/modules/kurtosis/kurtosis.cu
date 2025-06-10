@@ -24,8 +24,11 @@ using namespace Blade;
 // CUDA kernel to compute sk_array
 template<typename IT, typename OT, bool debugMode,
     int N_ANTS, int N_CHANS, int N_SAMPS, int N_POLS>
-__global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
+__global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounter) {
     // let's assume STDDEV of 5 for now
+
+    int masksize = N_ANTS * N_CHANS * N_SAMPS / (block_size * 4);
+    // int masksize = N_ANTS * N_CHANS * (N_SAMPS / block_size) * N_POLS;
 
     float repl;
     if constexpr (debugMode) {
@@ -187,6 +190,8 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
     int chan_start;
     int zap1, zap2;
     skind = 0;
+    int maskidx_raw;
+    int maskidx_true;
     int maskidx1;
 
     for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
@@ -201,13 +206,20 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
             zap1 = sk_1 < sklim_lower_mod || sk_1 > sklim_upper_mod;
             zap2 = sk_2 < sklim_lower_mod || sk_2 > sklim_upper_mod;
 
-            maskidx1 = ((ant * N_CHANS + chan) * (N_SAMPS / block_size) + (samp_start / block_size)) * N_POLS;
+            maskidx_raw = ((ant * N_CHANS + chan) * (N_SAMPS / block_size) + (samp_start / block_size)) * N_POLS;
+            maskidx_true = ((ant * N_CHANS + chan) * ((N_SAMPS) / (block_size * 4))) + (samp_start / (block_size * 4));
 
-            mask[maskidx1] = 0;
-            mask[maskidx1 + 1] = 0;
+            maskidx_true = (maskcounter - 1) * masksize + (maskidx_true);
+            // printf("%d %d\n", maskidx_true, masksize);
+            if (samp_start % (block_size * 4) == 0) {
+                mask[maskidx_true] = 0;
+            }
+
+            mask[maskidx_true] = mask[maskidx_true] + (zap1 << (maskidx_raw % 8)) + (zap2 << ((maskidx_raw + 1) % 8));
+
             if (zap1 && zap2) {
-                mask[maskidx1] = 1 << (maskidx1 % 8);
-                mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
+                // mask[maskidx1] = 1 << (maskidx1 % 8);
+                // mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
 
                 chan_start = intermediate_base;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
@@ -217,7 +229,7 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
                 }
             }
             else if (zap1) {
-                mask[maskidx1] = 1 << (maskidx1 % 8);
+                // mask[maskidx1] = 1 << (maskidx1 % 8);
 
                 chan_start = intermediate_base;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
@@ -226,13 +238,16 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask) {
                 }
             }
             else if (zap2) {
-                mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
+                // mask[maskidx1 + 1] = 1 << ((maskidx1 + 1) % 8);
+                
                 chan_start = intermediate_base + 1;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
                     block[j].x = repl;
                     block[j].y = repl;
                 }
             }
+
+            mask[maskidx1] = mask[maskidx1] + mask[maskidx1 + 1];
             // printf("%d %d\n", mask[maskidx1], mask[maskidx1 + 1]);
             
         // }

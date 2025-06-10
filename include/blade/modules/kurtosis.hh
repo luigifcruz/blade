@@ -19,6 +19,7 @@ class BLADE_API Kurtosis : public Module {
         int nPols = 2;
         int nChans = 192;
         int subblocksize = 256;
+        int nmaskruns = 128;
         // U64 blockSize = 256;
     };
 
@@ -75,7 +76,6 @@ class BLADE_API Kurtosis : public Module {
     Output output;
     int maskCounter;
     std::ofstream maskOutFile;
-
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {
