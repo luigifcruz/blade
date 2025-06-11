@@ -74,7 +74,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
     // this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nmaskruns * config.nAnts, config.nChans, 8192, 2}, true);
 
     this->maskCounter = 0;
-    this->maskOutFile.open("/home/gsingh/temp/blade_out.bin", std::ios::binary);
+    this->maskOutFile.open("./blade_out.bin", std::ios::binary);
     
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
