@@ -247,7 +247,7 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
                 }
             }
 
-            mask[maskidx1] = mask[maskidx1] + mask[maskidx1 + 1];
+            // mask[maskidx1] = mask[maskidx1] + mask[maskidx1 + 1];
             // printf("%d %d\n", mask[maskidx1], mask[maskidx1 + 1]);
             
         // }
