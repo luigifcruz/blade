@@ -19,7 +19,7 @@ class BLADE_API Kurtosis : public Module {
         int nPols = 2;
         int nChans = 192;
         int subblocksize = 256;
-        int nmaskruns = 128;
+        int nmaskruns = 1;
         // U64 blockSize = 256;
     };
 
