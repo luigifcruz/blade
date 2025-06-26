@@ -133,6 +133,8 @@ Result Kurtosis<IT, OT>::process(const U64& currentStepCount, const Stream& stre
     }
     */
 
+    BL_CHECK(Link(output.buf, input.buf));
+
     // check mask flag/counter
     // if 0 nothing
     // else call this->writeMaskToDisk();

@@ -22,6 +22,32 @@ sklim_vals = {
     }
 }
 
+class KurtosisMaskReader:
+    def __init__(self, fpath, kbsize = 256, nants = 28):
+        self.fpath = fpath
+        self.bksize = 256
+        self.nants = nants
+
+    def read(self):
+        f = open(self.fpath, "rb")
+        data = f.read()
+        self.rawdata = data
+        self.mask = np.zeros(shape = (len(data) * 8))
+        f.close()
+
+        for idx, val in enumerate(data):
+            # self.mask[idx * 8 : (idx + 1) * 8] = [(val & (2 ** p)) >> p for p in range(0, 8)]
+            for p in range(0, 8):
+                masked = (val & (2 ** p)) >> p
+                self.mask[idx * 8 + p] = masked
+
+        n_elements = self.mask.shape[0]
+        blocks = n_elements / (192 * 2 * (8192 / self.bksize) * self.nants)
+        assert (8192 / self.bksize) == int(8192 / self.bksize)
+        # self.mask = self.mask.reshape((self.nants, 192, -1, 2))
+        # self.mask = self.mask.reshape((-1, self.nants, 192, int(8192 / (self.bksize * 4))))
+        self.mask = self.mask.reshape((1, 192, -1, 2))
+
 @bl.runner
 class Pipeline:
     def __init__(self, input_shape,  output_shape, config):
@@ -94,7 +120,7 @@ if __name__ == "__main__":
     # block = block / np.std(block)
 
     chunksize = full_block_cp.shape[2]
-    result = None 
+    result = np.zeros_like(sample_input) 
     for bstart in range(0, chunksize, block_size):
         # bstart = block_ind
         bend = bstart + block_size
@@ -129,10 +155,14 @@ if __name__ == "__main__":
         # we are replacing with 100 here since we're in debug mode
         maskedblock = block_cp * mask + ((100 + 100j) * (1 - mask))
         #maskedblock = (block_cp * mask) # + (block_median * (1 - mask))
+        '''
         if result is not None:
             result = np.concatenate((result, maskedblock), axis = 2)
         else:
             result = maskedblock
+        '''
+
+        result[:, :, bstart:bend, :] = maskedblock
     # maskedblock[np.where(maskedblock == 0)] = 0.0 #np.median(block_cp)
 
     # py_output = cp.asnumpy(maskedblock)

@@ -29,7 +29,7 @@ class KurtosisTest : CudaBenchmark {
             // config.inputPolarization = POL::XY;
             // config.outputPolarization = static_cast<POL>(M);
             // config.blockSize = 192;
-            config.nAnts = 28;
+            config.nAnts = 42;
             config.debugMode = true;
 
             deviceInputBuf = ArrayTensor<Device::CUDA, IT>({config.nAnts, config.nChans, nsamps, config.nPols}, true);
@@ -58,7 +58,7 @@ class KurtosisTest : CudaBenchmark {
 
         for (int i = 0; i < config.nAnts; i++) {
             for (int j = 0; j < config.nChans; j++) {
-                if ((rand() % 1000) < 700) {
+                if ((rand() % 1000) < 1000) {
                     int pol = rand() % 2;
                     for (int s = 0; s < nsamps; s++) {
                         deviceInputBuf[(((i * config.nChans) + j) * nsamps + s) * config.nPols + pol] = 100;
