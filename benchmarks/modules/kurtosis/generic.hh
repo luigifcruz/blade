@@ -12,7 +12,7 @@ static void BM_Kurtosis_Compute_CF32_CF32(bm::State& state) {
 }
 
 BENCHMARK(BM_Kurtosis_Compute_CF32_CF32)
-    ->Iterations(2<<12)
+    ->Iterations(2<<8)
     //->Args({ 2, static_cast<uint8_t>(POL::LR)})
     //->Args({16, static_cast<uint8_t>(POL::LR)})
     ->UseManualTime()

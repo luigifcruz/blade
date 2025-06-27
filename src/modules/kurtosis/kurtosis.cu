@@ -1,5 +1,6 @@
 #include "blade/memory/base.hh"
 #include "cuComplex.h"
+#include <curand_kernel.h>
 
 #define block_size 256
 #define minv 0.00390625
@@ -30,40 +31,20 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     int masksize = N_ANTS * N_CHANS * N_SAMPS / (block_size * 4);
     // int masksize = N_ANTS * N_CHANS * (N_SAMPS / block_size) * N_POLS;
 
-    float repl;
-    if constexpr (debugMode) {
-        repl = 100.0f;
-    }
-    else {
-        repl = 0.0f;
-    }
+    float replx, reply;
 
-    /*
-    int start = blockIdx.x * 1024 + threadIdx.x;
-    int n = (N_ANTS * N_CHANS * N_SAMPS * N_POLS) / 65536;
-    for (int j = start * n; j < start * n + n; j = j + 4) {
-        asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
-                    :
-                    : "l"(block + j), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
-        asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
-                    :
-                    : "l"(block + j + 2), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
+    if constexpr (debugMode) {
+        replx = 100.0f;
+        reply = 100.0f;
     }
-    return;
+    /*
+    else {
+        replx = 0.0f;
+        reply = 0.0f;
+    }
     */
 
     // Compute indices
-    /*
-    int chan = threadIdx.x;
-    if (ant >= N_ANTS) {
-        ant = ant - N_ANTS;
-        ant = ant * 5 + chan / 32;
-        if (ant >= N_ANTS) {
-            return;
-        }
-        chan = 160 + (chan % 32);
-    }
-    */
     int ant = blockIdx.x;
     int chan = threadIdx.x + blockIdx.y * 160;
     if (chan >= N_CHANS) {
@@ -194,6 +175,28 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     int maskidx_true;
     int maskidx1;
 
+    double rmean = 0.0;
+    double imean = 0.0;
+    double rstd = 8.0f;
+    double istd = 8.0f;
+
+    /*
+    for (int a = ant * N_CHANS * N_SAMPS * N_POLS; a < (ant + 1) * N_CHANS * N_SAMPS * N_POLS; a++) {
+        rvar = rvar + pow(block[a].x - rmean, static_cast<double>(2.0));
+        ivar = ivar + pow(block[a].y - imean, static_cast<double>(2.0));
+    }
+
+    rvar = rvar / (N_CHANS * N_SAMPS * N_POLS);
+    ivar = ivar / (N_CHANS * N_SAMPS * N_POLS);
+
+    rstd = pow(rvar, static_cast<double>(0.5));
+    istd = pow(ivar, static_cast<double>(0.5));
+    */
+
+    curandState state;
+    // ant * chan + ant just creates a unique id for each thread
+    curand_init(1234ULL, ant * chan + ant, 0, &state);
+
     for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
     // for (int samp_start = init_samp_start; samp_start < init_samp_start + 256; samp_start = samp_start + block_size) {
             intermediate_base = (threadbaseidx + samp_start) * N_POLS;
@@ -223,9 +226,13 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
 
                 chan_start = intermediate_base;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
+                    if constexpr (!debugMode) {
+                        replx = curand_normal(&state) * rstd + rmean;
+                        reply = curand_normal(&state) * istd + imean;
+                    }
                     asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
                                 :
-                                : "l"(block + j), "f"(repl), "f"(repl), "f"(repl), "f"(repl));
+                                : "l"(block + j), "f"(replx), "f"(reply), "f"(replx), "f"(reply));
                 }
             }
             else if (zap1) {
@@ -233,8 +240,12 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
 
                 chan_start = intermediate_base;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                    block[j].x = repl;
-                    block[j].y = repl;
+                    if constexpr (!debugMode) {
+                        replx = curand_normal(&state) * rstd + rmean;
+                        reply = curand_normal(&state) * istd + imean;
+                    }
+                    block[j].x = replx;
+                    block[j].y = reply;
                 }
             }
             else if (zap2) {
@@ -242,8 +253,12 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
                 
                 chan_start = intermediate_base + 1;
                 for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                    block[j].x = repl;
-                    block[j].y = repl;
+                    if constexpr (!debugMode) {
+                        replx = curand_normal(&state) * rstd + rmean;
+                        reply = curand_normal(&state) * istd + imean;
+                    }
+                    block[j].x = replx;
+                    block[j].y = reply;
                 }
             }
 
