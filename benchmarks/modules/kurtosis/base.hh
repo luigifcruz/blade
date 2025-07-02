@@ -37,7 +37,7 @@ class KurtosisTest : CudaBenchmark {
 
         for (int i = 0; i < nAnts; i++) {
             for (int j = 0; j < nChans; j++) {
-                if ((rand() % 1000) < 500) {
+                if ((rand() % 1000) < 1000) {
                     int pol = rand() % 2;
                     for (int s = 0; s < nSamps; s++) {
                         deviceInputBuf[(((i * nChans) + j) * nSamps + s) * nPols + pol] = 100;

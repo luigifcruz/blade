@@ -42,8 +42,8 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
             getInputBuffer().shape().numberOfFrequencyChannels(),
             getInputBuffer().shape().numberOfTimeSamples(), 
             getInputBuffer().shape().numberOfPolarizations(),
-            config.nKurtosisSigma,
-            config.kurtosisBlockSize
+            config.numberOfKurtosisStddev,
+            config.kurtosisChannelLength
         )
     );
 
@@ -61,10 +61,10 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
    
     // 32 comes from 8192 / 256
     // we are deciding to do blocks of 256 for kurtosis
-    this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nMaskRuns, 
+    this->output.mask = ArrayTensor<Device::CUDA, U8>({config.numberOfMaskRuns, 
             getInputBuffer().shape().numberOfAspects(),
             getInputBuffer().shape().numberOfFrequencyChannels(),
-            getInputBuffer().shape().numberOfTimeSamples() / (4 * config.kurtosisBlockSize)
+            getInputBuffer().shape().numberOfTimeSamples() / (4 * config.kurtosisChannelLength)
             }, true);
 
     this->maskCounter = 0;
@@ -75,13 +75,10 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
                               getOutputBuffer().shape());
     BL_INFO("Config: debugMode:          {}", this->config.debugMode);
-    // BL_INFO("Config: nAnts:              {}", this->config.nAnts);
-    // BL_INFO("Config: nPols:              {}", this->config.nPols);
-    // BL_INFO("Config: nChans:             {}", this->config.nChans);
-    BL_INFO("Config: kurtosisBlockSize:  {}", this->config.kurtosisBlockSize);
-    BL_INFO("Config: nKurtosisSigma:     {}", this->config.nKurtosisSigma);
-    BL_INFO("Config: nMaskRuns:          {}", this->config.nMaskRuns);
-    BL_INFO("Config: maskFilePath:       {}", this->config.maskFilePath);
+    BL_INFO("Config: kurtosisChannelLength:  {}", this->config.kurtosisChannelLength);
+    BL_INFO("Config: numberOfKurtosisStddev:  {}", this->config.numberOfKurtosisStddev);
+    BL_INFO("Config: numberOfMaskRuns:       {}", this->config.numberOfMaskRuns);
+    BL_INFO("Config: maskFilePath:           {}", this->config.maskFilePath);
     BL_INFO("Output Mask Shape: {}", getOutputMask().shape());
 }
 
@@ -89,7 +86,7 @@ template<typename IT, typename OT>
 Result Kurtosis<IT, OT>::writeMaskToDisk() {
     // mask write implementation
 
-    int masksize = config.nMaskRuns * getInputBuffer().shape().numberOfAspects() * getInputBuffer().shape().numberOfFrequencyChannels() * 8;
+    int masksize = config.numberOfMaskRuns * getInputBuffer().shape().numberOfAspects() * getInputBuffer().shape().numberOfFrequencyChannels() * 8;
         
     this->maskOutFile.write(reinterpret_cast<const char*>((this->output.mask.data())), masksize);
 
@@ -99,7 +96,7 @@ Result Kurtosis<IT, OT>::writeMaskToDisk() {
 template<typename IT, typename OT>
 Kurtosis<IT, OT>::~Kurtosis() {
     // destructor
-    if (this->maskCounter == config.nMaskRuns) {
+    if (this->maskCounter == config.numberOfMaskRuns) {
         this->writeMaskToDisk();
     }
     this->maskOutFile.close();
@@ -111,7 +108,7 @@ Result Kurtosis<IT, OT>::process(const U64& currentStepCount, const Stream& stre
     BL_CHECK(Link(output.buf, input.buf));
 
 
-    if (this->maskCounter == config.nMaskRuns) {
+    if (this->maskCounter == config.numberOfMaskRuns) {
         this->writeMaskToDisk();
         this->maskCounter = 0;
     }
