@@ -86,11 +86,11 @@ if __name__ == "__main__":
     # bl_phasors = host_phasors.as_numpy()
     bl_output = host_output.as_numpy()
 
-    sample_input = 8 * np.random.normal(size=input_shape) + 8j * np.random.normal(size=input_shape)
+    sample_input = 8 * np.random.normal(size=input_shape) + 16j * np.random.normal(size=input_shape)
     # add pollution
-    pollution = np.zeros_like(sample_input)
-    pollution[:, :, ::2048, :] = 100 * np.random.normal(size = (28, 192, 4, 2)) + 100j * np.random.normal(size = (28, 192, 4, 2))
-    sample_input = sample_input + pollution
+    # pollution = np.zeros_like(sample_input)
+    # pollution[:, :, ::2048, :] = 100 * np.random.normal(size = (28, 192, 4, 2)) + 100j * np.random.normal(size = (28, 192, 4, 2))
+    # sample_input = sample_input + pollution
 
     inp = np.copy(sample_input) 
 

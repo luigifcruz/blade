@@ -18,9 +18,10 @@ class BLADE_API Kurtosis : public Module {
         int nAnts = 28;
         int nPols = 2;
         int nChans = 192;
-        int subblocksize = 256;
-        int nmaskruns = 64;
-        // U64 blockSize = 256;
+        int kurtosisBlockSize = 256;
+        int nKurtosisSigma = 5;
+        int nMaskRuns = 64;
+        std::string maskFilePath = "./blade_out.bin";
     };
 
     constexpr const Config& getConfig() const {
@@ -76,6 +77,7 @@ class BLADE_API Kurtosis : public Module {
     Output output;
     int maskCounter;
     std::ofstream maskOutFile;
+
     // Expected Shape
 
     const ArrayShape getOutputBufferShape() const {

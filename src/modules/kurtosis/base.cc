@@ -44,10 +44,12 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
             TypeInfo<IT>::name,
             TypeInfo<OT>::name,
             config.debugMode,
-            config.nAnts, 
-            config.nChans, 
-            8192, 
-            2
+            getInputBuffer().shape().numberOfAspects(),
+            getInputBuffer().shape().numberOfFrequencyChannels(),
+            getInputBuffer().shape().numberOfTimeSamples(), 
+            getInputBuffer().shape().numberOfPolarizations(),
+            config.nKurtosisSigma,
+            config.kurtosisBlockSize
         )
     );
 
@@ -70,12 +72,18 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
    
     // 32 comes from 8192 / 256
     // we are deciding to do blocks of 256 for kurtosis
-    this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nmaskruns, config.nAnts, config.nChans, 8192 / (4 * config.subblocksize)}, true);
+    this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nMaskRuns, 
+            //config.nAnts, 
+            getInputBuffer().shape().numberOfAspects(),
+            //config.nChans, 
+            getInputBuffer().shape().numberOfFrequencyChannels(),
+            getInputBuffer().shape().numberOfTimeSamples() / (4 * config.kurtosisBlockSize)
+            }, true);
     // this->output.mask = ArrayTensor<Device::CUDA, U8>({config.nmaskruns * config.nAnts, config.nChans, 8192, 2}, true);
 
     this->maskCounter = 0;
-    this->maskOutFile.open("./blade_out.bin", std::ios::binary);
-    
+    this->maskOutFile.open(std::string(this->config.maskFilePath), std::ios::binary);
+
     // Print configuration values.
     BL_INFO("Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
     BL_INFO("Shape: {} -> {}", getInputBuffer().shape(), 
@@ -87,7 +95,7 @@ template<typename IT, typename OT>
 Result Kurtosis<IT, OT>::writeMaskToDisk() {
     // mask write implementation
 
-    int masksize = config.nmaskruns * config.nAnts * config.nChans * 8;
+    int masksize = config.nMaskRuns * config.nAnts * config.nChans * 8;
     // std::ofstream outputFile("/home/gsingh/temp/blade_out.bin", std::ios::out | std::ios::binary);
     // printf("writing from %p\n", this->output.mask);
     // for (int i = 0; i < masksize; i = i + 1) {
@@ -119,7 +127,7 @@ Result Kurtosis<IT, OT>::writeMaskToDisk() {
 template<typename IT, typename OT>
 Kurtosis<IT, OT>::~Kurtosis() {
     // destructor
-    if (this->maskCounter == config.nmaskruns) {
+    if (this->maskCounter == config.nMaskRuns) {
         this->writeMaskToDisk();
     }
     this->maskOutFile.close();
@@ -139,7 +147,7 @@ Result Kurtosis<IT, OT>::process(const U64& currentStepCount, const Stream& stre
     // if 0 nothing
     // else call this->writeMaskToDisk();
 
-    if (this->maskCounter == config.nmaskruns) {
+    if (this->maskCounter == config.nMaskRuns) {
         /*
         while (this->future_obj.get() != Result::SUCCESS) {
             this->future_obj = std::async(this->writeMaskToDisk);
