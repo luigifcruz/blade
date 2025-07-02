@@ -22,31 +22,6 @@ sklim_vals = {
     }
 }
 
-class KurtosisMaskReader:
-    def __init__(self, fpath, kbsize = 256, nants = 28):
-        self.fpath = fpath
-        self.bksize = 256
-        self.nants = nants
-
-    def read(self):
-        f = open(self.fpath, "rb")
-        data = f.read()
-        self.rawdata = data
-        self.mask = np.zeros(shape = (len(data) * 8))
-        f.close()
-
-        for idx, val in enumerate(data):
-            # self.mask[idx * 8 : (idx + 1) * 8] = [(val & (2 ** p)) >> p for p in range(0, 8)]
-            for p in range(0, 8):
-                masked = (val & (2 ** p)) >> p
-                self.mask[idx * 8 + p] = masked
-
-        n_elements = self.mask.shape[0]
-        blocks = n_elements / (192 * 2 * (8192 / self.bksize) * self.nants)
-        assert (8192 / self.bksize) == int(8192 / self.bksize)
-        # self.mask = self.mask.reshape((self.nants, 192, -1, 2))
-        # self.mask = self.mask.reshape((-1, self.nants, 192, int(8192 / (self.bksize * 4))))
-        self.mask = self.mask.reshape((1, 192, -1, 2))
 
 @bl.runner
 class Pipeline:
@@ -74,8 +49,8 @@ if __name__ == "__main__":
     block_size = 256
 
     config = {
-        #'enable_incoherent_beam': True,
-        #'enable_incoherent_beam_sqrt': True,
+            'debugMode' : True,
+            'nMaskRuns' : 1
     }
 
     host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)

@@ -12,8 +12,6 @@ class BLADE_API Kurtosis : public Module {
     // Configuration
 
     struct Config {
-        // POL inputPolarization = POL::XY;
-        // POL outputPolarization = POL::LR;
         bool debugMode = false;
         int nAnts = 28;
         int nPols = 2;

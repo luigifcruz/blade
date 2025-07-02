@@ -18,7 +18,21 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
     nb::class_<Class, Module> mod(mm, "mod");
 
     nb::class_<typename Class::Config>(mod, "config")
-        .def(nb::init<const U64&>(), "block_size"_a = 512);
+        .def(nb::init<const bool,
+                const int,
+                const int,
+                const int,
+                const int,
+                const int,
+                const int,
+                const std::string&>(), "debugMode"_a = false,
+                "nAnts"_a = 28,
+                "nPols"_a = 2,
+                "nChans"_a = 192,
+                "kurtosisBlockSize"_a = 256,
+                "nKurtosisSigma"_a = 5,
+                "nMaskRuns"_a = 64,
+                "maskFilePath"_a = "./blade_out.bin");
 
     nb::class_<typename Class::Input>(mod, "input")
         .def(nb::init<const ArrayTensor<Device::CUDA, IT>&>(), "buffer"_a);
