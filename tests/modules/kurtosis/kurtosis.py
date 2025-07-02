@@ -43,14 +43,14 @@ class Pipeline:
 
 if __name__ == "__main__":
     # Specify dimension of array.
-    input_shape = (28, 192, 8192, 2)
+    input_shape = (42, 192, 8192, 2)
     output_shape = input_shape #(20, 192, 8192, 2)
 
     block_size = 256
 
     config = {
             'debugMode' : True,
-            'nMaskRuns' : 1
+            # 'nAnts' : 42
     }
 
     host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)

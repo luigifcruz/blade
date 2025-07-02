@@ -13,9 +13,9 @@ class BLADE_API Kurtosis : public Module {
 
     struct Config {
         bool debugMode = false;
-        int nAnts = 28;
-        int nPols = 2;
-        int nChans = 192;
+        // int nAnts = 28;
+        // int nPols = 2;
+        // int nChans = 192;
         int kurtosisBlockSize = 256;
         int nKurtosisSigma = 5;
         int nMaskRuns = 64;

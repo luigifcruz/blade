@@ -25,8 +25,7 @@ class KurtosisTest : CudaBenchmark {
 
         InitAndProfile([&](){
             config.debugMode = true;
-
-            deviceInputBuf = ArrayTensor<Device::CUDA, IT>({42, 192, 8192, 2}, true);
+            deviceInputBuf = ArrayTensor<Device::CUDA, IT>({nAnts, nChans, nSamps, nPols}, true);
 
             //BL_DISABLE_PRINT();
             Create(module, config, {
