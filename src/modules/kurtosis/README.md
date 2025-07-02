@@ -12,6 +12,6 @@ We will remove channels if they are not Gaussian enough -- this is evaluated by 
 
 We determined empirically that a kurtosis block size (M, in the formula) of 256 is ideal, along with a stddev of 5 for the kurtosis bounds.
 
-The kurtosis kernel goes through each channel and pol, calculating the spectral kurtosis (SK) values for each of the 256-sample long channels.
+The kurtosis kernel goes through each sub-channel and pol, calculating the spectral kurtosis (SK) values for each of the 256-sample long channels. 
 
 

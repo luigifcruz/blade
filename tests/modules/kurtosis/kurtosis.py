@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     config = {
             'debugMode' : True,
-            # 'nAnts' : 42
+            'numberOfKurtosisStddev' : 3
     }
 
     host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         sk_mean = 1
 
         # TODO: remove assumption
-        n_stds = 5
+        n_stds = config['numberOfKurtosisStddev']
 
         sk_bounds = sklim_vals[n_stds][block_size]
 

@@ -15,7 +15,7 @@ class BLADE_API Kurtosis : public Module {
         bool debugMode = false;
         int kurtosisChannelLength = 256;
         int numberOfKurtosisStddev = 5;
-        int numberOfMaskRuns = 64;
+        int numberOfMaskRuns = 128;
         std::string maskFilePath = "./blade_out.bin";
     };
 

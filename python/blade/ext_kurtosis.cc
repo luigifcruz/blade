@@ -23,9 +23,9 @@ void NB_SUBMODULE(auto& m, const auto& in_name, const auto& out_name) {
                 const int,
                 const int,
                 const std::string&>(), "debugMode"_a = false,
-                "kurtosisBlockSize"_a = 256,
-                "nKurtosisSigma"_a = 5,
-                "nMaskRuns"_a = 64,
+                "kurtosisChannelLength"_a = 256,
+                "numberOfKurtosisStddev"_a = 5,
+                "numberOfMaskRuns"_a = 64,
                 "maskFilePath"_a = "./blade_out.bin");
 
     nb::class_<typename Class::Input>(mod, "input")
