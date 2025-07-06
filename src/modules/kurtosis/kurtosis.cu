@@ -2,7 +2,6 @@
 #include "cuComplex.h"
 #include <curand_kernel.h>
 
-
 using namespace Blade;
 
 // CUDA kernel to compute sk_array
@@ -53,47 +52,57 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     float skvals[N_POLS * N_SAMPS / block_size];
     int skind = 0;
     for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
-            s1_1 = 0;
-            s2_1 = 0;
+        // set accumulators to 0
+        s1_1 = 0;
+        s2_1 = 0;
 
-            s1_2 = 0;
-            s2_2 = 0;
+        s1_2 = 0;
+        s2_2 = 0;
 
-            baseidx = threadbaseidx + samp_start;
-            intermediate_base = baseidx * N_POLS;
-            idx1 = intermediate_base;
+        baseidx = threadbaseidx + samp_start;
+        intermediate_base = baseidx * N_POLS;
+        idx1 = intermediate_base;
 
-            for (int samp = 0; samp < block_size; samp++) {
-                
-                asm volatile(
-                    "ld.global.v4.f32 {%0, %1, %2, %3}, [%4];"
-                    : "=f"(x1), "=f"(y1), "=f"(x2), "=f"(y2)
-                    : "l"(block + idx1)
-                    );
+        for (int samp = 0; samp < block_size; samp++) {
+            // load the two complex numbers into memory via a
+            // four-float memory read
 
-                x1 = x1 * x1;
-                y1 = y1 * y1;
-                x2 = x2 * x2;
-                y2 = y2 * y2;
+            asm volatile(
+                "ld.global.v4.f32 {%0, %1, %2, %3}, [%4];"
+                : "=f"(x1), "=f"(y1), "=f"(x2), "=f"(y2)
+                : "l"(block + idx1)
+                );
 
-                v2_1 = x1 + y1;
-                v2_2 = x2 + y2;
-                
-                s1_1 += v2_1;
-                s1_2 += v2_2;
+            // square all four and then sum into the v2_X values
+            // to compute squared magnitudes
+            x1 = x1 * x1;
+            y1 = y1 * y1;
+            x2 = x2 * x2;
+            y2 = y2 * y2;
 
-                s2_1 = fmaf(v2_1, v2_1, s2_1);
-                s2_2 = fmaf(v2_2, v2_2, s2_2);
+            v2_1 = x1 + y1;
+            v2_2 = x2 + y2;
+            
+            // sum of squared magnitudes
+            s1_1 += v2_1;
+            s1_2 += v2_2;
 
-                idx1 = idx1 + N_POLS;
-            }
+            // sum of fourth-pow magnitudes
+            // fmaf(a, b, c) is equivalent to c = c + a * b
+            s2_1 = fmaf(v2_1, v2_1, s2_1);
+            s2_2 = fmaf(v2_2, v2_2, s2_2);
 
-            // Compute sk value
-            sk_1 = quotient * ((block_size * (s2_1 / (s1_1 * s1_1))) - 1.0f);
-            sk_2 = quotient * ((block_size * (s2_2 / (s1_2 * s1_2))) - 1.0f);
+            // jump ahead by N_POLS for next values
+            idx1 = idx1 + N_POLS;
+        }
 
-            skvals[skind++] = sk_1;
-            skvals[skind++] = sk_2;
+        // Compute sk value
+        sk_1 = quotient * ((block_size * (s2_1 / (s1_1 * s1_1))) - 1.0f);
+        sk_2 = quotient * ((block_size * (s2_2 / (s1_2 * s1_2))) - 1.0f);
+
+        // fill up the array
+        skvals[skind++] = sk_1;
+        skvals[skind++] = sk_2;
     }
 
 
@@ -110,6 +119,7 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     double rstd;
     double istd;
 
+    // modify distributions based on if we are debugging
     if constexpr (debugMode) {
         rmean = 100.0f;
         imean= 100.0f;
@@ -154,16 +164,30 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
             mask[maskidx_true] = 0;
         }
 
-        // sum the values of the two pols and write
+        // sum the values of the two pols
+        // by performing a bit shift the "1" in the mask gets
+        // moved to its appropriate place in the integer
+        //
+        // each thread is responsible for two UNIQUE channels -- that is,
+        // no other threads will touch the mask indices that this one does
+        // 
+        // and so given that above we conditionally set the mask value to zero,
+        // here we can add to the existing value based on the bit shift
+        
         mask[maskidx_true] = mask[maskidx_true] + (zap1 << (maskidx_raw % 8)) + (zap2 << ((maskidx_raw + 1) % 8));
 
         if (zap1 && zap2) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
+                // here we are only generating two values
+                // and so both pols will be the same complex number a + bi
+                // this is just for efficiency purposes
                 replx1 = curand_normal(&state) * rstd + rmean;
                 reply1 = curand_normal(&state) * istd + imean;
                 // replx2 = curand_normal(&state) * rstd + rmean;
                 // reply2 = curand_normal(&state) * rstd + rmean;
+
+                // consecutive four-float store
                 asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
                             :
                             : "l"(block + j), "f"(replx1), "f"(reply1), "f"(replx1), "f"(reply1));

@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     config = {
             'debugMode' : True,
-            'numberOfKurtosisStddev' : 3
+            'numberOfKurtosisStddev' : 4
     }
 
     host_input = bl.array_tensor(input_shape, dtype=bl.cf32, device=bl.cpu)
@@ -119,7 +119,6 @@ if __name__ == "__main__":
 
         sk_mean = 1
 
-        # TODO: remove assumption
         n_stds = config['numberOfKurtosisStddev']
 
         sk_bounds = sklim_vals[n_stds][block_size]
@@ -127,12 +126,10 @@ if __name__ == "__main__":
 
         mask = np.logical_and(sk_arr > sk_bounds[0], sk_arr < sk_bounds[1])
         nzapped = np.sum(1 - mask)
-        print("zapped", nzapped, "of", mask.shape)
-        # mask = cp.logical_and(sk_arr > sk_bounds[0], sk_arr < sk_bounds[1])
+        # print("zapped", nzapped, "of", mask.shape)
         
         # we are replacing with 100 here since we're in debug mode
         maskedblock = block_cp * mask + ((100 + 100j) * (1 - mask))
-        #maskedblock = (block_cp * mask) # + (block_median * (1 - mask))
         '''
         if result is not None:
             result = np.concatenate((result, maskedblock), axis = 2)
@@ -152,15 +149,10 @@ if __name__ == "__main__":
 
     #
     # Compare Results
-    # Since kurtosis does an in-place modification
-    # maybe we want to compare bl_input with py_output?
 
     assert np.allclose(bl_output[:-1, :, :, :], py_output[:-1, :, :, :], rtol=0.01)
     assert np.allclose(bl_output[-1, :, :, :], py_output[-1, :, :, :], atol=250)
 
-    # assert np.allclose(bl_output[:-1, :, :, :], py_output[:-1, :, :, :], rtol=0.01)
-    # assert np.allclose(bl_output[-1, :, :, :], py_output[-1, :, :, :], atol=250)
-    
 
 
     print("Test successfully completed!")
