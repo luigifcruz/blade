@@ -69,6 +69,7 @@ class BenchmarkRunner {
             inputBuffer.push_back(ArrayTensor<Device::CPU, IT>(config.inputShape));
             outputBuffer.push_back(ArrayTensor<Device::CPU, OT>(config.outputShape));
         }
+        pipeline->compile(0);
     }
 
     Result run(const U64& totalIterations) {

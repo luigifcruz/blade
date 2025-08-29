@@ -121,6 +121,17 @@ Channelizer<IT, OT>::~Channelizer() {
 }
 
 template<typename IT, typename OT>
+Result Channelizer<IT, OT>::compile(const Stream& stream) {
+    if (config.rate == 1) {
+        return Result::SUCCESS;
+    }
+
+    BL_DEBUG("Compiling FFT Size: {}", config.rate);
+    BL_CHECK(this->compileKernel("main", stream));
+    return Result::SUCCESS;
+}
+
+template<typename IT, typename OT>
 Result Channelizer<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (config.rate == 1) {
         return Result::SUCCESS;

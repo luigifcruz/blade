@@ -58,6 +58,15 @@ Caster<IT, OT>::Caster(const Config& config,
 }
 
 template<typename IT, typename OT>
+Result Caster<IT, OT>::compile(const Stream& stream) {
+    if constexpr (std::is_same<IT, OT>::value) {
+        return Result::SUCCESS;
+    }
+    BL_DEBUG("Compiling ... Type: {} -> {}", TypeInfo<IT>::name, TypeInfo<OT>::name);
+    return this->compileKernel("main", stream);
+}
+
+template<typename IT, typename OT>
 Result Caster<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if constexpr (std::is_same<IT, OT>::value) {
         return Result::SUCCESS;

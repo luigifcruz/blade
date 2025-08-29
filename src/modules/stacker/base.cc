@@ -73,6 +73,31 @@ Stacker<IT, OT>::Stacker(const Config& config,
 }
 
 template<typename IT, typename OT>
+Result Stacker<IT, OT>::compile(const Stream& stream) {
+    if (config.multiplier == 1) {
+        return Result::SUCCESS;
+    }
+
+    if (strategy == Strategy::Kernel) {
+        cache
+            .get_kernel(
+                Template("stacker")
+                    .instantiate(TypeInfo<IT>::name)
+            )
+            ->configure(
+                PadGridSize(input.buf.size(), config.blockSize),
+                config.blockSize,
+                0,
+                stream
+            );
+    }
+
+    if (strategy == Strategy::Copy) {   }
+
+    return Result::SUCCESS;
+}
+
+template<typename IT, typename OT>
 Result Stacker<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     if (config.multiplier == 1) {
         return Result::SUCCESS;

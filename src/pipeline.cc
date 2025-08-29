@@ -166,4 +166,15 @@ Result Pipeline::compute(const U64& index) {
     return Result::SUCCESS;
 }
 
+Result Pipeline::compile(const U64& index) {
+    for (auto& module : _modules) {
+        const auto& result = module->compile(_streams[index]);
+        if (result != Result::SUCCESS) {
+            BL_FATAL("Module compilation failed: {}", module->name());
+            return result;
+        }
+    }
+    return Result::SUCCESS;
+}
+
 }  // namespace Blade

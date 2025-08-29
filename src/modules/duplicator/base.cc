@@ -32,6 +32,11 @@ Duplicator<IT, OT>::Duplicator(const Config& config,
 }
 
 template<typename IT, typename OT>
+Result Duplicator<IT, OT>::compile(const Stream& stream) {
+    return Result::SUCCESS;
+}
+
+template<typename IT, typename OT>
 Result Duplicator<IT, OT>::process(const U64& currentStepCount, const Stream& stream) {
     return Blade::Copy(output.buf, input.buf, stream);
 }
