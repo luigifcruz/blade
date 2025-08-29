@@ -75,6 +75,9 @@ class BenchmarkRunner {
                 const U64 i = enqueueCount++ % 2;
                 return pipeline->transferIn(inputBuffer[i]);
             };
+            auto transferCallback = [&](){
+                return Result::SUCCESS;
+            };
             auto resultCallback = [&](){
                 return pipeline->transferResult();
             };
@@ -82,7 +85,7 @@ class BenchmarkRunner {
                 const U64 i = dequeueCount++ % 2;
                 return pipeline->transferOut(outputBuffer[i]);
             };
-            BL_CHECK(pipeline->enqueue(inputCallback, resultCallback, outputCallback, enqueueCount, dequeueCount));
+            BL_CHECK(pipeline->enqueue(inputCallback, transferCallback, resultCallback, outputCallback, enqueueCount, dequeueCount));
 
             BL_CHECK(pipeline->dequeue([&](const U64& inputId,
                                            const U64& outputId,

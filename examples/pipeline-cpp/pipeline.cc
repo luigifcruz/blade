@@ -111,13 +111,16 @@ int main() {
         auto inputCallback = [&](){
             return pipeline->transferIn(inputBuffer[enqueueCount++ % 2]);
         };
+        auto transferCallback = [&](){
+            return Result::SUCCESS;
+        };
         auto resultCallback = [&](){
             return pipeline->transferResult();
         };
         auto outputCallback = [&](){
             return pipeline->transferOut(outputBuffer[dequeueCount++ % 2]);
         };
-        pipeline->enqueue(inputCallback, resultCallback, outputCallback, enqueueCount, dequeueCount);
+        pipeline->enqueue(inputCallback, transferCallback, resultCallback, outputCallback, enqueueCount, dequeueCount);
 
         pipeline->dequeue([&](const U64& inputId,
                               const U64& outputId,
