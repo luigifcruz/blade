@@ -18,13 +18,18 @@ class Pipeline:
         self.copy(buf, self.output.buf)
 
 
-def test(A, F, T, P, Size, Rate):
+def test(A, F, T, P, Size, Rate, Axis=2):
     in_shape = (A, F, T, P)
-    out_shape = (A, F, int(T / Size), P)
+
+    out_shape = tuple(
+        d if di != Axis else int(d / Size)
+        for di, d in enumerate(in_shape)
+    )
 
     config = {
         "size": Size,
         "rate": Rate,
+        "axis": Axis,
     }
 
     host_input = bl.array_tensor(in_shape, dtype=bl.cf32, device=bl.cpu)
@@ -49,8 +54,12 @@ def test(A, F, T, P, Size, Rate):
     #
 
     py_output = np.zeros(out_shape, dtype=np.complex64)
+    re_shape = [in_shape[i] for i in range(Axis)]
+    re_shape.extend([int(in_shape[Axis] / Size), Size])
+    re_shape.extend([in_shape[i] for i in range(Axis+1, len(in_shape))])
+    re_shape = tuple(re_shape) 
     for _ in range(Rate):
-        py_output += np.sum(np.reshape(bl_input, (A, F, int(T / Size), Size, P)), axis=3)
+        py_output += np.sum(np.reshape(bl_input, re_shape), axis=Axis+1)
 
     #
     # Compare Results
@@ -66,4 +75,6 @@ if __name__ == "__main__":
          int(sys.argv[3]),
          int(sys.argv[4]),
          int(sys.argv[5]),
-         int(sys.argv[6]))
+         int(sys.argv[6]),
+         int(sys.argv[7])
+         )
