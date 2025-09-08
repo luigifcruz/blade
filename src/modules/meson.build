@@ -13,5 +13,6 @@ subdir('duplicator')
 subdir('guppi')
 subdir('integrator')
 subdir('bfr5')
+subdir('kurtosis')
 
 summary(sum_lst, section: 'Modules', bool_yn: true)

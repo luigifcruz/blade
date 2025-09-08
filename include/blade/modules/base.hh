@@ -59,4 +59,8 @@
 #include "blade/modules/integrator.hh"
 #endif
 
+#ifdef BLADE_MODULE_KURTOSIS
+#include "blade/modules/kurtosis.hh"
+#endif
+
 #endif

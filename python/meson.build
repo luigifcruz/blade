@@ -29,6 +29,7 @@ if py.found()
             'ext_pipeline.cc',
             'ext_polarizer.cc',
             'ext_runner.cc',
+            'ext_kurtosis.cc',
         ]
     )
 endif
