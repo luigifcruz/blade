@@ -15,6 +15,7 @@ Runner::~Runner() {
 }
 
 Result Runner::enqueue(const std::function<Result()>& inputCallback,
+                       const std::function<Result()>& transferCallback,
                        const std::function<Result()>& resultCallback,
                        const std::function<Result()>& outputCallback,
                        U64 inputId,
@@ -35,6 +36,7 @@ Result Runner::enqueue(const std::function<Result()>& inputCallback,
     BL_CHECK(compute(headIndex));
     if (_willOutput) {
         BL_CHECK(resultCallback());
+        BL_CHECK(transferCallback());
         BL_CHECK(record(headIndex));
         BL_CHECK(outputCallback());
     } else {
