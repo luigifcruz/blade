@@ -152,6 +152,9 @@ int main() {
         auto inputCallback = [&](){
             return pipeline->transferIn(inputBuffer[enqueueCount++ % inputBuffer.size()]);
         };
+        auto transferCallback = [&](){
+            return Result::SUCCESS;
+        };
         auto resultCallback = [&](){
             return pipeline->transferResult();
         };
@@ -161,7 +164,7 @@ int main() {
         struct timespec timestamp_start, timestamp_stop;
       
         clock_gettime(CLOCK_MONOTONIC, &timestamp_start);
-        pipeline->enqueue(inputCallback, resultCallback, outputCallback, enqueueCount % inputBuffer.size(), dequeueCount % outputBuffer.size());
+        pipeline->enqueue(inputCallback, transferCallback, resultCallback, outputCallback, enqueueCount % inputBuffer.size(), dequeueCount % outputBuffer.size());
 
         pipeline->dequeue([&](const U64& inputId, 
                               const U64& outputId,
