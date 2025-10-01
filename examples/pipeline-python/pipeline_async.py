@@ -52,6 +52,10 @@ while iterations[0] < 8:
         pipeline.transfer_in(host_input)
         return bl.result.success
 
+    # Define the transfer callback function
+    def transfer_callback():
+        return bl.result.success
+
     # Define the result callback function
     def result_callback():
         pipeline.transfer_result()
@@ -64,7 +68,7 @@ while iterations[0] < 8:
         return bl.result.success
 
     # Enqueue the pipeline with the input and output callbacks and the current enqueue count
-    pipeline.enqueue(input_callback, result_callback, output_callback, enqueue_count[0], dequeue_count[0])
+    pipeline.enqueue(input_callback, transfer_callback, result_callback, output_callback, enqueue_count[0], dequeue_count[0])
 
     # Define the dequeue callback function
     def callback(input_id, output_id, did_output):
