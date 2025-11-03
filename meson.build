@@ -11,7 +11,7 @@ project(
 )
 
 is_static = get_option('default_library') == 'static'
-cuda_args = ['-arch', 'compute_70', '--expt-relaxed-constexpr', '-diag-suppress', '815']
+cuda_args = ['-arch', 'compute_80', '--expt-relaxed-constexpr', '-diag-suppress', '815']
 
 cfg_lst = configuration_data(
     {
