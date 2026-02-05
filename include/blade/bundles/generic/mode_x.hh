@@ -147,7 +147,7 @@ class BLADE_API ModeX : public Bundle {
 
             .blockSize = config.stackerBlockSize,
         }, {
-            .buf = correlator->getOutputBuffer(),
+            .buf = config.channelizerBypass ? bypassCorrelator->getOutputBuffer() : correlator->getOutputBuffer(),
         });
 
         if (getOutputBuffer().shape() != config.outputShape) {
