@@ -12,7 +12,7 @@ project(
 
 src_lst = []
 dep_lst = [
-    dependency('cuda', version: '>=11', modules: ['cuda', 'culibos', 'cufile']),
+    dependency('cuda', version: '>=11', modules: ['cuda', 'culibos', 'cudart']),
     dependency('jetstream'),
 ]
 inc_lst = [
