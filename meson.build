@@ -1,46 +1,32 @@
 project(
     'blade',
-    ['cpp', 'c', 'cuda'],
-    version: '1.1.0', # [VERSION UPGRADE HOOK]
+    ['cpp'],
+    version: '2.0.0',
     default_options: [
-        'buildtype=release',
         'cpp_std=c++20',
+        'buildtype=release',
         'b_ndebug=if-release',
-        'prefix=/usr',
+        'cuda_std=c++20',
     ]
 )
 
-is_static = get_option('default_library') == 'static'
-cuda_args = ['-arch', 'compute_80', '--expt-relaxed-constexpr', '-diag-suppress', '815']
-
-cfg_lst = configuration_data(
-    {
-        'commit': run_command('git', 'describe', '--always', '--dirty', '--abbrev=9', check: true).stdout().strip()
-    }
-)
 src_lst = []
 dep_lst = [
-    dependency('cuda', version: '>=11', modules: ['nvrtc', 'cuda', 'culibos', 'cudart', 'cufft']),
+    dependency('cuda', version: '>=11', modules: ['cuda', 'culibos', 'cufile']),
+    dependency('jetstream'),
 ]
 inc_lst = [
     include_directories('include'),
-    include_directories('kernels'),
-    include_directories('.'),
 ]
-jit_lst = []
 
-subdir('meson')
 subdir('src')
-subdir('include')
-subdir('kernels')
 
 lib_blade = library(
     'blade',
     src_lst,
     include_directories: inc_lst,
     dependencies: dep_lst,
-    gnu_symbol_visibility: 'hidden',
-    install: not is_static,
+    install: true,
 )
 
 lib_blade_dep = declare_dependency(
@@ -49,24 +35,8 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
-if not is_static
-    pkg = import('pkgconfig')
-    pkg.generate(
-        lib_blade,
-        libraries: dep_lst,
-    )
-endif
-
-subdir('python')
-subdir('docs')
-subdir('tests')
-subdir('benchmarks')
-subdir('examples')
-
-summary({
-    'cpp_std': get_option('cpp_std'),
-    'prefix': get_option('prefix'),
-    'buildtype': get_option('buildtype'),
-    'static library': is_static,
-    'python bindings': py.found(),
-}, section: 'General', bool_yn: true)
+pkg = import('pkgconfig')
+pkg.generate(
+    lib_blade,
+    libraries: dep_lst,
+)

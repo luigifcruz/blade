@@ -1,9 +1,20 @@
 .cache
-.vscode
-build
-__pycache__
 .DS_Store
-.mesonpy*
+build/*
+builddir/*
+__pycache__
+.ipynb_checkpoints
+.vscode
+.idea
+builddir
+imgui.ini
+workspace
 
-subprojects/*
-!subprojects/fmt.wrap
+*.zip
+
+build*
+build-*
+
+!*.wrap
+!packagefiles
+!libusb-browser

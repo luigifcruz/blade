@@ -1,1 +1,0 @@
-from blade._pipeline_impl import pipeline
