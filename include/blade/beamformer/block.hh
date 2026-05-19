@@ -1,5 +1,5 @@
-#ifndef BLADE_DOMAINS_DSP_BEAMFORMER_BLOCK_HH
-#define BLADE_DOMAINS_DSP_BEAMFORMER_BLOCK_HH
+#ifndef BLADE_BEAMFORMER_BLOCK_HH
+#define BLADE_BEAMFORMER_BLOCK_HH
 
 #include <jetstream/block.hh>
 
@@ -22,4 +22,4 @@ struct Beamformer : public Block::Config {
 
 }  // namespace Jetstream::Blocks
 
-#endif  // BLADE_DOMAINS_DSP_BEAMFORMER_BLOCK_HH
+#endif  // BLADE_BEAMFORMER_BLOCK_HH

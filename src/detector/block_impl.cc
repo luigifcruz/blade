@@ -1,7 +1,7 @@
-#include <blade/domains/dsp/detector/block.hh>
+#include <blade/detector/block.hh>
 #include <jetstream/detail/block_impl.hh>
 
-#include <blade/domains/dsp/detector/module.hh>
+#include <blade/detector/module.hh>
 
 namespace Jetstream::Blocks {
 

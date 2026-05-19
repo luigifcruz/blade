@@ -1,5 +1,5 @@
-#ifndef BLADE_DOMAINS_DSP_CORRELATOR_BLOCK_HH
-#define BLADE_DOMAINS_DSP_CORRELATOR_BLOCK_HH
+#ifndef BLADE_CORRELATOR_BLOCK_HH
+#define BLADE_CORRELATOR_BLOCK_HH
 
 #include <string>
 
@@ -27,4 +27,4 @@ struct Correlator : public Block::Config {
 
 }  // namespace Jetstream::Blocks
 
-#endif  // BLADE_DOMAINS_DSP_CORRELATOR_BLOCK_HH
+#endif  // BLADE_CORRELATOR_BLOCK_HH

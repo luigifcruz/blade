@@ -1,7 +1,7 @@
-#ifndef BLADE_DOMAINS_DSP_CORRELATOR_MODULE_IMPL_HH
-#define BLADE_DOMAINS_DSP_CORRELATOR_MODULE_IMPL_HH
+#ifndef BLADE_DETECTOR_MODULE_IMPL_HH
+#define BLADE_DETECTOR_MODULE_IMPL_HH
 
-#include <blade/domains/dsp/correlator/module.hh>
+#include <blade/detector/module.hh>
 #include <jetstream/detail/module_impl.hh>
 
 namespace Jetstream::Modules {
@@ -12,9 +12,8 @@ constexpr U64 kFrequencyAxis = 1;
 constexpr U64 kTimeAxis = 2;
 constexpr U64 kPolarizationAxis = 3;
 constexpr U64 kExpectedInputPolarizations = 2;
-constexpr U64 kOutputPolarizations = 4;
 
-struct CorrelatorImpl : public Module::Impl, public DynamicConfig<Correlator> {
+struct DetectorImpl : public Module::Impl, public DynamicConfig<Detector> {
     Result validate() override;
     Result define() override;
     Result create() override;
@@ -24,14 +23,9 @@ struct CorrelatorImpl : public Module::Impl, public DynamicConfig<Correlator> {
  protected:
     Tensor inputTensor;
     Tensor outputTensor;
-    U64 baselineCount = 0;
-    U64 blockSizeX = 0;
-    U64 blockSizeY = 0;
-    U64 integrationStep = 0;
-    bool optimizeTimeDomain = false;
-    bool sharedMemoryEnabled = false;
+    U64 inputSampleCount = 0;
 };
 
 }  // namespace Jetstream::Modules
 
-#endif  // BLADE_DOMAINS_DSP_CORRELATOR_MODULE_IMPL_HH
+#endif  // BLADE_DETECTOR_MODULE_IMPL_HH

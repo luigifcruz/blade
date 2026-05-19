@@ -1,1 +1,3 @@
-subdir('domains')
+subdir('detector')
+subdir('correlator')
+subdir('beamformer')

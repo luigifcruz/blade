@@ -1,7 +1,7 @@
-#include <blade/domains/dsp/correlator/block.hh>
+#include <blade/correlator/block.hh>
 #include <jetstream/detail/block_impl.hh>
 
-#include <blade/domains/dsp/correlator/module.hh>
+#include <blade/correlator/module.hh>
 
 namespace Jetstream::Blocks {
 

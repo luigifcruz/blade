@@ -1,5 +1,5 @@
-#ifndef BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_HH
-#define BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_HH
+#ifndef BLADE_BEAMFORMER_MODULE_HH
+#define BLADE_BEAMFORMER_MODULE_HH
 
 #include <jetstream/module.hh>
 
@@ -16,4 +16,4 @@ struct Beamformer : public Module::Config {
 
 }  // namespace Jetstream::Modules
 
-#endif  // BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_HH
+#endif  // BLADE_BEAMFORMER_MODULE_HH

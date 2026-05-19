@@ -1,5 +1,5 @@
-#ifndef BLADE_DOMAINS_DSP_CORRELATOR_MODULE_HH
-#define BLADE_DOMAINS_DSP_CORRELATOR_MODULE_HH
+#ifndef BLADE_CORRELATOR_MODULE_HH
+#define BLADE_CORRELATOR_MODULE_HH
 
 #include <string>
 
@@ -21,4 +21,4 @@ struct Correlator : public Module::Config {
 
 }  // namespace Jetstream::Modules
 
-#endif  // BLADE_DOMAINS_DSP_CORRELATOR_MODULE_HH
+#endif  // BLADE_CORRELATOR_MODULE_HH

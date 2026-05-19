@@ -1,7 +1,7 @@
-#include <blade/domains/dsp/beamformer/block.hh>
+#include <blade/beamformer/block.hh>
 #include <jetstream/detail/block_impl.hh>
 
-#include <blade/domains/dsp/beamformer/module.hh>
+#include <blade/beamformer/module.hh>
 
 namespace Jetstream::Blocks {
 

@@ -1,7 +1,7 @@
-#ifndef BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_IMPL_HH
-#define BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_IMPL_HH
+#ifndef BLADE_BEAMFORMER_MODULE_IMPL_HH
+#define BLADE_BEAMFORMER_MODULE_IMPL_HH
 
-#include <blade/domains/dsp/beamformer/module.hh>
+#include <blade/beamformer/module.hh>
 #include <jetstream/detail/module_impl.hh>
 
 namespace Jetstream::Modules {
@@ -39,4 +39,4 @@ struct BeamformerImpl : public Module::Impl, public DynamicConfig<Beamformer> {
 
 }  // namespace Jetstream::Modules
 
-#endif  // BLADE_DOMAINS_DSP_BEAMFORMER_MODULE_IMPL_HH
+#endif  // BLADE_BEAMFORMER_MODULE_IMPL_HH
