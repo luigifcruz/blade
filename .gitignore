@@ -18,3 +18,7 @@ build-*
 !*.wrap
 !packagefiles
 !libusb-browser
+
+subprojects/*
+!subprojects/packagefiles/
+!subprojects/cyberether.wrap

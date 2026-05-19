@@ -12,8 +12,7 @@ project(
 
 src_lst = []
 dep_lst = [
-    dependency('cuda', version: '>=11', modules: ['cuda', 'culibos', 'cudart']),
-    dependency('jetstream'),
+    subproject('cyberether').get_variable('libjetstream_dep'),
 ]
 inc_lst = [
     include_directories('include'),
