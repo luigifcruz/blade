@@ -11,6 +11,7 @@ struct Beamformer : public Block::Config {
     U64 blockSize = 512;
 
     JST_BLOCK_TYPE(beamformer);
+    JST_BLOCK_DOMAIN("BLADE");
     JST_BLOCK_PARAMS(enableIncoherentBeam, enableIncoherentBeamSqrt, blockSize);
     JST_BLOCK_DESCRIPTION(
         "Beamformer",

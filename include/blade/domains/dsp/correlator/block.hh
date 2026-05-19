@@ -15,6 +15,7 @@ struct Correlator : public Block::Config {
     U64 blockSize = 32;
 
     JST_BLOCK_TYPE(correlator);
+    JST_BLOCK_DOMAIN("BLADE");
     JST_BLOCK_PARAMS(integrationRate, conjugateAntennaIndex, useSharedMemory,
                      calculationMode, blockSize);
     JST_BLOCK_DESCRIPTION(

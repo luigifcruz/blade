@@ -11,6 +11,7 @@ struct Detector : public Block::Config {
     U64 blockSize = 512;
 
     JST_BLOCK_TYPE(detector);
+    JST_BLOCK_DOMAIN("BLADE");
     JST_BLOCK_PARAMS(integrationRate, numberOfOutputPolarizations, blockSize);
     JST_BLOCK_DESCRIPTION(
         "Detector",
