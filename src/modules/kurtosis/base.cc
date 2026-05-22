@@ -55,6 +55,21 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
                 "functionality is required.");
         BL_CHECK_THROW(Result::ERROR);
     }
+    
+    if (getInputBuffer().shape().numberOfPolarizations() != 2) {
+        BL_FATAL("Number of polarizations ({}) must be 2.",
+                 getInputBuffer().shape().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+    
+    const auto time_pols = (getInputBuffer().shape().numberOfTimeSamples() * getInputBuffer().shape().numberOfPolarizations());
+    if (time_pols % (8 * config.kurtosisChannelLength) != 0) {
+        BL_FATAL("Number of Timesample-Polarizations ({}) must be a whole multiple of 8 channel-lengths ({}).",
+            time_pols,
+            8 * config.kurtosisChannelLength
+        );
+        BL_CHECK_THROW(Result::ERROR);
+    }
 
     // Link output buffer or link input with output.
     BL_CHECK_THROW(Link(output.buf, input.buf));
@@ -64,7 +79,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
     this->output.mask = ArrayTensor<Device::CUDA, U8>({config.numberOfMaskRuns, 
             getInputBuffer().shape().numberOfAspects(),
             getInputBuffer().shape().numberOfFrequencyChannels(),
-            getInputBuffer().shape().numberOfTimeSamples() / (4 * config.kurtosisChannelLength)
+            (getInputBuffer().shape().numberOfTimeSamples() * getInputBuffer().shape().numberOfPolarizations()) / (8 * config.kurtosisChannelLength)
             }, true);
 
     this->maskCounter = 0;
@@ -85,10 +100,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
 template<typename IT, typename OT>
 Result Kurtosis<IT, OT>::writeMaskToDisk() {
     // mask write implementation
-
-    int masksize = config.numberOfMaskRuns * getInputBuffer().shape().numberOfAspects() * getInputBuffer().shape().numberOfFrequencyChannels() * 8;
-        
-    this->maskOutFile.write(reinterpret_cast<const char*>((this->output.mask.data())), masksize);
+    this->maskOutFile.write(reinterpret_cast<const char*>((this->output.mask.data())), this->output.mask.size_bytes());
 
     return Result::SUCCESS;
 }

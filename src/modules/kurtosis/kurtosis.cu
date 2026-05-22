@@ -11,7 +11,7 @@ template<typename IT, typename OT, bool debugMode,
 __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounter) {
     // let's assume STDDEV of 5 for now
 
-    constexpr int masksize = N_ANTS * N_CHANS * N_SAMPS / (block_size * 4);
+    constexpr int masksize = N_ANTS * N_CHANS * N_POLS * N_SAMPS / (block_size * 8);
     constexpr double quotient = (1.0 * block_size + 1) / (1.0 * block_size - 1);
 
     float sklim_lower, sklim_upper;
@@ -33,7 +33,7 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
 
     // Compute indices
     int ant = blockIdx.x;
-    int chan = threadIdx.x + blockIdx.y * 160;
+    int chan = threadIdx.x + blockIdx.y * blockDim.x;
     if (chan >= N_CHANS) {
         return;
     }
@@ -66,7 +66,6 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         for (int samp = 0; samp < block_size; samp++) {
             // load the two complex numbers into memory via a
             // four-float memory read
-
             asm volatile(
                 "ld.global.v4.f32 {%0, %1, %2, %3}, [%4];"
                 : "=f"(x1), "=f"(y1), "=f"(x2), "=f"(y2)
@@ -111,7 +110,6 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     skind = 0;
     int maskidx_raw;
     int maskidx_true;
-    // int maskidx1;
 
     float replx1, reply1, replx2, reply2;
     double rmean;
@@ -137,11 +135,10 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     // ant * chan + ant just creates a unique id for each thread
     curand_init(1234ULL, ant * chan + ant, 0, &state);
 
-    for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
-        intermediate_base = (threadbaseidx + samp_start) * N_POLS;
+    for (int kurtblock_idx = 0; kurtblock_idx < N_SAMPS/block_size; kurtblock_idx++) {
+        intermediate_base = (threadbaseidx + kurtblock_idx*block_size) * N_POLS;
 
         // based on sk we can zap the channel
-
         sk_1 = skvals[skind++];
         sk_2 = skvals[skind++];
         
@@ -151,43 +148,28 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         // maskidx_raw corresponds to the element in a mask with no int-to-bit
         // reduction
         // maskidx_true corresponds to the element in a mask where 8 ints are
-        // reduced into one -- one bit per chan-pol -- and hence we divide by an 
-        // extra factor of 8 when considering the time axis
-        maskidx_raw = ((ant * N_CHANS + chan) * (N_SAMPS / block_size) + (samp_start / block_size)) * N_POLS;
-        maskidx_true = (((ant * N_CHANS + chan) * ((N_SAMPS) / (block_size * 8))) + (samp_start / (block_size * 8))) * N_POLS;
-
-        // account for the fact that we write multiple mask blocks
-        maskidx_true = (maskcounter - 1) * masksize + (maskidx_true);
+        //   reduced into one -- one bit per chan-pol -- and hence we divide by an 
+        //   extra factor of 8 when considering the time axis
+        maskidx_raw = (threadbaseidx / block_size + kurtblock_idx) * N_POLS;
+        //   also, account for the fact that we write multiple mask blocks
+        maskidx_true = (maskcounter - 1) * masksize + (maskidx_raw / 8);
 
         // set the element to 0 in certain cases (when we reach an integer boundary)
-        if (samp_start % (block_size * (8 / N_POLS)) == 0) {
+        //  each 8bits iterates (1 or 2) pols first, then kurtblock_index
+        if (kurtblock_idx % (8 / N_POLS) == 0) {
             mask[maskidx_true] = 0;
         }
 
-        // sum the values of the two pols
-        // by performing a bit shift the "1" in the mask gets
-        // moved to its appropriate place in the integer
-        //
-        // each thread is responsible for two UNIQUE channels -- that is,
-        // no other threads will touch the mask indices that this one does
-        // 
-        // and so given that above we conditionally set the mask value to zero,
-        // here we can add to the existing value based on the bit shift
-        
+        // sum the values of the two pols and write
         mask[maskidx_true] = mask[maskidx_true] + (zap1 << (maskidx_raw % 8)) + (zap2 << ((maskidx_raw + 1) % 8));
 
         if (zap1 && zap2) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
-                // here we are only generating two values
-                // and so both pols will be the same complex number a + bi
-                // this is just for efficiency purposes
                 replx1 = curand_normal(&state) * rstd + rmean;
                 reply1 = curand_normal(&state) * istd + imean;
                 // replx2 = curand_normal(&state) * rstd + rmean;
                 // reply2 = curand_normal(&state) * rstd + rmean;
-
-                // consecutive four-float store
                 asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
                             :
                             : "l"(block + j), "f"(replx1), "f"(reply1), "f"(replx1), "f"(reply1));
