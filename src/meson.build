@@ -5,4 +5,5 @@ src_lst += files([
 subdir('detector')
 subdir('correlator')
 subdir('beamformer')
+subdir('polarizer')
 subdir('stacker')
