@@ -188,7 +188,7 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     int maskidx_raw;
     int maskidx_true;
 
-    float replx1, reply1, replx2, reply2;
+    float2 repl1, repl2;
     float rmean;
     float imean;
     float rstd_1, rstd_2;
@@ -246,31 +246,35 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         if (zap1 && zap2) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
-                replx1 = curand_normal(&state) * rstd_1 + rmean;
-                reply1 = curand_normal(&state) * istd_1 + imean;
-                replx2 = curand_normal(&state) * rstd_2 + rmean;
-                reply2 = curand_normal(&state) * istd_2 + imean;
+                repl1 = curand_normal2(&state);
+                repl1.x *= rstd_1 + rmean;
+                repl1.y *= istd_1 + imean;
+                repl2 = curand_normal2(&state);
+                repl2.x *= rstd_2 + rmean;
+                repl2.y *= istd_2 + imean;
                 asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
                             :
-                            : "l"(block + j), "f"(replx1), "f"(reply1), "f"(replx2), "f"(reply2));
+                            : "l"(block + j), "f"(repl1.x), "f"(repl1.y), "f"(repl2.x), "f"(repl2.y));
             }
         }
         else if (zap1) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                replx1 = curand_normal(&state) * rstd_1 + rmean;
-                reply1 = curand_normal(&state) * istd_1 + imean;
-                block[j].x = replx1;
-                block[j].y = reply1;
+                repl1 = curand_normal2(&state);
+                repl1.x *= rstd_1 + rmean;
+                repl1.y *= istd_1 + imean;
+                block[j].x = repl1.x;
+                block[j].y = repl1.y;
             }
         }
         else if (zap2) {
             chan_start = intermediate_base + 1;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                replx1 = curand_normal(&state) * rstd_2 + rmean;
-                reply1 = curand_normal(&state) * istd_2 + imean;
-                block[j].x = replx1;
-                block[j].y = reply1;
+                repl2 = curand_normal2(&state);
+                repl2.x *= rstd_2 + rmean;
+                repl2.y *= istd_2 + imean;
+                block[j].x = repl2.x;
+                block[j].y = repl2.y;
             }
         }
     }
