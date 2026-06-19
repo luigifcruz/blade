@@ -18,14 +18,38 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
 
     switch (nKurtosisSigma) {
         case 3:
+            // PFA=1.3498980316300957e-03
             sklim_lower = 0.698159;
             sklim_upper = 1.49597;
             break;
         case 4:
+            // PFA=3.1671241833119958e-05
             sklim_lower = 0.613738;
             sklim_upper = 1.784;
             break;
+        case 6:
+            // PFA=9.8658764503770140e-10
+            sklim_lower = 0.431631;
+            sklim_upper = 2.769471;
+            break;
+        case 7:
+            // PFA=1.2798125438858348e-12
+            sklim_lower = 0.319825;
+            sklim_upper = 3.638890;
+            break;
+        case 8:
+            // PFA=6.2209605742718204e-16
+            sklim_lower = 0.178846;
+            sklim_upper = 4.703961;
+            break;
+        case 9:
+            // PFA=1.1285884059538425e-19
+            sklim_lower = -0.012557;
+            sklim_upper = 4.808045;
+            break;
+        case 5:
         default: // default is 5
+            // PFA=2.8665157187919449e-07
             sklim_lower = 0.526881;
             sklim_upper = 2.18694;
             break;

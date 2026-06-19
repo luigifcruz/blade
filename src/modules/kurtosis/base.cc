@@ -18,6 +18,12 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
         : Module(kurtosis_program),
           config(config),
           input(input) {
+    
+    const bool kurtosisStddevInRange = config.numberOfKurtosisStddev >= 3 || config.numberOfKurtosisStddev <= 9;
+    if (!kurtosisStddevInRange) {
+        BL_WARN("Kurtosis std-dev value expected to be with [3, 9], will default to 5 instead of {}.",
+                 config.numberOfKurtosisStddev);
+    }
     // Configure kernel instantiation.
     BL_CHECK_THROW(
         this->createKernel(
@@ -91,7 +97,13 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
                               getOutputBuffer().shape());
     BL_INFO("Config: debugMode:          {}", this->config.debugMode);
     BL_INFO("Config: kurtosisChannelLength:  {}", this->config.kurtosisChannelLength);
-    BL_INFO("Config: numberOfKurtosisStddev:  {}", this->config.numberOfKurtosisStddev);
+    if (kurtosisStddevInRange) {
+        BL_INFO("Config: numberOfKurtosisStddev: {}", this->config.numberOfKurtosisStddev);
+    }
+    else {
+        BL_INFO("Config: numberOfKurtosisStddev: 5 ({} is out of range)", this->config.numberOfKurtosisStddev);
+    }
+
     BL_INFO("Config: numberOfMaskRuns:       {}", this->config.numberOfMaskRuns);
     BL_INFO("Config: maskFilePath:           {}", this->config.maskFilePath);
     BL_INFO("Output Mask Shape: {}", getOutputMask().shape());
