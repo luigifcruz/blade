@@ -18,7 +18,14 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
         : Module(kurtosis_program),
           config(config),
           input(input) {
+    
+    const bool kurtosisStddevInRange = config.numberOfKurtosisStddev >= 3 || config.numberOfKurtosisStddev <= 9;
+    if (!kurtosisStddevInRange) {
+        BL_WARN("Kurtosis std-dev value expected to be with [3, 9], will default to 5 instead of {}.",
+                 config.numberOfKurtosisStddev);
+    }
     // Configure kernel instantiation.
+    const unsigned int nthreads = 160; // inherited constant, not sure why, probably performance
     BL_CHECK_THROW(
         this->createKernel(
             // Kernel name.
@@ -28,10 +35,10 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
             // Kernel grid & block size.
             dim3( // grid dimensions
                 getInputBuffer().shape().numberOfAspects(),
-                2
+                (getInputBuffer().shape().numberOfFrequencyChannels()+nthreads-1) / nthreads
             ),
             dim3( // threads per block
-                160
+                nthreads
             ),
             0,
             // Kernel templates.
@@ -55,6 +62,21 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
                 "functionality is required.");
         BL_CHECK_THROW(Result::ERROR);
     }
+    
+    if (getInputBuffer().shape().numberOfPolarizations() != 2) {
+        BL_FATAL("Number of polarizations ({}) must be 2.",
+                 getInputBuffer().shape().numberOfPolarizations());
+        BL_CHECK_THROW(Result::ERROR);
+    }
+    
+    const auto time_pols = (getInputBuffer().shape().numberOfTimeSamples() * getInputBuffer().shape().numberOfPolarizations());
+    if (time_pols % (8 * config.kurtosisChannelLength) != 0) {
+        BL_FATAL("Number of Timesample-Polarizations ({}) must be a whole multiple of 8 channel-lengths ({}).",
+            time_pols,
+            8 * config.kurtosisChannelLength
+        );
+        BL_CHECK_THROW(Result::ERROR);
+    }
 
     // Link output buffer or link input with output.
     BL_CHECK_THROW(Link(output.buf, input.buf));
@@ -64,7 +86,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
     this->output.mask = ArrayTensor<Device::CUDA, U8>({config.numberOfMaskRuns, 
             getInputBuffer().shape().numberOfAspects(),
             getInputBuffer().shape().numberOfFrequencyChannels(),
-            getInputBuffer().shape().numberOfTimeSamples() / (4 * config.kurtosisChannelLength)
+            (getInputBuffer().shape().numberOfTimeSamples() * getInputBuffer().shape().numberOfPolarizations()) / (8 * config.kurtosisChannelLength)
             }, true);
 
     this->maskCounter = 0;
@@ -76,7 +98,13 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
                               getOutputBuffer().shape());
     BL_INFO("Config: debugMode:          {}", this->config.debugMode);
     BL_INFO("Config: kurtosisChannelLength:  {}", this->config.kurtosisChannelLength);
-    BL_INFO("Config: numberOfKurtosisStddev:  {}", this->config.numberOfKurtosisStddev);
+    if (kurtosisStddevInRange) {
+        BL_INFO("Config: numberOfKurtosisStddev: {}", this->config.numberOfKurtosisStddev);
+    }
+    else {
+        BL_INFO("Config: numberOfKurtosisStddev: 5 ({} is out of range)", this->config.numberOfKurtosisStddev);
+    }
+
     BL_INFO("Config: numberOfMaskRuns:       {}", this->config.numberOfMaskRuns);
     BL_INFO("Config: maskFilePath:           {}", this->config.maskFilePath);
     BL_INFO("Output Mask Shape: {}", getOutputMask().shape());
@@ -85,10 +113,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
 template<typename IT, typename OT>
 Result Kurtosis<IT, OT>::writeMaskToDisk() {
     // mask write implementation
-
-    int masksize = config.numberOfMaskRuns * getInputBuffer().shape().numberOfAspects() * getInputBuffer().shape().numberOfFrequencyChannels() * 8;
-        
-    this->maskOutFile.write(reinterpret_cast<const char*>((this->output.mask.data())), masksize);
+    this->maskOutFile.write(reinterpret_cast<const char*>((this->output.mask.data())), this->output.mask.size_bytes());
 
     return Result::SUCCESS;
 }
