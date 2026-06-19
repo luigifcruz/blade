@@ -25,6 +25,7 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
                  config.numberOfKurtosisStddev);
     }
     // Configure kernel instantiation.
+    const unsigned int nthreads = 160; // inherited constant, not sure why, probably performance
     BL_CHECK_THROW(
         this->createKernel(
             // Kernel name.
@@ -34,10 +35,10 @@ Kurtosis<IT, OT>::Kurtosis(const Config& config,
             // Kernel grid & block size.
             dim3( // grid dimensions
                 getInputBuffer().shape().numberOfAspects(),
-                2
+                (getInputBuffer().shape().numberOfFrequencyChannels()+nthreads-1) / nthreads
             ),
             dim3( // threads per block
-                160
+                nthreads
             ),
             0,
             // Kernel templates.

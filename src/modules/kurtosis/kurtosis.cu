@@ -65,6 +65,18 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     float v2_1, v2_2, sk_1, sk_2;
     float s1_1, s2_1, s1_2, s2_2;
     float x1, y1, x2, y2;
+    
+    // calculate stddev of real/image for both pols
+    // holds square sum, and for 8bit integers and block_size=256
+    // the max of (127**2)*256 is < 256**3 which is the
+    // single precision integer limit... no need for doubles
+    float stddev_r1, stddev_r2, stddev_i1, stddev_i2; 
+
+    // initial fallback stddev is 0.0 until non-flagged sk-channel found
+    float stddev_r1_fallback = 0.0f;
+    float stddev_r2_fallback = 0.0f;
+    float stddev_i1_fallback = 0.0f;
+    float stddev_i2_fallback = 0.0f;
 
     int idx1, baseidx, intermediate_base;
 
@@ -74,6 +86,8 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     
     // for this ant-chan: one sk_val for each chan and pol
     float skvals[N_POLS * N_SAMPS / block_size];
+    float stddev_rstd[N_POLS * N_SAMPS / block_size];
+    float stddev_istd[N_POLS * N_SAMPS / block_size];
     int skind = 0;
     for (int samp_start = 0; samp_start < N_SAMPS; samp_start = samp_start + block_size) {
         // set accumulators to 0
@@ -82,6 +96,11 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
 
         s1_2 = 0;
         s2_2 = 0;
+
+        stddev_r1 = 0;
+        stddev_r2 = 0;
+        stddev_i1 = 0;
+        stddev_i2 = 0;
 
         baseidx = threadbaseidx + samp_start;
         intermediate_base = baseidx * N_POLS;
@@ -110,6 +129,16 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
             s1_1 += v2_1;
             s1_2 += v2_2;
 
+            // sum of squared components for std-dev
+            // assume mean of 0
+            // except in debug leave the sum as zero for stddev of 0
+            if constexpr (!debugMode) {
+                stddev_r1 += x1;
+                stddev_r2 += x2;
+                stddev_i1 += y1;
+                stddev_i2 += y2;
+            }
+
             // sum of fourth-pow magnitudes
             // fmaf(a, b, c) is equivalent to c = c + a * b
             s2_1 = fmaf(v2_1, v2_1, s2_1);
@@ -124,7 +153,31 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         sk_2 = quotient * ((block_size * (s2_2 / (s1_2 * s1_2))) - 1.0f);
 
         // fill up the array
+        // and note the (population) std-deviation
+        // except use the most recent fallback if the sk-channel will be flagged
+        // as we cannot use the stddev of an out of range sample-population
+        if (sk_1 < sklim_lower || sk_1 > sklim_upper) {
+            stddev_rstd[skind] = stddev_r1_fallback;
+            stddev_istd[skind] = stddev_i1_fallback;
+        }
+        else {
+            stddev_rstd[skind] = sqrtf(stddev_r1 / (block_size));
+            stddev_r1_fallback = stddev_rstd[skind];
+            stddev_istd[skind] = sqrtf(stddev_i1 / (block_size));
+            stddev_i1_fallback = stddev_istd[skind];
+        }
         skvals[skind++] = sk_1;
+        
+        if (sk_2 < sklim_lower || sk_2 > sklim_upper) {
+            stddev_rstd[skind] = stddev_r2_fallback;
+            stddev_istd[skind] = stddev_i2_fallback;
+        }
+        else {
+            stddev_rstd[skind] = sqrtf(stddev_r2 / (block_size));
+            stddev_r2_fallback = stddev_rstd[skind];
+            stddev_istd[skind] = sqrtf(stddev_i2 / (block_size));
+            stddev_i2_fallback = stddev_istd[skind];
+        }
         skvals[skind++] = sk_2;
     }
 
@@ -136,22 +189,18 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
     int maskidx_true;
 
     float replx1, reply1, replx2, reply2;
-    double rmean;
-    double imean;
-    double rstd;
-    double istd;
+    float rmean;
+    float imean;
+    float rstd_1, rstd_2;
+    float istd_1, istd_2;
 
     // modify distributions based on if we are debugging
     if constexpr (debugMode) {
         rmean = 100.0f;
         imean= 100.0f;
-        rstd = 0.0f;
-        istd = 0.0f;
     } else {
         rmean = 0.0f;
         imean = 0.0f;
-        rstd = 8.0f;
-        istd = 8.0f;
     }
 
 
@@ -163,7 +212,14 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         intermediate_base = (threadbaseidx + kurtblock_idx*block_size) * N_POLS;
 
         // based on sk we can zap the channel
+        // use the observed stddev, unless it is zero as in the case of initial fallbacks,
+        // then use latest fallback (hopefully not also zero)
+        rstd_1 = stddev_rstd[skind] == 0.0 ? stddev_r1_fallback : stddev_rstd[skind];
+        istd_1 = stddev_istd[skind] == 0.0 ? stddev_i1_fallback : stddev_istd[skind];
         sk_1 = skvals[skind++];
+
+        rstd_2 = stddev_rstd[skind] == 0.0 ? stddev_r2_fallback : stddev_rstd[skind];
+        istd_2 = stddev_istd[skind] == 0.0 ? stddev_i2_fallback : stddev_istd[skind];
         sk_2 = skvals[skind++];
         
         zap1 = sk_1 < sklim_lower || sk_1 > sklim_upper;
@@ -190,20 +246,20 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         if (zap1 && zap2) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + 2) {
-                replx1 = curand_normal(&state) * rstd + rmean;
-                reply1 = curand_normal(&state) * istd + imean;
-                // replx2 = curand_normal(&state) * rstd + rmean;
-                // reply2 = curand_normal(&state) * rstd + rmean;
+                replx1 = curand_normal(&state) * rstd_1 + rmean;
+                reply1 = curand_normal(&state) * istd_1 + imean;
+                replx2 = curand_normal(&state) * rstd_2 + rmean;
+                reply2 = curand_normal(&state) * istd_2 + imean;
                 asm volatile ("st.global.v4.f32 [%0], {%1, %2, %3, %4};"
                             :
-                            : "l"(block + j), "f"(replx1), "f"(reply1), "f"(replx1), "f"(reply1));
+                            : "l"(block + j), "f"(replx1), "f"(reply1), "f"(replx2), "f"(reply2));
             }
         }
         else if (zap1) {
             chan_start = intermediate_base;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                replx1 = curand_normal(&state) * rstd + rmean;
-                reply1 = curand_normal(&state) * istd + imean;
+                replx1 = curand_normal(&state) * rstd_1 + rmean;
+                reply1 = curand_normal(&state) * istd_1 + imean;
                 block[j].x = replx1;
                 block[j].y = reply1;
             }
@@ -211,12 +267,11 @@ __global__ void compute_sk_array(cuFloatComplex* block, U8* mask, int maskcounte
         else if (zap2) {
             chan_start = intermediate_base + 1;
             for (int j = chan_start; j < chan_start + block_size * N_POLS; j = j + N_POLS) {
-                replx1 = curand_normal(&state) * rstd + rmean;
-                reply1 = curand_normal(&state) * istd + imean;
+                replx1 = curand_normal(&state) * rstd_2 + rmean;
+                reply1 = curand_normal(&state) * istd_2 + imean;
                 block[j].x = replx1;
                 block[j].y = reply1;
             }
         }
     }
 }
-
