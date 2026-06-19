@@ -13,6 +13,7 @@ project(
 src_lst = []
 dep_lst = [
     subproject('cyberether').get_variable('libjetstream_dep'),
+    subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
 ]
 inc_lst = [
     include_directories('include'),
