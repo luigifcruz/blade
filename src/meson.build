@@ -1,4 +1,4 @@
-src_lst += files([
+plugin_sources += files([
     'plugin.cc',
 ])
 

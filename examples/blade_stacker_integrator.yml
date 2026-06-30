@@ -1,0 +1,97 @@
+---
+version: 2
+title: BLADE Stacker and Integrator
+summary: Simple stacking and integration of dimensions.
+graph:
+  - name: signal_generator
+    module: signal_generator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      signalType: cosine
+      signalDataType: CF32
+      sampleRate: 1000000
+      frequency: 1000
+      amplitude: 1
+      phase: 0
+      dcOffset: 0
+      noiseVariance: 1
+      chirpStartFreq: 1000
+      chirpEndFreq: 10000
+      chirpDuration: 1
+      bufferSize: 512
+    meta:
+      node:
+        x: 222
+        y: 386.5
+        width: 140
+        height: 0
+  - name: duplicate
+    module: duplicate
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      hostAccessible: true
+      outputDevice: cuda
+    input:
+      buffer: '${graph.signal_generator.output.signal}'
+    meta:
+      node:
+        x: 583
+        y: 411.5
+        width: 140
+        height: 0
+  - name: reshape
+    module: reshape
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      shape: '[1,512,1,1]'
+      contiguous: false
+    input:
+      buffer: '${graph.duplicate.output.buffer}'
+    meta:
+      node:
+        x: 823
+        y: 404.5
+        width: 140
+        height: 0
+  - name: stacker
+    module: stacker
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      axis: 3
+      ratio: 2
+      copySizeThreshold: 512
+      blockSize: 512
+    input:
+      buffer: '${graph.reshape.output.buffer}'
+    meta:
+      node:
+        x: 1097
+        y: 400.5
+        width: 140
+        height: 0
+  - name: integrator
+    module: integrator
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      size: 8
+      rate: 4
+      axis: 1
+      blockSize: 512
+    input:
+      buffer: '${graph.stacker.output.buffer}'
+    meta:
+      node:
+        x: 1315
+        y: 401.5
+        width: 140
+        height: 0
