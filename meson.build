@@ -12,19 +12,17 @@ project(
     ]
 )
 
-cyberether_dep = dependency(
-    'jetstream',
-    required: false,
-    fallback: ['cyberether', 'libjetstream_dep'],
-)
 dep_lst = [
-    cyberether_dep,
-    subproject('radiointerferometryc99').get_variable('lib_radiointerferometry_dep'),
+    dependency(
+        'jetstream',
+        required: true,
+        fallback: ['cyberether', 'libjetstream_dep'],
+    ),
+    subproject(
+        'radiointerferometryc99',
+        default_options: ['default_library=static'],
+    ).get_variable('lib_radiointerferometry_dep'),
 ]
-
-if not cyberether_dep.found()
-    error('CyberEther dependency not found.')
-endif
 
 plugin_sources = []
 plugin_inc = include_directories('include')
