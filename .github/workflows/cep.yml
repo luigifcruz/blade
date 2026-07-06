@@ -16,10 +16,10 @@ jobs:
         include:
           - tag: x86_64-cuda
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:ubuntu24-x86_64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.6.1-ubuntu24-x86_64-cuda
           - tag: aarch64-cuda
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:ubuntu24-aarch64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.6.1-ubuntu24-aarch64-cuda
 
     steps:
       - name: Checkout
