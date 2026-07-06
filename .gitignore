@@ -22,4 +22,5 @@ build-*
 subprojects/*
 !subprojects/packagefiles/
 !subprojects/cyberether.wrap
+!subprojects/erfa.wrap
 !subprojects/radiointerferometryc99.wrap

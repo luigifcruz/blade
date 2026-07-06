@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  cep:
+    uses: ./.github/workflows/cep.yml
+
+  github-release:
+    needs: [cep]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4.3.0
+        with:
+          name: blade-cep-ubuntu24-cuda
+          path: .dist/artifacts
+
+      - name: Release
+        uses: softprops/action-gh-release@v2.6.2
+        with:
+          files: .dist/artifacts/*.cep

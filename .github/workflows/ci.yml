@@ -1,0 +1,12 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  cep:
+    uses: ./.github/workflows/cep.yml

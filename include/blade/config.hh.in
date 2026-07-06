@@ -1,0 +1,10 @@
+#define BLADE_VERSION_STR "@version@"
+#define BLADE_VERSION_MAJOR @version_major@
+#define BLADE_VERSION_MINOR @version_minor@
+#define BLADE_VERSION_PATCH @version_patch@
+#define BLADE_VERSION_ENCODE(major, minor, patch) ((((major) & 0xffu) << 16) | (((minor) & 0xffu) << 8) | ((patch) & 0xffu))
+#define BLADE_VERSION_CURRENT BLADE_VERSION_ENCODE(BLADE_VERSION_MAJOR, BLADE_VERSION_MINOR, BLADE_VERSION_PATCH)
+
+// Loaders
+#mesondefine BLADE_LOADER_JETSTREAM_AVAILABLE
+#mesondefine BLADE_LOADER_RADIOINTERFEROMETRY_AVAILABLE

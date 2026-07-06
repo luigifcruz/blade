@@ -1,0 +1,83 @@
+name: CEP Plugin Build
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build (${{ matrix.tag }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tag: x86_64-cuda
+            runner: ubuntu-latest
+            base: ghcr.io/luigifcruz/cyberether:ubuntu24-x86_64-cuda
+          - tag: aarch64-cuda
+            runner: ubuntu-24.04-arm
+            base: ghcr.io/luigifcruz/cyberether:ubuntu24-aarch64-cuda
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.3.1
+
+      - name: Build CEP artifact
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --env BUILD_TYPE=release \
+            --env CEP_OUTPUT_DIR=.dist/${{ matrix.tag }} \
+            --volume "${PWD}:/workspace" \
+            --workdir /workspace \
+            "${{ matrix.base }}" \
+            sh -lc '
+              set -eu
+              workspace_owner="$(stat -c "%u:%g" /workspace)"
+              trap '\''chown -R "${workspace_owner}" /workspace/.dist /workspace/build /workspace/subprojects 2>/dev/null || true'\'' EXIT
+              git config --global --add safe.directory /workspace
+              sh tools/ci/package_cep.sh
+            '
+
+      - name: Stage artifact
+        run: |
+          set -euo pipefail
+          mkdir -p .dist/artifacts
+          test -s .dist/${{ matrix.tag }}/blade.cep
+          cp .dist/${{ matrix.tag }}/blade.cep .dist/artifacts/blade-ubuntu24-${{ matrix.tag }}.cep
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: blade-cep-ubuntu24-${{ matrix.tag }}
+          path: .dist/artifacts/blade-ubuntu24-${{ matrix.tag }}.cep
+
+  merge:
+    name: merge
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.3.1
+
+      - uses: actions/download-artifact@v4.3.0
+        with:
+          pattern: blade-cep-ubuntu24-*-cuda
+          path: .dist/ceps
+          merge-multiple: true
+
+      - name: Merge CEP bundles
+        run: |
+          set -euo pipefail
+          python3 tools/merger.py \
+            --output .dist/artifacts/blade.cep \
+            .dist/ceps/blade-ubuntu24-x86_64-cuda.cep \
+            .dist/ceps/blade-ubuntu24-aarch64-cuda.cep
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: blade-cep-ubuntu24-cuda
+          path: .dist/artifacts/blade.cep

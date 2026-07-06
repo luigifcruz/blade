@@ -1,0 +1,8 @@
+[wrap-git]
+directory = erfa
+url = https://github.com/liberfa/erfa.git
+revision = v2.0.1
+depth = 1
+
+[provide]
+erfa = erfa_dep

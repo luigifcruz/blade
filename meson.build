@@ -8,59 +8,126 @@ project(
         'warning_level=3',
         'buildtype=release',
         'b_ndebug=if-release',
-        'cuda_std=c++20',
     ]
 )
 
-dep_lst = [
-    dependency(
-        'jetstream',
-        required: true,
-        fallback: ['cyberether', 'libjetstream_dep'],
-    ),
-    subproject(
-        'radiointerferometryc99',
-        default_options: ['default_library=static'],
-    ).get_variable('lib_radiointerferometry_dep'),
-]
+#
+# Global Variables
+#
 
-plugin_sources = []
-plugin_inc = include_directories('include')
-plugin_example = files(
-    'examples/blade_phasor.yml'
-)
-plugin_bundler = files('tools/bundler')
+blade_is_linux = target_machine.system().startswith('linux')
+
+if not blade_is_linux
+    error('BLADE only supports Linux targets for now.')
+endif
+
+minimum_jetstream_version = '1.5.0'
+
+#
+# Load Python
+#
 
 pymod = import('python')
-py = pymod.find_installation(required: true)
+py = pymod.find_installation(required: false)
 
+#
+# Handle Options
+#
+
+cfg_lst = configuration_data()
+src_lst = []
+dep_lst = []
+inc_lst = [
+    include_directories('include'),
+]
+
+#
+# Handle Configuration Data
+#
+
+cfg_lst.set('version', meson.project_version())
+version_parts = meson.project_version().split('.')
+cfg_lst.set('version_major', version_parts[0])
+cfg_lst.set('version_minor', version_parts[1])
+cfg_lst.set('version_patch', version_parts[2])
+
+#
+# Call Subdirectories
+#
+
+subdir('meson')
 subdir('src')
 
-plugin_module = shared_module(
-    'cyberether_blade_plugin',
-    plugin_sources,
-    include_directories: plugin_inc,
+#
+# Library
+#
+
+lib_blade = library(
+    'blade',
+    src_lst,
+    include_directories: inc_lst,
     dependencies: dep_lst,
     gnu_symbol_visibility: 'hidden',
-    name_prefix: '',
-    build_by_default: false,
-    install: false,
+    link_args: ['-Wl,-Bsymbolic', '-Wl,--no-as-needed'],
+    install: true,
 )
 
-custom_target(
-    'cyberether_blade_plugin_cep',
-    input: [plugin_module, plugin_example],
-    output: 'cyberether_blade_plugin.cep',
-    command: [
-        py,
-        plugin_bundler,
-        '--output', '@OUTPUT@',
-        '--name', 'cyberether-blade-plugin',
-        '--version', meson.project_version(),
-        '--minimum-jetstream-version', '1.5.0',
-        '--target', 'path=@INPUT0@,system=' + host_machine.system() + ',device=cpu,arch=' + host_machine.cpu_family(),
-        '--example', '@INPUT1@',
-    ],
-    build_by_default: true,
-    install: false,
+lib_blade_dep = declare_dependency(
+    include_directories: inc_lst,
+    dependencies: dep_lst,
+    link_with: lib_blade,
 )
+
+#
+# Install Library
+#
+
+subdir('include')
+
+pkg = import('pkgconfig')
+pkg.generate(
+    lib_blade,
+    libraries: dep_lst,
+)
+
+#
+# Packaging
+#
+
+blade_examples = files(
+    'examples/blade_phasor.yml',
+    'examples/blade_stacker_integrator.yml',
+)
+
+if py.found()
+    custom_target(
+        'blade_cep',
+        input: [lib_blade] + blade_examples,
+        output: 'blade.cep',
+        command: [
+            py,
+            files('tools/bundler.py'),
+            '--output', '@OUTPUT@',
+            '--name', meson.project_name(),
+            '--version', meson.project_version(),
+            '--minimum-jetstream-version', minimum_jetstream_version,
+            '--target', 'path=@INPUT0@,system=' + host_machine.system() + ',device=cuda,arch=' + host_machine.cpu_family(),
+            '--example', '@INPUT1@',
+            '--example', '@INPUT2@',
+        ],
+        build_by_default: true,
+        install: false,
+    )
+endif
+
+summary({'CEP bundle': py.found()}, section: 'Packaging', bool_yn: true)
+
+#
+# Print Summary
+#
+
+summary({
+    'cpp_std': get_option('cpp_std'),
+    'prefix': get_option('prefix'),
+    'buildtype': get_option('buildtype'),
+}, section: 'General', bool_yn: true)
