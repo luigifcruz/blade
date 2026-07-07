@@ -1,5 +1,6 @@
 ldr_lst = {}
 
+subdir('cuda')
 subdir('jetstream')
 subdir('radiointerferometry')
 

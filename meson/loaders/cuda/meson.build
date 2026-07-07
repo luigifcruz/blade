@@ -1,0 +1,20 @@
+deps = [
+    dependency(
+        'cuda',
+        version: '>=11.7',
+        modules: ['cuda', 'nvrtc', 'cufft'],
+        required: true,
+    ),
+]
+
+all_deps_found = true
+foreach x_dep : deps
+    all_deps_found = all_deps_found and x_dep.found()
+endforeach
+
+if all_deps_found
+    cfg_lst.set('BLADE_LOADER_CUDA_AVAILABLE', true)
+    dep_lst += deps
+endif
+
+ldr_lst += {'CUDA': all_deps_found}
