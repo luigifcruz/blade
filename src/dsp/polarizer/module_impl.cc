@@ -5,24 +5,34 @@ namespace Jetstream::Modules {
 Result PolarizerImpl::validate() {
     const auto& config = *candidate();
 
-    if (inputPolarization != "xy") {
-        JST_ERROR("[MODULE_POLARIZER] The input must be XY.");
+    const auto validPolarization = [](const std::string& polarization) {
+        return polarization == "x" || polarization == "y" ||
+               polarization == "l" || polarization == "r" ||
+               polarization == "xy" || polarization == "lr";
+    };
+
+    if (!validPolarization(config.inputPolarization) ||
+        !validPolarization(config.outputPolarization)) {
+        JST_ERROR("[MODULE_POLARIZER] Unsupported polarization configuration: {} -> {}.",
+                  config.inputPolarization,
+                  config.outputPolarization);
         return Result::ERROR;
     }
-    else {
-        if (
-            outputPolarization != "x" &&
-            outputPolarization != "y" &&
-            outputPolarization != "lr"
-        ) {
-            JST_ERROR("[MODULE_POLARIZER] Unsupported output polarization for input XY: {}. Expected [X, Y, LR].",
-                      config.outputPolarization);
-            return Result::ERROR;
-        }
+
+    const bool sameBasis = config.inputPolarization == config.outputPolarization;
+    if (!sameBasis &&
+        (config.inputPolarization != "xy" ||
+         (config.outputPolarization != "x" &&
+          config.outputPolarization != "y" &&
+          config.outputPolarization != "lr"))) {
+        JST_ERROR("[MODULE_POLARIZER] Unsupported polarization conversion: {} -> {}.",
+                  config.inputPolarization,
+                  config.outputPolarization);
+        return Result::ERROR;
     }
 
-    if (config.blockSize == 0) {
-        JST_ERROR("[MODULE_POLARIZER] The CUDA block size must be positive.");
+    if (config.blockSize == 0 || (!sameBasis && config.blockSize > 1024)) {
+        JST_ERROR("[MODULE_POLARIZER] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }
 
@@ -49,6 +59,23 @@ Result PolarizerImpl::create() {
     if (!inputTensor.contiguous()) {
         JST_ERROR("[MODULE_POLARIZER] Input tensor must be contiguous.");
         return Result::ERROR;
+    }
+
+    bypass = inputPolarization == outputPolarization;
+    if (bypass) {
+        const U64 expectedPolarizations =
+            (inputPolarization == "xy" || inputPolarization == "lr") ? 2 : 1;
+        if (inputTensor.shape(kPolarizationAxis) != expectedPolarizations) {
+            JST_ERROR("[MODULE_POLARIZER] Input polarization dimension must be {} for basis {}, but received {}.",
+                      expectedPolarizations,
+                      inputPolarization,
+                      inputTensor.shape(kPolarizationAxis));
+            return Result::ERROR;
+        }
+
+        outputTensor = inputTensor;
+        outputs()["buffer"].produced(name(), "buffer", outputTensor);
+        return Result::SUCCESS;
     }
 
     if (inputTensor.shape(kPolarizationAxis) != kExpectedInputPolarizations) {
@@ -79,6 +106,7 @@ Result PolarizerImpl::create() {
 Result PolarizerImpl::destroy() {
     inputTensor = {};
     outputTensor = {};
+    bypass = false;
 
     return Result::SUCCESS;
 }

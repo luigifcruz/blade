@@ -33,7 +33,7 @@ Result PolarizerImpl::define() {
     JST_CHECK(defineInterfaceConfig("outputPolarization",
                                     "Output Polarizations",
                                     "The polarization of the output signal.",
-                                    "dropdown:lr(LR),x(X),y(Y)"));
+                                    "dropdown:lr(LR),xy(XY),x(X),y(Y)"));
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the polarizer kernel.",
