@@ -14,7 +14,13 @@ namespace {
 
 constexpr const char* kBeamformerKernelName = "beamformer_ata";
 constexpr const char* kBeamformerKernelSource = R"(
+<<<type_aliases>>>
 <<<kernel_constants>>>
+
+struct alignas(2 * sizeof(InputScalar)) InputComplex {
+    InputScalar real;
+    InputScalar imag;
+};
 
 struct alignas(8) Complex {
     float real;
@@ -32,6 +38,7 @@ struct alignas(16) ComplexPair {
 };
 
 static_assert(NPOLS == 2, "Beamformer expects exactly two polarizations.");
+static_assert(sizeof(InputComplex) == 2 * sizeof(InputScalar), "Beamformer input complex layout is invalid.");
 static_assert(sizeof(Complex) == 8, "Beamformer complex layout must remain 8 bytes.");
 static_assert(alignof(Complex) == 8, "Beamformer complex alignment must remain 8 bytes.");
 static_assert(sizeof(ComplexPair) == 16, "Beamformer output pair layout must remain 16 bytes.");
@@ -39,6 +46,11 @@ static_assert(alignof(ComplexPair) == 16, "Beamformer output pair alignment must
 
 __device__ Complex detect(const Complex& value) {
     return Complex((value.real * value.real) + (value.imag * value.imag), 0.0f);
+}
+
+__device__ Complex convert(const InputComplex& value) {
+    return Complex(static_cast<float>(value.real) * INPUT_SCALE,
+                   static_cast<float>(value.imag) * INPUT_SCALE);
 }
 
 __device__ Complex multiply(const Complex& lhs, const Complex& rhs) {
@@ -50,7 +62,7 @@ __device__ Complex add(const Complex& lhs, const Complex& rhs) {
     return Complex(lhs.real + rhs.real, lhs.imag + rhs.imag);
 }
 
-extern "C" __global__ void beamformer_ata(const Complex* input,
+extern "C" __global__ void beamformer_ata(const InputComplex* input,
                                            const Complex* phasor,
                                            Complex* out) {
     const int bi = threadIdx.x;
@@ -77,8 +89,8 @@ extern "C" __global__ void beamformer_ata(const Complex* input,
     const int dx = NTIME * NCHANS * NPOLS;
 
     for (int a = 0; a < NANTS; a++, ix += dx) {
-        ant_cache[a][0] = input[ix + 0];
-        ant_cache[a][1] = input[ix + 1];
+        ant_cache[a][0] = convert(input[ix + 0]);
+        ant_cache[a][1] = convert(input[ix + 1]);
     }
 
     int iz = (ch * NTIME) + ti;
@@ -132,8 +144,8 @@ Result BeamformerImplNativeCuda::create() {
     const Tensor& input = inputs().at("buffer").tensor;
     const Tensor& phasors = inputs().at("phasors").tensor;
 
-    if (input.dtype() != DataType::CF32) {
-        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
+    if (input.dtype() != DataType::CI8 && input.dtype() != DataType::CF32) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
                   input.dtype());
         return Result::ERROR;
     }
@@ -150,7 +162,30 @@ Result BeamformerImplNativeCuda::create() {
 }
 
 Result BeamformerImplNativeCuda::computeInitialize() {
+    const std::string inputScalarType = [&]() -> std::string {
+        switch (inputTensor.dtype()) {
+            case DataType::CI8: return "signed char";
+            case DataType::CF32: return "float";
+            default: return "";
+        }
+    }();
+
+    if (inputScalarType.empty()) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
+                  inputTensor.dtype());
+        return Result::ERROR;
+    }
+
+    const std::string inputScale = inputTensor.dtype() == DataType::CI8
+        ? "(1.0f / 128.0f)"
+        : "1.0f";
+
     const std::unordered_map<std::string, std::string> pieces = {
+        {"type_aliases",
+         jst::fmt::format("using InputScalar = {};\n"
+                          "static constexpr float INPUT_SCALE = {};",
+                          inputScalarType,
+                          inputScale)},
         {"kernel_constants",
          jst::fmt::format("static constexpr int NBEAMS = {};\n"
                           "static constexpr int NANTS = {};\n"
