@@ -16,8 +16,8 @@ Result DetectorImpl::validate() {
         return Result::ERROR;
     }
 
-    if (config.blockSize == 0) {
-        JST_ERROR("[MODULE_DETECTOR] The CUDA block size must be positive.");
+    if (config.blockSize == 0 || config.blockSize > 1024) {
+        JST_ERROR("[MODULE_DETECTOR] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }
 
