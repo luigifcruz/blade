@@ -17,9 +17,7 @@ struct CorrelatorImpl : public Block::Impl, public DynamicConfig<Blocks::Correla
 Result CorrelatorImpl::configure() {
     moduleConfig->integrationRate = integrationRate;
     moduleConfig->conjugateAntennaIndex = conjugateAntennaIndex;
-    moduleConfig->useSharedMemory = useSharedMemory;
     moduleConfig->calculationMode = calculationMode;
-    moduleConfig->blockSize = blockSize;
 
     return Result::SUCCESS;
 }
@@ -36,18 +34,10 @@ Result CorrelatorImpl::define() {
                                     "Conjugate Antenna",
                                     "Select whether the conjugate is applied to antenna A or antenna B.",
                                     "dropdown:0(Antenna A),1(Antenna B)"));
-    JST_CHECK(defineInterfaceConfig("useSharedMemory",
-                                    "Shared Memory",
-                                    "Cache the reference antenna in shared memory when optimizing the time domain.",
-                                    "bool"));
     JST_CHECK(defineInterfaceConfig("calculationMode",
                                     "Calculation Mode",
-                                    "Intermediate precision used for the complex multiply-conjugate operation.",
+                                    "Intermediate calculation precision.",
                                     "dropdown:integer(Integer),single_precision_fp(Single Precision FP),double_precision_fp(Double Precision FP)"));
-    JST_CHECK(defineInterfaceConfig("blockSize",
-                                    "Block Size",
-                                    "CUDA threads per block for the correlator kernel.",
-                                    "int:threads"));
 
     return Result::SUCCESS;
 }

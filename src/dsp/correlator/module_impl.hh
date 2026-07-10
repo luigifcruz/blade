@@ -25,11 +25,7 @@ struct CorrelatorImpl : public Module::Impl, public DynamicConfig<Correlator> {
     Tensor inputTensor;
     Tensor outputTensor;
     U64 baselineCount = 0;
-    U64 blockSizeX = 0;
-    U64 blockSizeY = 0;
     U64 integrationStep = 0;
-    bool optimizeTimeDomain = false;
-    bool sharedMemoryEnabled = false;
 };
 
 }  // namespace Jetstream::Modules

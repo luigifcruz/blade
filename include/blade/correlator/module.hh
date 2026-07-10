@@ -10,13 +10,10 @@ namespace Jetstream::Modules {
 struct Correlator : public Module::Config {
     U64 integrationRate = 1;
     U64 conjugateAntennaIndex = 1;
-    bool useSharedMemory = false;
     std::string calculationMode = "double_precision_fp";
-    U64 blockSize = 32;
 
     JST_MODULE_TYPE(correlator);
-    JST_MODULE_PARAMS(integrationRate, conjugateAntennaIndex, useSharedMemory,
-                      calculationMode, blockSize);
+    JST_MODULE_PARAMS(integrationRate, conjugateAntennaIndex, calculationMode);
 };
 
 }  // namespace Jetstream::Modules

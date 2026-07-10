@@ -24,11 +24,6 @@ Result CorrelatorImpl::validate() {
         return Result::ERROR;
     }
 
-    if (config.blockSize == 0) {
-        JST_ERROR("[MODULE_CORRELATOR] The CUDA block size must be positive.");
-        return Result::ERROR;
-    }
-
     return Result::SUCCESS;
 }
 
@@ -71,25 +66,10 @@ Result CorrelatorImpl::create() {
         return Result::ERROR;
     }
 
-    optimizeTimeDomain = inputTensor.shape(kTimeAxis) > inputTensor.shape(kFrequencyAxis);
-    blockSizeX = optimizeTimeDomain ? 1 : blockSize;
-    blockSizeY = optimizeTimeDomain ? blockSize : 1;
-
-    if ((inputTensor.shape(kFrequencyAxis) % blockSizeX) != 0) {
-        JST_ERROR("[MODULE_CORRELATOR] Input frequency dimension {} is not divisible by the block size {}.",
-                  inputTensor.shape(kFrequencyAxis),
-                  blockSizeX);
+    if (inputTensor.shape(kTimeAxis) == 0) {
+        JST_ERROR("[MODULE_CORRELATOR] Input time dimension must be positive.");
         return Result::ERROR;
     }
-
-    if ((inputTensor.shape(kTimeAxis) % blockSizeY) != 0) {
-        JST_ERROR("[MODULE_CORRELATOR] Input time dimension {} is not divisible by the block size {}.",
-                  inputTensor.shape(kTimeAxis),
-                  blockSizeY);
-        return Result::ERROR;
-    }
-
-    sharedMemoryEnabled = useSharedMemory && optimizeTimeDomain;
 
     baselineCount = (inputTensor.shape(kAspectAxis) * (inputTensor.shape(kAspectAxis) + 1)) / 2;
     const Shape outputShape = {
@@ -113,11 +93,7 @@ Result CorrelatorImpl::destroy() {
     inputTensor = {};
     outputTensor = {};
     baselineCount = 0;
-    blockSizeX = 0;
-    blockSizeY = 0;
     integrationStep = 0;
-    optimizeTimeDomain = false;
-    sharedMemoryEnabled = false;
 
     return Result::SUCCESS;
 }
