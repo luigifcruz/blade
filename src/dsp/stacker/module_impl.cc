@@ -5,13 +5,14 @@ namespace Jetstream::Modules {
 Result StackerImpl::validate() {
     const auto& config = *candidate();
 
-    if (config.ratio <= 1) {
-        JST_ERROR("[MODULE_STACKER] The axis ratio must be greater than 1.");
+    if (config.ratio == 0) {
+        JST_ERROR("[MODULE_STACKER] The axis ratio must be greater than 0.");
         return Result::ERROR;
     }
 
-    if (config.blockSize == 0) {
-        JST_ERROR("[MODULE_STACKER] The CUDA block size must be positive.");
+    if (config.ratio != 1 &&
+        (config.blockSize == 0 || config.blockSize > 1024)) {
+        JST_ERROR("[MODULE_STACKER] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }
 
@@ -38,10 +39,17 @@ Result StackerImpl::create() {
         return Result::ERROR;
     }
 
+    bypass = ratio == 1;
+    if (bypass) {
+        outputTensor = inputTensor;
+        outputs()["buffer"].produced(name(), "buffer", outputTensor);
+        return Result::SUCCESS;
+    }
+
     Shape outputShape = inputTensor.shape();
     outputShape[axis] *= ratio;
     
-    JST_CHECK(outputTensor.create(inputTensor.device(), DataType::CF32, outputShape));
+    JST_CHECK(outputTensor.create(inputTensor.device(), inputTensor.dtype(), outputShape));
     JST_CHECK(outputTensor.propagateAttributes(inputTensor));
 
     outputs()["buffer"].produced(name(), "buffer", outputTensor);
@@ -52,6 +60,7 @@ Result StackerImpl::create() {
 Result StackerImpl::destroy() {
     inputTensor = {};
     outputTensor = {};
+    bypass = false;
 
     return Result::SUCCESS;
 }

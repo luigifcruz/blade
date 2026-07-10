@@ -16,6 +16,7 @@ struct StackerImpl : public Module::Impl, public DynamicConfig<Stacker> {
  protected:
     Tensor inputTensor;
     Tensor outputTensor;
+    bool bypass = false;
 };
 
 }  // namespace Jetstream::Modules

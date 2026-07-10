@@ -21,11 +21,12 @@ struct Stacker : public Block::Config {
         "The Stacker block tiles successive input buffers along a tensor axis, assembling "
         "an output whose axis is ratio times larger than the input. Each compute cycle "
         "writes the current buffer into its slot and the output is emitted once every "
-        "ratio buffers. Input tensors must be CF32 and can have any rank.\n\n"
+        "ratio buffers. Input tensors can be F32, CF32, or CI8 and can have any rank. "
+        "Ratio=1 bypasses stacking.\n\n"
 
         "## Arguments\n"
         "- **Axis**: The tensor axis to stack along.\n"
-        "- **Ratio**: Number of buffers tiled into one output, must be greater than one.\n"
+        "- **Ratio**: Number of buffers tiled into one output, must be greater than zero.\n"
         "- **Copy Size Threshold**: Chunk width in elements below which a kernel is used instead of a strided memcopy.\n"
         "- **Block Size**: Number of CUDA threads per block.\n\n"
 
