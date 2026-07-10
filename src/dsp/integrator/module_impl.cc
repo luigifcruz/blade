@@ -13,12 +13,8 @@ Result IntegratorImpl::validate() {
         JST_ERROR("[MODULE_INTEGRATOR] The size must be greater than 0.");
         return Result::ERROR;
     }
-    if (config.rate*config.size == 1) {
-        JST_ERROR("[MODULE_INTEGRATOR] Either size or rate must be greater than 1.");
-        return Result::ERROR;
-    }
-    if (config.blockSize == 0) {
-        JST_ERROR("[MODULE_INTEGRATOR] The CUDA block size must be positive.");
+    if (config.blockSize == 0 || config.blockSize > 1024) {
+        JST_ERROR("[MODULE_INTEGRATOR] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }
 
@@ -52,6 +48,13 @@ Result IntegratorImpl::create() {
         return Result::ERROR;
     }
 
+    bypass = size == 1 && rate == 1 && inputTensor.dtype() == DataType::CF32;
+    if (bypass) {
+        outputTensor = inputTensor;
+        outputs()["buffer"].produced(name(), "buffer", outputTensor);
+        return Result::SUCCESS;
+    }
+
     Shape outputShape = inputTensor.shape();
     outputShape[axis] /= size;
     
@@ -66,6 +69,7 @@ Result IntegratorImpl::create() {
 Result IntegratorImpl::destroy() {
     inputTensor = {};
     outputTensor = {};
+    bypass = false;
 
     return Result::SUCCESS;
 }
