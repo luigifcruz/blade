@@ -9,7 +9,7 @@ The Integrator sums samples along a tensor axis to raise the signal-to-noise rat
 
 ## How it works
 
-Each accumulation cycle starts by zeroing the output buffer. A runtime-compiled CUDA kernel then sums `size` consecutive groups along the chosen axis and adds the result into the output. When `rate` is greater than one, the output is only emitted after that many buffers have been accumulated, and the block skips downstream processing in between. At least one of `size` or `rate` must be greater than one. The input can be complex float or complex signed byte, and the output is always complex float.
+Each accumulation cycle starts by zeroing the output buffer. A runtime-compiled CUDA kernel then sums `size` consecutive groups along the chosen axis and adds the result into the output. When `rate` is greater than one, the output is only emitted after that many buffers have been accumulated, and the block skips downstream processing in between. Setting both `size` and `rate` to one bypasses integration. The input can be real float, complex float, or complex signed byte, and the output is always complex float.
 
 ## Configuration
 
@@ -24,7 +24,7 @@ Each accumulation cycle starts by zeroing the output buffer. A runtime-compiled 
 
 | Name | Description |
 |---|---|
-| `buffer` | Contiguous `CF32` or `CI8` tensor of any rank greater than the chosen axis. |
+| `buffer` | Contiguous `F32`, `CF32`, or `CI8` tensor of any rank greater than the chosen axis. |
 
 ## Output
 

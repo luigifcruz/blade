@@ -19,7 +19,7 @@ struct Beamformer : public Block::Config {
         "# Beamformer\n"
         "The Beamformer block forms coherent beams from a phased array by weighting each "
         "antenna voltage with a per-beam phasor and summing over antennas. Input voltages "
-        "must be CF32 shaped as [antennas, channels, samples, polarizations] and phasors "
+        "must be CI8 or CF32 shaped as [antennas, channels, samples, polarizations] and phasors "
         "CF32 shaped as [beams, antennas, channels, 1, polarizations]. An incoherent beam "
         "built from the summed antenna powers can be appended after the coherent beams.\n\n"
 
@@ -36,7 +36,7 @@ struct Beamformer : public Block::Config {
         "## Examples\n"
         "- Form two coherent beams:\n"
         "  Config: defaults\n"
-        "  Input: CF32[20, 192, 8192, 2] + Phasors CF32[2, 20, 192, 1, 2] -> CF32[2, 192, 8192, 2].\n\n"
+        "  Input: CI8 or CF32[20, 192, 8192, 2] + Phasors CF32[2, 20, 192, 1, 2] -> CF32[2, 192, 8192, 2].\n\n"
 
         "## Implementation\n"
         "Input Buffer + Phasors -> Beamformer Module -> Output Buffer\n"

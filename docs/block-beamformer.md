@@ -9,7 +9,7 @@ The Beamformer is the core compute block of a BLADE beamforming pipeline. It for
 
 ## How it works
 
-Each compute cycle launches a runtime-compiled CUDA kernel with one thread block per channel and time slice. The kernel first caches all beam phasors in shared memory and the antenna samples of its time slot in registers, then multiplies each antenna voltage by its beam phasor and accumulates the products over antennas, independently per polarization. When the incoherent beam is enabled, the kernel additionally detects the power of each antenna after applying the phasors of the first beam and accumulates it into one extra beam at the last index, optionally taking its square root to convert power into amplitude.
+Each compute cycle launches a runtime-compiled CUDA kernel with one thread block per channel and time slice. The kernel converts `CI8` samples to normalized single precision by dividing each component by 128, caches all beam phasors in shared memory and the antenna samples of its time slot in registers, then multiplies each antenna voltage by its beam phasor and accumulates the products over antennas, independently per polarization. When the incoherent beam is enabled, the kernel additionally detects the power of each antenna after applying the phasors of the first beam and accumulates it into one extra beam at the last index, optionally taking its square root to convert power into amplitude.
 
 ## Configuration
 
@@ -23,7 +23,7 @@ Each compute cycle launches a runtime-compiled CUDA kernel with one thread block
 
 | Name | Description |
 |---|---|
-| `buffer` | Contiguous `CF32` tensor shaped `[antennas, channels, samples, polarizations]` with exactly two polarizations. |
+| `buffer` | Contiguous `CI8` or `CF32` tensor shaped `[antennas, channels, samples, polarizations]` with exactly two polarizations. |
 | `phasors` | Contiguous `CF32` tensor shaped `[beams, antennas, channels, 1, polarizations]` matching the input antenna and channel counts. |
 
 ## Output

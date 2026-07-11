@@ -21,8 +21,8 @@ struct Integrator : public Block::Config {
         "The Integrator block sums samples along a tensor axis. The size parameter sums "
         "groups of consecutive indices inside a single buffer, shrinking the axis, while "
         "the rate parameter accumulates successive buffers into the same output before it "
-        "is emitted. Input tensors can be CF32 or CI8 of any rank and the output is always "
-        "CF32.\n\n"
+        "is emitted. Input tensors can be F32, CF32, or CI8 of any rank and the output is "
+        "always CF32. Size=1 and Rate=1 bypasses integration.\n\n"
 
         "## Arguments\n"
         "- **Size**: Number of indices summed together within one buffer along the axis.\n"

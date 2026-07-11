@@ -16,6 +16,7 @@ struct IntegratorImpl : public Module::Impl, public DynamicConfig<Integrator> {
  protected:
     Tensor inputTensor;
     Tensor outputTensor;
+    bool bypass = false;
 };
 
 }  // namespace Jetstream::Modules

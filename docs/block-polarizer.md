@@ -9,14 +9,14 @@ The Polarizer converts a dual linear-polarization complex signal into a circular
 
 ## How it works
 
-The block selects one of three runtime-compiled CUDA kernels based on the requested output polarization. The circular kernel multiplies the Y polarization by a ninety degree phasor and writes the sum and difference with the X polarization as the left and right circular components. The single-component kernels simply gather every X or Y sample into a tensor with a single polarization axis. The conversion is a pure per-sample operation, so every other axis of the input passes through unchanged.
+When the input and output bases match, the block bypasses processing and exposes the input directly. Otherwise it selects one of three runtime-compiled CUDA kernels based on the requested output polarization. The circular kernel multiplies the Y polarization by a ninety degree phasor and writes the sum and difference with the X polarization as the left and right circular components. The single-component kernels simply gather every X or Y sample into a tensor with a single polarization axis. The conversion is a pure per-sample operation, so every other axis of the input passes through unchanged.
 
 ## Configuration
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `inputPolarization` | string | `xy` | Polarization basis of the input signal. Only `xy` is supported. |
-| `outputPolarization` | string | `lr` | Output basis: `lr` for circular, or `x` or `y` for a single linear component. |
+| `outputPolarization` | string | `lr` | Output basis: `lr` for circular, `xy` to bypass, or `x` or `y` for a single linear component. |
 | `blockSize` | integer | `512` | CUDA threads per block. |
 
 ## Input
@@ -29,4 +29,4 @@ The block selects one of three runtime-compiled CUDA kernels based on the reques
 
 | Name | Description |
 |---|---|
-| `buffer` | `CF32` tensor with the same shape as the input for `lr`, or with a single polarization for `x` and `y`. |
+| `buffer` | `CF32` tensor with the same shape as the input for `lr` and `xy`, or with a single polarization for `x` and `y`. |

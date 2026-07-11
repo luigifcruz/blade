@@ -11,22 +11,23 @@ namespace Jetstream::Modules {
 namespace {
 
 constexpr const char* kStackerKernelSource = R"(
-<<<type_aliases>>>
+using U64 = unsigned long long;
+
 <<<kernel_constants>>>
 
-struct alignas(2 * sizeof(InputScalar)) Complex {
-    InputScalar real;
-    InputScalar imag;
+struct alignas(ELEMENT_SIZE) Element {
+    unsigned char data[ELEMENT_SIZE];
 };
 
-extern "C" __global__ void stacker(const Complex* input,
-                                         Complex* output,
+extern "C" __global__ void stacker(const Element* input,
+                                   Element* output,
                                    const U64 input_size,
                                    const U64 stackIndex) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const U64 tid = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
     if (tid < input_size) {
-        const U64 oid = (tid/WIDTH_IN)*(WIDTH_OUT) + (stackIndex*WIDTH_IN) + (tid%WIDTH_IN);
+        const U64 oid = (tid / WIDTH_IN) * WIDTH_OUT +
+                        (stackIndex * WIDTH_IN) + (tid % WIDTH_IN);
         output[oid] = input[tid];
     }
 }
@@ -58,18 +59,26 @@ struct StackerImplNativeCuda : public StackerImpl,
 Result StackerImplNativeCuda::create() {
     const Tensor& input = inputs().at("buffer").tensor;
 
-    if (input.dtype() != DataType::CF32) {
-        JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
+    if (input.dtype() != DataType::F32 &&
+        input.dtype() != DataType::CF32 &&
+        input.dtype() != DataType::CI8) {
+        JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Unsupported input data type '{}'. Expected F32, CF32, or CI8.",
                   input.dtype());
         return Result::ERROR;
     }
 
+    JST_CHECK(StackerImpl::create());
+
     stackIndex = 0;
+    if (bypass) {
+        return Result::SUCCESS;
+    }
+
     width = 1;
     for (U64 i = axis; i < input.rank(); i++) {
         width *= input.shape()[i];
     }
-    widthByteSize = width * sizeof(input.dtype());
+    widthByteSize = width * input.elementSize();
     height = 1;
     for (U64 i = 0; i < axis; i++) {
         height *= input.shape()[i];
@@ -80,33 +89,21 @@ Result StackerImplNativeCuda::create() {
     kernelNotCopy = width < copySizeThreshold;
     JST_DEBUG("[MODULE_STACKER_NATIVE_CUDA] Stacking with {}.", kernelNotCopy ? "kernel" : "CUDA memcopy");
 
-    JST_CHECK(StackerImpl::create());
-
     return Result::SUCCESS;
 }
 
 Result StackerImplNativeCuda::computeInitialize() {
+    if (bypass) {
+        return Result::SUCCESS;
+    }
+
     if (kernelNotCopy) {
-        const std::string scalarType = [&]() -> std::string {
-            switch (inputTensor.dtype()) {
-                case DataType::CF32: return "float";
-                default: return "";
-            }
-        }();
-        if (scalarType.empty()) {
-            JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
-                    inputTensor.dtype());
-            return Result::ERROR;
-        }
-        
         const std::unordered_map<std::string, std::string> pieces = {
-            {"type_aliases",
-            jst::fmt::format("using U64 = unsigned long long;\n"
-                            "using InputScalar = {};",
-                            scalarType)},
             {"kernel_constants",
-            jst::fmt::format("static constexpr int WIDTH_IN = {};\n"
-                            "static constexpr int WIDTH_OUT = {};",
+            jst::fmt::format("static constexpr U64 ELEMENT_SIZE = {};\n"
+                            "static constexpr U64 WIDTH_IN = {};\n"
+                            "static constexpr U64 WIDTH_OUT = {};",
+                            inputTensor.elementSize(),
                             width,
                             width*ratio)},
         };
@@ -117,6 +114,10 @@ Result StackerImplNativeCuda::computeInitialize() {
 }
 
 Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
+    if (bypass) {
+        return Result::SUCCESS;
+    }
+
     if (stackIndex == 0) {
         JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
             JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Failed to clear the output buffer: {}.", err);
@@ -132,13 +133,13 @@ Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
             (void*)&inputSize,
             (void*)&stackIndex
         };
-    
+
         const Extent3D<U64> block = {blockSize, 1, 1};
         const Extent3D<U64> grid = {(inputTensor.size() + blockSize - 1) / blockSize, 1, 1};
-    
+
         JST_CHECK(scheduleKernel(kStackerKernelName, stream, grid, block, arguments));
     } else {
-        
+
         JST_CUDA_CHECK(
             cudaMemcpy2DAsync(
                 ((uint8_t*)outputData)+(widthByteSize * stackIndex),
@@ -157,9 +158,9 @@ Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     if (inputTensor.hasAttribute("timestamp")) {
         JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
     }
-    stackIndex = (stackIndex + 1)%this->ratio;
+    stackIndex = (stackIndex + 1) % ratio;
 
-    return Result::SUCCESS;
+    return stackIndex == 0 ? Result::SUCCESS : Result::SKIP;
 }
 
 Result StackerImplNativeCuda::computeDeinitialize() {

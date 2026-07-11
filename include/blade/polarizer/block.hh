@@ -25,7 +25,7 @@ struct Polarizer : public Block::Config {
 
         "## Arguments\n"
         "- **Input Polarization**: Polarization basis of the input signal, only XY is supported.\n"
-        "- **Output Polarization**: Output basis, LR for circular or X or Y for a single linear component.\n"
+        "- **Output Polarization**: Output basis, LR for circular, XY to bypass, or X or Y for a single linear component.\n"
         "- **Block Size**: Number of CUDA threads per block.\n\n"
 
         "## Useful For\n"
@@ -40,7 +40,7 @@ struct Polarizer : public Block::Config {
 
         "## Implementation\n"
         "Input Buffer -> Polarizer Module -> Output Buffer\n"
-        "1. Selects the conversion kernel matching the requested output basis.\n"
+        "1. Bypasses processing when the input and output bases match, otherwise selects the conversion kernel.\n"
         "2. Multiplies the Y polarization by the ninety degree phasor for the circular basis.\n"
         "3. Writes the converted or extracted polarizations to the output buffer."
     );

@@ -31,10 +31,10 @@ __device__ Complex sub(const Complex& lhs, const Complex& rhs) {
 }
 
 extern "C" __global__ void polarizer_xy_lr(const Complex* input,
-                                                 Complex* output,
-                                                 U64 inputSize,
-                                                 U64 outputSize) {
-    const int tid = (blockIdx.x * blockDim.x + threadIdx.x) * 2;
+                                           Complex* output,
+                                           U64 inputSize,
+                                           U64 outputSize) {
+    const U64 tid = (static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x) * 2;
 
     assert(inputSize == outputSize);
 
@@ -47,7 +47,7 @@ extern "C" __global__ void polarizer_xy_lr(const Complex* input,
         const Complex yPol = input[tid + 1];
 
         const Complex yPol90(-yPol.imag, +yPol.real);
-        
+
         output[tid + 0] = add(xPol, yPol90);
         output[tid + 1] = sub(xPol, yPol90);
     }
@@ -62,11 +62,11 @@ struct alignas(2 * sizeof(Scalar)) Complex {
     Scalar imag;
 };
 
-extern "C" __global__ __global__ void polarizer_xy_x(const Complex* input,
-                                                           Complex* output,
-                                                           U64 inputSize,
-                                                           U64 outputSize) {
-    const int tid = (blockIdx.x * blockDim.x + threadIdx.x);
+extern "C" __global__ void polarizer_xy_x(const Complex* input,
+                                          Complex* output,
+                                          U64 inputSize,
+                                          U64 outputSize) {
+    const U64 tid = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
     if (tid < outputSize) {
         output[tid] = input[(tid * 2) + 0];
@@ -82,11 +82,11 @@ struct alignas(2 * sizeof(Scalar)) Complex {
     Scalar imag;
 };
 
-extern "C" __global__ __global__ void polarizer_xy_y(const Complex* input,
-                                                           Complex* output,
-                                                           U64 inputSize,
-                                                           U64 outputSize) {
-    const int tid = (blockIdx.x * blockDim.x + threadIdx.x);
+extern "C" __global__ void polarizer_xy_y(const Complex* input,
+                                          Complex* output,
+                                          U64 inputSize,
+                                          U64 outputSize) {
+    const U64 tid = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
     if (tid < outputSize) {
         output[tid] = input[(tid * 2) + 1];
@@ -101,8 +101,8 @@ constexpr const char* kPolarizerXYtoYKernelName = "polarizer_xy_y";
 }  // namespace
 
 struct PolarizerImplNativeCuda : public PolarizerImpl,
-                                public NativeCudaRuntimeContext,
-                                public Scheduler::Context {
+                                 public NativeCudaRuntimeContext,
+                                 public Scheduler::Context {
  public:
     Result create() final;
     Result computeInitialize() override;
@@ -119,8 +119,7 @@ Result PolarizerImplNativeCuda::create() {
     const Tensor& input = inputs().at("buffer").tensor;
 
     if (input.dtype() != DataType::CF32) {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
-                  input.dtype());
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.", input.dtype());
         return Result::ERROR;
     }
 
@@ -132,6 +131,10 @@ Result PolarizerImplNativeCuda::create() {
 }
 
 Result PolarizerImplNativeCuda::computeInitialize() {
+    if (bypass) {
+        return Result::SUCCESS;
+    }
+
     const std::string scalarType = [&]() -> std::string {
         switch (inputTensor.dtype()) {
             case DataType::CF32: return "float";
@@ -139,16 +142,15 @@ Result PolarizerImplNativeCuda::computeInitialize() {
         }
     }();
     if (scalarType.empty()) {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
-                inputTensor.dtype());
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.", inputTensor.dtype());
         return Result::ERROR;
     }
-    
+
     const std::unordered_map<std::string, std::string> pieces = {
         {"type_aliases",
         jst::fmt::format("using U64 = unsigned long long;\n"
-                        "using Scalar = {};",
-                        scalarType)},
+                         "using Scalar = {};",
+                         scalarType)},
     };
 
     if (outputPolarization == "lr") {
@@ -161,8 +163,7 @@ Result PolarizerImplNativeCuda::computeInitialize() {
         kernelName = kPolarizerXYtoYKernelName;
         JST_CHECK(createKernel(kPolarizerXYtoYKernelName, kPolarizerXYtoYKernelSource, pieces));
     } else {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported output polarization {}.",
-                  outputPolarization);
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported output polarization {}.", outputPolarization);
         return Result::ERROR;
     }
 
@@ -172,6 +173,10 @@ Result PolarizerImplNativeCuda::computeInitialize() {
 }
 
 Result PolarizerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
+    if (bypass) {
+        return Result::SUCCESS;
+    }
+
     JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
         JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Failed to clear the output buffer: {}.", err);
     });

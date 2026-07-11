@@ -23,6 +23,7 @@ struct PolarizerImpl : public Module::Impl, public DynamicConfig<Polarizer> {
  protected:
     Tensor inputTensor;
     Tensor outputTensor;
+    bool bypass = false;
 };
 
 }  // namespace Jetstream::Modules
