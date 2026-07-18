@@ -21,6 +21,7 @@ build-*
 
 subprojects/*
 !subprojects/packagefiles/
+!subprojects/catch2.wrap
 !subprojects/cyberether.wrap
 !subprojects/erfa.wrap
 !subprojects/radiointerferometryc99.wrap

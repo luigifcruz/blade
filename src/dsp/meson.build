@@ -1,4 +1,5 @@
 subdir('beamformer')
+subdir('channelizer')
 subdir('correlator')
 subdir('detector')
 subdir('integrator')

@@ -30,19 +30,19 @@ Result IntegratorImpl::define() {
     JST_CHECK(defineInterfaceConfig("size",
                                     "Size",
                                     "The number of integrations within each block.",
-                                    "int"));
+                                    "uint"));
     JST_CHECK(defineInterfaceConfig("rate",
                                     "Rate",
                                     "The number of blocks to integrate together.",
-                                    "int"));
+                                    "uint"));
     JST_CHECK(defineInterfaceConfig("axis",
                                     "Axis",
                                     "The axis on which to integrate.",
-                                    "int"));
+                                    "uint"));
     JST_CHECK(defineInterfaceConfig("blockSize",
                                 "Block Size",
                                 "CUDA threads per block for the integrator kernel.",
-                                "int:threads"));
+                                "uint:threads"));
 
     return Result::SUCCESS;
 }

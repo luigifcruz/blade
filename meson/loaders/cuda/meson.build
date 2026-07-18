@@ -1,20 +1,25 @@
-deps = [
-    dependency(
+cuda_deps = []
+cuda_found = false
+
+if blade_device_cuda_requested
+    cuda_deps += dependency(
         'cuda',
         version: '>=11.7',
         modules: ['cuda', 'nvrtc', 'cufft'],
-        required: true,
-    ),
-]
+        required: not blade_devices_auto,
+    )
 
-all_deps_found = true
-foreach x_dep : deps
-    all_deps_found = all_deps_found and x_dep.found()
-endforeach
-
-if all_deps_found
-    cfg_lst.set('BLADE_LOADER_CUDA_AVAILABLE', true)
-    dep_lst += deps
+    cuda_found = true
+    foreach cuda_dep : cuda_deps
+        cuda_found = cuda_found and cuda_dep.found()
+    endforeach
 endif
 
-ldr_lst += {'CUDA': all_deps_found}
+if cuda_found
+    cfg_lst.set('BLADE_LOADER_CUDA_AVAILABLE', true)
+    cfg_lst.set('BLADE_DEVICE_CUDA_AVAILABLE', true)
+    dep_lst += cuda_deps
+    blade_device_cuda_enabled = true
+endif
+
+ldr_lst += {'CUDA': cuda_found}

@@ -28,7 +28,7 @@ struct Integrator : public Block::Config {
         "- **Size**: Number of indices summed together within one buffer along the axis.\n"
         "- **Rate**: Number of successive buffers accumulated into one output.\n"
         "- **Axis**: The tensor axis to integrate on, defaulting to the time axis.\n"
-        "- **Block Size**: Number of CUDA threads per block.\n\n"
+        "- **Block Size**: Number of CUDA threads per block. Ignored on CPU.\n\n"
 
         "## Useful For\n"
         "- Increasing the signal-to-noise ratio of detected spectra.\n"

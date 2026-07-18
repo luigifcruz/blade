@@ -31,7 +31,8 @@ Result PolarizerImpl::validate() {
         return Result::ERROR;
     }
 
-    if (config.blockSize == 0 || (!sameBasis && config.blockSize > 1024)) {
+    if (device() == DeviceType::CUDA &&
+        (config.blockSize == 0 || (!sameBasis && config.blockSize > 1024))) {
         JST_ERROR("[MODULE_POLARIZER] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }

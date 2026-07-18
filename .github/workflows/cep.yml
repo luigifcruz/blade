@@ -16,10 +16,20 @@ jobs:
         include:
           - tag: x86_64-cuda
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.6.1-ubuntu24-x86_64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-x86_64-cuda
+            device: cuda
           - tag: aarch64-cuda
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.6.1-ubuntu24-aarch64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-aarch64-cuda
+            device: cuda
+          - tag: x86_64-cpu
+            runner: ubuntu-latest
+            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-x86_64
+            device: cpu
+          - tag: aarch64-cpu
+            runner: ubuntu-24.04-arm
+            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-aarch64
+            device: cpu
 
     steps:
       - name: Checkout
@@ -30,6 +40,7 @@ jobs:
           set -euo pipefail
           docker run --rm \
             --env BUILD_TYPE=release \
+            --env BLADE_DEVICES=${{ matrix.device }} \
             --env CEP_OUTPUT_DIR=.dist/${{ matrix.tag }} \
             --volume "${PWD}:/workspace" \
             --workdir /workspace \
@@ -65,7 +76,7 @@ jobs:
 
       - uses: actions/download-artifact@v4.3.0
         with:
-          pattern: blade-cep-ubuntu24-*-cuda
+          pattern: blade-cep-ubuntu24-*
           path: .dist/ceps
           merge-multiple: true
 
@@ -75,9 +86,11 @@ jobs:
           python3 tools/merger.py \
             --output .dist/artifacts/blade.cep \
             .dist/ceps/blade-ubuntu24-x86_64-cuda.cep \
-            .dist/ceps/blade-ubuntu24-aarch64-cuda.cep
+            .dist/ceps/blade-ubuntu24-aarch64-cuda.cep \
+            .dist/ceps/blade-ubuntu24-x86_64-cpu.cep \
+            .dist/ceps/blade-ubuntu24-aarch64-cpu.cep
 
       - uses: actions/upload-artifact@v4.6.2
         with:
-          name: blade-cep-ubuntu24-cuda
+          name: blade-cep-ubuntu24
           path: .dist/artifacts/blade.cep

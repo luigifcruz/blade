@@ -5,7 +5,8 @@ namespace Jetstream::Modules {
 Result BeamformerImpl::validate() {
     const auto& config = *candidate();
 
-    if (config.blockSize == 0 || config.blockSize > 1024) {
+    if (device() == DeviceType::CUDA &&
+        (config.blockSize == 0 || config.blockSize > 1024)) {
         JST_ERROR("[MODULE_BEAMFORMER] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
     }
@@ -97,14 +98,16 @@ Result BeamformerImpl::create() {
         return Result::ERROR;
     }
 
-    if ((inputTensor.shape(kBufferTimeAxis) % blockSize) != 0) {
+    if (device() == DeviceType::CUDA &&
+        (inputTensor.shape(kBufferTimeAxis) % blockSize) != 0) {
         JST_ERROR("[MODULE_BEAMFORMER] Number of time samples ({}) isn't divisible by the block size ({}).",
                   inputTensor.shape(kBufferTimeAxis),
                   blockSize);
         return Result::ERROR;
     }
 
-    if (phasorTensor.shape(kPhasorBeamAxis) > blockSize) {
+    if (device() == DeviceType::CUDA &&
+        phasorTensor.shape(kPhasorBeamAxis) > blockSize) {
         JST_ERROR("[MODULE_BEAMFORMER] The block size ({}) is smaller than the number of beams ({}).",
                   blockSize,
                   phasorTensor.shape(kPhasorBeamAxis));

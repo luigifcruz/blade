@@ -37,7 +37,7 @@ Result PolarizerImpl::define() {
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the polarizer kernel.",
-                                    "int:threads"));
+                                    "uint:threads"));
 
     return Result::SUCCESS;
 }

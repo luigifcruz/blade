@@ -1,5 +1,7 @@
 #include "module_impl.hh"
 
+#include <limits>
+
 namespace Jetstream::Modules {
 
 Result CorrelatorImpl::validate() {
@@ -71,7 +73,24 @@ Result CorrelatorImpl::create() {
         return Result::ERROR;
     }
 
-    baselineCount = (inputTensor.shape(kAspectAxis) * (inputTensor.shape(kAspectAxis) + 1)) / 2;
+    U64 baselineFactorA = inputTensor.shape(kAspectAxis);
+    if (baselineFactorA == std::numeric_limits<U64>::max()) {
+        JST_ERROR("[MODULE_CORRELATOR] Input aspect dimension is too large.");
+        return Result::ERROR;
+    }
+
+    U64 baselineFactorB = baselineFactorA + 1;
+    if ((baselineFactorA % 2) == 0) {
+        baselineFactorA /= 2;
+    } else {
+        baselineFactorB /= 2;
+    }
+    if (baselineFactorA > std::numeric_limits<U64>::max() / baselineFactorB) {
+        JST_ERROR("[MODULE_CORRELATOR] Baseline count is too large.");
+        return Result::ERROR;
+    }
+
+    baselineCount = baselineFactorA * baselineFactorB;
     const Shape outputShape = {
         baselineCount,
         inputTensor.shape(kFrequencyAxis),

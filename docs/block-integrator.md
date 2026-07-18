@@ -9,7 +9,7 @@ The Integrator sums samples along a tensor axis to raise the signal-to-noise rat
 
 ## How it works
 
-Each accumulation cycle starts by zeroing the output buffer. A runtime-compiled CUDA kernel then sums `size` consecutive groups along the chosen axis and adds the result into the output. When `rate` is greater than one, the output is only emitted after that many buffers have been accumulated, and the block skips downstream processing in between. Setting both `size` and `rate` to one bypasses integration. The input can be real float, complex float, or complex signed byte, and the output is always complex float.
+Each accumulation cycle starts by zeroing the output buffer. The CPU implementation uses contiguous axis-aware reductions, while the CUDA implementation uses a runtime-compiled kernel. Both sum `size` consecutive groups along the chosen axis and add the result into the output. When `rate` is greater than one, the output is only emitted after that many buffers have been accumulated, and the block skips downstream processing in between. Setting both `size` and `rate` to one bypasses `CF32` integration. The input can be real float, complex float, or complex signed byte, and the output is always complex float.
 
 ## Configuration
 
@@ -18,7 +18,7 @@ Each accumulation cycle starts by zeroing the output buffer. A runtime-compiled 
 | `size` | integer | `1` | Number of indices summed together within one buffer along the axis. The axis must be divisible by this value. |
 | `rate` | integer | `1` | Number of successive buffers accumulated into one output. |
 | `axis` | integer | `2` | The tensor axis to integrate on, defaulting to the time axis. |
-| `blockSize` | integer | `512` | CUDA threads per block. |
+| `blockSize` | integer | `512` | CUDA threads per block. Ignored on CPU. |
 
 ## Input
 

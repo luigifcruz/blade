@@ -27,8 +27,8 @@ struct Stacker : public Block::Config {
         "## Arguments\n"
         "- **Axis**: The tensor axis to stack along.\n"
         "- **Ratio**: Number of buffers tiled into one output, must be greater than zero.\n"
-        "- **Copy Size Threshold**: Chunk width in elements below which a kernel is used instead of a strided memcopy.\n"
-        "- **Block Size**: Number of CUDA threads per block.\n\n"
+        "- **Copy Size Threshold**: CUDA chunk width below which a kernel is used instead of a strided copy. Ignored on CPU.\n"
+        "- **Block Size**: Number of CUDA threads per block; ignored on CPU.\n\n"
 
         "## Useful For\n"
         "- Batching short buffers into larger blocks for downstream processing.\n"
@@ -43,7 +43,7 @@ struct Stacker : public Block::Config {
         "## Implementation\n"
         "Input Buffer -> Stacker Module -> Output Buffer\n"
         "1. Zeroes the output when a new stacking cycle begins.\n"
-        "2. Copies the buffer into its slot with a kernel for narrow chunks or a strided memcopy for wide ones.\n"
+        "2. Copies the buffer into its slot with CPU row copies or the selected CUDA path.\n"
         "3. Emits the assembled output after ratio buffers have been placed."
     );
 };

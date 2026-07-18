@@ -26,7 +26,7 @@ struct Beamformer : public Block::Config {
         "## Arguments\n"
         "- **Enable Incoherent Beam**: Append an incoherent beam at the last beam index.\n"
         "- **Enable Incoherent Beam Square Root**: Apply a square root to the incoherent beam power.\n"
-        "- **Block Size**: Number of CUDA threads per block. The number of time samples must be divisible by this value.\n\n"
+        "- **Block Size**: Number of CUDA threads per block. Ignored on CPU. The number of time samples must be divisible by this value on CUDA.\n\n"
 
         "## Useful For\n"
         "- Steering multiple simultaneous beams from a phased array like the Allen Telescope Array.\n"
@@ -40,7 +40,7 @@ struct Beamformer : public Block::Config {
 
         "## Implementation\n"
         "Input Buffer + Phasors -> Beamformer Module -> Output Buffer\n"
-        "1. Caches the beam phasors in shared memory and the antenna samples in registers.\n"
+        "1. Reuses antenna samples across beams on CPU or caches phasors and samples on CUDA.\n"
         "2. Multiplies each antenna voltage by its beam phasor and accumulates over antennas.\n"
         "3. Optionally detects the per-antenna power and accumulates it into the incoherent beam."
     );

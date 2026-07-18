@@ -9,7 +9,7 @@ The Beamformer is the core compute block of a BLADE beamforming pipeline. It for
 
 ## How it works
 
-Each compute cycle launches a runtime-compiled CUDA kernel with one thread block per channel and time slice. The kernel converts `CI8` samples to normalized single precision by dividing each component by 128, caches all beam phasors in shared memory and the antenna samples of its time slot in registers, then multiplies each antenna voltage by its beam phasor and accumulates the products over antennas, independently per polarization. When the incoherent beam is enabled, the kernel additionally detects the power of each antenna after applying the phasors of the first beam and accumulates it into one extra beam at the last index, optionally taking its square root to convert power into amplitude.
+Each compute cycle converts `CI8` samples to normalized single precision by dividing each component by 128, multiplies each antenna voltage by its beam phasor, and accumulates the products over antennas independently per polarization. The CPU implementation reuses a small antenna cache for each channel and time sample. The CUDA implementation uses a runtime-compiled kernel that caches phasors in shared memory and antenna samples in registers. When the incoherent beam is enabled, either backend additionally detects the power of each antenna after applying the phasors of the first beam and accumulates it into one extra beam at the last index, optionally taking its square root to convert power into amplitude.
 
 ## Configuration
 
@@ -17,7 +17,7 @@ Each compute cycle launches a runtime-compiled CUDA kernel with one thread block
 |---|---|---|---|
 | `enableIncoherentBeam` | boolean | `false` | Append an incoherent beam after the coherent beams. |
 | `enableIncoherentBeamSqrt` | boolean | `false` | Apply a square root to the incoherent beam power. |
-| `blockSize` | integer | `512` | CUDA threads per block. The time axis must be divisible by this value and it must be at least the number of beams. |
+| `blockSize` | integer | `512` | CUDA threads per block. Ignored on CPU. On CUDA, the time axis must be divisible by this value and it must be at least the number of beams. |
 
 ## Input
 

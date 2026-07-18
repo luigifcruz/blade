@@ -1,7 +1,7 @@
 ldr_lst = {}
 
-subdir('cuda')
 subdir('jetstream')
+subdir('cuda')
 subdir('radiointerferometry')
 
 summary(ldr_lst, section: 'Loaders', bool_yn: true)
