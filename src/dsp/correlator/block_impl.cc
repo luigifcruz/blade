@@ -29,7 +29,7 @@ Result CorrelatorImpl::define() {
     JST_CHECK(defineInterfaceConfig("integrationRate",
                                     "Integration Rate",
                                     "Number of input buffers accumulated into each output visibility buffer.",
-                                    "int:buffers"));
+                                    "uint:buffers"));
     JST_CHECK(defineInterfaceConfig("conjugateAntennaIndex",
                                     "Conjugate Antenna",
                                     "Select whether the conjugate is applied to antenna A or antenna B.",

@@ -1,0 +1,28 @@
+catch2_dep = dependency(
+    'catch2',
+    version: '>=3',
+    fallback: ['catch2', 'catch2_dep'],
+)
+
+blade_flowgraph_tests = executable(
+    'blade-flowgraph-tests',
+    [
+        'main.cc',
+        'flowgraph_tests.cc',
+    ],
+    dependencies: [lib_blade_dep, catch2_dep],
+    cpp_args: [
+        '-DBLADE_TEST_FLOWGRAPH_DIR="@0@"'.format(
+            meson.current_source_dir() / 'flowgraphs'
+        ),
+    ],
+    link_args: ['-Wl,--no-as-needed'],
+)
+
+test(
+    'blade-flowgraphs',
+    blade_flowgraph_tests,
+    suite: 'blade',
+    is_parallel: false,
+    timeout: 0,
+)

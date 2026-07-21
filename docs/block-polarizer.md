@@ -9,7 +9,7 @@ The Polarizer converts a dual linear-polarization complex signal into a circular
 
 ## How it works
 
-When the input and output bases match, the block bypasses processing and exposes the input directly. Otherwise it selects one of three runtime-compiled CUDA kernels based on the requested output polarization. The circular kernel multiplies the Y polarization by a ninety degree phasor and writes the sum and difference with the X polarization as the left and right circular components. The single-component kernels simply gather every X or Y sample into a tensor with a single polarization axis. The conversion is a pure per-sample operation, so every other axis of the input passes through unchanged.
+When the input and output bases match, the block bypasses processing and exposes the input directly. Otherwise the CPU implementation uses a contiguous loop and the CUDA implementation selects one of three runtime-compiled kernels. The circular conversion multiplies the Y polarization by a ninety degree phasor and writes the sum and difference with the X polarization as the left and right circular components. Single-component conversion gathers every X or Y sample into a tensor with one polarization. Every other axis passes through unchanged.
 
 ## Configuration
 
@@ -17,7 +17,7 @@ When the input and output bases match, the block bypasses processing and exposes
 |---|---|---|---|
 | `inputPolarization` | string | `xy` | Polarization basis of the input signal. Only `xy` is supported. |
 | `outputPolarization` | string | `lr` | Output basis: `lr` for circular, `xy` to bypass, or `x` or `y` for a single linear component. |
-| `blockSize` | integer | `512` | CUDA threads per block. |
+| `blockSize` | integer | `512` | CUDA threads per block. Ignored on CPU. |
 
 ## Input
 

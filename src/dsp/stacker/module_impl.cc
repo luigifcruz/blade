@@ -1,5 +1,7 @@
 #include "module_impl.hh"
 
+#include <limits>
+
 namespace Jetstream::Modules {
 
 Result StackerImpl::validate() {
@@ -10,7 +12,7 @@ Result StackerImpl::validate() {
         return Result::ERROR;
     }
 
-    if (config.ratio != 1 &&
+    if (device() == DeviceType::CUDA && config.ratio != 1 &&
         (config.blockSize == 0 || config.blockSize > 1024)) {
         JST_ERROR("[MODULE_STACKER] The CUDA block size must be between 1 and 1024.");
         return Result::ERROR;
@@ -47,6 +49,11 @@ Result StackerImpl::create() {
     }
 
     Shape outputShape = inputTensor.shape();
+    if (outputShape[axis] != 0 &&
+        ratio > std::numeric_limits<U64>::max() / outputShape[axis]) {
+        JST_ERROR("[MODULE_STACKER] Output axis size is too large.");
+        return Result::ERROR;
+    }
     outputShape[axis] *= ratio;
     
     JST_CHECK(outputTensor.create(inputTensor.device(), inputTensor.dtype(), outputShape));

@@ -2,11 +2,11 @@
 
 A GPU-accelerated radio astronomy DSP plugin for [CyberEther](https://cyberether.org).
 
-The BLADE plugin (Breakthrough Listen Accelerated DSP Engine) is part of the [stelline.space](https://stelline.space) stack. It provides the signal-processing blocks of a radio telescope backend: beamforming, correlation, phasor generation, polarization conversion, detection, integration, and stacking. The CUDA kernels are compiled just-in-time at runtime for the exact tensor shapes flowing through the pipeline. The blocks were born as the beamforming engine of the [Allen Telescope Array](https://www.seti.org/ata) and are used in production there.
+The BLADE plugin (Breakthrough Listen Accelerated DSP Engine) is part of the [stelline.space](https://stelline.space) stack. It provides the signal-processing blocks of a radio telescope backend: channelization, beamforming, correlation, phasor generation, polarization conversion, detection, integration, and stacking. Every block has a native CPU implementation. CUDA implementations are included when the CUDA toolkit is available and compile their kernels just in time for the tensor shapes flowing through the pipeline. The blocks were born as the beamforming engine of the [Allen Telescope Array](https://www.seti.org/ata) and are used in production there.
 
 ## Documentation
 
-The full documentation lives at [stelline.space/docs](https://stelline.space/docs). It includes a reference page for every block: the Beamformer, the Phasor, the Correlator, the Polarizer, the Detector, the Integrator, and the Stacker.
+The full documentation lives at [stelline.space/docs](https://stelline.space/docs). It includes a reference page for every block: the Channelizer, the Beamformer, the Phasor, the Correlator, the Polarizer, the Detector, the Integrator, and the Stacker.
 
 ## Example Flowgraphs
 

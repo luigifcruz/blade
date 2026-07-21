@@ -52,11 +52,11 @@ Result PhasorImpl::define() {
     JST_CHECK(defineInterfaceConfig("frequencyStartIndex",
                                     "Frequency Start Index",
                                     "The zero-indexed frequency channel offset for the phasors.",
-                                    "int"));
+                                    "uint"));
     JST_CHECK(defineInterfaceConfig("referenceAntennaIndex",
                                     "Reference Antenna Index",
                                     "The index of the reference antenna.",
-                                    "int"));
+                                    "uint"));
     JST_CHECK(defineInterfaceConfig("arrayReferenceLongitude",
                                     "Array Reference Longitude",
                                     "The array reference position longitude.",

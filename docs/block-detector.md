@@ -9,7 +9,7 @@ The Detector converts dual-polarization complex voltages into detected power pro
 
 ## How it works
 
-Each compute cycle zeroes the output buffer and launches one of two precompiled CUDA kernels, selected by the number of output polarizations. One thread handles each dual-polarization input sample, computes its power products, and atomically accumulates them into the output sample of its integration window. The time axis therefore shrinks by the integration rate while the polarization axis becomes the number of detected products, and the output turns real-valued.
+Each compute cycle computes the power products of every dual-polarization sample and sums them into their integration windows. The CPU implementation performs one contiguous reduction per output sample. The CUDA implementation uses one thread per input sample and atomic accumulation. The time axis therefore shrinks by the integration rate while the polarization axis becomes the number of detected products, and the output turns real-valued.
 
 ## Configuration
 
@@ -17,7 +17,7 @@ Each compute cycle zeroes the output buffer and launches one of two precompiled 
 |---|---|---|---|
 | `integrationRate` | integer | `1` | Number of time samples summed into each output sample. The time axis must be divisible by this value. |
 | `numberOfOutputPolarizations` | integer | `4` | Detected products per sample, `1` for total power or `4` for full products. |
-| `blockSize` | integer | `512` | CUDA threads per block. |
+| `blockSize` | integer | `512` | CUDA threads per block. Ignored on CPU. |
 
 ## Input
 

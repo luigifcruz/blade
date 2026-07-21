@@ -5,6 +5,10 @@
 #define BLADE_VERSION_ENCODE(major, minor, patch) ((((major) & 0xffu) << 16) | (((minor) & 0xffu) << 8) | ((patch) & 0xffu))
 #define BLADE_VERSION_CURRENT BLADE_VERSION_ENCODE(BLADE_VERSION_MAJOR, BLADE_VERSION_MINOR, BLADE_VERSION_PATCH)
 
+// Devices
+#mesondefine BLADE_DEVICE_CPU_AVAILABLE
+#mesondefine BLADE_DEVICE_CUDA_AVAILABLE
+
 // Loaders
 #mesondefine BLADE_LOADER_CUDA_AVAILABLE
 #mesondefine BLADE_LOADER_JETSTREAM_AVAILABLE

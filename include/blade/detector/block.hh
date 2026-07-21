@@ -26,7 +26,7 @@ struct Detector : public Block::Config {
         "## Arguments\n"
         "- **Integration Rate**: Number of time samples summed into each output sample.\n"
         "- **Number of Output Polarizations**: Detected products per sample, 1 or 4.\n"
-        "- **Block Size**: Number of CUDA threads per block.\n\n"
+        "- **Block Size**: Number of CUDA threads per block. Ignored on CPU.\n\n"
 
         "## Useful For\n"
         "- Converting beamformed voltages into power spectra.\n"
@@ -40,9 +40,9 @@ struct Detector : public Block::Config {
 
         "## Implementation\n"
         "Input Buffer -> Detector Module -> Output Buffer\n"
-        "1. Zeroes the output buffer and selects the one or four polarization kernel.\n"
+        "1. Selects the one or four polarization CPU loop or CUDA kernel.\n"
         "2. Computes the power products of each dual-polarization sample.\n"
-        "3. Accumulates every integration window atomically into one output sample."
+        "3. Accumulates every integration window into one output sample."
     );
 };
 

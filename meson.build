@@ -21,7 +21,7 @@ if not blade_is_linux
     error('BLADE only supports Linux targets for now.')
 endif
 
-minimum_jetstream_version = '1.5.0'
+minimum_jetstream_version = '1.7.0'
 
 #
 # Load Python
@@ -40,6 +40,24 @@ dep_lst = []
 inc_lst = [
     include_directories('include'),
 ]
+
+blade_requested_devices = get_option('devices')
+if blade_requested_devices.length() == 0
+    error('The devices option must contain auto, cpu, or cuda.')
+endif
+
+blade_devices_auto = 'auto' in blade_requested_devices
+if blade_devices_auto and blade_requested_devices.length() != 1
+    error('The auto device cannot be combined with explicit devices.')
+endif
+
+blade_device_cpu_enabled = blade_devices_auto or 'cpu' in blade_requested_devices
+blade_device_cuda_requested = blade_devices_auto or 'cuda' in blade_requested_devices
+blade_device_cuda_enabled = false
+
+if blade_device_cpu_enabled
+    cfg_lst.set('BLADE_DEVICE_CPU_AVAILABLE', true)
+endif
 
 #
 # Handle Configuration Data
@@ -78,6 +96,10 @@ lib_blade_dep = declare_dependency(
     link_with: lib_blade,
 )
 
+if get_option('tests')
+    subdir('tests')
+endif
+
 #
 # Install Library
 #
@@ -99,6 +121,8 @@ blade_examples = files(
     'examples/blade_stacker_integrator.yml',
 )
 
+blade_package_device = cfg_lst.get('BLADE_LOADER_CUDA_AVAILABLE', false) ? 'cuda' : 'cpu'
+
 if py.found()
     custom_target(
         'blade_cep',
@@ -111,7 +135,7 @@ if py.found()
             '--name', meson.project_name(),
             '--version', meson.project_version(),
             '--minimum-jetstream-version', minimum_jetstream_version,
-            '--target', 'path=@INPUT0@,system=' + host_machine.system() + ',device=cuda,arch=' + host_machine.cpu_family(),
+            '--target', 'path=@INPUT0@,system=' + host_machine.system() + ',device=' + blade_package_device + ',arch=' + host_machine.cpu_family(),
             '--example', '@INPUT1@',
             '--example', '@INPUT2@',
         ],
@@ -131,3 +155,9 @@ summary({
     'prefix': get_option('prefix'),
     'buildtype': get_option('buildtype'),
 }, section: 'General', bool_yn: true)
+
+summary({
+    'Selection': ','.join(blade_requested_devices),
+    'CPU': blade_device_cpu_enabled,
+    'CUDA': blade_device_cuda_enabled,
+}, section: 'Devices', bool_yn: true)

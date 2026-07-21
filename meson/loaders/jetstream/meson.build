@@ -3,6 +3,9 @@ deps = [
         'jetstream',
         version: '>=' + minimum_jetstream_version,
         required: true,
+        default_options: [
+            'remote=enabled',
+        ],
     ),
 ]
 

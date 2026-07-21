@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4.3.0
         with:
-          name: blade-cep-ubuntu24-cuda
+          name: blade-cep-ubuntu24
           path: .dist/artifacts
 
       - name: Release

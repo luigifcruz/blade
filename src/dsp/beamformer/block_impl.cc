@@ -38,7 +38,7 @@ Result BeamformerImpl::define() {
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the beamformer kernel.",
-                                    "int:threads"));
+                                    "uint:threads"));
 
     return Result::SUCCESS;
 }

@@ -1,0 +1,123 @@
+---
+version: 2
+title: Polarizer CPU and CUDA parity
+graph:
+  - name: source
+    module: signal_generator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      signalType: cosine
+      signalDataType: CF32
+      sampleRate: 1024
+      frequency: 19
+      amplitude: 0.625
+      phase: 0.5
+      dcOffset: 0.125
+      bufferSize: 128
+    meta:
+      node:
+        x: 100
+        y: 320
+        width: 180
+        height: 0
+  - name: shaped_input
+    module: reshape
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      shape: '[2,2,16,2]'
+      contiguous: false
+    input:
+      buffer: '${graph.source.output.signal}'
+    meta:
+      node:
+        x: 400
+        y: 320
+        width: 180
+        height: 0
+  - name: to_cuda
+    module: duplicate
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      outputDevice: cuda
+      hostAccessible: true
+    input:
+      buffer: '${graph.shaped_input.output.buffer}'
+    meta:
+      node:
+        x: 700
+        y: 520
+        width: 180
+        height: 0
+  - name: cpu_dut
+    module: polarizer
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      inputPolarization: xy
+      outputPolarization: lr
+      blockSize: 64
+    input:
+      buffer: '${graph.shaped_input.output.buffer}'
+    meta:
+      node:
+        x: 700
+        y: 140
+        width: 180
+        height: 0
+  - name: cuda_dut
+    module: polarizer
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      inputPolarization: xy
+      outputPolarization: lr
+      blockSize: 64
+    input:
+      buffer: '${graph.to_cuda.output.buffer}'
+    meta:
+      node:
+        x: 1000
+        y: 520
+        width: 180
+        height: 0
+  - name: from_cuda
+    module: duplicate
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      outputDevice: cpu
+      hostAccessible: true
+    input:
+      buffer: '${graph.cuda_dut.output.buffer}'
+    meta:
+      node:
+        x: 1300
+        y: 520
+        width: 180
+        height: 0
+  - name: compare
+    module: comparator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      inputCount: 2
+      tolerance: 1e-6
+    input:
+      input0: '${graph.cpu_dut.output.buffer}'
+      input1: '${graph.from_cuda.output.buffer}'
+    meta:
+      node:
+        x: 1600
+        y: 320
+        width: 180
+        height: 0

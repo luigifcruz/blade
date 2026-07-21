@@ -29,7 +29,7 @@ Result DetectorImpl::define() {
     JST_CHECK(defineInterfaceConfig("integrationRate",
                                     "Integration Rate",
                                     "Number of input time samples summed into each detector output sample.",
-                                    "int:samples"));
+                                    "uint:samples"));
     JST_CHECK(defineInterfaceConfig("numberOfOutputPolarizations",
                                     "Output Polarizations",
                                     "Select 1 for total power or 4 for XX, YY, Re(XY), Im(XY).",
@@ -37,7 +37,7 @@ Result DetectorImpl::define() {
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the detector kernel.",
-                                    "int:threads"));
+                                    "uint:threads"));
 
     return Result::SUCCESS;
 }

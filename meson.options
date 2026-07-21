@@ -1,0 +1,8 @@
+option('tests', type: 'boolean', value: true, description: 'Build BLADE tests.')
+option(
+    'devices',
+    type: 'array',
+    value: ['auto'],
+    choices: ['auto', 'cpu', 'cuda'],
+    description: 'Device implementations to build. auto enables CPU and every available accelerator.',
+)

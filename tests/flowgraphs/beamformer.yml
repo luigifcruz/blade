@@ -1,0 +1,177 @@
+---
+version: 2
+title: Beamformer CPU and CUDA parity
+graph:
+  - name: voltage_source
+    module: signal_generator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      signalType: cosine
+      signalDataType: CF32
+      sampleRate: 1024
+      frequency: 7
+      amplitude: 0.5
+      phase: 0.25
+      dcOffset: 0.125
+      bufferSize: 256
+    meta:
+      node:
+        x: 100
+        y: 160
+        width: 180
+        height: 0
+  - name: voltages
+    module: reshape
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      shape: '[2,2,32,2]'
+      contiguous: false
+    input:
+      buffer: '${graph.voltage_source.output.signal}'
+    meta:
+      node:
+        x: 400
+        y: 160
+        width: 180
+        height: 0
+  - name: phasor_source
+    module: signal_generator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      signalType: cosine
+      signalDataType: CF32
+      sampleRate: 64
+      frequency: 3
+      amplitude: 0.75
+      phase: 0.5
+      dcOffset: 0.25
+      bufferSize: 16
+    meta:
+      node:
+        x: 100
+        y: 480
+        width: 180
+        height: 0
+  - name: phasors
+    module: reshape
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      shape: '[2,2,2,1,2]'
+      contiguous: false
+    input:
+      buffer: '${graph.phasor_source.output.signal}'
+    meta:
+      node:
+        x: 400
+        y: 480
+        width: 180
+        height: 0
+  - name: voltages_to_cuda
+    module: duplicate
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      outputDevice: cuda
+      hostAccessible: true
+    input:
+      buffer: '${graph.voltages.output.buffer}'
+    meta:
+      node:
+        x: 700
+        y: 460
+        width: 180
+        height: 0
+  - name: phasors_to_cuda
+    module: duplicate
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      outputDevice: cuda
+      hostAccessible: true
+    input:
+      buffer: '${graph.phasors.output.buffer}'
+    meta:
+      node:
+        x: 700
+        y: 680
+        width: 180
+        height: 0
+  - name: cpu_dut
+    module: beamformer
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      enableIncoherentBeam: true
+      enableIncoherentBeamSqrt: true
+      blockSize: 32
+    input:
+      buffer: '${graph.voltages.output.buffer}'
+      phasors: '${graph.phasors.output.buffer}'
+    meta:
+      node:
+        x: 900
+        y: 100
+        width: 180
+        height: 0
+  - name: cuda_dut
+    module: beamformer
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      enableIncoherentBeam: true
+      enableIncoherentBeamSqrt: true
+      blockSize: 32
+    input:
+      buffer: '${graph.voltages_to_cuda.output.buffer}'
+      phasors: '${graph.phasors_to_cuda.output.buffer}'
+    meta:
+      node:
+        x: 1000
+        y: 560
+        width: 180
+        height: 0
+  - name: from_cuda
+    module: duplicate
+    device: cuda
+    runtime: native
+    provider: generic
+    config:
+      outputDevice: cpu
+      hostAccessible: true
+    input:
+      buffer: '${graph.cuda_dut.output.buffer}'
+    meta:
+      node:
+        x: 1300
+        y: 560
+        width: 180
+        height: 0
+  - name: compare
+    module: comparator
+    device: cpu
+    runtime: native
+    provider: generic
+    config:
+      inputCount: 2
+      tolerance: 1e-5
+    input:
+      input0: '${graph.cpu_dut.output.buffer}'
+      input1: '${graph.from_cuda.output.buffer}'
+    meta:
+      node:
+        x: 1600
+        y: 320
+        width: 180
+        height: 0

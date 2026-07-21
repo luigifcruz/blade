@@ -45,8 +45,8 @@ struct Correlator : public Block::Config {
         "## Implementation\n"
         "Input Buffer -> Correlator Module -> Output Buffer\n"
         "1. Zeroes the output visibilities at the start of each integration window.\n"
-        "2. Stages every antenna's voltages for one channel and time slice into shared memory.\n"
-        "3. Reduces a 2x2 tile of the baseline matrix per thread, holding the products in registers.\n"
+        "2. Reuses each antenna sample across baselines on CPU or stages channel slices on CUDA.\n"
+        "3. Accumulates the four polarization products with the selected calculation type.\n"
         "4. Accumulates each buffer into the output with exactly one addition per visibility, "
         "so the result is bit-reproducible across runs, and emits the buffer when the window closes."
     );
