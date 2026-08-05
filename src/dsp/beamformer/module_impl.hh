@@ -3,6 +3,7 @@
 
 #include <blade/beamformer/module.hh>
 #include <jetstream/detail/module_impl.hh>
+#include <jetstream/memory/axis.hh>
 
 namespace Jetstream::Modules {
 
@@ -34,6 +35,12 @@ struct BeamformerImpl : public Module::Impl, public DynamicConfig<Beamformer> {
     Tensor inputTensor;
     Tensor phasorTensor;
     Tensor outputTensor;
+
+    U64 validatedBeamCount = 0;
+    U64 validatedOutputSizeBytes = 0;
+    Shape validatedOutputShape;
+    SignalAxes validatedSignalAxes;
+
     U64 beamCount = 0;
 };
 

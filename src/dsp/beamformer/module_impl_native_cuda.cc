@@ -1,6 +1,10 @@
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <unordered_map>
 
 #include <jetstream/backend/devices/cuda/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cuda.hh>
@@ -12,6 +16,9 @@ namespace Jetstream::Modules {
 
 namespace {
 
+constexpr U64 kMaxGridSizeX = std::numeric_limits<I32>::max();
+constexpr U64 kMaxGridSizeY = 65535;
+constexpr U64 kSharedMemoryBudget = 49152;
 constexpr const char* kBeamformerKernelName = "beamformer_ata";
 constexpr const char* kBeamformerKernelSource = R"(
 <<<type_aliases>>>
@@ -65,17 +72,17 @@ __device__ Complex add(const Complex& lhs, const Complex& rhs) {
 extern "C" __global__ void beamformer_ata(const InputComplex* input,
                                            const Complex* phasor,
                                            Complex* out) {
-    const int bi = threadIdx.x;
-    const int ti = bi + (blockIdx.y * TBLOCK);
-    const int ch = blockIdx.x;
+    const unsigned long long bi = threadIdx.x;
+    const unsigned long long ti = bi + (blockIdx.y * TBLOCK);
+    const unsigned long long ch = blockIdx.x;
 
     __shared__ Complex phr_cache[NBEAMS][NANTS][NPOLS];
 
-    int iy = (ch * NPOLS) + (bi * NPOLS * NCHANS * NANTS);
-    const int dy = NPOLS * NCHANS;
+    unsigned long long iy = (ch * NPOLS) + (bi * NPOLS * NCHANS * NANTS);
+    const unsigned long long dy = NPOLS * NCHANS;
 
     if (bi < NBEAMS) {
-        for (int a = 0; a < NANTS; a++, iy += dy) {
+        for (unsigned long long a = 0; a < NANTS; a++, iy += dy) {
             phr_cache[bi][a][0] = phasor[iy + 0];
             phr_cache[bi][a][1] = phasor[iy + 1];
         }
@@ -85,21 +92,21 @@ extern "C" __global__ void beamformer_ata(const InputComplex* input,
 
     Complex ant_cache[NANTS][NPOLS];
 
-    int ix = (ch * NTIME * NPOLS) + (ti * NPOLS);
-    const int dx = NTIME * NCHANS * NPOLS;
+    unsigned long long ix = (ch * NTIME * NPOLS) + (ti * NPOLS);
+    const unsigned long long dx = NTIME * NCHANS * NPOLS;
 
-    for (int a = 0; a < NANTS; a++, ix += dx) {
+    for (unsigned long long a = 0; a < NANTS; a++, ix += dx) {
         ant_cache[a][0] = convert(input[ix + 0]);
         ant_cache[a][1] = convert(input[ix + 1]);
     }
 
-    int iz = (ch * NTIME) + ti;
-    const int dz = NTIME * NCHANS;
+    unsigned long long iz = (ch * NTIME) + ti;
+    const unsigned long long dz = NTIME * NCHANS;
 
-    for (int b = 0; b < NBEAMS; b++, iz += dz) {
+    for (unsigned long long b = 0; b < NBEAMS; b++, iz += dz) {
         Complex acc[NPOLS] = {Complex(0.0f, 0.0f), Complex(0.0f, 0.0f)};
 
-        for (int a = 0; a < NANTS; a++) {
+        for (unsigned long long a = 0; a < NANTS; a++) {
             acc[0] = add(acc[0], multiply(ant_cache[a][0], phr_cache[b][a][0]));
             acc[1] = add(acc[1], multiply(ant_cache[a][1], phr_cache[b][a][1]));
         }
@@ -110,7 +117,7 @@ extern "C" __global__ void beamformer_ata(const InputComplex* input,
     if (ENABLE_INCOHERENT_BEAM) {
         Complex acc[NPOLS] = {Complex(0.0f, 0.0f), Complex(0.0f, 0.0f)};
 
-        for (int a = 0; a < NANTS; a++) {
+        for (unsigned long long a = 0; a < NANTS; a++) {
             acc[0] = add(acc[0], detect(multiply(ant_cache[a][0], phr_cache[0][a][0])));
             acc[1] = add(acc[1], detect(multiply(ant_cache[a][1], phr_cache[0][a][1])));
         }
@@ -131,6 +138,7 @@ struct BeamformerImplNativeCuda : public BeamformerImpl,
                                   public NativeCudaRuntimeContext,
                                   public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeInitialize() override;
     Result computeSubmit(const cudaStream_t& stream) override;
@@ -140,9 +148,25 @@ struct BeamformerImplNativeCuda : public BeamformerImpl,
     bool kernelCreated = false;
 };
 
-Result BeamformerImplNativeCuda::create() {
+Result BeamformerImplNativeCuda::validate() {
+    JST_CHECK(BeamformerImpl::validate());
+
+    const auto& config = *candidate();
+    if (config.blockSize == 0 || config.blockSize > 1024) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] The CUDA block size must be between 1 and 1024.");
+        return Result::ERROR;
+    }
+
+    if (!inputs().contains("buffer") || !inputs().contains("phasors")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
     const Tensor& phasors = inputs().at("phasors").tensor;
+    if (!input.validShape() || input.size() == 0 ||
+        !phasors.validShape() || phasors.size() == 0) {
+        return Result::SUCCESS;
+    }
 
     if (input.dtype() != DataType::CI8 && input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
@@ -156,6 +180,70 @@ Result BeamformerImplNativeCuda::create() {
         return Result::ERROR;
     }
 
+    if ((input.shape(kBufferTimeAxis) % config.blockSize) != 0) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Number of time samples ({}) isn't divisible by the block size ({}).",
+                  input.shape(kBufferTimeAxis),
+                  config.blockSize);
+        return Result::ERROR;
+    }
+
+    if (phasors.shape(kPhasorBeamAxis) > config.blockSize) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] The block size ({}) is smaller than the number of beams ({}).",
+                  config.blockSize,
+                  phasors.shape(kPhasorBeamAxis));
+        return Result::ERROR;
+    }
+
+    if (input.shape(kBufferFrequencyAxis) > kMaxGridSizeX ||
+        input.shape(kBufferTimeAxis) / config.blockSize > kMaxGridSizeY) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Input shape exceeds the CUDA grid limits.");
+        return Result::ERROR;
+    }
+
+    const U64 maxKernelIndex = std::numeric_limits<I32>::max();
+    U64 outputPairCount = 1;
+    for (Index axis = 0; axis < kBufferPolarizationAxis; ++axis) {
+        if (!detail::CheckedMultiply(outputPairCount,
+                                     validatedOutputShape[axis],
+                                     outputPairCount)) {
+            JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Output indexing exceeds CUDA limits.");
+            return Result::ERROR;
+        }
+    }
+    if (input.size() > maxKernelIndex || phasors.size() > maxKernelIndex ||
+        outputPairCount > maxKernelIndex) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Tensor indexing exceeds the kernel's 32-bit range.");
+        return Result::ERROR;
+    }
+
+    U64 sharedPhasorCount = 0;
+    U64 sharedPhasorSizeBytes = 0;
+    if (!detail::CheckedMultiply(phasors.shape(kPhasorBeamAxis),
+                                 input.shape(kBufferAspectAxis),
+                                 sharedPhasorCount) ||
+        !detail::CheckedMultiply(sharedPhasorCount,
+                                 kExpectedPolarizations,
+                                 sharedPhasorCount) ||
+        !detail::CheckedMultiply(sharedPhasorCount,
+                                 static_cast<U64>(sizeof(CF32)),
+                                 sharedPhasorSizeBytes) ||
+        sharedPhasorSizeBytes > kSharedMemoryBudget) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Phasor cache exceeds the CUDA shared-memory limit.");
+        return Result::ERROR;
+    }
+
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                        alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    return Result::SUCCESS;
+}
+
+Result BeamformerImplNativeCuda::create() {
     JST_CHECK(BeamformerImpl::create());
 
     return Result::SUCCESS;
@@ -212,13 +300,16 @@ Result BeamformerImplNativeCuda::computeInitialize() {
 }
 
 Result BeamformerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
-    JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
+    const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
+    const auto* phasorBase = static_cast<const std::uint8_t*>(phasorTensor.buffer().data());
+    auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    const void* inputData = inputBase + inputTensor.offsetBytes();
+    const void* phasorData = phasorBase + phasorTensor.offsetBytes();
+    void* outputData = outputBase + outputTensor.offsetBytes();
+
+    JST_CUDA_CHECK(cudaMemsetAsync(outputData, 0, outputTensor.sizeBytes(), stream), [&] {
         JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Failed to clear the beamformer output buffer: {}.", err);
     });
-
-    const void* inputData = inputTensor.data();
-    const void* phasorData = phasorTensor.data();
-    void* outputData = outputTensor.data();
 
     void* inputArgument = const_cast<void*>(inputData);
     void* phasorArgument = const_cast<void*>(phasorData);
@@ -236,10 +327,6 @@ Result BeamformerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     };
 
     JST_CHECK(scheduleKernel(kBeamformerKernelName, stream, grid, block, arguments));
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
 
     return Result::SUCCESS;
 }
