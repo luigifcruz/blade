@@ -51,6 +51,6 @@ Result CorrelatorImpl::create() {
     return Result::SUCCESS;
 }
 
-JST_REGISTER_BLOCK(CorrelatorImpl);
+JST_REGISTER_BLOCK(CorrelatorImpl, {"correlator"});
 
 }  // namespace Jetstream::Blocks

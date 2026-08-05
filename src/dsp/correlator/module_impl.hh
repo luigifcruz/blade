@@ -3,6 +3,7 @@
 
 #include <blade/correlator/module.hh>
 #include <jetstream/detail/module_impl.hh>
+#include <jetstream/memory/axis.hh>
 
 namespace Jetstream::Modules {
 
@@ -24,6 +25,12 @@ struct CorrelatorImpl : public Module::Impl, public DynamicConfig<Correlator> {
  protected:
     Tensor inputTensor;
     Tensor outputTensor;
+
+    U64 validatedBaselineCount = 0;
+    U64 validatedOutputSizeBytes = 0;
+    Shape validatedOutputShape;
+    SignalAxes validatedSignalAxes;
+
     U64 baselineCount = 0;
     U64 integrationStep = 0;
 };

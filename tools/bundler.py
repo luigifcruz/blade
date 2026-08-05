@@ -12,6 +12,7 @@ def normalize_system(value):
     value = value.lower()
     aliases = {
         "darwin": "macos",
+        "emscripten": "browser",
         "mac": "macos",
         "osx": "macos",
         "win32": "windows",
@@ -32,6 +33,19 @@ def normalize_arch(value):
 
 def yaml_quote(value):
     return "'" + value.replace("'", "''") + "'"
+
+
+def parse_version(value):
+    parts = value.split(".")
+    if (
+        len(parts) != 3
+        or any(not part.isascii() or not part.isdigit() for part in parts)
+        or any(int(part) > 255 for part in parts)
+    ):
+        raise argparse.ArgumentTypeError(
+            "version must use x.y.z with each component between 0 and 255"
+        )
+    return value
 
 
 def parse_target(value):
@@ -119,13 +133,16 @@ def main():
     parser = argparse.ArgumentParser(description="Create a CyberEther .cep plugin bundle.")
     parser.add_argument("--output", required=True, help="Output .cep path.")
     parser.add_argument("--name", required=True, help="Plugin name.")
-    parser.add_argument("--version", required=True, help="Plugin version.")
+    parser.add_argument(
+        "--version", required=True, type=parse_version, help="Plugin version as x.y.z."
+    )
     parser.add_argument(
         "--minimum-jetstream-version",
         "--min-jetstream-version",
         dest="minimum_jetstream_version",
         required=True,
-        help="Minimum CyberEther/Jetstream version, for example 1.5.0.",
+        type=parse_version,
+        help="Minimum CyberEther/Jetstream version, for example 1.8.0.",
     )
     parser.add_argument(
         "--target",
@@ -148,7 +165,27 @@ def main():
 
     targets = []
     archive_paths = set()
+    target_variants = set()
+    source_devices = {}
     for target in args.target:
+        variant = (target["system"], target["device"], target["arch"])
+        if variant in target_variants:
+            raise SystemExit("duplicate target variant: " + "-".join(variant))
+        target_variants.add(variant)
+
+        source_platform = (
+            target["source"].resolve(),
+            target["system"],
+            target["arch"],
+        )
+        known_device = source_devices.get(source_platform)
+        if known_device is not None and known_device != target["device"]:
+            raise SystemExit(
+                f"target source {target['source']} cannot be used for multiple "
+                f"devices on {target['system']}-{target['arch']}"
+            )
+        source_devices[source_platform] = target["device"]
+
         archive_path = PurePosixPath(
             "targets",
             f"{target['system']}-{target['arch']}-{target['device']}",

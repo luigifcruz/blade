@@ -1,6 +1,10 @@
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 
 #include <jetstream/backend/devices/cuda/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cuda.hh>
@@ -13,6 +17,8 @@ namespace Jetstream::Modules {
 
 namespace {
 
+constexpr U64 kMaxGridSizeX = std::numeric_limits<I32>::max();
+constexpr U64 kMaxGridSizeYZ = 65535;
 constexpr const char* kCorrelatorKernelName = "correlator";
 
 // Both kernels share the same decomposition. A thread block owns one channel and
@@ -405,6 +411,7 @@ struct CorrelatorImplNativeCuda : public CorrelatorImpl,
                                   public NativeCudaRuntimeContext,
                                   public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result destroy() override;
     Result computeInitialize() override;
@@ -412,8 +419,6 @@ struct CorrelatorImplNativeCuda : public CorrelatorImpl,
     Result computeDeinitialize() override;
 
  private:
-    Result derivePlan();
-
     bool kernelCreated = false;
     bool accumulateKernelCreated = false;
     bool accumulatorCleared = false;
@@ -424,10 +429,29 @@ struct CorrelatorImplNativeCuda : public CorrelatorImpl,
     std::string inputScalarType;
     std::string calculationScalarType;
     U64 elementCount = 0;
+
+    CorrelatorLaunchPlan validatedPlan;
+    std::string validatedInputScalarType;
+    std::string validatedCalculationScalarType;
+    U64 validatedElementCount = 0;
 };
 
-Result CorrelatorImplNativeCuda::create() {
+Result CorrelatorImplNativeCuda::validate() {
+    validatedPlan = {};
+    validatedInputScalarType.clear();
+    validatedCalculationScalarType.clear();
+    validatedElementCount = 0;
+
+    JST_CHECK(CorrelatorImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
 
     if (input.dtype() != DataType::CI8 && input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
@@ -435,10 +459,127 @@ Result CorrelatorImplNativeCuda::create() {
         return Result::ERROR;
     }
 
-    JST_CHECK(CorrelatorImpl::create());
-    JST_CHECK(derivePlan());
+    const auto& config = *candidate();
+    if (input.dtype() == DataType::CF32 && config.calculationMode == "integer") {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Integer calculation mode is not supported for CF32 input. "
+                  "Use single_precision_fp or double_precision_fp.");
+        return Result::ERROR;
+    }
 
-    elementCount = baselineCount * inputTensor.shape(kFrequencyAxis) * kOutputPolarizations * 2;
+    const std::string candidateInputScalarType = [&]() -> std::string {
+        switch (input.dtype()) {
+            case DataType::CI8: return "signed char";
+            case DataType::CF32: return "float";
+            default: return "";
+        }
+    }();
+
+    if (candidateInputScalarType.empty()) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
+                  input.dtype());
+        return Result::ERROR;
+    }
+
+    const std::string candidateCalculationScalarType = [&]() -> std::string {
+        if (config.calculationMode == "integer") {
+            return "int";
+        }
+
+        if (config.calculationMode == "single_precision_fp") {
+            return "float";
+        }
+
+        if (config.calculationMode == "double_precision_fp") {
+            return "double";
+        }
+
+        return "";
+    }();
+
+    if (candidateCalculationScalarType.empty()) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Unsupported calculation mode '{}'.",
+                  config.calculationMode);
+        return Result::ERROR;
+    }
+
+    CorrelatorLaunchPlan candidatePlan;
+    std::string error;
+    if (!DeriveCorrelatorLaunchPlan(input.shape(kAspectAxis),
+                                    input.shape(kFrequencyAxis),
+                                    input.shape(kTimeAxis),
+                                    input.dtype() == DataType::CI8,
+                                    config.calculationMode == "integer",
+                                    (config.calculationMode == "double_precision_fp") ? 8 : 4,
+                                    candidatePlan,
+                                    error)) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Cannot correlate shape {}: {}.",
+                  input.shape(), error);
+        return Result::ERROR;
+    }
+
+    const U64 requiredInputAlignment = candidatePlan.packed
+        ? U64{16}
+        : (input.dtype() == DataType::CI8 ? U64{4} : U64{16});
+    if ((input.offsetBytes() % requiredInputAlignment) != 0) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Input byte offset {} must be aligned to {} bytes for the selected kernel path.",
+                  input.offsetBytes(),
+                  requiredInputAlignment);
+        return Result::ERROR;
+    }
+
+    if (input.shape(kFrequencyAxis) > kMaxGridSizeX ||
+        candidatePlan.chunkCount > kMaxGridSizeYZ ||
+        candidatePlan.tileBatchCount > kMaxGridSizeYZ) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Correlator launch exceeds the CUDA grid limits.");
+        return Result::ERROR;
+    }
+
+    U64 candidateElementCount = 0;
+    if (!detail::CheckedMultiply(validatedBaselineCount,
+                                 input.shape(kFrequencyAxis),
+                                 candidateElementCount) ||
+        !detail::CheckedMultiply(candidateElementCount,
+                                 kOutputPolarizations,
+                                 candidateElementCount) ||
+        !detail::CheckedMultiply(candidateElementCount,
+                                 U64{2},
+                                 candidateElementCount)) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Accumulator geometry exceeds the supported range.");
+        return Result::ERROR;
+    }
+
+    constexpr U64 kAccumulateThreads = 256;
+    const U64 accumulateBlockCount =
+        (candidateElementCount / kAccumulateThreads) +
+        (candidateElementCount % kAccumulateThreads != 0);
+    if (candidatePlan.packed && accumulateBlockCount > kMaxGridSizeX) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Accumulator launch exceeds the CUDA grid limit.");
+        return Result::ERROR;
+    }
+
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                        alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    validatedPlan = candidatePlan;
+    validatedInputScalarType = candidateInputScalarType;
+    validatedCalculationScalarType = candidateCalculationScalarType;
+    validatedElementCount = candidateElementCount;
+
+    return Result::SUCCESS;
+}
+
+Result CorrelatorImplNativeCuda::create() {
+    JST_CHECK(CorrelatorImpl::create());
+
+    plan = validatedPlan;
+    inputScalarType = validatedInputScalarType;
+    calculationScalarType = validatedCalculationScalarType;
+    elementCount = validatedElementCount;
 
     if (plan.packed) {
         JST_CHECK(accumulatorTensor.create(inputTensor.device(), DataType::CI32, outputTensor.shape()));
@@ -451,71 +592,12 @@ Result CorrelatorImplNativeCuda::create() {
 Result CorrelatorImplNativeCuda::destroy() {
     accumulatorTensor = {};
     plan = {};
+    inputScalarType.clear();
+    calculationScalarType.clear();
     elementCount = 0;
     accumulatorCleared = false;
 
     return CorrelatorImpl::destroy();
-}
-
-Result CorrelatorImplNativeCuda::derivePlan() {
-    inputScalarType = [&]() -> std::string {
-        switch (inputTensor.dtype()) {
-            case DataType::CI8: return "signed char";
-            case DataType::CF32: return "float";
-            default: return "";
-        }
-    }();
-
-    if (inputScalarType.empty()) {
-        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Unsupported input data type '{}'. Expected CI8 or CF32.",
-                  inputTensor.dtype());
-        return Result::ERROR;
-    }
-
-    if (inputTensor.dtype() == DataType::CF32 && calculationMode == "integer") {
-        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Integer calculation mode is not supported for CF32 input. "
-                  "Use single_precision_fp or double_precision_fp.");
-        return Result::ERROR;
-    }
-
-    calculationScalarType = [&]() -> std::string {
-        if (calculationMode == "integer") {
-            return "int";
-        }
-
-        if (calculationMode == "single_precision_fp") {
-            return "float";
-        }
-
-        if (calculationMode == "double_precision_fp") {
-            return "double";
-        }
-
-        return "";
-    }();
-
-    if (calculationScalarType.empty()) {
-        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Unsupported calculation mode '{}'.",
-                  calculationMode);
-        return Result::ERROR;
-    }
-
-    std::string error;
-
-    if (!DeriveCorrelatorLaunchPlan(inputTensor.shape(kAspectAxis),
-                                    inputTensor.shape(kFrequencyAxis),
-                                    inputTensor.shape(kTimeAxis),
-                                    inputTensor.dtype() == DataType::CI8,
-                                    calculationMode == "integer",
-                                    (calculationMode == "double_precision_fp") ? 8 : 4,
-                                    plan,
-                                    error)) {
-        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Cannot correlate shape {}: {}.",
-                  inputTensor.shape(), error);
-        return Result::ERROR;
-    }
-
-    return Result::SUCCESS;
 }
 
 Result CorrelatorImplNativeCuda::computeInitialize() {
@@ -555,25 +637,33 @@ Result CorrelatorImplNativeCuda::computeInitialize() {
 }
 
 Result CorrelatorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
+    const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
+    auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    auto* accumulatorBase = plan.packed
+        ? static_cast<std::uint8_t*>(accumulatorTensor.buffer().data())
+        : nullptr;
+    void* inputData = const_cast<std::uint8_t*>(inputBase + inputTensor.offsetBytes());
+    void* outputData = outputBase + outputTensor.offsetBytes();
+    void* accumulatorData = plan.packed
+        ? accumulatorBase + accumulatorTensor.offsetBytes()
+        : nullptr;
+
     if (plan.packed && !accumulatorCleared) {
-        JST_CUDA_CHECK(cudaMemsetAsync(accumulatorTensor.data(), 0, accumulatorTensor.sizeBytes(), stream), [&] {
+        JST_CUDA_CHECK(cudaMemsetAsync(accumulatorData, 0, accumulatorTensor.sizeBytes(), stream), [&] {
             JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Failed to clear the accumulator buffer: {}.", err);
         });
         accumulatorCleared = true;
     }
 
     if (integrationStep == 0) {
-        JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
+        JST_CUDA_CHECK(cudaMemsetAsync(outputData, 0, outputTensor.sizeBytes(), stream), [&] {
             JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Failed to clear the correlator output buffer: {}.", err);
         });
     }
 
-    void* outputData = outputTensor.data();
-    void* inputArgument = const_cast<void*>(inputTensor.data());
-
-    void* correlatorTarget = plan.packed ? accumulatorTensor.data() : outputData;
+    void* correlatorTarget = plan.packed ? accumulatorData : outputData;
     void* arguments[] = {
-        &inputArgument,
+        &inputData,
         &correlatorTarget,
     };
 
@@ -590,7 +680,12 @@ Result CorrelatorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
 
         constexpr U64 kAccumulateThreads = 256;
         const Extent3D<U64> accumulateBlock = {kAccumulateThreads, 1, 1};
-        const Extent3D<U64> accumulateGrid = {(elementCount + kAccumulateThreads - 1) / kAccumulateThreads, 1, 1};
+        const Extent3D<U64> accumulateGrid = {
+            (elementCount / kAccumulateThreads) +
+                (elementCount % kAccumulateThreads != 0),
+            1,
+            1,
+        };
 
         JST_CHECK(scheduleKernel(kAccumulateKernelName, stream, accumulateGrid, accumulateBlock,
                                  accumulateArguments));
@@ -599,10 +694,6 @@ Result CorrelatorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     integrationStep = (integrationStep + 1) % integrationRate;
     if (integrationStep != 0) {
         return Result::SKIP;
-    }
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
     }
 
     return Result::SUCCESS;

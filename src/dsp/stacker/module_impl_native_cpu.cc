@@ -1,5 +1,7 @@
 #include <cstring>
+#include <limits>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -13,17 +15,23 @@ struct StackerImplNativeCpu : public StackerImpl,
                               public NativeCpuRuntimeContext,
                               public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeSubmit() override;
-
- private:
-    U64 widthByteSize = 0;
-    U64 height = 0;
-    U64 stackIndex = 0;
 };
 
-Result StackerImplNativeCpu::create() {
+Result StackerImplNativeCpu::validate() {
+    JST_CHECK(StackerImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
     if (input.dtype() != DataType::F32 &&
         input.dtype() != DataType::CF32 &&
         input.dtype() != DataType::CI8) {
@@ -32,25 +40,21 @@ Result StackerImplNativeCpu::create() {
         return Result::ERROR;
     }
 
-    JST_CHECK(StackerImpl::create());
-
-    stackIndex = 0;
-    if (bypass) {
-        return Result::SUCCESS;
-    }
-
-    U64 width = 1;
-    for (U64 i = axis; i < inputTensor.rank(); ++i) {
-        width *= inputTensor.shape(i);
-    }
-    widthByteSize = width * inputTensor.elementSize();
-
-    height = 1;
-    for (U64 i = 0; i < axis; ++i) {
-        height *= inputTensor.shape(i);
+    if (!validatedBypass) {
+        U64 alignedOutputSize = 0;
+        if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                             alignedOutputSize) ||
+            alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+            JST_ERROR("[MODULE_STACKER_NATIVE_CPU] Output allocation size is too large.");
+            return Result::ERROR;
+        }
     }
 
     return Result::SUCCESS;
+}
+
+Result StackerImplNativeCpu::create() {
+    return StackerImpl::create();
 }
 
 Result StackerImplNativeCpu::computeSubmit() {
@@ -68,16 +72,13 @@ Result StackerImplNativeCpu::computeSubmit() {
     if (widthByteSize != 0) {
         for (U64 row = 0; row < height; ++row) {
             const U64 inputOffset = row * widthByteSize;
-            const U64 outputOffset = ((row * ratio) + stackIndex) * widthByteSize;
+            const U64 outputOffset = (row * outputRowByteSize) +
+                                     (stackIndex * widthByteSize);
             std::memcpy(output + outputOffset, input + inputOffset, widthByteSize);
         }
     }
 
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
-
-    stackIndex = (stackIndex + 1) % ratio;
+    stackIndex = (stackIndex + 1) % stackRatio;
     return stackIndex == 0 ? Result::SUCCESS : Result::SKIP;
 }
 

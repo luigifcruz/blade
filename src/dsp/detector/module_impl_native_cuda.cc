@@ -1,14 +1,21 @@
 #include <jetstream/backend/devices/cuda/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cuda.hh>
 #include <jetstream/scheduler_context.hh>
+
+#include <cstdint>
+#include <limits>
 
 #include "module_impl.hh"
 
 namespace Jetstream::Modules {
 
 namespace {
+
+constexpr U64 kMaxThreadsPerBlock = 1024;
+constexpr U64 kMaxGridSizeX = std::numeric_limits<I32>::max();
 
 constexpr const char* kDetector4PolKernelSource = R"(
 extern "C" __global__ void detector_4pol(const float* input,
@@ -73,6 +80,7 @@ struct DetectorImplNativeCuda : public DetectorImpl,
                                 public NativeCudaRuntimeContext,
                                 public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeInitialize() override;
     Result computeSubmit(const cudaStream_t& stream) override;
@@ -81,18 +89,59 @@ struct DetectorImplNativeCuda : public DetectorImpl,
  private:
     std::string kernelName;
     bool kernelCreated = false;
+    U64 validatedGridSize = 0;
+    U64 gridSize = 0;
 };
 
-Result DetectorImplNativeCuda::create() {
-    const Tensor& input = inputs().at("buffer").tensor;
+Result DetectorImplNativeCuda::validate() {
+    validatedGridSize = 0;
 
-    if (input.dtype() != DataType::CF32) {
-        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
-                  input.dtype());
+    JST_CHECK(DetectorImpl::validate());
+
+    const auto& config = *candidate();
+    if (config.blockSize == 0 || config.blockSize > kMaxThreadsPerBlock) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] The CUDA block size must be between 1 and {}.",
+                  kMaxThreadsPerBlock);
         return Result::ERROR;
     }
 
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
+    const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
+    if (input.dtype() != DataType::CF32) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.",
+                   input.dtype());
+        return Result::ERROR;
+    }
+
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes, alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    const U64 blockCount =
+        validatedInputSampleCount / config.blockSize +
+        (validatedInputSampleCount % config.blockSize != 0);
+    if (blockCount > kMaxGridSizeX) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Input size exceeds the CUDA grid limit.");
+        return Result::ERROR;
+    }
+
+    validatedGridSize = blockCount;
+    return Result::SUCCESS;
+}
+
+Result DetectorImplNativeCuda::create() {
     JST_CHECK(DetectorImpl::create());
+    gridSize = validatedGridSize;
 
     return Result::SUCCESS;
 }
@@ -101,13 +150,9 @@ Result DetectorImplNativeCuda::computeInitialize() {
     if (numberOfOutputPolarizations == 4) {
         kernelName = kDetector4PolKernelName;
         JST_CHECK(createKernel(kDetector4PolKernelName, kDetector4PolKernelSource));
-    } else if (numberOfOutputPolarizations == 1) {
+    } else {
         kernelName = kDetector1PolKernelName;
         JST_CHECK(createKernel(kDetector1PolKernelName, kDetector1PolKernelSource));
-    } else {
-        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Unsupported number of output polarizations {}.",
-                  numberOfOutputPolarizations);
-        return Result::ERROR;
     }
 
     kernelCreated = true;
@@ -116,12 +161,19 @@ Result DetectorImplNativeCuda::computeInitialize() {
 }
 
 Result DetectorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
-    JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
+    const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
+    auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    if (!inputBase || !outputBase) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Missing input or output device buffer.");
+        return Result::ERROR;
+    }
+
+    const void* inputData = inputBase + inputTensor.offsetBytes();
+    void* outputData = outputBase + outputTensor.offsetBytes();
+
+    JST_CUDA_CHECK(cudaMemsetAsync(outputData, 0, outputTensor.sizeBytes(), stream), [&] {
         JST_ERROR("[MODULE_DETECTOR_NATIVE_CUDA] Failed to clear the detector output buffer: {}.", err);
     });
-
-    const void* inputData = inputTensor.data();
-    void* outputData = outputTensor.data();
 
     void* inputArgument = const_cast<void*>(inputData);
     void* arguments[] = {
@@ -132,13 +184,9 @@ Result DetectorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     };
 
     const Extent3D<U64> block = {blockSize, 1, 1};
-    const Extent3D<U64> grid = {(inputSampleCount + blockSize - 1) / blockSize, 1, 1};
+    const Extent3D<U64> grid = {gridSize, 1, 1};
 
     JST_CHECK(scheduleKernel(kernelName, stream, grid, block, arguments));
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
 
     return Result::SUCCESS;
 }

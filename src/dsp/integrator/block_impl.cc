@@ -56,6 +56,6 @@ Result IntegratorImpl::create() {
     return Result::SUCCESS;
 }
 
-JST_REGISTER_BLOCK(IntegratorImpl);
+JST_REGISTER_BLOCK(IntegratorImpl, {"integrator"});
 
 }  // namespace Jetstream::Blocks

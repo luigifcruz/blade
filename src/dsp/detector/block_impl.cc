@@ -51,6 +51,6 @@ Result DetectorImpl::create() {
     return Result::SUCCESS;
 }
 
-JST_REGISTER_BLOCK(DetectorImpl);
+JST_REGISTER_BLOCK(DetectorImpl, {"detector"});
 
 }  // namespace Jetstream::Blocks

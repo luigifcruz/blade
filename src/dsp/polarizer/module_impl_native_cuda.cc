@@ -1,10 +1,14 @@
 #include <jetstream/backend/devices/cuda/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cuda.hh>
 #include <jetstream/scheduler_context.hh>
 
 #include "module_impl.hh"
+
+#include <cstdint>
+#include <limits>
 
 namespace Jetstream::Modules {
 
@@ -32,24 +36,22 @@ __device__ Complex sub(const Complex& lhs, const Complex& rhs) {
 
 extern "C" __global__ void polarizer_xy_lr(const Complex* input,
                                            Complex* output,
-                                           U64 inputSize,
-                                           U64 outputSize) {
-    const U64 tid = (static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x) * 2;
+                                           U64 workItemCount) {
+    const U64 index = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
-    assert(inputSize == outputSize);
-
-    if (tid < inputSize) {
+    if (index < workItemCount) {
+        const U64 offset = index * 2;
         // The complex multiplication below can be simplified because
         // the real part of the phasor is 0.0. Boring implementation:
         // const IT yPol90 = cuCmulf(yPol, make_cuFloatComplex(0.0, 1.0));
 
-        const Complex xPol = input[tid + 0];
-        const Complex yPol = input[tid + 1];
+        const Complex xPol = input[offset + 0];
+        const Complex yPol = input[offset + 1];
 
         const Complex yPol90(-yPol.imag, +yPol.real);
 
-        output[tid + 0] = add(xPol, yPol90);
-        output[tid + 1] = sub(xPol, yPol90);
+        output[offset + 0] = add(xPol, yPol90);
+        output[offset + 1] = sub(xPol, yPol90);
     }
 }
 )";
@@ -64,11 +66,10 @@ struct alignas(2 * sizeof(Scalar)) Complex {
 
 extern "C" __global__ void polarizer_xy_x(const Complex* input,
                                           Complex* output,
-                                          U64 inputSize,
-                                          U64 outputSize) {
+                                          U64 workItemCount) {
     const U64 tid = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
-    if (tid < outputSize) {
+    if (tid < workItemCount) {
         output[tid] = input[(tid * 2) + 0];
     }
 }
@@ -84,11 +85,10 @@ struct alignas(2 * sizeof(Scalar)) Complex {
 
 extern "C" __global__ void polarizer_xy_y(const Complex* input,
                                           Complex* output,
-                                          U64 inputSize,
-                                          U64 outputSize) {
+                                          U64 workItemCount) {
     const U64 tid = static_cast<U64>(blockIdx.x) * blockDim.x + threadIdx.x;
 
-    if (tid < outputSize) {
+    if (tid < workItemCount) {
         output[tid] = input[(tid * 2) + 1];
     }
 }
@@ -104,6 +104,7 @@ struct PolarizerImplNativeCuda : public PolarizerImpl,
                                  public NativeCudaRuntimeContext,
                                  public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeInitialize() override;
     Result computeSubmit(const cudaStream_t& stream) override;
@@ -112,20 +113,62 @@ struct PolarizerImplNativeCuda : public PolarizerImpl,
  private:
     std::string kernelName;
     bool kernelCreated = false;
-    U64 inputSize, outputSize;
+    U64 validatedBlockSize = 0;
+    U64 launchBlockSize = 0;
 };
 
-Result PolarizerImplNativeCuda::create() {
-    const Tensor& input = inputs().at("buffer").tensor;
+Result PolarizerImplNativeCuda::validate() {
+    validatedBlockSize = 0;
+    JST_CHECK(PolarizerImpl::validate());
 
+    const U64 candidateBlockSize = candidate()->blockSize;
+    if (validatedPath != PolarizerPath::BYPASS &&
+        (candidateBlockSize == 0 || candidateBlockSize > 1024)) {
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] The CUDA block size must be between 1 and 1024.");
+        return Result::ERROR;
+    }
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
+    const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
     if (input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.", input.dtype());
         return Result::ERROR;
     }
 
+    if (validatedPath == PolarizerPath::BYPASS) {
+        return Result::SUCCESS;
+    }
+
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                         alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    constexpr U64 kMaxGridSizeX = std::numeric_limits<I32>::max();
+    const U64 blockCount = validatedOutputWorkItemCount / candidateBlockSize +
+                           (validatedOutputWorkItemCount % candidateBlockSize != 0);
+    if (blockCount > kMaxGridSizeX) {
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Output size exceeds the CUDA grid limit.");
+        return Result::ERROR;
+    }
+
+    validatedBlockSize = candidateBlockSize;
+
+    return Result::SUCCESS;
+}
+
+Result PolarizerImplNativeCuda::create() {
     JST_CHECK(PolarizerImpl::create());
-    inputSize = input.size();
-    outputSize = outputs().at("buffer").tensor.size();
+    launchBlockSize = validatedBlockSize;
 
     return Result::SUCCESS;
 }
@@ -135,36 +178,28 @@ Result PolarizerImplNativeCuda::computeInitialize() {
         return Result::SUCCESS;
     }
 
-    const std::string scalarType = [&]() -> std::string {
-        switch (inputTensor.dtype()) {
-            case DataType::CF32: return "float";
-            default: return "";
-        }
-    }();
-    if (scalarType.empty()) {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported input data type '{}'. Expected CF32.", inputTensor.dtype());
-        return Result::ERROR;
-    }
-
     const std::unordered_map<std::string, std::string> pieces = {
         {"type_aliases",
-        jst::fmt::format("using U64 = unsigned long long;\n"
-                         "using Scalar = {};",
-                         scalarType)},
+         jst::fmt::format("using U64 = unsigned long long;\n"
+                          "using Scalar = {};",
+                          "float")},
     };
 
-    if (outputPolarization == "lr") {
-        kernelName = kPolarizerXYtoLRKernelName;
-        JST_CHECK(createKernel(kPolarizerXYtoLRKernelName, kPolarizerXYtoLRKernelSource, pieces));
-    } else if (outputPolarization == "x") {
-        kernelName = kPolarizerXYtoXKernelName;
-        JST_CHECK(createKernel(kPolarizerXYtoXKernelName, kPolarizerXYtoXKernelSource, pieces));
-    } else if (outputPolarization == "y") {
-        kernelName = kPolarizerXYtoYKernelName;
-        JST_CHECK(createKernel(kPolarizerXYtoYKernelName, kPolarizerXYtoYKernelSource, pieces));
-    } else {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Unsupported output polarization {}.", outputPolarization);
-        return Result::ERROR;
+    switch (path) {
+        case PolarizerPath::BYPASS:
+            break;
+        case PolarizerPath::XY_TO_LR:
+            kernelName = kPolarizerXYtoLRKernelName;
+            JST_CHECK(createKernel(kernelName, kPolarizerXYtoLRKernelSource, pieces));
+            break;
+        case PolarizerPath::XY_TO_X:
+            kernelName = kPolarizerXYtoXKernelName;
+            JST_CHECK(createKernel(kernelName, kPolarizerXYtoXKernelSource, pieces));
+            break;
+        case PolarizerPath::XY_TO_Y:
+            kernelName = kPolarizerXYtoYKernelName;
+            JST_CHECK(createKernel(kernelName, kPolarizerXYtoYKernelSource, pieces));
+            break;
     }
 
     kernelCreated = true;
@@ -177,29 +212,36 @@ Result PolarizerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
         return Result::SUCCESS;
     }
 
-    JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
+    const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
+    auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    if (!inputBase || !outputBase) {
+        JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Missing input or output device buffer.");
+        return Result::ERROR;
+    }
+
+    const void* inputData = inputBase + inputTensor.offsetBytes();
+    void* outputData = outputBase + outputTensor.offsetBytes();
+
+    JST_CUDA_CHECK(cudaMemsetAsync(outputData, 0, outputTensor.sizeBytes(), stream), [&] {
         JST_ERROR("[MODULE_POLARIZER_NATIVE_CUDA] Failed to clear the output buffer: {}.", err);
     });
-
-    const void* inputData = inputTensor.data();
-    void* outputData = outputTensor.data();
 
     void* inputArgument = const_cast<void*>(inputData);
     void* arguments[] = {
         &inputArgument,
         &outputData,
-        (void*)&inputSize,
-        (void*)&outputSize
+        &outputWorkItemCount,
     };
 
-    const Extent3D<U64> block = {blockSize, 1, 1};
-    const Extent3D<U64> grid = {(inputTensor.size() + blockSize - 1) / blockSize, 1, 1};
+    const Extent3D<U64> block = {launchBlockSize, 1, 1};
+    const Extent3D<U64> grid = {
+        outputWorkItemCount / launchBlockSize +
+            (outputWorkItemCount % launchBlockSize != 0),
+        1,
+        1,
+    };
 
     JST_CHECK(scheduleKernel(kernelName, stream, grid, block, arguments));
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
 
     return Result::SUCCESS;
 }

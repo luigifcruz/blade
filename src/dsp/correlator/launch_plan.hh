@@ -6,6 +6,7 @@
 #include <string>
 
 #include <jetstream/fmt/format.h>
+#include <jetstream/tools/numeric.hh>
 
 namespace Jetstream::Modules {
 
@@ -33,6 +34,9 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
                                        const uint64_t calculationScalarSize,
                                        CorrelatorLaunchPlan& plan,
                                        std::string& error) {
+    plan = {};
+    error.clear();
+
     if (antennas == 0 || channels == 0 || samples == 0) {
         error = "the input dimensions must all be positive";
         return false;
@@ -40,19 +44,46 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
 
     plan.packed = integerInput && (samples % 4) == 0 && samples <= kMaxIntegerSamples;
 
-    const uint64_t antennasEven = antennas + (antennas % 2);
-    plan.antennaStride = antennasEven + 2;
+    uint64_t antennasEven = 0;
+    if (!detail::CheckedAdd(antennas, antennas % 2, antennasEven) ||
+        !detail::CheckedAdd(antennasEven, uint64_t{2}, plan.antennaStride)) {
+        error = "the antenna geometry exceeds the supported range";
+        return false;
+    }
     if ((plan.antennaStride % 4) != 2) {
-        plan.antennaStride += 2;
+        if (!detail::CheckedAdd(plan.antennaStride,
+                                uint64_t{2},
+                                plan.antennaStride)) {
+            error = "the antenna stride exceeds the supported range";
+            return false;
+        }
     }
 
     plan.tileGrid = antennasEven / 2;
-    plan.tileCount = (plan.tileGrid * (plan.tileGrid + 1)) / 2;
+    uint64_t tileGridPlusOne = 0;
+    uint64_t tileProduct = 0;
+    if (!detail::CheckedAdd(plan.tileGrid,
+                            uint64_t{1},
+                            tileGridPlusOne) ||
+        !detail::CheckedMultiply(plan.tileGrid,
+                                 tileGridPlusOne,
+                                 tileProduct)) {
+        error = "the baseline tile count exceeds the supported range";
+        return false;
+    }
+    plan.tileCount = tileProduct / 2;
 
-    plan.threadCount = std::clamp(((plan.tileCount + 31) / 32) * 32,
-                                  static_cast<uint64_t>(64),
-                                  static_cast<uint64_t>(256));
-    plan.tileBatchCount = (plan.tileCount + plan.threadCount - 1) / plan.threadCount;
+    if (plan.tileCount >= 256) {
+        plan.threadCount = 256;
+    } else {
+        const uint64_t warpCount = (plan.tileCount / 32) +
+                                   (plan.tileCount % 32 != 0);
+        plan.threadCount = std::clamp(warpCount * 32,
+                                      uint64_t{64},
+                                      uint64_t{256});
+    }
+    plan.tileBatchCount = (plan.tileCount / plan.threadCount) +
+                          (plan.tileCount % plan.threadCount != 0);
 
     constexpr uint64_t kTargetBlocks = 1024;
     constexpr uint64_t kMinChunkSamples = 128;
@@ -61,11 +92,21 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
     const auto pickChunks = [&](const bool split) {
         plan.chunkCount = 1;
         if (split) {
-            while (plan.chunkCount < kMaxChunkCount &&
-                   (samples % (2 * plan.chunkCount)) == 0 &&
-                   (samples / (2 * plan.chunkCount)) >= kMinChunkSamples &&
-                   (channels * plan.chunkCount) < kTargetBlocks) {
-                plan.chunkCount *= 2;
+            while (plan.chunkCount < kMaxChunkCount) {
+                uint64_t nextChunkCount = 0;
+                uint64_t activeBlockCount = 0;
+                if (!detail::CheckedMultiply(plan.chunkCount,
+                                             uint64_t{2},
+                                             nextChunkCount) ||
+                    !detail::CheckedMultiply(channels,
+                                             plan.chunkCount,
+                                             activeBlockCount) ||
+                    (samples % nextChunkCount) != 0 ||
+                    (samples / nextChunkCount) < kMinChunkSamples ||
+                    activeBlockCount >= kTargetBlocks) {
+                    break;
+                }
+                plan.chunkCount = nextChunkCount;
             }
         }
         plan.chunkSamples = samples / plan.chunkCount;
@@ -73,8 +114,12 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
 
     const auto chooseStage = [&](const uint64_t bytesPerSample, const uint64_t multiple) -> uint64_t {
         for (uint64_t stage = 128; stage >= 1; stage /= 2) {
+            uint64_t sharedMemorySize = 0;
             if ((stage % multiple) == 0 &&
-                (stage * bytesPerSample) <= kSharedMemoryBudget &&
+                detail::CheckedMultiply(stage,
+                                        bytesPerSample,
+                                        sharedMemorySize) &&
+                sharedMemorySize <= kSharedMemoryBudget &&
                 (plan.chunkSamples % stage) == 0) {
                 return stage;
             }
@@ -85,7 +130,12 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
     plan.stageSamples = 0;
     if (plan.packed) {
         pickChunks(true);
-        plan.stageSamples = chooseStage(plan.antennaStride * 4, 4);
+        uint64_t bytesPerSample = 0;
+        if (detail::CheckedMultiply(plan.antennaStride,
+                                    uint64_t{4},
+                                    bytesPerSample)) {
+            plan.stageSamples = chooseStage(bytesPerSample, 4);
+        }
         if (plan.stageSamples == 0) {
             plan.packed = false;
         }
@@ -93,7 +143,15 @@ inline bool DeriveCorrelatorLaunchPlan(const uint64_t antennas,
 
     if (!plan.packed) {
         pickChunks(false);
-        plan.stageSamples = chooseStage(4 * plan.antennaStride * calculationScalarSize, 1);
+        uint64_t bytesPerSample = 0;
+        if (detail::CheckedMultiply(plan.antennaStride,
+                                    uint64_t{4},
+                                    bytesPerSample) &&
+            detail::CheckedMultiply(bytesPerSample,
+                                    calculationScalarSize,
+                                    bytesPerSample)) {
+            plan.stageSamples = chooseStage(bytesPerSample, 1);
+        }
     }
 
     if (plan.stageSamples == 0) {

@@ -1,9 +1,12 @@
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
+#include <limits>
 #include <type_traits>
 #include <vector>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -41,6 +44,7 @@ struct BeamformerImplNativeCpu : public BeamformerImpl,
                                  public NativeCpuRuntimeContext,
                                  public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result destroy() override;
     Result computeSubmit() override;
@@ -53,9 +57,19 @@ struct BeamformerImplNativeCpu : public BeamformerImpl,
     std::vector<std::array<CF32, kExpectedPolarizations>> antennaCache;
 };
 
-Result BeamformerImplNativeCpu::create() {
+Result BeamformerImplNativeCpu::validate() {
+    JST_CHECK(BeamformerImpl::validate());
+
+    if (!inputs().contains("buffer") || !inputs().contains("phasors")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
     const Tensor& phasors = inputs().at("phasors").tensor;
+    if (!input.validShape() || input.size() == 0 ||
+        !phasors.validShape() || phasors.size() == 0) {
+        return Result::SUCCESS;
+    }
 
     if (input.dtype() != DataType::CI8 && input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CPU] Unsupported input data type '{}'. Expected CI8 or CF32.",
@@ -69,6 +83,30 @@ Result BeamformerImplNativeCpu::create() {
         return Result::ERROR;
     }
 
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                        alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CPU] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    U64 cacheSizeBytes = 0;
+    if (!detail::CheckedMultiply(
+            input.shape(kBufferAspectAxis),
+            static_cast<U64>(sizeof(std::array<CF32, kExpectedPolarizations>)),
+            cacheSizeBytes) ||
+        cacheSizeBytes >
+            static_cast<U64>(std::numeric_limits<std::ptrdiff_t>::max()) ||
+        cacheSizeBytes > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CPU] Antenna cache allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    return Result::SUCCESS;
+}
+
+Result BeamformerImplNativeCpu::create() {
     JST_CHECK(BeamformerImpl::create());
 
     antennaCache.resize(inputTensor.shape(kBufferAspectAxis));
@@ -89,10 +127,6 @@ Result BeamformerImplNativeCpu::destroy() {
 
 Result BeamformerImplNativeCpu::computeSubmit() {
     JST_CHECK(kernel());
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
 
     return Result::SUCCESS;
 }

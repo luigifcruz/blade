@@ -16,19 +16,19 @@ jobs:
         include:
           - tag: x86_64-cuda
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-x86_64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.8.0-ubuntu24-x86_64-cuda
             device: cuda
           - tag: aarch64-cuda
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-aarch64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.8.0-ubuntu24-aarch64-cuda
             device: cuda
           - tag: x86_64-cpu
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-x86_64
+            base: ghcr.io/luigifcruz/cyberether:v1.8.0-ubuntu24-x86_64
             device: cpu
           - tag: aarch64-cpu
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.7.0-ubuntu24-aarch64
+            base: ghcr.io/luigifcruz/cyberether:v1.8.0-ubuntu24-aarch64
             device: cpu
 
     steps:
@@ -50,7 +50,11 @@ jobs:
               workspace_owner="$(stat -c "%u:%g" /workspace)"
               trap '\''chown -R "${workspace_owner}" /workspace/.dist /workspace/build /workspace/subprojects 2>/dev/null || true'\'' EXIT
               git config --global --add safe.directory /workspace
-              sh tools/ci/package_cep.sh
+              rm -rf build
+              meson setup build -Dbuildtype="${BUILD_TYPE}" -Ddevices="${BLADE_DEVICES}"
+              meson compile -C build blade_cep
+              mkdir -p "${CEP_OUTPUT_DIR}"
+              cp build/blade.cep "${CEP_OUTPUT_DIR}/blade.cep"
             '
 
       - name: Stage artifact

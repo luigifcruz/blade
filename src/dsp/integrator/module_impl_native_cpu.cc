@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
+#include <limits>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -30,6 +32,7 @@ struct IntegratorImplNativeCpu : public IntegratorImpl,
                                  public NativeCpuRuntimeContext,
                                  public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeSubmit() override;
 
@@ -38,13 +41,20 @@ struct IntegratorImplNativeCpu : public IntegratorImpl,
     Result kernelTyped();
 
     std::function<Result()> kernel;
-    U64 integratedElementCount = 1;
-    U64 numberOfElements = 0;
-    U64 blockIndex = 0;
 };
 
-Result IntegratorImplNativeCpu::create() {
+Result IntegratorImplNativeCpu::validate() {
+    JST_CHECK(IntegratorImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
     if (input.dtype() != DataType::F32 &&
         input.dtype() != DataType::CF32 &&
         input.dtype() != DataType::CI8) {
@@ -53,31 +63,35 @@ Result IntegratorImplNativeCpu::create() {
         return Result::ERROR;
     }
 
+    const auto& config = *candidate();
+    validatedBypass = config.size == 1 && config.rate == 1 &&
+                      input.dtype() == DataType::CF32;
+    if (!validatedBypass) {
+        U64 alignedOutputSize = 0;
+        if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                            alignedOutputSize) ||
+            alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+            JST_ERROR("[MODULE_INTEGRATOR_NATIVE_CPU] Output allocation size is too large.");
+            return Result::ERROR;
+        }
+    }
+
+    return Result::SUCCESS;
+}
+
+Result IntegratorImplNativeCpu::create() {
     JST_CHECK(IntegratorImpl::create());
 
-    blockIndex = 0;
     if (bypass) {
         return Result::SUCCESS;
     }
 
-    integratedElementCount = 1;
-    for (U64 i = axis + 1; i < inputTensor.rank(); ++i) {
-        integratedElementCount *= inputTensor.shape(i);
-    }
-    numberOfElements = inputTensor.size() / size;
-
-    switch (inputTensor.dtype()) {
-        case DataType::F32:
-            kernel = [this]() { return kernelTyped<F32>(); };
-            break;
-        case DataType::CF32:
-            kernel = [this]() { return kernelTyped<CF32>(); };
-            break;
-        case DataType::CI8:
-            kernel = [this]() { return kernelTyped<CI8>(); };
-            break;
-        default:
-            return Result::ERROR;
+    if (inputTensor.dtype() == DataType::F32) {
+        kernel = [this]() { return kernelTyped<F32>(); };
+    } else if (inputTensor.dtype() == DataType::CF32) {
+        kernel = [this]() { return kernelTyped<CF32>(); };
+    } else {
+        kernel = [this]() { return kernelTyped<CI8>(); };
     }
 
     return Result::SUCCESS;
@@ -94,10 +108,6 @@ Result IntegratorImplNativeCpu::computeSubmit() {
     }
 
     JST_CHECK(kernel());
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
 
     blockIndex = (blockIndex + 1) % rate;
     return blockIndex == 0 ? Result::SUCCESS : Result::SKIP;

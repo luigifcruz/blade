@@ -3,14 +3,15 @@
 
 #include <blade/detector/module.hh>
 #include <jetstream/detail/module_impl.hh>
+#include <jetstream/memory/axis.hh>
 
 namespace Jetstream::Modules {
 
-constexpr U64 kExpectedRank = 4;
-constexpr U64 kAspectAxis = 0;
-constexpr U64 kFrequencyAxis = 1;
-constexpr U64 kTimeAxis = 2;
-constexpr U64 kPolarizationAxis = 3;
+constexpr Index kExpectedRank = 4;
+constexpr Index kAspectAxis = 0;
+constexpr Index kFrequencyAxis = 1;
+constexpr Index kTimeAxis = 2;
+constexpr Index kPolarizationAxis = 3;
 constexpr U64 kExpectedInputPolarizations = 2;
 
 struct DetectorImpl : public Module::Impl, public DynamicConfig<Detector> {
@@ -21,8 +22,19 @@ struct DetectorImpl : public Module::Impl, public DynamicConfig<Detector> {
     Result reconfigure() override;
 
  protected:
+    SignalAxes validatedSignalAxes;
+    Shape validatedOutputShape;
+    Index validatedSampleAxis = 0;
+    Index validatedPolarizationAxis = 0;
+    U64 validatedInputSampleCount = 0;
+    U64 validatedOutputSizeBytes = 0;
+
     Tensor inputTensor;
     Tensor outputTensor;
+    SignalAxes signalAxes;
+    Shape outputShape;
+    Index sampleAxis = 0;
+    Index polarizationAxis = 0;
     U64 inputSampleCount = 0;
 };
 

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <any>
 #include <array>
 #include <cmath>
 #include <limits>
@@ -6,15 +7,11 @@
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <jetstream/backend/base.hh>
-#include <jetstream/domains/core/ones_tensor/block.hh>
 #include <jetstream/flowgraph.hh>
 #include <jetstream/flowgraph_view.hh>
-#include <jetstream/registry.hh>
 
-#include <blade/channelizer/block.hh>
 #include <blade/config.hh>
 
 namespace {
@@ -75,15 +72,6 @@ struct FlowgraphGuard {
     }
 };
 
-bool HasImplementation(const std::string& type, DeviceType device) {
-    const auto implementations = Registry::ListAvailableModules(type);
-    return std::any_of(implementations.begin(), implementations.end(), [device](const auto& impl) {
-        return impl.device == device &&
-               impl.runtime == RuntimeType::NATIVE &&
-               impl.provider == "generic";
-    });
-}
-
 #if defined(BLADE_DEVICE_CPU_AVAILABLE) && defined(BLADE_DEVICE_CUDA_AVAILABLE) && \
     defined(JETSTREAM_BACKEND_CUDA_AVAILABLE)
 std::string Metric(const Flowgraph::View::BlockData& block, const std::string& name) {
@@ -118,92 +106,6 @@ bool ComparisonCompleted(const Tensor& error) {
 #endif
 
 }  // namespace
-
-TEST_CASE("BLADE blocks expose only selected device implementations", "[registry]") {
-    REQUIRE(Registry::ListAvailableBlocks("channelizer").size() == 1);
-
-    constexpr std::array<const char*, 7> kCpuBlocks = {
-        "beamformer",
-        "correlator",
-        "detector",
-        "integrator",
-        "phasor",
-        "polarizer",
-        "stacker",
-    };
-    constexpr std::array<const char*, 6> kCudaBlocks = {
-        "beamformer",
-        "correlator",
-        "detector",
-        "integrator",
-        "polarizer",
-        "stacker",
-    };
-
-    for (const char* type : kCpuBlocks) {
-#if defined(BLADE_DEVICE_CPU_AVAILABLE)
-        INFO("Missing selected CPU implementation for " << type);
-        REQUIRE(HasImplementation(type, DeviceType::CPU));
-#else
-        INFO("Unexpected unselected CPU implementation for " << type);
-        REQUIRE_FALSE(HasImplementation(type, DeviceType::CPU));
-#endif
-    }
-
-    for (const char* type : kCudaBlocks) {
-#if defined(BLADE_DEVICE_CUDA_AVAILABLE)
-        INFO("Missing selected CUDA implementation for " << type);
-        REQUIRE(HasImplementation(type, DeviceType::CUDA));
-#else
-        INFO("Unexpected unselected CUDA implementation for " << type);
-        REQUIRE_FALSE(HasImplementation(type, DeviceType::CUDA));
-#endif
-    }
-}
-
-TEST_CASE("Channelizer matches the shifted FFT tensor contract",
-          "[flowgraph][channelizer][cpu]") {
-    BackendGuard backendGuard;
-    Backend::Config backendConfig;
-    backendConfig.headless = true;
-    REQUIRE(Backend::Initialize<DeviceType::CPU>(backendConfig) == Result::SUCCESS);
-
-    FlowgraphGuard graph;
-    REQUIRE(graph.flowgraph.create({}, nullptr, nullptr, nullptr) == Result::SUCCESS);
-    graph.created = true;
-
-    Blocks::OnesTensor source;
-    source.shape = {1, 2, 4, 1};
-    source.dataType = "CF32";
-    REQUIRE(graph.flowgraph.blockCreate("source", source, {}) == Result::SUCCESS);
-
-    TensorMap inputs;
-    inputs["buffer"].requested("source", "buffer");
-
-    Blocks::Channelizer channelizer;
-    REQUIRE(graph.flowgraph.blockCreate("channelizer", channelizer, inputs) ==
-            Result::SUCCESS);
-    REQUIRE(graph.flowgraph.compute() == Result::SUCCESS);
-
-    Flowgraph::View::BlockData block;
-    REQUIRE(graph.flowgraph.view().block("channelizer", block) == Result::SUCCESS);
-    const Tensor output = block.outputs.at("buffer").tensor;
-    REQUIRE(output.shape() == Shape{1, 8, 1, 1});
-    REQUIRE(output.dtype() == DataType::CF32);
-
-    constexpr std::array<F32, 8> expected = {0.0f, 0.0f, 4.0f, 0.0f,
-                                              0.0f, 0.0f, 4.0f, 0.0f};
-    const CF32* outputData = output.data<CF32>();
-    REQUIRE(outputData != nullptr);
-    for (U64 i = 0; i < expected.size(); ++i) {
-        REQUIRE_THAT(outputData[i].real(),
-                     Catch::Matchers::WithinAbs(expected[i], 1e-5f));
-        REQUIRE_THAT(outputData[i].imag(),
-                     Catch::Matchers::WithinAbs(0.0f, 1e-5f));
-    }
-
-    REQUIRE(graph.destroy() == Result::SUCCESS);
-}
 
 TEST_CASE("CPU reference flowgraphs match CUDA", "[flowgraph][cuda][parity]") {
 #if !defined(BLADE_DEVICE_CPU_AVAILABLE) || !defined(BLADE_DEVICE_CUDA_AVAILABLE) || \

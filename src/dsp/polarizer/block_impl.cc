@@ -51,6 +51,6 @@ Result PolarizerImpl::create() {
     return Result::SUCCESS;
 }
 
-JST_REGISTER_BLOCK(PolarizerImpl);
+JST_REGISTER_BLOCK(PolarizerImpl, {"polarizer"});
 
 }  // namespace Jetstream::Blocks

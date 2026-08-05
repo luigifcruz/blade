@@ -1,10 +1,14 @@
 #include <jetstream/backend/devices/cuda/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cuda.hh>
 #include <jetstream/scheduler_context.hh>
 
 #include "module_impl.hh"
+
+#include <cstdint>
+#include <limits>
 
 namespace Jetstream::Modules {
 
@@ -34,6 +38,8 @@ extern "C" __global__ void stacker(const Element* input,
 )";
 
 constexpr const char* kStackerKernelName  = "stacker";
+constexpr U64 kMaxGridSizeX = std::numeric_limits<I32>::max();
+constexpr U64 kMaxCudaPitch = std::numeric_limits<I32>::max();
 
 }  // namespace
 
@@ -41,24 +47,33 @@ struct StackerImplNativeCuda : public StackerImpl,
                                 public NativeCudaRuntimeContext,
                                 public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeInitialize() override;
     Result computeSubmit(const cudaStream_t& stream) override;
     Result computeDeinitialize() override;
 
  private:
-    std::string kernelName;
     bool kernelCreated = false;
+    bool validatedKernelNotCopy = false;
     bool kernelNotCopy = false;
-    U64 width, widthByteSize;
-    U64 height;
-    U64 inputSize;
-    U64 stackIndex;
+    U64 validatedBlockSize = 0;
+    U64 launchBlockSize = 0;
 };
 
-Result StackerImplNativeCuda::create() {
-    const Tensor& input = inputs().at("buffer").tensor;
+Result StackerImplNativeCuda::validate() {
+    validatedKernelNotCopy = false;
+    validatedBlockSize = 0;
+    JST_CHECK(StackerImpl::validate());
 
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
+    const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
     if (input.dtype() != DataType::F32 &&
         input.dtype() != DataType::CF32 &&
         input.dtype() != DataType::CI8) {
@@ -67,26 +82,55 @@ Result StackerImplNativeCuda::create() {
         return Result::ERROR;
     }
 
-    JST_CHECK(StackerImpl::create());
-
-    stackIndex = 0;
-    if (bypass) {
+    if (validatedBypass) {
         return Result::SUCCESS;
     }
 
-    width = 1;
-    for (U64 i = axis; i < input.rank(); i++) {
-        width *= input.shape()[i];
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                         alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Output allocation size is too large.");
+        return Result::ERROR;
     }
-    widthByteSize = width * input.elementSize();
-    height = 1;
-    for (U64 i = 0; i < axis; i++) {
-        height *= input.shape()[i];
+
+    const auto& config = *candidate();
+    const bool candidateKernelNotCopy =
+        validatedWidth < config.copySizeThreshold;
+    if (candidateKernelNotCopy) {
+        if (config.blockSize == 0 || config.blockSize > 1024) {
+            JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] The CUDA block size must be between 1 and 1024 for the kernel path.");
+            return Result::ERROR;
+        }
+
+        const U64 blockCount = validatedInputSize / config.blockSize +
+                               (validatedInputSize % config.blockSize != 0);
+        if (blockCount > kMaxGridSizeX) {
+            JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Input size exceeds the CUDA grid limit.");
+            return Result::ERROR;
+        }
+        validatedBlockSize = config.blockSize;
+    } else if (validatedWidthByteSize > kMaxCudaPitch ||
+               validatedOutputRowByteSize > kMaxCudaPitch ||
+               validatedWidthByteSize > std::numeric_limits<std::size_t>::max() ||
+               validatedOutputRowByteSize > std::numeric_limits<std::size_t>::max() ||
+               validatedHeight > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] CUDA copy dimensions exceed the supported range.");
+        return Result::ERROR;
     }
-    inputSize = input.size();
+
+    validatedKernelNotCopy = candidateKernelNotCopy;
+
+    return Result::SUCCESS;
+}
+
+Result StackerImplNativeCuda::create() {
+    JST_CHECK(StackerImpl::create());
+
+    kernelNotCopy = validatedKernelNotCopy;
+    launchBlockSize = validatedBlockSize;
     JST_DEBUG("[MODULE_STACKER_NATIVE_CUDA] Height of {} and width of {} elements ({} bytes).",
               height, width, widthByteSize)
-    kernelNotCopy = width < copySizeThreshold;
     JST_DEBUG("[MODULE_STACKER_NATIVE_CUDA] Stacking with {}.", kernelNotCopy ? "kernel" : "CUDA memcopy");
 
     return Result::SUCCESS;
@@ -103,9 +147,9 @@ Result StackerImplNativeCuda::computeInitialize() {
             jst::fmt::format("static constexpr U64 ELEMENT_SIZE = {};\n"
                             "static constexpr U64 WIDTH_IN = {};\n"
                             "static constexpr U64 WIDTH_OUT = {};",
-                            inputTensor.elementSize(),
-                            width,
-                            width*ratio)},
+                             inputTensor.elementSize(),
+                             width,
+                             outputWidth)},
         };
         JST_CHECK(createKernel(kStackerKernelName, kStackerKernelSource, pieces));
         kernelCreated = true;
@@ -118,13 +162,22 @@ Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
         return Result::SUCCESS;
     }
 
+    const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
+    auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    if (!inputBase || !outputBase) {
+        JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Missing input or output device buffer.");
+        return Result::ERROR;
+    }
+
+    const void* inputData = inputBase + inputTensor.offsetBytes();
+    void* outputData = outputBase + outputTensor.offsetBytes();
+
     if (stackIndex == 0) {
-        JST_CUDA_CHECK(cudaMemsetAsync(outputTensor.data(), 0, outputTensor.sizeBytes(), stream), [&] {
+        JST_CUDA_CHECK(cudaMemsetAsync(outputData, 0, outputTensor.sizeBytes(), stream), [&] {
             JST_ERROR("[MODULE_STACKER_NATIVE_CUDA] Failed to clear the output buffer: {}.", err);
         });
     }
-    const void* inputData = inputTensor.data();
-    void* outputData = outputTensor.data();
+
     if (kernelNotCopy) {
         void* inputArgument = const_cast<void*>(inputData);
         void* arguments[] = {
@@ -134,17 +187,22 @@ Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
             (void*)&stackIndex
         };
 
-        const Extent3D<U64> block = {blockSize, 1, 1};
-        const Extent3D<U64> grid = {(inputTensor.size() + blockSize - 1) / blockSize, 1, 1};
+        const Extent3D<U64> block = {launchBlockSize, 1, 1};
+        const Extent3D<U64> grid = {
+            inputSize / launchBlockSize + (inputSize % launchBlockSize != 0),
+            1,
+            1,
+        };
 
         JST_CHECK(scheduleKernel(kStackerKernelName, stream, grid, block, arguments));
     } else {
-
+        auto* outputBytes = static_cast<std::uint8_t*>(outputData);
+        const auto* inputBytes = static_cast<const std::uint8_t*>(inputData);
         JST_CUDA_CHECK(
             cudaMemcpy2DAsync(
-                ((uint8_t*)outputData)+(widthByteSize * stackIndex),
-                widthByteSize * ratio,
-                ((uint8_t*)inputData)+0,
+                outputBytes + (widthByteSize * stackIndex),
+                outputRowByteSize,
+                inputBytes,
                 widthByteSize,
                 widthByteSize,
                 height,
@@ -155,10 +213,7 @@ Result StackerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
         });
     }
 
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
-    stackIndex = (stackIndex + 1) % ratio;
+    stackIndex = (stackIndex + 1) % stackRatio;
 
     return stackIndex == 0 ? Result::SUCCESS : Result::SKIP;
 }
