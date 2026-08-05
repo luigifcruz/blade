@@ -6,6 +6,16 @@
 
 namespace Jetstream::Modules {
 
+constexpr U64 kAntennaPositionRank = 2;
+constexpr U64 kAntennaCalibrationRank = 3;
+constexpr U64 kBoresightCoordinateRank = 1;
+constexpr U64 kBeamCoordinateRank = 2;
+
+constexpr U64 kAntennaAxis = 0;
+constexpr U64 kCoordinateAxis = 1;
+constexpr U64 kChannelAxis = 1;
+constexpr U64 kPolarizationAxis = 2;
+
 struct PhasorImpl : public Module::Impl, public DynamicConfig<Phasor> {
     Result validate() override;
     Result define() override;
@@ -14,6 +24,18 @@ struct PhasorImpl : public Module::Impl, public DynamicConfig<Phasor> {
     Result reconfigure() override;
 
  protected:
+    Tensor validatedAntennaPositionTensor;
+    Tensor validatedAntennaCalibrationTensor;
+    Tensor validatedBoresightCoordinateTensor;
+    Tensor validatedBeamCoordinateTensor;
+    Tensor validatedJulianDateTensor;
+    Tensor validatedDut1Tensor;
+    Shape validatedOutputDelayShape;
+    Shape validatedOutputPhasorShape;
+    U64 validatedAntennaCount = 0;
+    U64 validatedOutputDelaySizeBytes = 0;
+    U64 validatedOutputPhasorSizeBytes = 0;
+
     Tensor antennaPositionTensor;
     Tensor antennaCalibrationTensor;
     Tensor boresightCoordinateTensor;

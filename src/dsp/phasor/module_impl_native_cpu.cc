@@ -1,4 +1,8 @@
+#include <cstddef>
+#include <limits>
+
 #include <jetstream/backend/devices/cpu/helpers.hh>
+#include <jetstream/memory/macros.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
 #include <jetstream/scheduler_context.hh>
 #include <jetstream/module_context.hh>
@@ -62,9 +66,11 @@ struct Triplet {
 
 struct PhasorImplNativeCpu : public PhasorImpl,
                            public NativeCpuRuntimeContext,
-                           public Scheduler::Context {
+                            public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
+    Result destroy() final;
 
     Result computeSubmit() override;
 
@@ -80,30 +86,111 @@ struct PhasorImplNativeCpu : public PhasorImpl,
     std::vector<F64> boresightDelay;
 };
 
+Result PhasorImplNativeCpu::validate() {
+    JST_CHECK(PhasorImpl::validate());
+
+    if (!inputs().contains("antennaPositions") ||
+        !inputs().contains("antennaCalibrations") ||
+        !inputs().contains("boresightCoordinates") ||
+        !inputs().contains("beamCoordinates") ||
+        !inputs().contains("julianDate") ||
+        !inputs().contains("dut1")) {
+        return Result::SUCCESS;
+    }
+
+    const Tensor& antennaPositions = inputs().at("antennaPositions").tensor;
+    const Tensor& antennaCalibrations = inputs().at("antennaCalibrations").tensor;
+    const Tensor& boresightCoordinates = inputs().at("boresightCoordinates").tensor;
+    const Tensor& beamCoordinates = inputs().at("beamCoordinates").tensor;
+    const Tensor& julianDate = inputs().at("julianDate").tensor;
+    const Tensor& dut1 = inputs().at("dut1").tensor;
+    if (!antennaPositions.validShape() || antennaPositions.size() == 0 ||
+        !antennaCalibrations.validShape() || antennaCalibrations.size() == 0 ||
+        !boresightCoordinates.validShape() || boresightCoordinates.size() == 0 ||
+        !beamCoordinates.validShape() || beamCoordinates.size() == 0 ||
+        !julianDate.validShape() || julianDate.size() == 0 ||
+        !dut1.validShape() || dut1.size() == 0) {
+        return Result::SUCCESS;
+    }
+
+    if (antennaPositions.dtype() != DataType::F64 ||
+        antennaCalibrations.dtype() != DataType::CF64 ||
+        boresightCoordinates.dtype() != DataType::F64 ||
+        beamCoordinates.dtype() != DataType::F64 ||
+        julianDate.dtype() != DataType::F64 ||
+        dut1.dtype() != DataType::F64) {
+        JST_ERROR("[MODULE_PHASOR_NATIVE_CPU] Expected input data types F64, CF64, F64, F64, F64, and F64.");
+        return Result::ERROR;
+    }
+
+    if (validatedAntennaCount > static_cast<U64>(std::numeric_limits<I32>::max()) ||
+        candidate()->referenceAntennaIndex >
+            static_cast<U64>(std::numeric_limits<I32>::max())) {
+        JST_ERROR("[MODULE_PHASOR_NATIVE_CPU] Antenna count and reference index must fit the provider's 32-bit range.");
+        return Result::ERROR;
+    }
+
+    U64 alignedDelaySize = 0;
+    U64 alignedPhasorSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputDelaySizeBytes,
+                                         alignedDelaySize) ||
+        alignedDelaySize > std::numeric_limits<std::size_t>::max() ||
+        !detail::CheckedPageAlignedSize(validatedOutputPhasorSizeBytes,
+                                         alignedPhasorSize) ||
+        alignedPhasorSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_PHASOR_NATIVE_CPU] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    U64 tripletScratchSize = 0;
+    U64 delayScratchSize = 0;
+    if (!detail::CheckedMultiply(validatedAntennaCount,
+                                 static_cast<U64>(sizeof(Triplet)),
+                                 tripletScratchSize) ||
+        !detail::CheckedMultiply(validatedAntennaCount,
+                                 static_cast<U64>(sizeof(F64)),
+                                 delayScratchSize) ||
+        tripletScratchSize > std::numeric_limits<std::size_t>::max() ||
+        delayScratchSize > std::numeric_limits<std::size_t>::max() ||
+        tripletScratchSize >
+            static_cast<U64>(std::numeric_limits<std::ptrdiff_t>::max()) ||
+        delayScratchSize >
+            static_cast<U64>(std::numeric_limits<std::ptrdiff_t>::max())) {
+        JST_ERROR("[MODULE_PHASOR_NATIVE_CPU] Scratch allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    return Result::SUCCESS;
+}
+
 Result PhasorImplNativeCpu::create() {
     // Create parent.
     JST_CHECK(PhasorImpl::create());
-    
-    const auto& nofAntennas = antennaPositionTensor.shape()[0];
+
     // JST_CHECK(antennasXyz.create(
     //     DeviceType::CPU,
     //     DataType::F64,
-    //     {nofAntennas, 3}
+    //     {validatedAntennaCount, 3}
     // ));
-    antennasXyz.resize(nofAntennas);
-    boresightUvw.resize(nofAntennas);
-    sourceUvw.resize(nofAntennas);
-    boresightDelay.resize(nofAntennas);
+    antennasXyz.resize(validatedAntennaCount);
+    boresightUvw.resize(validatedAntennaCount);
+    sourceUvw.resize(validatedAntennaCount);
+    boresightDelay.resize(validatedAntennaCount);
 
     // Register compute kernel.
-    if (outputPhasorTensor.dtype() == DataType::CF32) {
-        kernel = [this]() { return kernelCF32(); };
-        return Result::SUCCESS;
-    }
-    
-    JST_ERROR("[MODULE_PHASOR_NATIVE_CPU] Unsupported output "
-              "data type: {}.", outputPhasorTensor.dtype());
-    return Result::ERROR;
+    kernel = [this]() { return kernelCF32(); };
+
+    return Result::SUCCESS;
+}
+
+Result PhasorImplNativeCpu::destroy() {
+    kernel = {};
+    antennasXyz = {};
+    boresightUvw = {};
+    sourceUvw = {};
+    boresightDelay = {};
+
+    return PhasorImpl::destroy();
 }
 
 Result PhasorImplNativeCpu::computeSubmit() {
