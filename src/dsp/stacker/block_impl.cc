@@ -56,6 +56,6 @@ Result StackerImpl::create() {
     return Result::SUCCESS;
 }
 
-JST_REGISTER_BLOCK(StackerImpl);
+JST_REGISTER_BLOCK(StackerImpl, {"stacker"});
 
 }  // namespace Jetstream::Blocks
