@@ -1,9 +1,12 @@
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <vector>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -57,6 +60,7 @@ struct CorrelatorImplNativeCpu : public CorrelatorImpl,
                                  public NativeCpuRuntimeContext,
                                  public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result destroy() override;
     Result computeSubmit() override;
@@ -71,28 +75,81 @@ struct CorrelatorImplNativeCpu : public CorrelatorImpl,
     std::function<Result()> kernel;
 };
 
-Result CorrelatorImplNativeCpu::create() {
+Result CorrelatorImplNativeCpu::validate() {
+    JST_CHECK(CorrelatorImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
     if (input.dtype() != DataType::CI8 && input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_CORRELATOR_NATIVE_CPU] Unsupported input data type '{}'. Expected CI8 or CF32.",
                   input.dtype());
         return Result::ERROR;
     }
 
-    JST_CHECK(CorrelatorImpl::create());
+    const auto& config = *candidate();
 
-    if (inputTensor.dtype() == DataType::CF32 && calculationMode == "integer") {
+    if (input.dtype() == DataType::CF32 && config.calculationMode == "integer") {
         JST_ERROR("[MODULE_CORRELATOR_NATIVE_CPU] Integer calculation mode is not supported for CF32 input. "
                   "Use single_precision_fp or double_precision_fp.");
         return Result::ERROR;
     }
 
-    if (inputTensor.dtype() == DataType::CI8 &&
-        calculationMode == "integer" &&
-        inputTensor.shape(kTimeAxis) > 65535) {
+    if (input.dtype() == DataType::CI8 &&
+        config.calculationMode == "integer" &&
+        input.shape(kTimeAxis) > 65535) {
         JST_ERROR("[MODULE_CORRELATOR_NATIVE_CPU] Integer calculation mode supports at most 65535 time samples.");
         return Result::ERROR;
     }
+
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                        alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CPU] Output allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    const U64 calculationScalarSize = config.calculationMode == "double_precision_fp"
+        ? static_cast<U64>(sizeof(F64))
+        : static_cast<U64>(sizeof(I32));
+    U64 sampleObjectSize = 0;
+    U64 baselineObjectSize = 0;
+    U64 sampleScratchSize = 0;
+    U64 baselineScratchSize = 0;
+    if (!detail::CheckedMultiply(calculationScalarSize,
+                                 U64{4},
+                                 sampleObjectSize) ||
+        !detail::CheckedMultiply(calculationScalarSize,
+                                 U64{2 * kOutputPolarizations},
+                                 baselineObjectSize) ||
+        !detail::CheckedMultiply(input.shape(kAspectAxis),
+                                 sampleObjectSize,
+                                 sampleScratchSize) ||
+        !detail::CheckedMultiply(validatedBaselineCount,
+                                 baselineObjectSize,
+                                 baselineScratchSize) ||
+        sampleScratchSize >
+            static_cast<U64>(std::numeric_limits<std::ptrdiff_t>::max()) ||
+        baselineScratchSize >
+            static_cast<U64>(std::numeric_limits<std::ptrdiff_t>::max()) ||
+        sampleScratchSize > std::numeric_limits<std::size_t>::max() ||
+        baselineScratchSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CPU] Scratch allocation size is too large.");
+        return Result::ERROR;
+    }
+
+    return Result::SUCCESS;
+}
+
+Result CorrelatorImplNativeCpu::create() {
+    JST_CHECK(CorrelatorImpl::create());
 
     if (inputTensor.dtype() == DataType::CI8) {
         if (calculationMode == "integer") {
@@ -127,10 +184,6 @@ Result CorrelatorImplNativeCpu::computeSubmit() {
     integrationStep = (integrationStep + 1) % integrationRate;
     if (integrationStep != 0) {
         return Result::SKIP;
-    }
-
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
     }
 
     return Result::SUCCESS;
