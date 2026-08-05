@@ -1,5 +1,7 @@
 #include <functional>
+#include <limits>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -13,6 +15,7 @@ struct DetectorImplNativeCpu : public DetectorImpl,
                                public NativeCpuRuntimeContext,
                                public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeSubmit() override;
 
@@ -23,37 +26,48 @@ struct DetectorImplNativeCpu : public DetectorImpl,
     std::function<Result()> kernel;
 };
 
-Result DetectorImplNativeCpu::create() {
+Result DetectorImplNativeCpu::validate() {
+    JST_CHECK(DetectorImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
     if (input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_DETECTOR_NATIVE_CPU] Unsupported input data type '{}'. Expected CF32.",
                   input.dtype());
         return Result::ERROR;
     }
 
-    JST_CHECK(DetectorImpl::create());
-
-    if (numberOfOutputPolarizations == 4) {
-        kernel = [this]() { return kernel4Pol(); };
-    } else if (numberOfOutputPolarizations == 1) {
-        kernel = [this]() { return kernel1Pol(); };
-    } else {
-        JST_ERROR("[MODULE_DETECTOR_NATIVE_CPU] Unsupported number of output polarizations {}.",
-                  numberOfOutputPolarizations);
+    U64 alignedOutputSize = 0;
+    if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes, alignedOutputSize) ||
+        alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+        JST_ERROR("[MODULE_DETECTOR_NATIVE_CPU] Output allocation size is too large.");
         return Result::ERROR;
     }
 
     return Result::SUCCESS;
 }
 
-Result DetectorImplNativeCpu::computeSubmit() {
-    JST_CHECK(kernel());
+Result DetectorImplNativeCpu::create() {
+    JST_CHECK(DetectorImpl::create());
 
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
+    if (numberOfOutputPolarizations == 4) {
+        kernel = [this]() { return kernel4Pol(); };
+    } else {
+        kernel = [this]() { return kernel1Pol(); };
     }
 
     return Result::SUCCESS;
+}
+
+Result DetectorImplNativeCpu::computeSubmit() {
+    return kernel();
 }
 
 Result DetectorImplNativeCpu::kernel1Pol() {
