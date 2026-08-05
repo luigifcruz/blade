@@ -21,7 +21,7 @@ if not blade_is_linux
     error('BLADE only supports Linux targets for now.')
 endif
 
-minimum_jetstream_version = '1.7.0'
+minimum_jetstream_version = '1.8.0'
 
 #
 # Load Python
