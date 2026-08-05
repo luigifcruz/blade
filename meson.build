@@ -36,6 +36,7 @@ py = pymod.find_installation(required: true)
 
 cfg_lst = configuration_data()
 src_lst = []
+plugin_test_lst = []
 dep_lst = []
 inc_lst = [
     include_directories('include'),
