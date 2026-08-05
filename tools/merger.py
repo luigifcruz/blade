@@ -2,9 +2,9 @@
 
 import argparse
 import io
-from pathlib import Path
 import tarfile
 import tempfile
+from pathlib import Path
 
 
 def yaml_quote(value):
