@@ -1,5 +1,7 @@
 #include <functional>
+#include <limits>
 
+#include <jetstream/memory/macros.hh>
 #include <jetstream/module_context.hh>
 #include <jetstream/registry.hh>
 #include <jetstream/runtime_context_native_cpu.hh>
@@ -13,6 +15,7 @@ struct PolarizerImplNativeCpu : public PolarizerImpl,
                                 public NativeCpuRuntimeContext,
                                 public Scheduler::Context {
  public:
+    Result validate() final;
     Result create() final;
     Result computeSubmit() override;
 
@@ -23,30 +26,53 @@ struct PolarizerImplNativeCpu : public PolarizerImpl,
     std::function<Result()> kernel;
 };
 
-Result PolarizerImplNativeCpu::create() {
+Result PolarizerImplNativeCpu::validate() {
+    JST_CHECK(PolarizerImpl::validate());
+
+    if (!inputs().contains("buffer")) {
+        return Result::SUCCESS;
+    }
+
     const Tensor& input = inputs().at("buffer").tensor;
+    if (!input.validShape() || input.size() == 0) {
+        return Result::SUCCESS;
+    }
+
     if (input.dtype() != DataType::CF32) {
         JST_ERROR("[MODULE_POLARIZER_NATIVE_CPU] Unsupported input data type '{}'. Expected CF32.",
                   input.dtype());
         return Result::ERROR;
     }
 
-    JST_CHECK(PolarizerImpl::create());
-
-    if (bypass) {
-        return Result::SUCCESS;
+    if (validatedPath != PolarizerPath::BYPASS) {
+        U64 alignedOutputSize = 0;
+        if (!detail::CheckedPageAlignedSize(validatedOutputSizeBytes,
+                                             alignedOutputSize) ||
+            alignedOutputSize > std::numeric_limits<std::size_t>::max()) {
+            JST_ERROR("[MODULE_POLARIZER_NATIVE_CPU] Output allocation size is too large.");
+            return Result::ERROR;
+        }
     }
 
-    if (outputPolarization == "lr") {
-        kernel = [this]() { return kernelXYtoLR(); };
-    } else if (outputPolarization == "x") {
-        kernel = [this]() { return kernelXYtoLinear(0); };
-    } else if (outputPolarization == "y") {
-        kernel = [this]() { return kernelXYtoLinear(1); };
-    } else {
-        JST_ERROR("[MODULE_POLARIZER_NATIVE_CPU] Unsupported output polarization {}.",
-                  outputPolarization);
-        return Result::ERROR;
+    return Result::SUCCESS;
+}
+
+Result PolarizerImplNativeCpu::create() {
+    kernel = {};
+    JST_CHECK(PolarizerImpl::create());
+
+    switch (path) {
+        case PolarizerPath::BYPASS:
+            break;
+        case PolarizerPath::XY_TO_LR:
+            kernel = [this]() { return kernelXYtoLR(); };
+            break;
+        case PolarizerPath::XY_TO_X:
+            kernel = [this]() { return kernelXYtoLinear(0); };
+            break;
+        case PolarizerPath::XY_TO_Y:
+            kernel = [this]() { return kernelXYtoLinear(1); };
+            break;
     }
 
     return Result::SUCCESS;
@@ -59,19 +85,14 @@ Result PolarizerImplNativeCpu::computeSubmit() {
 
     JST_CHECK(kernel());
 
-    if (inputTensor.hasAttribute("timestamp")) {
-        JST_CHECK(outputTensor.setAttribute("timestamp", inputTensor.attribute("timestamp")));
-    }
-
     return Result::SUCCESS;
 }
 
 Result PolarizerImplNativeCpu::kernelXYtoLR() {
     const CF32* input = inputTensor.data<CF32>();
     CF32* output = outputTensor.data<CF32>();
-    const U64 pairCount = inputTensor.size() / kExpectedInputPolarizations;
 
-    for (U64 pair = 0; pair < pairCount; ++pair) {
+    for (U64 pair = 0; pair < outputWorkItemCount; ++pair) {
         const CF32& x = input[(pair * 2) + 0];
         const CF32& y = input[(pair * 2) + 1];
         const CF32 y90{-y.imag(), y.real()};
