@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,10 +13,13 @@
 #include <jetstream/domains/core/ones_tensor/block.hh>
 #include <jetstream/flowgraph.hh>
 #include <jetstream/flowgraph_view.hh>
+#include <jetstream/module.hh>
 #include <jetstream/registry.hh>
 
 #include <blade/channelizer/block.hh>
 #include <blade/config.hh>
+#include <blade/integrator/block.hh>
+#include <blade/integrator/module.hh>
 
 namespace {
 
@@ -120,7 +124,16 @@ bool ComparisonCompleted(const Tensor& error) {
 }  // namespace
 
 TEST_CASE("BLADE blocks expose only selected device implementations", "[registry]") {
-    REQUIRE(Registry::ListAvailableBlocks("channelizer").size() == 1);
+    const auto channelizerRegistrations =
+        Registry::ListAvailableBlocks("channelizer");
+    REQUIRE(channelizerRegistrations.size() == 1);
+    const std::vector<Registry::BlockModuleRequirement> channelizerRequirements = {
+        {"invert"},
+        {"fft"},
+        {"reshape"},
+    };
+    REQUIRE(channelizerRegistrations.front().moduleRequirements ==
+            channelizerRequirements);
 
     constexpr std::array<const char*, 7> kCpuBlocks = {
         "beamformer",
@@ -176,6 +189,10 @@ TEST_CASE("Channelizer matches the shifted FFT tensor contract",
     source.shape = {1, 2, 4, 1};
     source.dataType = "CF32";
     REQUIRE(graph.flowgraph.blockCreate("source", source, {}) == Result::SUCCESS);
+    Flowgraph::View::BlockData sourceBlock;
+    REQUIRE(graph.flowgraph.view().block("source", sourceBlock) == Result::SUCCESS);
+    REQUIRE(sourceBlock.outputs.at("buffer").tensor.setAttribute(
+        "sampleRate", F32{1024.0f}) == Result::SUCCESS);
 
     TensorMap inputs;
     inputs["buffer"].requested("source", "buffer");
@@ -190,6 +207,9 @@ TEST_CASE("Channelizer matches the shifted FFT tensor contract",
     const Tensor output = block.outputs.at("buffer").tensor;
     REQUIRE(output.shape() == Shape{1, 8, 1, 1});
     REQUIRE(output.dtype() == DataType::CF32);
+    REQUIRE(std::any_cast<Index>(output.attribute("sampleAxis")) == Index{2});
+    REQUIRE(std::any_cast<Index>(output.attribute("channelAxis")) == Index{1});
+    REQUIRE(std::any_cast<F32>(output.attribute("sampleRate")) == F32{256.0f});
 
     constexpr std::array<F32, 8> expected = {0.0f, 0.0f, 4.0f, 0.0f,
                                               0.0f, 0.0f, 4.0f, 0.0f};
@@ -203,6 +223,82 @@ TEST_CASE("Channelizer matches the shifted FFT tensor contract",
     }
 
     REQUIRE(graph.destroy() == Result::SUCCESS);
+}
+
+TEST_CASE("Integrator preserves invalid block candidates for recovery",
+          "[flowgraph][integrator][reconfigure]") {
+    FlowgraphGuard graph;
+    REQUIRE(graph.flowgraph.create({}, nullptr, nullptr, nullptr) == Result::SUCCESS);
+    graph.created = true;
+
+    Blocks::OnesTensor source;
+    source.shape = {1, 1, 4, 1};
+    source.dataType = "CF32";
+    REQUIRE(graph.flowgraph.blockCreate("source", source, {}) == Result::SUCCESS);
+
+    TensorMap inputs;
+    inputs["buffer"].requested("source", "buffer");
+
+    Blocks::Integrator integrator;
+    integrator.size = 2;
+    integrator.axis = 2;
+    REQUIRE(graph.flowgraph.blockCreate("integrator", integrator, inputs) ==
+            Result::SUCCESS);
+
+    Parser::Map invalid;
+    invalid["size"] = U64{0};
+    REQUIRE(graph.flowgraph.blockReconfigure("integrator", invalid) ==
+            Result::SUCCESS);
+
+    Flowgraph::View::BlockData block;
+    REQUIRE(graph.flowgraph.view().block("integrator", block) == Result::SUCCESS);
+    REQUIRE(block.state == Block::State::Errored);
+    REQUIRE(block.outputs.empty());
+
+    Parser::Map saved;
+    REQUIRE(graph.flowgraph.blockConfig("integrator", saved) == Result::SUCCESS);
+    REQUIRE(std::any_cast<U64>(saved.at("size")) == 0);
+
+    Parser::Map recovery;
+    recovery["size"] = integrator.size;
+    REQUIRE(graph.flowgraph.blockReconfigure("integrator", recovery) ==
+            Result::SUCCESS);
+    REQUIRE(graph.flowgraph.view().block("integrator", block) == Result::SUCCESS);
+    REQUIRE(block.state == Block::State::Created);
+    REQUIRE(block.outputs.at("buffer").tensor.shape() == Shape{1, 1, 2, 1});
+
+    REQUIRE(graph.destroy() == Result::SUCCESS);
+}
+
+TEST_CASE("Integrator module reconfiguration is transactional",
+          "[module][integrator][reconfigure]") {
+    std::shared_ptr<Module> module;
+    REQUIRE(Registry::BuildModule("integrator",
+                                  DeviceType::CPU,
+                                  RuntimeType::NATIVE,
+                                  "generic",
+                                  module) == Result::SUCCESS);
+
+    Tensor input;
+    REQUIRE(input.create(DeviceType::CPU, DataType::CF32, {1, 1, 4, 1}) ==
+            Result::SUCCESS);
+    TensorMap inputs;
+    inputs["buffer"].requested("source", "buffer");
+    inputs["buffer"].tensor = input;
+
+    Modules::Integrator config;
+    REQUIRE(module->create("integrator", config, inputs) == Result::SUCCESS);
+    REQUIRE(module->state() == Module::State::CREATED);
+
+    Parser::Map invalid;
+    invalid["size"] = U64{0};
+    REQUIRE(module->reconfigure(invalid) == Result::ERROR);
+    REQUIRE(module->state() == Module::State::CREATED);
+
+    Parser::Map saved;
+    REQUIRE(module->config(saved) == Result::SUCCESS);
+    REQUIRE(std::any_cast<U64>(saved.at("size")) == config.size);
+    REQUIRE(module->destroy() == Result::SUCCESS);
 }
 
 TEST_CASE("CPU reference flowgraphs match CUDA", "[flowgraph][cuda][parity]") {

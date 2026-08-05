@@ -2,9 +2,12 @@ deps = [
     dependency(
         'jetstream',
         version: '>=' + minimum_jetstream_version,
+        fallback: ['cyberether', 'libjetstream_dep'],
         required: true,
         default_options: [
-            'remote=enabled',
+            'tests=false',
+            'examples=false',
+            'remote=disabled',
         ],
     ),
 ]

@@ -3,6 +3,6 @@ src_lst += files([
     'module_impl.cc',
 ])
 
-if blade_device_cpu_enabled
+if plugin_device_cpu_enabled
     src_lst += files(['module_impl_native_cpu.cc'])
 endif
