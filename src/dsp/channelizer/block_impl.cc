@@ -1,7 +1,7 @@
 #include <blade/channelizer/block.hh>
 #include <jetstream/detail/block_impl.hh>
 
-#include <jetstream/domains/core/invert/module.hh>
+#include <jetstream/domains/dsp/invert/module.hh>
 #include <jetstream/domains/core/reshape/module.hh>
 #include <jetstream/domains/dsp/fft/module.hh>
 #include <jetstream/memory/axis.hh>
