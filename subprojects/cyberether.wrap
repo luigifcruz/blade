@@ -1,7 +1,7 @@
 [wrap-git]
 directory = cyberether
 url = https://github.com/luigifcruz/cyberether.git
-revision = v1.8.2
+revision = v1.9.0
 depth = 1
 clone-recursive = true
 

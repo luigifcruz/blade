@@ -26,3 +26,4 @@ jobs:
         uses: softprops/action-gh-release@v2.6.2
         with:
           files: .dist/artifacts/*.cep
+          generate_release_notes: true
