@@ -51,7 +51,10 @@ jobs:
               trap '\''chown -R "${workspace_owner}" /workspace/.dist /workspace/build /workspace/subprojects 2>/dev/null || true'\'' EXIT
               git config --global --add safe.directory /workspace
               rm -rf build
-              meson setup build -Dbuildtype="${BUILD_TYPE}" -Ddevices="${BLADE_DEVICES}"
+              meson setup build \
+                --force-fallback-for=erfa \
+                -Dbuildtype="${BUILD_TYPE}" \
+                -Ddevices="${BLADE_DEVICES}"
               meson compile -C build blade_cep
               mkdir -p "${CEP_OUTPUT_DIR}"
               cp build/blade.cep "${CEP_OUTPUT_DIR}/blade.cep"
