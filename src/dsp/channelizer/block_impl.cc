@@ -74,7 +74,7 @@ Result ChannelizerImpl::validate() {
 
     const U64 samples = inputTensor.shape(kSampleAxis);
     if (samples != 1 && (samples % 2) != 0) {
-        JST_ERROR("[BLOCK_CHANNELIZER] Sample count {} must be even.", samples);
+        JST_ERROR("[BLOCK_CHANNELIZER] Sample count {} must be one or even.", samples);
         return Result::ERROR;
     }
 

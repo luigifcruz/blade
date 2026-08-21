@@ -120,3 +120,35 @@ TEST_CASE("Channelizer matches the shifted FFT tensor contract",
 
     REQUIRE(graph.destroy() == Result::SUCCESS);
 }
+
+TEST_CASE("Channelizer reports its accepted sample-count constraint",
+          "[blade][channelizer][block][validation][diagnostic]") {
+    BackendGuard backendGuard;
+    Backend::Config backendConfig;
+    backendConfig.headless = true;
+    REQUIRE(Backend::Initialize<DeviceType::CPU>(backendConfig) == Result::SUCCESS);
+
+    FlowgraphGuard graph;
+    REQUIRE(graph.flowgraph.create({}, nullptr, nullptr, nullptr) == Result::SUCCESS);
+    graph.created = true;
+
+    Blocks::OnesTensor source;
+    source.shape = {1, 2, 3, 1};
+    source.dataType = "CF32";
+    REQUIRE(graph.flowgraph.blockCreate("source", source, {}) == Result::SUCCESS);
+
+    TensorMap inputs;
+    inputs["buffer"].requested("source", "buffer");
+
+    Blocks::Channelizer channelizer;
+    REQUIRE(graph.flowgraph.blockCreate("channelizer", channelizer, inputs) ==
+            Result::SUCCESS);
+
+    Flowgraph::View::BlockData block;
+    REQUIRE(graph.flowgraph.view().block("channelizer", block) == Result::SUCCESS);
+    REQUIRE(block.state == Block::State::Errored);
+    REQUIRE(block.diagnostic ==
+            "[BLOCK_CHANNELIZER] Sample count 3 must be one or even.");
+
+    REQUIRE(graph.destroy() == Result::SUCCESS);
+}

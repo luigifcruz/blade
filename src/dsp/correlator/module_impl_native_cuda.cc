@@ -642,6 +642,11 @@ Result CorrelatorImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     auto* accumulatorBase = plan.packed
         ? static_cast<std::uint8_t*>(accumulatorTensor.buffer().data())
         : nullptr;
+    if (!inputBase || !outputBase || (plan.packed && !accumulatorBase)) {
+        JST_ERROR("[MODULE_CORRELATOR_NATIVE_CUDA] Missing input, output, or accumulator device buffer.");
+        return Result::ERROR;
+    }
+
     void* inputData = const_cast<std::uint8_t*>(inputBase + inputTensor.offsetBytes());
     void* outputData = outputBase + outputTensor.offsetBytes();
     void* accumulatorData = plan.packed

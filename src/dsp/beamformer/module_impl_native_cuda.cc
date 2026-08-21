@@ -200,22 +200,6 @@ Result BeamformerImplNativeCuda::validate() {
         return Result::ERROR;
     }
 
-    const U64 maxKernelIndex = std::numeric_limits<I32>::max();
-    U64 outputPairCount = 1;
-    for (Index axis = 0; axis < kBufferPolarizationAxis; ++axis) {
-        if (!detail::CheckedMultiply(outputPairCount,
-                                     validatedOutputShape[axis],
-                                     outputPairCount)) {
-            JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Output indexing exceeds CUDA limits.");
-            return Result::ERROR;
-        }
-    }
-    if (input.size() > maxKernelIndex || phasors.size() > maxKernelIndex ||
-        outputPairCount > maxKernelIndex) {
-        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Tensor indexing exceeds the kernel's 32-bit range.");
-        return Result::ERROR;
-    }
-
     U64 sharedPhasorCount = 0;
     U64 sharedPhasorSizeBytes = 0;
     if (!detail::CheckedMultiply(phasors.shape(kPhasorBeamAxis),
@@ -303,6 +287,11 @@ Result BeamformerImplNativeCuda::computeSubmit(const cudaStream_t& stream) {
     const auto* inputBase = static_cast<const std::uint8_t*>(inputTensor.buffer().data());
     const auto* phasorBase = static_cast<const std::uint8_t*>(phasorTensor.buffer().data());
     auto* outputBase = static_cast<std::uint8_t*>(outputTensor.buffer().data());
+    if (!inputBase || !phasorBase || !outputBase) {
+        JST_ERROR("[MODULE_BEAMFORMER_NATIVE_CUDA] Missing input, phasor, or output device buffer.");
+        return Result::ERROR;
+    }
+
     const void* inputData = inputBase + inputTensor.offsetBytes();
     const void* phasorData = phasorBase + phasorTensor.offsetBytes();
     void* outputData = outputBase + outputTensor.offsetBytes();
