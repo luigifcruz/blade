@@ -30,15 +30,15 @@ Result BeamformerImpl::define() {
     JST_CHECK(defineInterfaceConfig("enableIncoherentBeam",
                                     "Incoherent Beam",
                                     "Append an incoherent beam using the first phasor beam as the weighting reference.",
-                                    "bool"));
+                                    {{"type", "bool"}}));
     JST_CHECK(defineInterfaceConfig("enableIncoherentBeamSqrt",
                                     "Incoherent Beam Sqrt",
                                     "Apply a square root to the incoherent beam after power accumulation.",
-                                    "bool"));
+                                    {{"type", "bool"}}));
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the beamformer kernel.",
-                                    "uint:threads"));
+                                    {{"type", "uint"}, {"unit", "threads"}}));
 
     return Result::SUCCESS;
 }

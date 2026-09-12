@@ -16,19 +16,19 @@ jobs:
         include:
           - tag: x86_64-cuda
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.9.0-ubuntu24-x86_64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-x86_64-cuda
             device: cuda
           - tag: aarch64-cuda
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.9.0-ubuntu24-aarch64-cuda
+            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-aarch64-cuda
             device: cuda
           - tag: x86_64-cpu
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.9.0-ubuntu24-x86_64
+            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-x86_64
             device: cpu
           - tag: aarch64-cpu
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.9.0-ubuntu24-aarch64
+            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-aarch64
             device: cpu
 
     steps:

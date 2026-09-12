@@ -29,15 +29,22 @@ Result CorrelatorImpl::define() {
     JST_CHECK(defineInterfaceConfig("integrationRate",
                                     "Integration Rate",
                                     "Number of input buffers accumulated into each output visibility buffer.",
-                                    "uint:buffers"));
+                                    {{"type", "uint"}, {"unit", "buffers"}}));
     JST_CHECK(defineInterfaceConfig("conjugateAntennaIndex",
                                     "Conjugate Antenna",
                                     "Select whether the conjugate is applied to antenna A or antenna B.",
-                                    "dropdown:0(Antenna A),1(Antenna B)"));
+                                    {{"type", "dropdown"}, {"options", Parser::Sequence{
+                                        Parser::Map{{"label", "Antenna A"}, {"value", "0"}},
+                                        Parser::Map{{"label", "Antenna B"}, {"value", "1"}},
+                                    }}}));
     JST_CHECK(defineInterfaceConfig("calculationMode",
                                     "Calculation Mode",
                                     "Intermediate calculation precision.",
-                                    "dropdown:integer(Integer),single_precision_fp(Single Precision FP),double_precision_fp(Double Precision FP)"));
+                                    {{"type", "dropdown"}, {"options", Parser::Sequence{
+                                        Parser::Map{{"label", "Integer"}, {"value", "integer"}},
+                                        Parser::Map{{"label", "Single Precision FP"}, {"value", "single_precision_fp"}},
+                                        Parser::Map{{"label", "Double Precision FP"}, {"value", "double_precision_fp"}},
+                                    }}}));
 
     return Result::SUCCESS;
 }

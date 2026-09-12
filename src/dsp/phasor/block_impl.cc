@@ -40,35 +40,35 @@ Result PhasorImpl::define() {
     JST_CHECK(defineInterfaceConfig("observationFrequencyHz",
                                     "Observation Frequency",
                                     "The observation center frequency.",
-                                    "float:MHz:3"));
+                                    {{"type", "float"}, {"unit", "MHz"}, {"scale", 1.0e6f}, {"precision", 3}}));
     JST_CHECK(defineInterfaceConfig("channelBandwidthHz",
                                     "Channel Bandwidth",
                                     "The channel bandwidth.",
-                                    "float:MHz:3"));
+                                    {{"type", "float"}, {"unit", "MHz"}, {"scale", 1.0e6f}, {"precision", 3}}));
     JST_CHECK(defineInterfaceConfig("totalBandwidthHz",
                                     "Total Bandwidth",
                                     "The total observation bandwidth. Such that channel 0 starts at `obs_center_freq - (total_bw / 2.0)`.",
-                                    "float:MHz:3"));
+                                    {{"type", "float"}, {"unit", "MHz"}, {"scale", 1.0e6f}, {"precision", 3}}));
     JST_CHECK(defineInterfaceConfig("frequencyStartIndex",
                                     "Frequency Start Index",
                                     "The zero-indexed frequency channel offset for the phasors.",
-                                    "uint"));
+                                    {{"type", "uint"}}));
     JST_CHECK(defineInterfaceConfig("referenceAntennaIndex",
                                     "Reference Antenna Index",
                                     "The index of the reference antenna.",
-                                    "uint"));
+                                    {{"type", "uint"}}));
     JST_CHECK(defineInterfaceConfig("arrayReferenceLongitude",
                                     "Array Reference Longitude",
                                     "The array reference position longitude.",
-                                    "float:rad:3"));
+                                    {{"type", "float"}, {"unit", "rad"}, {"precision", 3}}));
     JST_CHECK(defineInterfaceConfig("arrayReferenceLatitude",
                                     "Array Reference Latitude",
                                     "The array reference position latitude.",
-                                    "float:rad:3"));
+                                    {{"type", "float"}, {"unit", "rad"}, {"precision", 3}}));
     JST_CHECK(defineInterfaceConfig("arrayReferenceAltitude",
                                     "Array Reference Altitude",
                                     "The array reference position altitude.",
-                                    "float:m:3"));
+                                    {{"type", "float"}, {"unit", "m"}, {"precision", 3}}));
 
     return Result::SUCCESS;
 }

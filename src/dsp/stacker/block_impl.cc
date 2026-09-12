@@ -30,19 +30,19 @@ Result StackerImpl::define() {
     JST_CHECK(defineInterfaceConfig("axis",
                                     "Axis",
                                     "The axis to stack in the output.",
-                                    "uint"));
+                                    {{"type", "uint"}}));
     JST_CHECK(defineInterfaceConfig("ratio",
                                     "Ratio",
                                     "The ratio of the output to the input in the stacked axis.",
-                                    "uint"));
+                                    {{"type", "uint"}}));
     JST_CHECK(defineInterfaceConfig("copySizeThreshold",
                                     "Copy Threshold",
                                     "The threshold above which CUDA memcpy should be used.",
-                                    "uint"));
+                                    {{"type", "uint"}}));
     JST_CHECK(defineInterfaceConfig("blockSize",
                                 "Block Size",
                                 "CUDA threads per block for the stacker kernel.",
-                                "uint:threads"));
+                                {{"type", "uint"}, {"unit", "threads"}}));
 
     return Result::SUCCESS;
 }

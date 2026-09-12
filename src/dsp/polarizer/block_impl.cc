@@ -29,15 +29,22 @@ Result PolarizerImpl::define() {
     JST_CHECK(defineInterfaceConfig("inputPolarization",
                                     "Input Polarization",
                                     "The polarization of the input signal.",
-                                    "dropdown:xy(XY)"));
+                                    {{"type", "dropdown"}, {"options", Parser::Sequence{
+                                        Parser::Map{{"label", "XY"}, {"value", "xy"}},
+                                    }}}));
     JST_CHECK(defineInterfaceConfig("outputPolarization",
                                     "Output Polarizations",
                                     "The polarization of the output signal.",
-                                    "dropdown:lr(LR),xy(XY),x(X),y(Y)"));
+                                    {{"type", "dropdown"}, {"options", Parser::Sequence{
+                                        Parser::Map{{"label", "LR"}, {"value", "lr"}},
+                                        Parser::Map{{"label", "XY"}, {"value", "xy"}},
+                                        Parser::Map{{"label", "X"}, {"value", "x"}},
+                                        Parser::Map{{"label", "Y"}, {"value", "y"}},
+                                    }}}));
     JST_CHECK(defineInterfaceConfig("blockSize",
                                     "Block Size",
                                     "CUDA threads per block for the polarizer kernel.",
-                                    "uint:threads"));
+                                    {{"type", "uint"}, {"unit", "threads"}}));
 
     return Result::SUCCESS;
 }

@@ -17,7 +17,7 @@ The `examples/` directory contains complete pipelines that are also bundled into
 
 ## Building
 
-The plugin builds with [Meson](https://mesonbuild.com) and bundles its package as a CEP:
+The plugin requires CyberEther 1.10.0 or newer, builds with [Meson](https://mesonbuild.com), and bundles its package as a CEP:
 
 ```bash
 meson setup build
