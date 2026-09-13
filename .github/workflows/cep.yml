@@ -2,6 +2,23 @@ name: CEP Plugin Build
 
 on:
   workflow_call:
+    inputs:
+      cyberether_version:
+        description: CyberEther version without the v prefix
+        required: false
+        type: string
+      cyberether_tag:
+        description: CyberEther release tag
+        required: false
+        type: string
+      plugin_ref:
+        description: BLADE commit to build (empty uses the triggering ref)
+        required: false
+        type: string
+    outputs:
+      cyberether_version:
+        description: CyberEther version used to build the CEP
+        value: ${{ jobs.build.outputs.cyberether_version }}
 
 permissions:
   contents: read
@@ -10,43 +27,71 @@ jobs:
   build:
     name: build (${{ matrix.tag }})
     runs-on: ${{ matrix.runner }}
+    env:
+      CYBERETHER_VERSION: ${{ inputs.cyberether_version }}
+      CYBERETHER_TAG: ${{ inputs.cyberether_tag }}
+      CYBERETHER_IMAGE_SUFFIX: ${{ matrix.image_suffix }}
+    outputs:
+      cyberether_version: ${{ steps.build.outputs.cyberether_version }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - tag: x86_64-cuda
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-x86_64-cuda
+            image_suffix: ubuntu24-x86_64-cuda
             device: cuda
           - tag: aarch64-cuda
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-aarch64-cuda
+            image_suffix: ubuntu24-aarch64-cuda
             device: cuda
           - tag: x86_64-cpu
             runner: ubuntu-latest
-            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-x86_64
+            image_suffix: ubuntu24-x86_64
             device: cpu
           - tag: aarch64-cpu
             runner: ubuntu-24.04-arm
-            base: ghcr.io/luigifcruz/cyberether:v1.10.0-ubuntu24-aarch64
+            image_suffix: ubuntu24-aarch64
             device: cpu
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4.3.1
+        with:
+          ref: ${{ inputs.plugin_ref }}
 
       - name: Build CEP artifact
+        id: build
         run: |
           set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" != workflow_dispatch &&
+                -z "${CYBERETHER_VERSION}" && -z "${CYBERETHER_TAG}" ]]; then
+            CYBERETHER_TAG="$(sed -n 's/^revision = //p' subprojects/cyberether.wrap)"
+            CYBERETHER_VERSION="${CYBERETHER_TAG#v}"
+          fi
+          if [[ ! "${CYBERETHER_VERSION}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] ||
+             [[ "${CYBERETHER_TAG}" != "v${CYBERETHER_VERSION}" ]]; then
+            echo 'Expected a stable CyberEther version (x.y.z) and matching tag (vx.y.z).' >&2
+            exit 1
+          fi
+          echo "cyberether_version=${CYBERETHER_VERSION}" >> "${GITHUB_OUTPUT}"
+          image="ghcr.io/luigifcruz/cyberether:${CYBERETHER_TAG}-${CYBERETHER_IMAGE_SUFFIX}"
+          echo "Building against CyberEther ${CYBERETHER_VERSION} using ${image}"
           docker run --rm \
             --env BUILD_TYPE=release \
+            --env CYBERETHER_VERSION \
+            --env CYBERETHER_TAG \
             --env BLADE_DEVICES=${{ matrix.device }} \
             --env CEP_OUTPUT_DIR=.dist/${{ matrix.tag }} \
             --volume "${PWD}:/workspace" \
             --workdir /workspace \
-            "${{ matrix.base }}" \
+            "${image}" \
             sh -lc '
               set -eu
+              if ! pkg-config --exact-version="${CYBERETHER_VERSION}" jetstream; then
+                echo "Expected Jetstream SDK ${CYBERETHER_VERSION} in ${CYBERETHER_TAG} image." >&2
+                exit 1
+              fi
               workspace_owner="$(stat -c "%u:%g" /workspace)"
               trap '\''chown -R "${workspace_owner}" /workspace/.dist /workspace/build /workspace/subprojects 2>/dev/null || true'\'' EXIT
               git config --global --add safe.directory /workspace
@@ -80,6 +125,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.3.1
+        with:
+          ref: ${{ inputs.plugin_ref }}
 
       - uses: actions/download-artifact@v4.3.0
         with:

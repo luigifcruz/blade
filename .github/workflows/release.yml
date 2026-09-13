@@ -3,6 +3,22 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_call:
+    inputs:
+      cyberether_version:
+        required: true
+        type: string
+      cyberether_tag:
+        required: true
+        type: string
+      plugin_ref:
+        description: BLADE release commit to build
+        required: true
+        type: string
+      release_tag:
+        description: Existing BLADE release receiving the rebuilt asset
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -10,20 +26,50 @@ permissions:
 jobs:
   cep:
     uses: ./.github/workflows/cep.yml
+    with:
+      cyberether_version: ${{ inputs.cyberether_version }}
+      cyberether_tag: ${{ inputs.cyberether_tag }}
+      plugin_ref: ${{ inputs.plugin_ref }}
 
   github-release:
     needs: [cep]
     runs-on: ubuntu-latest
+    concurrency:
+      group: blade-github-release
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: write
+    env:
+      CYBERETHER_VERSION: ${{ needs.cep.outputs.cyberether_version }}
     steps:
       - uses: actions/download-artifact@v4.3.0
         with:
           name: blade-cep-ubuntu24
           path: .dist/artifacts
 
+      - name: Name release asset
+        run: |
+          mv .dist/artifacts/blade.cep \
+            ".dist/artifacts/blade-cyberether-${CYBERETHER_VERSION}.cep"
+
+      - name: Upload asset to existing BLADE release
+        if: ${{ inputs.cyberether_tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BLADE_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          asset=".dist/artifacts/blade-cyberether-${CYBERETHER_VERSION}.cep"
+          gh release upload "${BLADE_RELEASE_TAG}" "${asset}" --clobber
+
       - name: Release
+        if: ${{ inputs.cyberether_tag == '' }}
         uses: softprops/action-gh-release@v2.6.2
         with:
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: .dist/artifacts/*.cep
           generate_release_notes: true
+          overwrite_files: true

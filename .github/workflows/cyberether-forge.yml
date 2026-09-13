@@ -1,0 +1,64 @@
+name: CyberEther Forge
+run-name: CyberEther Forge (${{ inputs.cyberether_tag }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      cyberether_version:
+        description: CyberEther version without the v prefix
+        required: true
+        type: string
+      cyberether_tag:
+        description: CyberEther release tag
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cyberether-forge-${{ inputs.cyberether_tag }}
+  cancel-in-progress: false
+
+jobs:
+  latest-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      commit: ${{ steps.commit.outputs.sha }}
+    steps:
+      - name: Find latest stable BLADE release
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const { data: release } = await github.rest.repos.getLatestRelease(context.repo);
+              core.setOutput('tag', release.tag_name);
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.notice('No stable BLADE release found; skipping Forge rebuild.');
+            }
+
+      - name: Checkout release tag
+        if: ${{ steps.release.outputs.tag != '' }}
+        uses: actions/checkout@v4.3.1
+        with:
+          ref: refs/tags/${{ steps.release.outputs.tag }}
+
+      - name: Resolve release commit
+        if: ${{ steps.release.outputs.tag != '' }}
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+  forge:
+    needs: latest-release
+    if: ${{ needs.latest-release.outputs.tag != '' }}
+    uses: ./.github/workflows/release.yml
+    with:
+      cyberether_version: ${{ inputs.cyberether_version }}
+      cyberether_tag: ${{ inputs.cyberether_tag }}
+      plugin_ref: ${{ needs.latest-release.outputs.commit }}
+      release_tag: ${{ needs.latest-release.outputs.tag }}
