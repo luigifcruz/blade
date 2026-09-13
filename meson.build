@@ -21,7 +21,7 @@ if not plugin_is_linux
     error('BLADE only supports Linux targets for now.')
 endif
 
-minimum_jetstream_version = '1.10.0'
+minimum_jetstream_version = '1.10.1'
 
 #
 # Load Python
